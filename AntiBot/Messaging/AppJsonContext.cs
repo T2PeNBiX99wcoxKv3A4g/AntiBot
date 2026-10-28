@@ -24,6 +24,8 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(AppInfoPayload))]
 [JsonSerializable(typeof(SettingsPayload))]
 [JsonSerializable(typeof(LogExportPayload))]
+[JsonSerializable(typeof(WindowStatePayload))]
+[JsonSerializable(typeof(WindowResizeRequest))]
 [JsonSerializable(typeof(VrchatLogLine))]
 [JsonSerializable(typeof(VrchatLogSnapshot))]
 [JsonSerializable(typeof(VrchatLogBatch))]

@@ -3,6 +3,8 @@ import styled from "styled-components";
 import {Native} from "@photino-net-utils/bridge";
 import {getAppInfo, type AppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
+import {ResizeHandles} from "./components/ResizeHandles";
+import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {LogViewerPage} from "./pages/LogViewerPage";
 import {SettingsPage} from "./pages/SettingsPage";
@@ -33,43 +35,57 @@ export default function App() {
     const running = log.status.running;
 
     return (
-        <Shell>
-            <Sidebar onNavigate={setPage} page={page} status={log.status}/>
+        <Root>
+            <TitleBar/>
 
-            <Main>
-                <Header>
-                    <HeaderText>
-                        <h1>{title}</h1>
-                        <p>{subtitle}</p>
-                    </HeaderText>
-                    <HeaderMeta>
-                        <StatusPill $active={running}>
-                            <Dot $active={running}/>
-                            {running ? "VRChat running" : "VRChat not running"}
-                        </StatusPill>
-                    </HeaderMeta>
-                </Header>
+            <Shell>
+                <Sidebar onNavigate={setPage} page={page} status={log.status}/>
 
-                <Content $flush={page === "logs"}>
-                    {page === "logs"
-                        ? <LogViewerPage log={log}/>
-                        : <SettingsPage info={info}/>}
-                </Content>
+                <Main>
+                    <Header>
+                        <HeaderText>
+                            <h1>{title}</h1>
+                            <p>{subtitle}</p>
+                        </HeaderText>
+                        <HeaderMeta>
+                            <StatusPill $active={running}>
+                                <Dot $active={running}/>
+                                {running ? "VRChat running" : "VRChat not running"}
+                            </StatusPill>
+                        </HeaderMeta>
+                    </Header>
 
-                <Footer>
-                    <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
-                </Footer>
-            </Main>
-        </Shell>
+                    <Content $flush={page === "logs"}>
+                        {page === "logs"
+                            ? <LogViewerPage log={log}/>
+                            : <SettingsPage info={info}/>}
+                    </Content>
+
+                    <Footer>
+                        <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
+                    </Footer>
+                </Main>
+            </Shell>
+
+            <ResizeHandles/>
+        </Root>
     );
 }
 
+const Root = styled.div`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-primary);
+`;
+
 const Shell = styled.div`
     display: flex;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     background:
-        radial-gradient(1100px 620px at 18% -10%, rgba(34, 211, 238, 0.08), transparent 60%),
-        radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.1), transparent 55%),
+        radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+        radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
         var(--bg-primary);
 `;
 

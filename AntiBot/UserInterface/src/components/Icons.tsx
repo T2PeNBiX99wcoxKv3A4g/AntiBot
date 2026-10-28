@@ -14,16 +14,6 @@ const base = (size: number) => ({
     "aria-hidden": true,
 });
 
-export function UserBlockIcon({size = 22}: IconProps) {
-    return (
-        <svg {...base(size)}>
-            <circle cx="12" cy="8" r="3.6"/>
-            <path d="M5 20c0-3.9 3.1-6.7 7-6.7s7 2.8 7 6.7"/>
-            <path d="M4 20 20 4"/>
-        </svg>
-    );
-}
-
 export function LogIcon({size = 18}: IconProps) {
     return (
         <svg {...base(size)}>
@@ -89,15 +79,6 @@ export function DownloadIcon({size = 16}: IconProps) {
         <svg {...base(size)}>
             <path d="M12 3v11M8 10l4 4 4-4"/>
             <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
-        </svg>
-    );
-}
-
-export function InfoIcon({size = 16}: IconProps) {
-    return (
-        <svg {...base(size)}>
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M12 11v5M12 8h.01"/>
         </svg>
     );
 }

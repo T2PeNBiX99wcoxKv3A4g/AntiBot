@@ -1,3 +1,4 @@
+using AntiBot.Interop;
 using AntiBot.Messaging;
 using Photino.NET;
 using PhotinoNetUtils.Extensions;
@@ -76,7 +77,19 @@ internal sealed class WindowManager : Singleton<WindowManager>
         if (IconPath is { Length: > 0 } icon)
             window.SetIconFile(icon);
 
-        window.RegisterWindowCreatedHandler((_, _) => MainWindowCreated?.Invoke());
+        // The interface draws its own title bar. On Windows the native frame stays and WindowFrame
+        // hides its non-client area, because a chromeless popup is a window no shell — or tiling
+        // window manager — will arrange. Elsewhere chromeless is still the simplest way.
+        if (!OperatingSystem.IsWindows())
+            window.SetChromeless(true);
+
+        window.RegisterWindowCreatedHandler((_, _) =>
+        {
+            if (OperatingSystem.IsWindows())
+                WindowFrame.RemoveTitleBar(window.WindowHandle);
+
+            MainWindowCreated?.Invoke();
+        });
 
         window.Load(AppUrl);
         _mainWindow = window;
@@ -116,10 +129,81 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context)
     {
-        if (context.Request.Type == "app.ready")
-            _mainWindowReady = true;
+        switch (context.Request.Type)
+        {
+            case "app.ready":
+                _mainWindowReady = true;
+                break;
+
+            case "window.minimize":
+                RunOnMainWindow(() => _mainWindow?.SetMinimized(true));
+                break;
+
+            case "window.toggleMaximize":
+                RunOnMainWindow(ToggleMaximize);
+                break;
+
+            case "window.close":
+                RunOnMainWindow(() => _mainWindow?.Close());
+                break;
+
+            case "window.drag":
+                RunOnMainWindow(() =>
+                {
+                    if (_mainWindow is not { } window)
+                        return;
+
+                    if (OperatingSystem.IsWindows())
+                        WindowDrag.Begin(window.WindowHandle);
+                    else if (OperatingSystem.IsLinux())
+                        LinuxWindow.BeginDrag(window.Title);
+                });
+                break;
+
+            case "window.resize":
+                RunOnMainWindow(() =>
+                {
+                    if (_mainWindow is not { } window)
+                        return;
+
+                    var direction = context.Payload<WindowResizeRequest>()?.Direction ?? "";
+
+                    if (OperatingSystem.IsWindows())
+                        WindowResize.Begin(window.WindowHandle, direction);
+                    else if (OperatingSystem.IsLinux())
+                        LinuxWindow.BeginResize(window.Title, direction);
+                });
+                break;
+        }
 
         return Task.FromResult<NativeResponse?>(null);
+    }
+
+    private void NotifyWindowState(bool maximized) =>
+        NotifyMainWindow("window.state", new WindowStatePayload(maximized));
+
+    private void ToggleMaximize()
+    {
+        if (_mainWindow is not { } window)
+            return;
+
+        if (OperatingSystem.IsWindows())
+        {
+            if (window.WindowHandle != IntPtr.Zero)
+                NotifyWindowState(WindowZoom.Toggle(window.WindowHandle));
+
+            return;
+        }
+
+        if (OperatingSystem.IsLinux())
+        {
+            NotifyWindowState(LinuxWindow.ToggleMaximize(window.Title));
+            return;
+        }
+
+        var maximized = window.Maximized != true;
+        window.SetMaximized(maximized);
+        NotifyWindowState(maximized);
     }
 
     public void Exit()

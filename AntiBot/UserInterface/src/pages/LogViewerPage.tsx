@@ -21,10 +21,10 @@ const LEVEL_TAGS: Record<string, string> = {
 };
 
 const levelColor = (level: string): string =>
-    level === "error" ? "#f87171"
+    level === "error" ? "#fb7185"
         : level === "warning" ? "#fbbf24"
-            : level === "info" ? "#22d3ee"
-                : level === "debug" ? "#475569" : "transparent";
+            : level === "info" ? "#60a5fa"
+                : level === "debug" ? "#6f6885" : "transparent";
 
 interface VisibleLine {
     line: LogLine;
@@ -387,7 +387,7 @@ const ToolbarButton = styled.button<{ $active?: boolean }>`
     padding: 7px 10px;
     border: 1px solid ${({$active}) => $active ? "var(--border-color-hover)" : "var(--border-color)"};
     border-radius: var(--radius-sm);
-    background: ${({$active}) => $active ? "rgba(34, 211, 238, 0.08)" : "var(--bg-card)"};
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.1)" : "var(--bg-card)"};
     color: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-secondary)"};
     font: inherit;
     font-family: var(--font-mono);
@@ -419,9 +419,9 @@ const Notice = styled.div<{ $error?: boolean }>`
     justify-content: space-between;
     gap: 12px;
     padding: 8px 12px;
-    border: 1px solid ${({$error}) => $error ? "rgba(248, 113, 113, 0.3)" : "var(--border-color)"};
+    border: 1px solid ${({$error}) => $error ? "rgba(251, 113, 133, 0.3)" : "var(--border-color)"};
     border-radius: var(--radius-sm);
-    background: ${({$error}) => $error ? "rgba(248, 113, 113, 0.08)" : "var(--bg-card)"};
+    background: ${({$error}) => $error ? "rgba(251, 113, 133, 0.08)" : "var(--bg-card)"};
     color: ${({$error}) => $error ? "var(--danger)" : "var(--text-secondary)"};
     font-size: 11px;
 
@@ -451,7 +451,7 @@ const Viewer = styled.section`
     overflow: hidden;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    background: rgba(6, 10, 17, 0.6);
+    background: rgba(9, 7, 16, 0.6);
 `;
 
 const Rows = styled.div`
@@ -474,7 +474,7 @@ const Row = styled.div<{ $level: string }>`
     contain-intrinsic-size: auto 20px;
 
     &:hover {
-        background: rgba(148, 163, 184, 0.06);
+        background: rgba(167, 139, 250, 0.06);
     }
 `;
 
@@ -521,7 +521,7 @@ const Message = styled.span<{ $level: string }>`
 
     mark {
         border-radius: 2px;
-        background: rgba(34, 211, 238, 0.25);
+        background: rgba(167, 139, 250, 0.28);
         color: var(--text-primary);
     }
 `;

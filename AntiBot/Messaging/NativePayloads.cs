@@ -14,3 +14,9 @@ internal sealed record SettingsPayload(string LogDirectory, string DefaultLogDir
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);
+
+/// <summary>Body for the <c>window.state</c> event.</summary>
+internal sealed record WindowStatePayload(bool Maximized);
+
+/// <summary>Payload for <c>window.resize</c>: the edge being dragged.</summary>
+internal sealed record WindowResizeRequest(string Direction);

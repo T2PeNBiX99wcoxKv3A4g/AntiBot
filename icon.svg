@@ -3,8 +3,8 @@
 
     <defs>
         <linearGradient id="background" x1="8" y1="8" x2="248" y2="248" gradientUnits="userSpaceOnUse">
-            <stop offset="0" stop-color="#0ea5e9"/>
-            <stop offset="1" stop-color="#6366f1"/>
+            <stop offset="0" stop-color="#6366f1"/>
+            <stop offset="1" stop-color="#a855f7"/>
         </linearGradient>
     </defs>
 
@@ -14,6 +14,6 @@
     <circle cx="128" cy="98" r="40" fill="#f8fafc"/>
     <path d="M62 198c0-33.1 29.5-60 66-60s66 26.9 66 60z" fill="#f8fafc"/>
 
-    <!-- Blocked -->
-    <path d="M56 200 200 56" stroke="#1e1b4b" stroke-width="18" stroke-linecap="round"/>
+    <!-- Blocked, cut out of the account with the background -->
+    <path d="M56 200 200 56" stroke="url(#background)" stroke-width="18" stroke-linecap="round"/>
 </svg>

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {LogIcon, SlidersIcon, UserBlockIcon} from "./Icons";
+import {LogIcon, SlidersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
@@ -17,14 +17,6 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
 export function Sidebar({page, onNavigate, status}: SidebarProps) {
     return (
         <Aside>
-            <Brand>
-                <Mark><UserBlockIcon/></Mark>
-                <BrandText>
-                    <strong>AntiBot</strong>
-                    <span>VRChat bot blocker</span>
-                </BrandText>
-            </Brand>
-
             <Nav>
                 {items.map(({id, label, icon: Icon}) => (
                     <Item key={id} $active={page === id} onClick={() => onNavigate(id)} type="button">
@@ -48,49 +40,12 @@ export function Sidebar({page, onNavigate, status}: SidebarProps) {
 const Aside = styled.aside`
     display: flex;
     flex-direction: column;
-    gap: 26px;
-    width: 244px;
+    gap: 22px;
+    width: 218px;
     flex-shrink: 0;
-    padding: 22px 16px;
-    background: rgba(9, 15, 25, 0.9);
+    padding: 16px 14px 18px;
+    background: rgba(8, 7, 15, 0.9);
     border-right: 1px solid var(--border-color);
-`;
-
-const Brand = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 0 8px;
-`;
-
-const Mark = styled.span`
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
-    color: #041016;
-    background: var(--accent-gradient);
-    box-shadow: var(--accent-glow);
-`;
-
-const BrandText = styled.div`
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-
-    strong {
-        font-size: 15px;
-        letter-spacing: -0.02em;
-    }
-
-    span {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--text-muted);
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-    }
 `;
 
 const Nav = styled.nav`
@@ -106,7 +61,7 @@ const Item = styled.button<{ $active: boolean }>`
     padding: 9px 10px;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    background: ${({$active}) => $active ? "rgba(34, 211, 238, 0.08)" : "transparent"};
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.12)" : "transparent"};
     color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-secondary)"};
     font: inherit;
     font-size: 13px;
