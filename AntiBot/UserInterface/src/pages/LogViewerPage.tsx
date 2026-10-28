@@ -216,7 +216,6 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                         ? `${lines.length} lines`
                         : `${visible.length} of ${lines.length} lines`}
                 </span>
-                <span>{status.running ? "VRChat running" : "VRChat not running"}</span>
             </StatusBar>
         </Page>
     );
@@ -579,7 +578,7 @@ const EmptyBox = styled.div`
 const StatusBar = styled.footer`
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 16px;
     padding: 0 2px;
     font-family: var(--font-mono);

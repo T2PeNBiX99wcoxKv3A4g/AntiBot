@@ -146,7 +146,7 @@ const Content = styled.div<{ $flush: boolean }>`
 
 const Footer = styled.footer`
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 16px;
     padding: 7px 26px;
     border-top: 1px solid var(--border-color);
