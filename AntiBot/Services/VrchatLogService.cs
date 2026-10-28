@@ -80,6 +80,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "log.snapshot" => Task.FromResult<NativeResponse?>(context.Reply("log.snapshot.result", Snapshot())),
+        "log.export" => ExportAsync(context),
         "log.openFolder" => Task.FromResult<NativeResponse?>(OpenFolder(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
@@ -309,8 +310,8 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
         return match.Success
             ? new(++_lastId, match.Groups["time"].Value, match.Groups["level"].Value.ToLowerInvariant(),
-                match.Groups["message"].Value)
-            : new(++_lastId, "", "", text);
+                match.Groups["message"].Value) { Raw = text }
+            : new(++_lastId, "", "", text) { Raw = text };
     }
 
     /// <summary>Marks where one session log ends and the next begins; the viewer draws it as a rule.</summary>
@@ -378,6 +379,33 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             .OnFailure(ex => Log.Warning(ex, "Failed to open {Directory}", directory))
             ? context.Reply("log.openFolder.result", new OkPayload())
             : context.Fail("log.openFolder.result", "error.openFolder");
+    }
+
+    /// <summary>Writes every line read so far, in its original form, to a new file in Downloads.</summary>
+    private async Task<NativeResponse?> ExportAsync(NativeContext context)
+    {
+        string[] lines;
+
+        lock (_gate)
+            lines = _buffer.Where(line => line.Raw.Length > 0).Select(line => line.Raw).ToArray();
+
+        if (lines.Length == 0)
+            return context.Fail("log.export.result", "error.noLog");
+
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var downloads = Path.Combine(home, "Downloads");
+        var folder = Directory.Exists(downloads) ? downloads : home;
+        var path = Path.Combine(folder, $"antibot-vrchat-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+
+        var attempt = await Try.Run(() => File.WriteAllLinesAsync(path, lines));
+        if (!attempt.IsSuccess)
+        {
+            Log.Warning(attempt.Exception, "Failed to export the log to {Path}", path);
+            return context.Fail("log.export.result", attempt.Exception?.Message ?? "error.export");
+        }
+
+        Log.Information("Exported {Count} log line(s) to {Path}", lines.Length, path);
+        return context.Reply("log.export.result", new LogExportPayload(true, lines.Length, path));
     }
 
     /// <summary>Whether VRChat's process exists. Checked at most once a second.</summary>

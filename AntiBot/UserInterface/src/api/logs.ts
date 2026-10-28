@@ -51,3 +51,16 @@ export async function openLogFolder(): Promise<void> {
 
     await Native.request("log.openFolder");
 }
+
+export interface LogExport {
+    saved: boolean;
+    lines: number;
+    path?: string;
+}
+
+/** Asks for a save location and writes every line read so far, in its original form. */
+export async function exportLog(): Promise<LogExport> {
+    if (!Native.available) return {saved: false, lines: 0};
+
+    return await Native.request<LogExport>("log.export");
+}

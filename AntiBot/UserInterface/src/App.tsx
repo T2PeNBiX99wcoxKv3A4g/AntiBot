@@ -39,7 +39,6 @@ export default function App() {
             <Main>
                 <Header>
                     <HeaderText>
-                        <Eyebrow>VRChat / anti-bot</Eyebrow>
                         <h1>{title}</h1>
                         <p>{subtitle}</p>
                     </HeaderText>
@@ -59,7 +58,6 @@ export default function App() {
 
                 <Footer>
                     <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
-                    <span>{running ? "following the live log" : "no log is read"}</span>
                 </Footer>
             </Main>
         </Shell>
@@ -106,14 +104,6 @@ const HeaderText = styled.div`
         font-size: 12px;
         color: var(--text-secondary);
     }
-`;
-
-const Eyebrow = styled.span`
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent-primary);
 `;
 
 const HeaderMeta = styled.div`

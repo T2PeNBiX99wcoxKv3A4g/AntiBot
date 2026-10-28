@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import styled from "styled-components";
-import {desktopAvailable, type LogLine} from "../api/logs";
-import {ArrowDownIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
+import {desktopAvailable, exportLog, type LogLine} from "../api/logs";
+import {ArrowDownIcon, DownloadIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
 import type {VrchatLog} from "../hooks/useVrchatLog";
 
 const LEVELS = ["debug", "info", "warning", "error"] as const;
@@ -37,6 +37,8 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
     const [query, setQuery] = useState("");
     const [hidden, setHidden] = useState<Set<string>>(new Set());
     const [follow, setFollow] = useState(true);
+    const [exporting, setExporting] = useState(false);
+    const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
     const rowsRef = useRef<HTMLDivElement>(null);
 
     const visible = useMemo(() => filterLines(lines, query, hidden), [lines, query, hidden]);
@@ -47,6 +49,13 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
         rowsRef.current.scrollTop = rowsRef.current.scrollHeight;
     }, [visible, follow]);
+
+    useEffect(() => {
+        if (!notice) return;
+
+        const timer = window.setTimeout(() => setNotice(null), 5000);
+        return () => window.clearTimeout(timer);
+    }, [notice]);
 
     const toggleLevel = (level: string) => setHidden((current) => {
         const next = new Set(current);
@@ -60,6 +69,20 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
         const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
         if (atBottom !== follow) setFollow(atBottom);
+    };
+
+    const exportLines = async () => {
+        setNotice(null);
+        setExporting(true);
+
+        try {
+            const result = await exportLog();
+            if (result.saved) setNotice({text: `Exported ${result.lines} lines to ${result.path}.`});
+        } catch (reason) {
+            setNotice({text: reason instanceof Error ? reason.message : String(reason), error: true});
+        } finally {
+            setExporting(false);
+        }
     };
 
     return (
@@ -102,6 +125,15 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     >
                         <TrashIcon/>Clear
                     </ToolbarButton>
+
+                    <ToolbarButton
+                        disabled={lines.length === 0 || exporting}
+                        onClick={exportLines}
+                        title="Save every line read so far to a file"
+                        type="button"
+                    >
+                        <DownloadIcon/>{exporting ? "Exporting…" : "Export"}
+                    </ToolbarButton>
                 </ToolbarRow>
 
                 <Levels>
@@ -119,6 +151,13 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     ))}
                 </Levels>
             </Toolbar>
+
+            {notice && (
+                <Notice $error={notice.error}>
+                    <span>{notice.text}</span>
+                    <button aria-label="Dismiss" onClick={() => setNotice(null)} type="button"><XIcon/></button>
+                </Notice>
+            )}
 
             <Viewer>
                 {!desktopAvailable ? (
@@ -373,6 +412,35 @@ const FollowDot = styled.span<{ $active: boolean }>`
     border-radius: 50%;
     background: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
     box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};
+`;
+
+const Notice = styled.div<{ $error?: boolean }>`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid ${({$error}) => $error ? "rgba(248, 113, 113, 0.3)" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$error}) => $error ? "rgba(248, 113, 113, 0.08)" : "var(--bg-card)"};
+    color: ${({$error}) => $error ? "var(--danger)" : "var(--text-secondary)"};
+    font-size: 11px;
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    button {
+        display: grid;
+        flex-shrink: 0;
+        place-items: center;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+    }
 `;
 
 const Viewer = styled.section`

@@ -83,6 +83,15 @@ export function ArrowDownIcon({size = 16}: IconProps) {
     );
 }
 
+export function DownloadIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M12 3v11M8 10l4 4 4-4"/>
+            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+        </svg>
+    );
+}
+
 export function InfoIcon({size = 16}: IconProps) {
     return (
         <svg {...base(size)}>

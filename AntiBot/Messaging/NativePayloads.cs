@@ -11,3 +11,6 @@ internal sealed record AppInfoPayload(string Version, string Platform);
 
 /// <summary>Body for <c>settings.get</c>.</summary>
 internal sealed record SettingsPayload(string LogDirectory, string DefaultLogDirectory);
+
+/// <summary>Body for <c>log.export</c>.</summary>
+internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);

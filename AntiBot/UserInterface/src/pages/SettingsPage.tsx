@@ -3,7 +3,7 @@ import styled from "styled-components";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {getSettings, saveSettings} from "../api/settings";
 import type {AppInfo} from "../api/system";
-import {FolderIcon, InfoIcon} from "../components/Icons";
+import {FolderIcon} from "../components/Icons";
 
 interface SettingsPageProps {
     info: AppInfo | null;
@@ -97,17 +97,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                     </Actions>
                 </Card>
             </Section>
-
-            <Callout>
-                <InfoIcon/>
-                <div>
-                    <strong>Only the live session is read.</strong>
-                    <p>
-                        VRChat writes its own log and AntiBot follows it with shared read access, so the file
-                        is never locked. While VRChat is not running, no log is opened at all.
-                    </p>
-                </div>
-            </Callout>
 
             <Section>
                 <SectionHeader>
@@ -257,32 +246,4 @@ const Button = styled.button`
 const ErrorText = styled.span`
     color: var(--danger);
     font-size: 11px;
-`;
-
-const Callout = styled.div`
-    display: flex;
-    gap: 10px;
-    padding: 16px;
-    border: 1px dashed var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-
-    svg {
-        flex-shrink: 0;
-        margin-top: 2px;
-        color: var(--accent-primary);
-    }
-
-    strong {
-        display: block;
-        margin-bottom: 3px;
-        font-size: 12px;
-        color: var(--text-primary);
-    }
-
-    p {
-        font-size: 12px;
-        line-height: 1.6;
-        color: var(--text-muted);
-    }
 `;

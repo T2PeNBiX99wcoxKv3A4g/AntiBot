@@ -40,11 +40,6 @@ export function Sidebar({page, onNavigate, status}: SidebarProps) {
                     <Dot $active={status.running}/>
                     {status.running ? "running" : "not running"}
                 </StatusValue>
-                <StatusHint>
-                    {status.running
-                        ? "Following the live log."
-                        : "Start VRChat to see its log."}
-                </StatusHint>
             </StatusCard>
         </Aside>
     );
@@ -170,10 +165,4 @@ const Dot = styled.span<{ $active: boolean }>`
     border-radius: 50%;
     background: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
     box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};
-`;
-
-const StatusHint = styled.span`
-    font-size: 10px;
-    line-height: 1.45;
-    color: var(--text-muted);
 `;
