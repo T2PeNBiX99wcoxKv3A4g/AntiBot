@@ -58,6 +58,12 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
     public VrchatLogService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
+    /// <summary>
+    ///     Raised for every batch, including state-only ones, so local parsers see the same stream the
+    ///     viewer does (including the new-session divider and VRChat shutting down).
+    /// </summary>
+    public event Action<VrchatLogBatch>? LinesRead;
+
     /// <summary>Starts the polling loop. Calling it more than once has no effect.</summary>
     public void Start()
     {
@@ -91,6 +97,9 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         {
             if (Poll() is { } batch)
             {
+                Try.Run(() => LinesRead?.Invoke(batch))
+                    .OnFailure(ex => Log.Warning(ex, "A log line handler failed"));
+
                 Log.Debug("Read {Count} new VRChat log line(s)", batch.Lines.Count);
                 WindowManager.Instance.NotifyMainWindow("log.lines", batch);
             }

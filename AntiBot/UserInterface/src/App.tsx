@@ -6,12 +6,14 @@ import {Sidebar} from "./components/Sidebar";
 import {ResizeHandles} from "./components/ResizeHandles";
 import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
+import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
 import {SettingsPage} from "./pages/SettingsPage";
 import type {Page} from "./pages";
 
 const pageMeta: Record<Page, { title: string; subtitle: string }> = {
     logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
+    instance: {title: "Instance", subtitle: "Players in your VRChat instance, read from the local log."},
     settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
 };
 
@@ -55,10 +57,12 @@ export default function App() {
                         </HeaderMeta>
                     </Header>
 
-                    <Content $flush={page === "logs"}>
+                    <Content $flush={page !== "settings"}>
                         {page === "logs"
                             ? <LogViewerPage log={log}/>
-                            : <SettingsPage info={info}/>}
+                            : page === "instance"
+                                ? <InstancePage/>
+                                : <SettingsPage info={info}/>}
                     </Content>
 
                     <Footer>

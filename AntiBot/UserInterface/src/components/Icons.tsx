@@ -74,6 +74,16 @@ export function ArrowDownIcon({size = 16}: IconProps) {
     );
 }
 
+export function UsersIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <circle cx="9" cy="8" r="3.2"/>
+            <path d="M3 19c0-3.3 2.7-5.6 6-5.6s6 2.3 6 5.6"/>
+            <path d="M15.8 5.2a3.2 3.2 0 0 1 0 5.9M17.4 13.8c2.1.6 3.6 2.3 3.6 4.4"/>
+        </svg>
+    );
+}
+
 export function DownloadIcon({size = 16}: IconProps) {
     return (
         <svg {...base(size)}>

@@ -63,6 +63,7 @@ internal static class Program
             _ = AppInfoService.Instance;
             SettingsService.Instance.Load();
             _ = VrchatLogService.Instance;
+            _ = InstanceService.Instance;
 
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;
