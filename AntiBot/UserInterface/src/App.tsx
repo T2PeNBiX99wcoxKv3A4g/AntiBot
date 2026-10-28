@@ -44,41 +44,41 @@ export default function App() {
         <Shell>
             <Sidebar page={page} onNavigate={setPage} state={guard.state}/>
 
-            <Main>
-                <Header>
-                    <HeaderText>
-                        <Eyebrow>VRChat / anti-bot</Eyebrow>
-                        <h1>{title}</h1>
-                        <p>{subtitle}</p>
-                    </HeaderText>
-                    <HeaderMeta>
-                        <StatusPill $active={guard.monitoring}>
-                            <Dot $active={guard.monitoring}/>
-                            {guard.monitoring ? "monitoring" : guard.state}
-                        </StatusPill>
-                        <ScaffoldBadge>scaffold</ScaffoldBadge>
-                    </HeaderMeta>
-                </Header>
+                <Main>
+                    <Header>
+                        <HeaderText>
+                            <Eyebrow>VRChat / anti-bot</Eyebrow>
+                            <h1>{title}</h1>
+                            <p>{subtitle}</p>
+                        </HeaderText>
+                        <HeaderMeta>
+                            <StatusPill $active={guard.monitoring}>
+                                <Dot $active={guard.monitoring}/>
+                                {guard.monitoring ? "monitoring" : guard.state}
+                            </StatusPill>
+                            <ScaffoldBadge>scaffold</ScaffoldBadge>
+                        </HeaderMeta>
+                    </Header>
 
-                <Content>
-                    <Notice>
-                        <InfoIcon/>
-                        <span>
-                            This build is a scaffold. The shell, tray and native bridge work, but no
-                            VRChat data is read and no account is classified or blocked.
-                        </span>
-                    </Notice>
+                    <Content>
+                        <Notice>
+                            <InfoIcon/>
+                            <span>
+                                This build is a scaffold. The shell, tray and native bridge work, but no
+                                VRChat data is read and no account is classified or blocked.
+                            </span>
+                        </Notice>
 
-                    {page === "overview" && <OverviewPage guard={guard}/>}
-                    {page === "signals" && <SignalsPage/>}
-                    {page === "settings" && <SettingsPage/>}
-                </Content>
+                        {page === "overview" && <OverviewPage guard={guard}/>}
+                        {page === "signals" && <SignalsPage/>}
+                        {page === "settings" && <SettingsPage/>}
+                    </Content>
 
-                <Footer>
-                    <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
-                    <span>Detection pipeline: not connected</span>
-                </Footer>
-            </Main>
+                    <Footer>
+                        <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
+                        <span>Detection pipeline: not connected</span>
+                    </Footer>
+                </Main>
         </Shell>
     );
 }
