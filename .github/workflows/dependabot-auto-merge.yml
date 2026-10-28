@@ -1,0 +1,21 @@
+name: Dependabot auto-merge
+
+# pull_request_target gives Dependabot workflows a writable token; the called
+# workflow verifies the author itself and only talks to the GitHub API.
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  automerge:
+    uses: T2PeNBiX99wcoxKv3A4g/Dependabot-Auto-Merge/.github/workflows/dependabot-auto-merge.yml@main
+    secrets: inherit

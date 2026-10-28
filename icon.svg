@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+    <title id="title">AntiBot</title>
+
+    <defs>
+        <linearGradient id="background" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#0ea5e9"/>
+            <stop offset="1" stop-color="#6366f1"/>
+        </linearGradient>
+    </defs>
+
+    <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#background)"/>
+
+    <!-- Shield -->
+    <path d="M128 34 200 62v60c0 52-32 78-72 96-40-18-72-44-72-96V62z" fill="#f8fafc" fill-opacity="0.98"/>
+
+    <!-- Blocked account -->
+    <circle cx="128" cy="126" r="34" fill="#4f46e5"/>
+    <path d="m108 106 40 40" stroke="#f8fafc" stroke-width="9" stroke-linecap="round"/>
+</svg>

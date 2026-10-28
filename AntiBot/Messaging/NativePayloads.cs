@@ -1,0 +1,10 @@
+namespace AntiBot.Messaging;
+
+// Response bodies. These are named records rather than anonymous types because the
+// source-generated JSON context has to know every shape the app can serialize.
+
+/// <summary>Body for a bare <c>{ "ok": true }</c> acknowledgement.</summary>
+internal sealed record OkPayload(bool Ok = true);
+
+/// <summary>Body for <c>app.info</c>.</summary>
+internal sealed record AppInfoPayload(string Version, string Platform);

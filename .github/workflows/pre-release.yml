@@ -1,0 +1,25 @@
+name: Pre Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "dev/**"
+    paths-ignore:
+      - "README.md"
+      - "LICENSE*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: T2PeNBiX99wcoxKv3A4g/Release-Workflows/.github/workflows/csharp_release.yml@main
+    with:
+      project_path: ./AntiBot/AntiBot.csproj
+      filename: AntiBot
+      runtimes: '["win-x64", "linux-x64"]'
+      version_file_path: ./AntiBot/AntiBot.csproj
+      version_keyword: Version
+      prerelease: true
+    secrets: inherit
