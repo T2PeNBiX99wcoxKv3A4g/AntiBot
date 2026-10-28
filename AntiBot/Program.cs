@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Versioning;
 using AntiBot.Services;
 using PhotinoNetUtils;
@@ -68,7 +69,7 @@ internal static class Program
 
             using var tray = CreateTray(manager.IconPath);
 
-            manager.MainWindowCreated += () => singleInstance.StartServer(_ => manager.ShowMainWindow());
+            manager.MainWindowCreated += [SuppressMessage("ReSharper", "AccessToDisposedClosure")]() => singleInstance.StartServer(_ => manager.ShowMainWindow());
 
             manager.CreateMainWindow();
             StartTray(tray);
