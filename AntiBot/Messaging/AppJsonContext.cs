@@ -22,7 +22,9 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(NativeEvent))]
 [JsonSerializable(typeof(OkPayload))]
 [JsonSerializable(typeof(AppInfoPayload))]
-[JsonSerializable(typeof(GuardStatus))]
+[JsonSerializable(typeof(VrchatLogLine))]
+[JsonSerializable(typeof(VrchatLogSnapshot))]
+[JsonSerializable(typeof(VrchatLogBatch))]
 internal sealed partial class AppJsonContext : JsonSerializerContext;
 
 /// <summary>Bridges loosely-typed payloads to the source-generated serializer.</summary>

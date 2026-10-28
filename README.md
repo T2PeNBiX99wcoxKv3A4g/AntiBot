@@ -2,9 +2,9 @@
 
 A desktop tool aimed at the automated-account ("bot") problem in VRChat.
 
-This repository is currently a **scaffold**. The application shell, IPC bridge, tray, single-instance
-handling and build pipeline are in place; the detection pipeline itself is intentionally not
-implemented yet.
+This repository is no longer only a scaffold. The application shell, IPC bridge, tray, single-instance
+handling and build pipeline are in place, and the first piece of the pipeline is implemented: a live
+view of the newest VRChat output log. Detection and scoring are not implemented yet.
 
 ## The problem
 
@@ -32,7 +32,7 @@ AntiBot/
 │   ├── Constants.cs
 │   ├── Messaging/                 # JSON bridge between React and C#
 │   ├── Models/
-│   ├── Services/                  # app info, guard status, window manager
+│   ├── Services/                  # app info, VRChat log follower, window manager
 │   ├── Libs/                      # PhotinoNETUtils.dll + shared front-end bridge
 │   └── UserInterface/             # Vite + React + TypeScript
 ├── AGENTS.md
@@ -76,14 +76,23 @@ dotnet build -c Release
 The interface is embedded in the assembly and served by the shared Kestrel static server on an
 OS-assigned loopback port.
 
+## VRChat log
+
+The log viewer follows the newest `output_log_*.txt` in
+`%USERPROFILE%\AppData\LocalLow\VRChat\VRChat` (or VRChat's Proton prefix on Linux). The file is
+opened for reading with `FileShare.ReadWrite | FileShare.Delete`, so VRChat keeps writing to it while
+it is being read, and a new session log is picked up automatically instead of staying on the old one.
+
+`ANTIBOT_VRCHAT_LOG_DIR` overrides the folder, which is useful for testing without a VRChat session.
+
 ## Current status
 
 - [x] Window, tray, close-to-tray, single instance
 - [x] React shell and native bridge
-- [x] `app.info` and placeholder `guard.status`
-- [ ] VRChat log observation
+- [x] `app.info` and the live log viewer (`log.snapshot`, pushed `log.lines`)
+- [x] VRChat log observation, including switching to the newest session log
 - [ ] Detection signals and scoring
 - [ ] Alerts, history and user actions
 - [ ] Settings and persistence
 
-The UI deliberately labels monitoring as not implemented; there is no fake detection behind it.
+The UI reports whether a log is being followed; nothing is classified or blocked.

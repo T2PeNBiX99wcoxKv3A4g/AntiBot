@@ -9,7 +9,7 @@ namespace AntiBot.Messaging;
 /// </summary>
 internal sealed class NativeRequest
 {
-    /// <summary>Logical message name, e.g. <c>guard.status</c>.</summary>
+    /// <summary>Logical message name, e.g. <c>log.snapshot</c>.</summary>
     public string? Type { get; set; }
 
     /// <summary>Optional correlation id; when present the handler replies with the same id.</summary>

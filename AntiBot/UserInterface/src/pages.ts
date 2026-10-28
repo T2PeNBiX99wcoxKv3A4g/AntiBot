@@ -1,1 +1,1 @@
-export type Page = "overview" | "signals" | "settings";
+export type Page = "logs" | "settings";

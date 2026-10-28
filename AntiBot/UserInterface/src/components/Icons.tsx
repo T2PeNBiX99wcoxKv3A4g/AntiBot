@@ -23,21 +23,11 @@ export function ShieldIcon({size = 22}: IconProps) {
     );
 }
 
-export function OverviewIcon({size = 18}: IconProps) {
+export function LogIcon({size = 18}: IconProps) {
     return (
         <svg {...base(size)}>
-            <rect height="7" rx="1.5" width="7" x="3" y="3"/>
-            <rect height="7" rx="1.5" width="7" x="14" y="3"/>
-            <rect height="7" rx="1.5" width="7" x="3" y="14"/>
-            <rect height="7" rx="1.5" width="7" x="14" y="14"/>
-        </svg>
-    );
-}
-
-export function PulseIcon({size = 18}: IconProps) {
-    return (
-        <svg {...base(size)}>
-            <path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 3v5h5M8.5 13h7M8.5 17h4"/>
         </svg>
     );
 }
@@ -52,13 +42,43 @@ export function SlidersIcon({size = 18}: IconProps) {
     );
 }
 
-export function EyeOffIcon({size = 18}: IconProps) {
+export function SearchIcon({size = 16}: IconProps) {
     return (
         <svg {...base(size)}>
-            <path d="m3 3 18 18"/>
-            <path d="M10.6 6.2A9.8 9.8 0 0 1 12 6c5 0 8.5 4 9.5 6-.4.8-1.1 2-2.3 3.1"/>
-            <path d="M6.2 7.6C3.9 9.2 2.8 11 2.5 12c1 2 4.5 6 9.5 6 1.1 0 2.1-.2 3-.5"/>
-            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+            <circle cx="11" cy="11" r="6.5"/>
+            <path d="m16 16 4.5 4.5"/>
+        </svg>
+    );
+}
+
+export function XIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M6 6l12 12M18 6 6 18"/>
+        </svg>
+    );
+}
+
+export function TrashIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M4 7h16M9 7V5h6v2M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/>
+        </svg>
+    );
+}
+
+export function FolderIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        </svg>
+    );
+}
+
+export function ArrowDownIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M12 5v14M6 13l6 6 6-6"/>
         </svg>
     );
 }

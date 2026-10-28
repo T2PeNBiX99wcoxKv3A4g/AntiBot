@@ -11,7 +11,7 @@
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
         <RootNamespace>AntiBot</RootNamespace>
         <Version>0.1.0</Version>
-        <Description>VRChat anti-bot tooling (scaffold).</Description>
+        <Description>VRChat anti-bot tooling with a live VRChat log viewer.</Description>
         <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
     </PropertyGroup>
 

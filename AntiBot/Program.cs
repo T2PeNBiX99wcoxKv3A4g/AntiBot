@@ -61,7 +61,7 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
-            _ = GuardService.Instance;
+            _ = VrchatLogService.Instance;
 
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;
@@ -73,6 +73,7 @@ internal static class Program
 
             manager.CreateMainWindow();
             StartTray(tray);
+            VrchatLogService.Instance.Start();
             manager.Run();
 
             Log.Information("Exiting");

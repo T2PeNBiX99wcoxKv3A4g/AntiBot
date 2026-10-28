@@ -1,20 +1,22 @@
 import styled from "styled-components";
+import {fileName, type LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {OverviewIcon, PulseIcon, ShieldIcon, SlidersIcon} from "./Icons";
+import {LogIcon, ShieldIcon, SlidersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
     onNavigate: (page: Page) => void;
-    state: string;
+    status: LogStatus;
 }
 
-const items: { id: Page; label: string; icon: typeof OverviewIcon }[] = [
-    {id: "overview", label: "Overview", icon: OverviewIcon},
-    {id: "signals", label: "Signals", icon: PulseIcon},
+const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
+    {id: "logs", label: "Log viewer", icon: LogIcon},
     {id: "settings", label: "Settings", icon: SlidersIcon},
 ];
 
-export function Sidebar({page, onNavigate, state}: SidebarProps) {
+export function Sidebar({page, onNavigate, status}: SidebarProps) {
+    const file = fileName(status.file);
+
     return (
         <Aside>
             <Brand>
@@ -27,12 +29,7 @@ export function Sidebar({page, onNavigate, state}: SidebarProps) {
 
             <Nav>
                 {items.map(({id, label, icon: Icon}) => (
-                    <Item
-                        key={id}
-                        $active={page === id}
-                        onClick={() => onNavigate(id)}
-                        type="button"
-                    >
+                    <Item key={id} $active={page === id} onClick={() => onNavigate(id)} type="button">
                         <Icon/>
                         <span>{label}</span>
                     </Item>
@@ -40,12 +37,16 @@ export function Sidebar({page, onNavigate, state}: SidebarProps) {
             </Nav>
 
             <StatusCard>
-                <StatusLabel>Guard state</StatusLabel>
-                <StatusValue>
-                    <Dot $active={false}/>
-                    {state}
+                <StatusLabel>VRChat log</StatusLabel>
+                <StatusValue $active={file !== null}>
+                    <Dot $active={file !== null}/>
+                    <span title={status.file ?? undefined}>{file ?? "waiting"}</span>
                 </StatusValue>
-                <StatusHint>Detection is not implemented yet.</StatusHint>
+                <StatusHint>
+                    {file
+                        ? "Following the newest session log."
+                        : "Start VRChat and its log will be followed automatically."}
+                </StatusHint>
             </StatusCard>
         </Aside>
     );
@@ -155,19 +156,25 @@ const StatusLabel = styled.span`
     color: var(--text-muted);
 `;
 
-const StatusValue = styled.div`
+const StatusValue = styled.div<{ $active: boolean }>`
     display: flex;
     align-items: center;
     gap: 7px;
     font-family: var(--font-mono);
     font-size: 12px;
-    text-transform: capitalize;
-    color: var(--text-primary);
+    color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-muted)"};
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 `;
 
 const Dot = styled.span<{ $active: boolean }>`
     width: 7px;
     height: 7px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
     box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};

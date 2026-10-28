@@ -23,6 +23,11 @@ internal sealed class WindowManager : Singleton<WindowManager>
     private bool _allowClose;
     private PhotinoWindow? _mainWindow;
 
+    /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
+    private bool _mainWindowReady;
+
+    public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
+
     /// <summary>Address the window loads the interface from, set before the window is created.</summary>
     public string AppUrl { get; set; } = "";
 
@@ -95,6 +100,27 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     /// <summary>Runs an action on the UI thread, once the message loop is running.</summary>
     public void RunOnMainWindow(Action action) => _mainWindow?.Invoke(action);
+
+    /// <summary>
+    ///     Pushes an event to the interface. Anything sent while the web view is still loading would
+    ///     abort the process, and the page requests its own state when it mounts, so it waits.
+    /// </summary>
+    public void NotifyMainWindow(string type, object? data)
+    {
+        if (!_mainWindowReady)
+            return;
+
+        Try.Run(() => _mainWindow?.SendWebMessage(NativeProtocol.SerializeEvent(type, data)))
+            .OnFailure(ex => Log.Warning(ex, "Failed to push {Type} to the interface", type));
+    }
+
+    private Task<NativeResponse?> HandleMessageAsync(NativeContext context)
+    {
+        if (context.Request.Type == "app.ready")
+            _mainWindowReady = true;
+
+        return Task.FromResult<NativeResponse?>(null);
+    }
 
     public void Exit()
     {
