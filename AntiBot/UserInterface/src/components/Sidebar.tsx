@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {fileName, type LogStatus} from "../api/logs";
+import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
 import {LogIcon, ShieldIcon, SlidersIcon} from "./Icons";
 
@@ -15,8 +15,6 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
 ];
 
 export function Sidebar({page, onNavigate, status}: SidebarProps) {
-    const file = fileName(status.file);
-
     return (
         <Aside>
             <Brand>
@@ -37,15 +35,15 @@ export function Sidebar({page, onNavigate, status}: SidebarProps) {
             </Nav>
 
             <StatusCard>
-                <StatusLabel>VRChat log</StatusLabel>
-                <StatusValue $active={file !== null}>
-                    <Dot $active={file !== null}/>
-                    <span title={status.file ?? undefined}>{file ?? "waiting"}</span>
+                <StatusLabel>VRChat</StatusLabel>
+                <StatusValue $active={status.running}>
+                    <Dot $active={status.running}/>
+                    {status.running ? "running" : "not running"}
                 </StatusValue>
                 <StatusHint>
-                    {file
-                        ? "Following the newest session log."
-                        : "Start VRChat and its log will be followed automatically."}
+                    {status.running
+                        ? "Following the live log."
+                        : "Start VRChat to see its log."}
                 </StatusHint>
             </StatusCard>
         </Aside>
@@ -163,12 +161,6 @@ const StatusValue = styled.div<{ $active: boolean }>`
     font-family: var(--font-mono);
     font-size: 12px;
     color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-muted)"};
-
-    span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
 `;
 
 const Dot = styled.span<{ $active: boolean }>`

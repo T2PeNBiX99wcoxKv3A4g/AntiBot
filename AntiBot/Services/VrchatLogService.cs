@@ -9,13 +9,13 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Follows the newest VRChat output log and streams its new lines to the interface.
-///     The file is opened for reading with full sharing, so VRChat keeps writing to it while it is
-///     being read, and the newest file is picked up automatically when VRChat starts a new session.
+///     Streams VRChat's log to the interface while VRChat runs. No log is opened at all while VRChat is
+///     not running; once it starts, the newest log in the configured folder is followed, opened for
+///     reading with full sharing so VRChat keeps writing to it.
 /// </summary>
 internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 {
-    /// <summary>How much of an existing log is read on attach, so the viewer starts with history.</summary>
+    /// <summary>How much of the current session log is read on attach, so the view is not empty.</summary>
     private const int PrefillBytes = 256 * 1024;
 
     /// <summary>How many lines stay available for a page that mounts later.</summary>
@@ -24,7 +24,9 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private const int ReadBufferSize = 64 * 1024;
 
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(400);
+    private static readonly TimeSpan ProcessCheckInterval = TimeSpan.FromSeconds(1);
     private static readonly UTF8Encoding Utf8 = new(false);
+    private static readonly string[] VrchatProcessNames = ["VRChat", "VRChat.exe"];
 
     private readonly Queue<VrchatLogLine> _buffer = new();
     private readonly char[] _charBuffer = new char[Utf8.GetMaxCharCount(ReadBufferSize)];
@@ -34,20 +36,27 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private readonly byte[] _readBuffer = new byte[ReadBufferSize];
 
     private CancellationTokenSource? _cancellation;
+    private string? _directory;
 
     /// <summary>Set while the first, partial line of a pre-filled log still has to be dropped.</summary>
     private bool _dropPartialLine;
 
     private string? _file;
     private long _lastId;
-    private string? _modifiedAt;
+
+    /// <summary>The file and byte offset last read, kept after closing so it is never read twice.</summary>
+    private string? _lastFile;
+    private long _lastPosition;
+
+    /// <summary>Last state the viewer was told about, so a start or stop is pushed exactly once.</summary>
+    private bool _running;
+
+    private bool _processRunning;
+    private long _processCheckedAt;
     private bool _started;
     private FileStream? _stream;
 
     public VrchatLogService() => NativeBridge.MessageReceived += HandleMessageAsync;
-
-    /// <summary>The VRChat log folder, <c>%USERPROFILE%\AppData\LocalLow\VRChat\VRChat</c> on Windows.</summary>
-    public static string LogDirectory { get; } = ResolveLogDirectory();
 
     /// <summary>Starts the polling loop. Calling it more than once has no effect.</summary>
     public void Start()
@@ -64,7 +73,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             token = _cancellation.Token;
         }
 
-        Log.Information("Following VRChat logs in {Directory}", LogDirectory);
+        Log.Information("Watching for VRChat; its newest log is followed while it runs");
         _ = Task.Run(() => PollAsync(token), token);
     }
 
@@ -81,7 +90,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         {
             if (Poll() is { } batch)
             {
-                Log.Debug("Read {Count} new VRChat log line(s) from {File}", batch.Lines.Count, batch.File);
+                Log.Debug("Read {Count} new VRChat log line(s)", batch.Lines.Count);
                 WindowManager.Instance.NotifyMainWindow("log.lines", batch);
             }
 
@@ -101,31 +110,75 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     {
         lock (_gate)
         {
-            var newest = FindNewestLog();
+            var directory = SettingsService.Instance.LogDirectory;
+            var directoryChanged = _directory is not null &&
+                                   !string.Equals(directory, _directory, StringComparison.OrdinalIgnoreCase);
+
+            if (directoryChanged)
+            {
+                Log.Information("Log folder changed to {Directory}", directory);
+                Reset();
+            }
+
+            _directory = directory;
+
+            var running = IsVrchatRunning();
+            var reset = directoryChanged;
+            var stateChanged = directoryChanged;
+
+            if (running != _running)
+            {
+                Log.Information(running
+                    ? "VRChat started; following its log"
+                    : "VRChat stopped; keeping the log on screen");
+                _running = running;
+                stateChanged = true;
+            }
+
+            // Nothing is opened or read while VRChat is not running.
+            if (!running)
+            {
+                if (_file is not null)
+                    CloseFile();
+
+                return reset || stateChanged ? State(directory, reset, []) : null;
+            }
+
+            var newest = FindNewestLog(directory);
 
             if (newest is null)
             {
-                if (_file is null)
-                    return null;
+                if (_file is not null)
+                {
+                    Reset();
+                    reset = true;
+                }
 
-                Log.Information("No VRChat log is present any more");
-
-                // Tell the viewer to go back to its "waiting for VRChat" state.
-                Detach();
-                return new(null, null, true, []);
+                return reset || stateChanged ? State(directory, reset, []) : null;
             }
 
-            var reset = !string.Equals(newest, _file, StringComparison.OrdinalIgnoreCase);
-            if (reset && !Attach(newest))
-                return null;
+            if (!string.Equals(newest, _file, StringComparison.OrdinalIgnoreCase))
+            {
+                var switched = new List<VrchatLogLine>();
 
-            _modifiedAt = Try.Run(() => File.GetLastWriteTimeUtc(newest).ToString("O")).GetOrNull()
-                          ?? _modifiedAt;
+                // Resuming the same file (VRChat relaunched without a new log) continues where it stopped;
+                // a different file is a new session, marked off from what is still on screen.
+                var resumed = string.Equals(newest, _lastFile, StringComparison.OrdinalIgnoreCase);
+                if (!resumed && !reset && _buffer.Count > 0)
+                    switched.Add(AddDivider());
+
+                if (!Attach(newest, resumed ? _lastPosition : null))
+                    return null;
+
+                switched.AddRange(ReadNewLines());
+
+                return State(directory, reset, switched);
+            }
 
             var lines = ReadNewLines();
 
-            return reset || lines.Count > 0
-                ? new VrchatLogBatch(_file, _modifiedAt, reset, lines)
+            return reset || stateChanged || lines.Count > 0
+                ? State(directory, reset, lines)
                 : null;
         }
     }
@@ -134,19 +187,19 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     ///     The newest log VRChat has written. Sessions are usually named by their start date, but the
     ///     write time is what really tells a live log from an old one.
     /// </summary>
-    private string? FindNewestLog() =>
-        Try.Run(() => Directory.Exists(LogDirectory)
-                ? Directory.EnumerateFiles(LogDirectory, "output_log*.txt")
+    private string? FindNewestLog(string directory) =>
+        Try.Run(() => Directory.Exists(directory)
+                ? Directory.EnumerateFiles(directory, "output_log*.txt")
                     .Select(path => new FileInfo(path))
                     .MaxBy(info => info.LastWriteTimeUtc)?.FullName
                 : null)
-            .OnFailure(ex => Log.Debug(ex, "Failed to list {Directory}", LogDirectory))
+            .OnFailure(ex => Log.Debug(ex, "Failed to list {Directory}", directory))
             .GetOrNull();
 
     /// <summary>Opens a log for reading without claiming it exclusively. The tail is loaded on attach.</summary>
-    private bool Attach(string path)
+    private bool Attach(string path, long? resumeAt = null)
     {
-        Detach();
+        CloseFile();
 
         var attempt = Try.Run(() =>
         {
@@ -154,12 +207,18 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
                 FileShare.ReadWrite | FileShare.Delete, 16 * 1024, FileOptions.SequentialScan);
             _stream = stream;
 
-            // Start near the end, so attaching to a long log does not send megabytes to the page.
-            _dropPartialLine = stream.Length > PrefillBytes;
-            stream.Seek(Math.Max(0, stream.Length - PrefillBytes), SeekOrigin.Begin);
+            if (resumeAt is { } position && position <= stream.Length)
+            {
+                stream.Seek(position, SeekOrigin.Begin);
+            }
+            else
+            {
+                // Start near the end, so attaching to a long session does not send megabytes to the page.
+                _dropPartialLine = stream.Length > PrefillBytes;
+                stream.Seek(Math.Max(0, stream.Length - PrefillBytes), SeekOrigin.Begin);
+            }
 
             _file = path;
-            _modifiedAt = File.GetLastWriteTimeUtc(path).ToString("O");
             Log.Information("Attached to VRChat log {File}", path);
             return true;
         }).OnFailure(ex => Log.Warning(ex, "Failed to read VRChat log {File}", path));
@@ -167,7 +226,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         if (attempt.IsSuccess)
             return true;
 
-        Detach();
+        CloseFile();
         return false;
     }
 
@@ -254,66 +313,96 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             : new(++_lastId, "", "", text);
     }
 
-    private void Detach()
+    /// <summary>Marks where one session log ends and the next begins; the viewer draws it as a rule.</summary>
+    private VrchatLogLine AddDivider()
+    {
+        var line = new VrchatLogLine(++_lastId, "", "session", "");
+
+        _buffer.Enqueue(line);
+        if (_buffer.Count > BufferLimit)
+            _buffer.Dequeue();
+
+        return line;
+    }
+
+    /// <summary>Closes the log and drops the unfinished line, keeping the lines already read.</summary>
+    private void CloseFile()
     {
         if (_stream is { } stream)
+        {
+            _lastPosition = Try.Run(() => stream.Position).GetOrNull();
+            _lastFile = _file;
             Try.Run(stream.Dispose).OnFailure(ex => Log.Debug(ex, "Failed to close the VRChat log"));
+        }
 
         _stream = null;
         _file = null;
-        _modifiedAt = null;
-        _buffer.Clear();
         _pending.Clear();
         _decoder.Reset();
         _dropPartialLine = false;
     }
 
+    /// <summary>Closes the log and forgets everything read from it, e.g. when the folder changes.</summary>
+    private void Reset()
+    {
+        CloseFile();
+        _buffer.Clear();
+        _lastFile = null;
+        _lastPosition = 0;
+    }
+
     private VrchatLogSnapshot Snapshot()
     {
+        var directory = SettingsService.Instance.LogDirectory;
+        var running = IsVrchatRunning();
+
         lock (_gate)
-            return new(LogDirectory, Directory.Exists(LogDirectory), _file, _modifiedAt, _buffer.ToArray());
+            return new(Directory.Exists(directory), running, _buffer.ToArray());
     }
+
+    private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines) =>
+        new(Directory.Exists(directory), _running, reset, lines);
 
     private NativeResponse OpenFolder(NativeContext context)
     {
-        if (!Directory.Exists(LogDirectory))
+        var directory = SettingsService.Instance.LogDirectory;
+
+        if (!Directory.Exists(directory))
             return context.Fail("log.openFolder.result", "error.logDirectoryMissing");
 
         ProcessStartInfo request = OperatingSystem.IsWindows()
-            ? new("explorer.exe", LogDirectory)
-            : new("xdg-open", LogDirectory);
+            ? new("explorer.exe", directory)
+            : new("xdg-open", directory);
 
         return Try.Run(() => Process.Start(request) is not null)
-            .OnFailure(ex => Log.Warning(ex, "Failed to open {Directory}", LogDirectory))
+            .OnFailure(ex => Log.Warning(ex, "Failed to open {Directory}", directory))
             ? context.Reply("log.openFolder.result", new OkPayload())
             : context.Fail("log.openFolder.result", "error.openFolder");
     }
 
-    private static string ResolveLogDirectory()
+    /// <summary>Whether VRChat's process exists. Checked at most once a second.</summary>
+    private bool IsVrchatRunning()
     {
-        if (Environment.GetEnvironmentVariable("ANTIBOT_VRCHAT_LOG_DIR") is { Length: > 0 } custom)
-            return custom;
+        var now = Environment.TickCount64;
+        if (now - _processCheckedAt < ProcessCheckInterval.TotalMilliseconds)
+            return _processRunning;
 
-        // LocalLow sits beside Local; there is no SpecialFolder for it.
-        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
-            .TrimEnd(Path.DirectorySeparatorChar);
-        var localLow = Path.Combine(Path.GetDirectoryName(local) ?? local, "LocalLow", "VRChat", "VRChat");
+        _processCheckedAt = now;
+        _processRunning = Try.Run(() => VrchatProcessNames.Any(IsProcessRunning))
+            .OnFailure(ex => Log.Debug(ex, "Failed to check whether VRChat is running"))
+            .GetOrNull();
 
-        if (!OperatingSystem.IsLinux() || Directory.Exists(localLow))
-            return localLow;
+        return _processRunning;
+    }
 
-        // VRChat runs under Proton on Linux, which keeps the game inside a Steam prefix.
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var prefixes = new[]
-        {
-            Path.Combine(home, ".steam", "steam", "steamapps", "compatdata", "438100", "pfx"),
-            Path.Combine(home, ".local", "share", "Steam", "steamapps", "compatdata", "438100", "pfx")
-        };
+    private static bool IsProcessRunning(string name)
+    {
+        var processes = Process.GetProcessesByName(name);
 
-        return prefixes
-            .Select(prefix => Path.Combine(prefix, "drive_c", "users", "steamuser",
-                "AppData", "LocalLow", "VRChat", "VRChat"))
-            .FirstOrDefault(Directory.Exists) ?? localLow;
+        foreach (var process in processes)
+            process.Dispose();
+
+        return processes.Length > 0;
     }
 
     [GeneratedRegex(

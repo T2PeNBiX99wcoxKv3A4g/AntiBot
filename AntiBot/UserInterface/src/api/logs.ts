@@ -11,30 +11,27 @@ export interface LogLine {
 }
 
 export interface LogStatus {
-    directory: string;
-    /** Whether the log folder exists on this machine. */
+    /** Whether the configured log folder exists. */
     exists: boolean;
-    file: string | null;
-    modifiedAt: string | null;
+    /** Whether VRChat is running. Nothing is read while it is not. */
+    running: boolean;
 }
 
 export interface LogSnapshot extends LogStatus {
     lines: LogLine[];
 }
 
-/** Body of the `log.lines` push; `reset` means the follower switched to a different file. */
-export interface LogBatch {
-    file: string | null;
-    modifiedAt: string | null;
+/** Body of the `log.lines` push; `reset` means the viewer should drop its current lines. */
+export interface LogBatch extends LogStatus {
     reset: boolean;
     lines: LogLine[];
 }
 
 export const desktopAvailable = Native.available;
 
-export const emptyStatus: LogStatus = {directory: "", exists: false, file: null, modifiedAt: null};
+export const emptyStatus: LogStatus = {exists: false, running: false};
 
-/** Reads the file being followed plus the lines buffered so far. */
+/** Reads what the follower has buffered, plus whether VRChat is running right now. */
 export async function getLogSnapshot(): Promise<LogSnapshot> {
     if (!Native.available) return {...emptyStatus, lines: []};
 
@@ -48,16 +45,9 @@ export function onLogLines(handler: (batch: LogBatch) => void): () => void {
     });
 }
 
-/** Asks the host to reveal the VRChat log folder in the file manager. */
+/** Asks the host to reveal the configured log folder in the file manager. */
 export async function openLogFolder(): Promise<void> {
     if (!Native.available) return;
 
     await Native.request("log.openFolder");
-}
-
-/** The file name without its folder, for headers and status cards. */
-export function fileName(path: string | null): string | null {
-    if (!path) return null;
-
-    return path.split(/[\\/]/).pop() ?? path;
 }

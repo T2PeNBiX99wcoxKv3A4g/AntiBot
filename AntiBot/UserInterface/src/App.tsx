@@ -1,7 +1,6 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {Native} from "@photino-net-utils/bridge";
-import {fileName} from "./api/logs";
 import {getAppInfo, type AppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
@@ -10,7 +9,7 @@ import {SettingsPage} from "./pages/SettingsPage";
 import type {Page} from "./pages";
 
 const pageMeta: Record<Page, { title: string; subtitle: string }> = {
-    logs: {title: "VRChat log", subtitle: "Live output of the newest VRChat session log."},
+    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
 };
 
@@ -31,7 +30,7 @@ export default function App() {
     }, []);
 
     const {title, subtitle} = pageMeta[page];
-    const file = fileName(log.status.file);
+    const running = log.status.running;
 
     return (
         <Shell>
@@ -45,9 +44,9 @@ export default function App() {
                         <p>{subtitle}</p>
                     </HeaderText>
                     <HeaderMeta>
-                        <StatusPill $active={file !== null}>
-                            <Dot $active={file !== null}/>
-                            {file ? "following" : "waiting for VRChat"}
+                        <StatusPill $active={running}>
+                            <Dot $active={running}/>
+                            {running ? "VRChat running" : "VRChat not running"}
                         </StatusPill>
                     </HeaderMeta>
                 </Header>
@@ -55,12 +54,12 @@ export default function App() {
                 <Content $flush={page === "logs"}>
                     {page === "logs"
                         ? <LogViewerPage log={log}/>
-                        : <SettingsPage info={info} status={log.status}/>}
+                        : <SettingsPage info={info}/>}
                 </Content>
 
                 <Footer>
                     <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
-                    <span>{file ? `log: ${file}` : "no VRChat log found yet"}</span>
+                    <span>{running ? "following the live log" : "no log is read"}</span>
                 </Footer>
             </Main>
         </Shell>

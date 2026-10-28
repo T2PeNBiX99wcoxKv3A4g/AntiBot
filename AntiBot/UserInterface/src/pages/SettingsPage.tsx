@@ -1,16 +1,46 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {desktopAvailable, fileName, openLogFolder, type LogStatus} from "../api/logs";
+import {desktopAvailable, openLogFolder} from "../api/logs";
+import {getSettings, saveSettings} from "../api/settings";
 import type {AppInfo} from "../api/system";
 import {FolderIcon, InfoIcon} from "../components/Icons";
 
 interface SettingsPageProps {
-    status: LogStatus;
     info: AppInfo | null;
 }
 
-export function SettingsPage({status, info}: SettingsPageProps) {
+export function SettingsPage({info}: SettingsPageProps) {
+    const [directory, setDirectory] = useState("");
+    const [saved, setSaved] = useState("");
+    const [defaultDirectory, setDefaultDirectory] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        void getSettings().then((settings) => {
+            setDirectory(settings.logDirectory ?? "");
+            setSaved(settings.logDirectory ?? "");
+            setDefaultDirectory(settings.defaultLogDirectory ?? "");
+        }, () => setError("Could not read the settings."));
+    }, []);
+
+    const trimmed = directory.trim();
+    const changed = trimmed !== saved;
+
+    const save = async () => {
+        setError(null);
+        setSaving(true);
+
+        try {
+            await saveSettings({logDirectory: trimmed});
+            setDirectory(trimmed);
+            setSaved(trimmed);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const revealFolder = async () => {
         setError(null);
@@ -27,35 +57,42 @@ export function SettingsPage({status, info}: SettingsPageProps) {
             <Section>
                 <SectionHeader>
                     <h2>Log source</h2>
-                    <span>read-only</span>
+                    <span>configurable</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
                         <Label>VRChat log folder</Label>
-                        <Value $mono>{status.directory || "unknown"}</Value>
+                        <Row>
+                            <Input
+                                aria-label="VRChat log folder"
+                                onChange={(event) => setDirectory(event.target.value)}
+                                placeholder="VRChat's log folder"
+                                spellCheck={false}
+                                value={directory}
+                            />
+                            <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
+                                {saving ? "Saving…" : "Save"}
+                            </Button>
+                        </Row>
                         <Hint>
-                            {status.exists
-                                ? "The newest output_log_*.txt in this folder is followed."
-                                : "This folder does not exist yet; start VRChat once and it will be created."}
-                        </Hint>
-                    </Field>
-
-                    <Field>
-                        <Label>Following</Label>
-                        <Value $mono>{fileName(status.file) ?? "waiting for VRChat"}</Value>
-                        <Hint>
-                            {status.file
-                                ? `Last written ${formatTime(status.modifiedAt)}.`
-                                : "Start VRChat and the log appears here without any configuration."}
+                            The newest log in this folder is followed while VRChat is running. Nothing is read
+                            while it is closed.
                         </Hint>
                     </Field>
 
                     {error && <ErrorText>{error}</ErrorText>}
 
                     <Actions>
-                        <Button disabled={!desktopAvailable || !status.exists} onClick={revealFolder} type="button">
-                            <FolderIcon/>Open log folder
+                        <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
+                            <FolderIcon/>Open folder
+                        </Button>
+                        <Button
+                            disabled={!defaultDirectory || trimmed === defaultDirectory}
+                            onClick={() => setDirectory(defaultDirectory)}
+                            type="button"
+                        >
+                            Use VRChat's folder
                         </Button>
                     </Actions>
                 </Card>
@@ -64,11 +101,10 @@ export function SettingsPage({status, info}: SettingsPageProps) {
             <Callout>
                 <InfoIcon/>
                 <div>
-                    <strong>The log is only read.</strong>
+                    <strong>Only the live session is read.</strong>
                     <p>
-                        AntiBot opens the file with shared read access, so VRChat keeps writing while the
-                        viewer follows it. When a new session writes a new log, the viewer switches to that
-                        file instead of staying on the old one.
+                        VRChat writes its own log and AntiBot follows it with shared read access, so the file
+                        is never locked. While VRChat is not running, no log is opened at all.
                     </p>
                 </div>
             </Callout>
@@ -89,13 +125,6 @@ export function SettingsPage({status, info}: SettingsPageProps) {
             </Section>
         </Stack>
     );
-}
-
-function formatTime(value: string | null): string {
-    if (!value) return "—";
-
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString(undefined, {hour12: false});
 }
 
 const Stack = styled.div`
@@ -145,6 +174,34 @@ const Field = styled.div`
     gap: 5px;
 `;
 
+const Row = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+`;
+
+const Input = styled.input`
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: 11px;
+
+    &::placeholder {
+        color: var(--text-muted);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: var(--border-color-hover);
+    }
+`;
+
 const Label = styled.span`
     font-size: 10px;
     font-weight: 600;
@@ -168,6 +225,7 @@ const Hint = styled.span`
 
 const Actions = styled.div`
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 `;
 
@@ -182,6 +240,7 @@ const Button = styled.button`
     color: var(--text-secondary);
     font: inherit;
     font-size: 11px;
+    white-space: nowrap;
     cursor: pointer;
 
     &:hover:not(:disabled) {

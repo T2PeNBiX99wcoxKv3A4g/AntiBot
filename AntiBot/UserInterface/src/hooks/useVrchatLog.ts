@@ -14,7 +14,7 @@ const MAX_LINES = 3000;
 export interface VrchatLog {
     status: LogStatus;
     lines: LogLine[];
-    /** Drops what was received so far; the follower keeps reading the file. */
+    /** Drops what was received so far; the follower keeps reading the log. */
     clear: () => void;
 }
 
@@ -26,7 +26,7 @@ export function useVrchatLog(): VrchatLog {
     /** Ceiling set by "clear", so lines the host already buffered do not come back. */
     const clearedUpTo = useRef(0);
 
-    /** Whether a live batch already arrived; its file is newer than the snapshot's. */
+    /** Whether a live batch already arrived; its state is newer than the snapshot's. */
     const receivedBatch = useRef(false);
 
     useEffect(() => {
@@ -37,11 +37,10 @@ export function useVrchatLog(): VrchatLog {
             if (cancelled) return;
 
             receivedBatch.current = true;
-            setStatus((current) => ({
-                ...current,
-                file: batch.file ?? null,
-                modifiedAt: batch.modifiedAt ?? null,
-            }));
+            setStatus({
+                exists: batch.exists ?? false,
+                running: batch.running ?? false,
+            });
             setLines((current) => appendBatch(current, batch, clearedUpTo.current));
         });
 
@@ -49,18 +48,9 @@ export function useVrchatLog(): VrchatLog {
             (snapshot) => {
                 if (cancelled) return;
 
-                setStatus((current) => receivedBatch.current
-                    ? {
-                        ...current,
-                        directory: snapshot.directory ?? current.directory,
-                        exists: snapshot.exists ?? current.exists,
-                    }
-                    : {
-                        directory: snapshot.directory ?? "",
-                        exists: snapshot.exists ?? false,
-                        file: snapshot.file ?? null,
-                        modifiedAt: snapshot.modifiedAt ?? null,
-                    });
+                if (!receivedBatch.current)
+                    setStatus({exists: snapshot.exists ?? false, running: snapshot.running ?? false});
+
                 setLines((current) => mergeSnapshot(current, snapshot.lines, clearedUpTo.current));
             },
             () => {

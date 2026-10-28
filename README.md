@@ -78,12 +78,15 @@ OS-assigned loopback port.
 
 ## VRChat log
 
-The log viewer follows the newest `output_log_*.txt` in
-`%USERPROFILE%\AppData\LocalLow\VRChat\VRChat` (or VRChat's Proton prefix on Linux). The file is
-opened for reading with `FileShare.ReadWrite | FileShare.Delete`, so VRChat keeps writing to it while
-it is being read, and a new session log is picked up automatically instead of staying on the old one.
+The log viewer shows VRChat's log only while VRChat is running; nothing is opened while it is closed.
+The newest `output_log*.txt` in the configured folder is followed, opened for reading with
+`FileShare.ReadWrite | FileShare.Delete`, so VRChat keeps writing to it while it is read. When VRChat
+closes, what was read stays on screen; when it starts again, the newest log is picked up and appended
+below a session divider.
 
-`ANTIBOT_VRCHAT_LOG_DIR` overrides the folder, which is useful for testing without a VRChat session.
+The folder is set in Settings and defaults to `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat` (or
+VRChat's Proton prefix on Linux). It is stored in `%LOCALAPPDATA%\AntiBot\settings.json`.
+`ANTIBOT_VRCHAT_LOG_DIR` overrides the default, which is useful for testing.
 
 ## Current status
 

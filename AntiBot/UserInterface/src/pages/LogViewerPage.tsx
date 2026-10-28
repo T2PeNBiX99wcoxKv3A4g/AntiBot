@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import styled from "styled-components";
-import {desktopAvailable, fileName, openLogFolder, type LogLine} from "../api/logs";
-import {ArrowDownIcon, FolderIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
+import {desktopAvailable, type LogLine} from "../api/logs";
+import {ArrowDownIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
 import type {VrchatLog} from "../hooks/useVrchatLog";
 
 const LEVELS = ["debug", "info", "warning", "error"] as const;
@@ -37,7 +37,6 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
     const [query, setQuery] = useState("");
     const [hidden, setHidden] = useState<Set<string>>(new Set());
     const [follow, setFollow] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const rowsRef = useRef<HTMLDivElement>(null);
 
     const visible = useMemo(() => filterLines(lines, query, hidden), [lines, query, hidden]);
@@ -61,16 +60,6 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
         const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
         if (atBottom !== follow) setFollow(atBottom);
-    };
-
-    const revealFolder = async () => {
-        setError(null);
-
-        try {
-            await openLogFolder();
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : String(reason));
-        }
     };
 
     return (
@@ -108,7 +97,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     <ToolbarButton
                         disabled={lines.length === 0}
                         onClick={clear}
-                        title="Clear the view; the log file itself is untouched"
+                        title="Clear the view; the log itself is untouched"
                         type="button"
                     >
                         <TrashIcon/>Clear
@@ -131,43 +120,41 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                 </Levels>
             </Toolbar>
 
-            {error && (
-                <ErrorBanner>
-                    <span>{error}</span>
-                    <button aria-label="Dismiss" onClick={() => setError(null)} type="button"><XIcon/></button>
-                </ErrorBanner>
-            )}
-
             <Viewer>
                 {!desktopAvailable ? (
                     <EmptyState
-                        hint="This page reads the local log through the desktop host. Start AntiBot instead of the browser preview."
+                        hint="The log is read through the desktop host. Start AntiBot instead of the browser preview."
                         title="Desktop host required"
                     />
-                ) : status.file === null ? (
-                    <EmptyState
-                        hint={status.exists
-                            ? "Start VRChat and its newest log will be followed automatically."
-                            : "The log folder does not exist yet; start VRChat once and it will appear here."}
-                        title="Waiting for VRChat"
-                    >
-                        <FolderButton disabled={!status.exists} onClick={revealFolder} type="button">
-                            <FolderIcon/>Open log folder
-                        </FolderButton>
-                        <Path>{status.directory || "log folder unknown"}</Path>
-                    </EmptyState>
+                ) : lines.length === 0 ? (
+                    !status.running ? (
+                        <EmptyState
+                            hint="Nothing is read while VRChat is closed. Its log appears here once it starts."
+                            title="VRChat is not running"
+                        />
+                    ) : !status.exists ? (
+                        <EmptyState
+                            hint="The configured log folder cannot be found. Set VRChat's log folder in Settings."
+                            title="Log folder not found"
+                        />
+                    ) : (
+                        <EmptyState
+                            hint="VRChat is starting; lines appear here as soon as it writes them."
+                            title="Waiting for the log"
+                        />
+                    )
                 ) : visible.length === 0 ? (
                     <EmptyState
-                        hint={lines.length === 0
-                            ? "The file is open; new lines appear here as VRChat writes them."
-                            : query.trim()
-                                ? `No line contains “${query.trim()}”.`
-                                : "Every line is hidden by the level filter."}
-                        title={lines.length > 0 ? "Nothing matches" : "Waiting for the first line"}
+                        hint={query.trim()
+                            ? `No line contains “${query.trim()}”.`
+                            : "Every line is hidden by the level filter."}
+                        title="Nothing matches"
                     />
                 ) : (
                     <Rows onScroll={handleScroll} ref={rowsRef}>
-                        {visible.map(({line, level}) => (
+                        {visible.map(({line, level}) => line.level === "session" ? (
+                            <SessionDivider key={line.id}>new session</SessionDivider>
+                        ) : (
                             <Row $level={level} key={line.id}>
                                 <Time>{line.time}</Time>
                                 <Tag $level={level}>{line.level ? LEVEL_TAGS[level] ?? line.level : ""}</Tag>
@@ -185,17 +172,12 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             </Viewer>
 
             <StatusBar>
-                <FileName title={status.file ?? undefined}>
-                    <LogIcon size={13}/>
-                    <span>{fileName(status.file) ?? "no log file"}</span>
-                </FileName>
                 <span>
                     {visible.length === lines.length
                         ? `${lines.length} lines`
                         : `${visible.length} of ${lines.length} lines`}
-                    {" · "}
-                    updated {formatTime(status.modifiedAt)}
                 </span>
+                <span>{status.running ? "VRChat running" : "VRChat not running"}</span>
             </StatusBar>
         </Page>
     );
@@ -232,13 +214,6 @@ function highlight(text: string, query: string) {
         : part);
 }
 
-function formatTime(value: string | null): string {
-    if (!value) return "—";
-
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleTimeString(undefined, {hour12: false});
-}
-
 function EmptyState({title, hint, children}: { title: string; hint: string; children?: ReactNode }) {
     return (
         <EmptyBox>
@@ -267,6 +242,7 @@ const Toolbar = styled.div`
 const ToolbarRow = styled.div`
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
 `;
 
@@ -279,6 +255,7 @@ const SearchBox = styled.div`
     display: flex;
     align-items: center;
     flex: 1;
+    min-width: 180px;
     max-width: 360px;
 
     svg {
@@ -398,28 +375,6 @@ const FollowDot = styled.span<{ $active: boolean }>`
     box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};
 `;
 
-const ErrorBanner = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 8px 12px;
-    border: 1px solid rgba(248, 113, 113, 0.3);
-    border-radius: var(--radius-sm);
-    background: rgba(248, 113, 113, 0.08);
-    color: var(--danger);
-    font-size: 11px;
-
-    button {
-        display: grid;
-        place-items: center;
-        border: 0;
-        background: transparent;
-        color: inherit;
-        cursor: pointer;
-    }
-`;
-
 const Viewer = styled.section`
     position: relative;
     display: flex;
@@ -459,6 +414,29 @@ const Row = styled.div<{ $level: string }>`
 const Time = styled.span`
     color: var(--text-muted);
     white-space: nowrap;
+`;
+
+const SessionDivider = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+
+    &::before,
+    &::after {
+        content: "";
+        height: 1px;
+        flex: 1;
+        background: var(--border-color);
+    }
+
+    &:hover {
+        color: var(--text-secondary);
+    }
 `;
 
 const Tag = styled.span<{ $level: string }>`
@@ -530,43 +508,6 @@ const EmptyBox = styled.div`
     }
 `;
 
-const Path = styled.code`
-    max-width: 640px;
-    padding: 5px 9px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--bg-input);
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    overflow-wrap: anywhere;
-`;
-
-const FolderButton = styled.button`
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    margin-top: 4px;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    font: inherit;
-    font-size: 11px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-        border-color: var(--border-color-hover);
-        color: var(--text-primary);
-    }
-
-    &:disabled {
-        opacity: 0.4;
-        cursor: default;
-    }
-`;
-
 const StatusBar = styled.footer`
     display: flex;
     align-items: center;
@@ -576,16 +517,4 @@ const StatusBar = styled.footer`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
-
-    span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-`;
-
-const FileName = styled.span`
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
 `;

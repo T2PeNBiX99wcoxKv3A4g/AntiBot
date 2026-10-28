@@ -61,6 +61,7 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
+            SettingsService.Instance.Load();
             _ = VrchatLogService.Instance;
 
             var manager = WindowManager.Instance;
