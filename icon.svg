@@ -2,7 +2,7 @@
     <title id="title">AntiBot</title>
 
     <defs>
-        <linearGradient id="background" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+        <linearGradient id="background" x1="8" y1="8" x2="248" y2="248" gradientUnits="userSpaceOnUse">
             <stop offset="0" stop-color="#0ea5e9"/>
             <stop offset="1" stop-color="#6366f1"/>
         </linearGradient>
@@ -10,10 +10,10 @@
 
     <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#background)"/>
 
-    <!-- Shield -->
-    <path d="M128 34 200 62v60c0 52-32 78-72 96-40-18-72-44-72-96V62z" fill="#f8fafc" fill-opacity="0.98"/>
+    <!-- Account -->
+    <circle cx="128" cy="98" r="40" fill="#f8fafc"/>
+    <path d="M62 198c0-33.1 29.5-60 66-60s66 26.9 66 60z" fill="#f8fafc"/>
 
-    <!-- Blocked account -->
-    <circle cx="128" cy="126" r="34" fill="#4f46e5"/>
-    <path d="m108 106 40 40" stroke="#f8fafc" stroke-width="9" stroke-linecap="round"/>
+    <!-- Blocked -->
+    <path d="M56 200 200 56" stroke="#1e1b4b" stroke-width="18" stroke-linecap="round"/>
 </svg>

@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {LogIcon, ShieldIcon, SlidersIcon} from "./Icons";
+import {LogIcon, SlidersIcon, UserBlockIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
@@ -18,10 +18,10 @@ export function Sidebar({page, onNavigate, status}: SidebarProps) {
     return (
         <Aside>
             <Brand>
-                <Mark><ShieldIcon/></Mark>
+                <Mark><UserBlockIcon/></Mark>
                 <BrandText>
                     <strong>AntiBot</strong>
-                    <span>VRChat guard</span>
+                    <span>VRChat bot blocker</span>
                 </BrandText>
             </Brand>
 

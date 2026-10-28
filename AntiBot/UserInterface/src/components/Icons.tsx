@@ -14,11 +14,12 @@ const base = (size: number) => ({
     "aria-hidden": true,
 });
 
-export function ShieldIcon({size = 22}: IconProps) {
+export function UserBlockIcon({size = 22}: IconProps) {
     return (
         <svg {...base(size)}>
-            <path d="M12 3 4.5 6v5.5c0 4.6 3.2 7.9 7.5 9.5 4.3-1.6 7.5-4.9 7.5-9.5V6z"/>
-            <path d="m8.8 12.2 2.2 2.2 4.2-4.4"/>
+            <circle cx="12" cy="8" r="3.6"/>
+            <path d="M5 20c0-3.9 3.1-6.7 7-6.7s7 2.8 7 6.7"/>
+            <path d="M4 20 20 4"/>
         </svg>
     );
 }
