@@ -1,9 +1,8 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {Native} from "@photino-net-utils/bridge";
+import {Native, ResizeHandles} from "@photino-net-utils/bridge";
 import {getAppInfo, type AppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
-import {ResizeHandles} from "./components/ResizeHandles";
 import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {InstancePage} from "./pages/InstancePage";

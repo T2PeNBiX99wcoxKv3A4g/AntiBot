@@ -1,25 +1,11 @@
-import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {Native} from "@photino-net-utils/bridge";
+import {useWindowControls, useWindowDrag} from "@photino-net-utils/bridge";
 import {BrandMark} from "./Brand";
 
 /** The interface draws the window title bar; the host hides the native one but keeps its frame. */
 export function TitleBar() {
-    const [maximized, setMaximized] = useState(false);
-
-    useEffect(() => {
-        if (!Native.available) return;
-
-        return Native.on((message) => {
-            if (message.type !== "window.state") return;
-
-            const data = message.data as { maximized?: unknown };
-            if (typeof data?.maximized === "boolean") setMaximized(data.maximized);
-        });
-    }, []);
-
-    const send = (type: string) => Native.send({type});
-    const toggleMaximize = () => send("window.toggleMaximize");
+    const controls = useWindowControls();
+    const drag = useWindowDrag();
 
     return (
         <Bar>
@@ -28,19 +14,19 @@ export function TitleBar() {
                 <strong>AntiBot</strong>
             </Brand>
 
-            <DragArea onDoubleClick={toggleMaximize} onMouseDown={() => send("window.drag")}/>
+            <DragArea {...drag}/>
 
             <Controls>
-                <ControlButton onClick={() => send("window.minimize")} title="Minimize" type="button">
+                <ControlButton onClick={controls.minimize} title="Minimize" type="button">
                     <svg aria-hidden="true" viewBox="0 0 10 10"><path d="M2 5h6"/></svg>
                 </ControlButton>
 
                 <ControlButton
-                    onClick={toggleMaximize}
-                    title={maximized ? "Restore" : "Maximize"}
+                    onClick={controls.toggleMaximize}
+                    title={controls.maximized ? "Restore" : "Maximize"}
                     type="button"
                 >
-                    {maximized
+                    {controls.maximized
                         ? <svg aria-hidden="true" viewBox="0 0 10 10">
                             <rect height="6" width="6" x="3" y="1"/>
                             <rect height="6" width="6" x="1" y="3"/>
@@ -48,7 +34,7 @@ export function TitleBar() {
                         : <svg aria-hidden="true" viewBox="0 0 10 10"><rect height="6" width="6" x="2" y="2"/></svg>}
                 </ControlButton>
 
-                <CloseButton onClick={() => send("window.close")} title="Close" type="button">
+                <CloseButton onClick={controls.close} title="Close" type="button">
                     <svg aria-hidden="true" viewBox="0 0 10 10"><path d="m2 2 6 6M8 2 2 8"/></svg>
                 </CloseButton>
             </Controls>
