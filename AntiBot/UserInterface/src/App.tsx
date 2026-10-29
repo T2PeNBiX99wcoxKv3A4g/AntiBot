@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {Native, ResizeHandles} from "@photino-net-utils/bridge";
+import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
 import {getAppInfo, type AppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
@@ -19,6 +19,7 @@ const pageMeta: Record<Page, { title: string; subtitle: string }> = {
 export default function App() {
     const [page, setPage] = useState<Page>("logs");
     const [info, setInfo] = useState<AppInfo | null>(null);
+    const corners = useWindowCorners();
     const log = useVrchatLog();
 
     useEffect(() => {
@@ -36,7 +37,7 @@ export default function App() {
     const running = log.status.running;
 
     return (
-        <Root>
+        <Root $rounded={corners}>
             <TitleBar/>
 
             <Shell>
@@ -75,11 +76,16 @@ export default function App() {
     );
 }
 
-const Root = styled.div`
+const Root = styled.div<{ $rounded: boolean }>`
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
     background: var(--bg-primary);
+
+    /* An undecorated window gets no frame from the compositor, so the corners are drawn here. */
+    border-radius: ${({$rounded}) => ($rounded ? "10px" : "0")};
+    box-shadow: ${({$rounded}) => ($rounded ? "inset 0 0 0 1px var(--border-color)" : "none")};
 `;
 
 const Shell = styled.div`

@@ -28,7 +28,7 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
     private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
         context.Request.Type == "app.info"
             ? Task.FromResult<NativeResponse?>(context.Reply("app.info.result",
-                new AppInfoPayload(Version, Platform)))
+                new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners)))
             : Task.FromResult<NativeResponse?>(null);
 
     /// <summary>The executable's write time, which a replacement binary always changes.</summary>

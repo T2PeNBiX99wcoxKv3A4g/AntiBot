@@ -72,6 +72,13 @@ body {
   height: 100%;
 }
 
+// The window is transparent behind the rounded corners the interface paints (Linux without
+// decorations), so the page must not fill that area in.
+html.window-rounded,
+html.window-rounded body {
+  background-color: transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

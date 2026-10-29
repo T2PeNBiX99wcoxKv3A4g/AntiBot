@@ -27,6 +27,12 @@ internal sealed class WindowManager : Singleton<WindowManager>
     /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
     private bool _mainWindowReady;
 
+    /// <summary>
+    ///     Whether the interface has to paint the window's rounded corners, because the platform leaves
+    ///     an undecorated window without a frame (Linux).
+    /// </summary>
+    public bool DrawsWindowCorners { get; private set; }
+
     public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     /// <summary>Address the window loads the interface from, set before the window is created.</summary>
@@ -87,6 +93,8 @@ internal sealed class WindowManager : Singleton<WindowManager>
         {
             if (OperatingSystem.IsWindows())
                 WindowFrame.RemoveTitleBar(window.WindowHandle);
+            else if (OperatingSystem.IsLinux())
+                DrawsWindowCorners = LinuxWindow.EnableTransparency(window.Title);
 
             MainWindowCreated?.Invoke();
         });

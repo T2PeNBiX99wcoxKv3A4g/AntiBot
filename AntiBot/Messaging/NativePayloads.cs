@@ -7,7 +7,7 @@ namespace AntiBot.Messaging;
 internal sealed record OkPayload(bool Ok = true);
 
 /// <summary>Body for <c>app.info</c>.</summary>
-internal sealed record AppInfoPayload(string Version, string Platform);
+internal sealed record AppInfoPayload(string Version, string Platform, bool Rounded);
 
 /// <summary>Body for <c>settings.get</c>.</summary>
 internal sealed record SettingsPayload(string LogDirectory, string DefaultLogDirectory);
