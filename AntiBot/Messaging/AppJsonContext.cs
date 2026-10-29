@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using AntiBot.Models;
+using PhotinoNetUtils.Messaging;
 
 namespace AntiBot.Messaging;
 
@@ -33,22 +33,3 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(VrchatLogBatch))]
 [JsonSerializable(typeof(AppSettings))]
 internal sealed partial class AppJsonContext : JsonSerializerContext;
-
-/// <summary>Bridges loosely-typed payloads to the source-generated serializer.</summary>
-internal static class NativeJson
-{
-    /// <summary>Converts a registered payload into the <see cref="JsonElement" /> the envelope embeds.</summary>
-    public static JsonElement? ToElement(object? value) =>
-        value is null ? null : JsonSerializer.SerializeToElement(value, TypeInfo(value.GetType()));
-
-    /// <summary>Resolves the type info for a registered type, or throws when it was never registered.</summary>
-    public static JsonTypeInfo TypeInfo(Type type) =>
-        AppJsonContext.Default.GetTypeInfo(type) ?? throw NotRegistered(type);
-
-    /// <summary>Typed overload of <see cref="TypeInfo(Type)" />, for deserializing a payload.</summary>
-    public static JsonTypeInfo<T> TypeInfo<T>() =>
-        AppJsonContext.Default.GetTypeInfo(typeof(T)) as JsonTypeInfo<T> ?? throw NotRegistered(typeof(T));
-
-    private static InvalidOperationException NotRegistered(Type type) =>
-        new($"JSON type '{type}' is not registered in {nameof(AppJsonContext)}.");
-}

@@ -2,6 +2,7 @@ using AntiBot.Messaging;
 using Photino.NET;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Interop;
+using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Utils;
 
@@ -122,7 +123,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
         if (!_mainWindowReady)
             return;
 
-        Try.Run(() => _mainWindow?.SendWebMessage(NativeProtocol.SerializeEvent(type, data)))
+        Try.Run(() => _mainWindow?.SendWebMessage(NativeBridge.SerializeEvent(type, data)))
             .OnFailure(ex => Log.Warning(ex, "Failed to push {Type} to the interface", type));
     }
 

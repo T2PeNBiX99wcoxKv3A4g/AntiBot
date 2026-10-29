@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Versioning;
+using AntiBot.Messaging;
 using AntiBot.Services;
 using PhotinoNetUtils;
+using PhotinoNetUtils.Messaging;
 #if !DEBUG
 using PhotinoNetUtils.Hosting;
 #endif
@@ -23,6 +25,9 @@ internal static class Program
         // Main must stay synchronous: [STAThread] is ignored for an async entry point, and the
         // Photino message loop / WebView2 require an STA thread.
         Logging.Initialize(Constants.Name, "antibot");
+
+        // The bridge serializes through this context; it has to know it before the interface speaks.
+        NativeBridge.Initialize(AppJsonContext.Default);
 
         if (OperatingSystem.IsLinux())
         {
