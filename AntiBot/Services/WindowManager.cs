@@ -1,4 +1,3 @@
-using AntiBot.Interop;
 using AntiBot.Messaging;
 using Photino.NET;
 using PhotinoNetUtils.Extensions;
