@@ -94,7 +94,10 @@ internal sealed class WindowManager : Singleton<WindowManager>
             if (OperatingSystem.IsWindows())
                 WindowFrame.RemoveTitleBar(window.WindowHandle);
             else if (OperatingSystem.IsLinux())
+            {
+                LinuxWindow.UseClientSideFrame(window.Title);
                 DrawsWindowCorners = LinuxWindow.EnableTransparency(window.Title);
+            }
 
             MainWindowCreated?.Invoke();
         });
