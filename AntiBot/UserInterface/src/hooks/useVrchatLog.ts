@@ -1,12 +1,5 @@
 import {useEffect, useRef, useState} from "react";
-import {
-    emptyStatus,
-    getLogSnapshot,
-    onLogLines,
-    type LogBatch,
-    type LogLine,
-    type LogStatus,
-} from "../api/logs";
+import {emptyStatus, getLogSnapshot, type LogBatch, type LogLine, type LogStatus, onLogLines,} from "../api/logs";
 
 /** How many lines the page keeps. Older ones are dropped; the log itself is untouched. */
 const MAX_LINES = 3000;

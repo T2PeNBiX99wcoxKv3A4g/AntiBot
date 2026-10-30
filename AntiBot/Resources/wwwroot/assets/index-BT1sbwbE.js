@@ -702,10 +702,9 @@ Error generating stack: `+e.message+`
     display: flex;
     flex: 1;
     min-height: 0;
-    background:
-        radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
-        radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
-        var(--bg-primary);
+    background: radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
+    var(--bg-primary);
 `,sa=N.main`
     display: flex;
     flex-direction: column;

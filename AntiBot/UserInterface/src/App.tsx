@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
-import {getAppInfo, type AppInfo} from "./api/system";
+import {type AppInfo, getAppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
@@ -92,10 +92,9 @@ const Shell = styled.div`
     display: flex;
     flex: 1;
     min-height: 0;
-    background:
-        radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
-        radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
-        var(--bg-primary);
+    background: radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
+    var(--bg-primary);
 `;
 
 const Main = styled.main`

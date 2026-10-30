@@ -18,7 +18,9 @@ export function TitleBar() {
 
             <Controls>
                 <ControlButton onClick={controls.minimize} title="Minimize" type="button">
-                    <svg aria-hidden="true" viewBox="0 0 10 10"><path d="M2 5h6"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 10 10">
+                        <path d="M2 5h6"/>
+                    </svg>
                 </ControlButton>
 
                 <ControlButton
@@ -31,11 +33,15 @@ export function TitleBar() {
                             <rect height="6" width="6" x="3" y="1"/>
                             <rect height="6" width="6" x="1" y="3"/>
                         </svg>
-                        : <svg aria-hidden="true" viewBox="0 0 10 10"><rect height="6" width="6" x="2" y="2"/></svg>}
+                        : <svg aria-hidden="true" viewBox="0 0 10 10">
+                            <rect height="6" width="6" x="2" y="2"/>
+                        </svg>}
                 </ControlButton>
 
                 <CloseButton onClick={controls.close} title="Close" type="button">
-                    <svg aria-hidden="true" viewBox="0 0 10 10"><path d="m2 2 6 6M8 2 2 8"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 10 10">
+                        <path d="m2 2 6 6M8 2 2 8"/>
+                    </svg>
                 </CloseButton>
             </Controls>
         </Bar>

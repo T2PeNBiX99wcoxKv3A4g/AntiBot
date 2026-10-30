@@ -1,11 +1,11 @@
-import {useEffect, useRef, useState, type ReactNode} from "react";
+import {type ReactNode, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {
     emptyInstance,
     getInstance,
-    onInstanceChanged,
     type InstanceSnapshot,
     type InstanceUser,
+    onInstanceChanged,
 } from "../api/instance";
 import {desktopAvailable} from "../api/logs";
 import {UsersIcon} from "../components/Icons";

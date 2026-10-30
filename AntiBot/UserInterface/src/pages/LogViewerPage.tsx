@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState, type ReactNode} from "react";
+import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import styled from "styled-components";
 import {desktopAvailable, exportLog, type LogLine} from "../api/logs";
 import {ArrowDownIcon, DownloadIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
