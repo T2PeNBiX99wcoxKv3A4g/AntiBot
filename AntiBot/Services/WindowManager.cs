@@ -18,8 +18,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
     ///     Per-app web view data folder. On Windows, Photino defaults to a WebView2 folder shared by
     ///     every Photino app, which breaks when another app holds it, so keep ours separate.
     /// </summary>
-    private static readonly string WebViewDataPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Constants.Name, "webview");
+    private static readonly string WebViewDataPath = Path.Combine(Constants.DataDirectory, "webview");
 
     private bool _allowClose;
     private PhotinoWindow? _mainWindow;

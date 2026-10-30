@@ -10,7 +10,7 @@ namespace AntiBot.Services;
 /// <summary>Loads and stores the settings file. The defaults apply until the user saves something.</summary>
 internal sealed class SettingsService : Singleton<SettingsService>
 {
-    private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "settings.json");
+    private static readonly string FilePath = Path.Combine(Constants.SettingsDirectory, "settings.json");
 
     private AppSettings _current = AppSettings.Default;
 

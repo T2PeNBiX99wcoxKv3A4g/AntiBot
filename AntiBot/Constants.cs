@@ -23,6 +23,11 @@ public static class Constants
     internal static ILogger Logger => Log.Logger.ForContext("SourceContext", "Core");
 
     /// <summary>
+    ///     Where the settings live: <c>%APPDATA%\AntiBot</c> (roaming).
+    /// </summary>
+    internal static string SettingsDirectory => AppPaths.SettingsDirectory(Name);
+
+    /// <summary>
     ///     A directory we own, used as the host's content root. The static server creates a
     ///     <c>wwwroot</c> web root under it when missing, which without this would land next to the
     ///     executable.
