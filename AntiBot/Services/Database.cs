@@ -63,6 +63,13 @@ internal sealed class Database : Singleton<Database>
                                       fetched_at    INTEGER NOT NULL
                                   );
 
+                                  CREATE TABLE IF NOT EXISTS avatars (
+                                      file_id    TEXT PRIMARY KEY,
+                                      avatar_id  TEXT,
+                                      name       TEXT NOT NULL,
+                                      fetched_at INTEGER NOT NULL
+                                  );
+
                                   CREATE INDEX IF NOT EXISTS ix_game_events_kind ON game_events (kind, id);
                                   """;
             command.ExecuteNonQuery();
@@ -235,6 +242,54 @@ internal sealed class Database : Singleton<Database>
         });
 
         attempt.OnFailure(ex => Log.Warning(ex, "Could not store the profile of {UserId}", player.Id));
+    }
+
+    /// <summary>Every avatar name resolved so far, keyed by the image file id it was found from.</summary>
+    public IReadOnlyDictionary<string, string> LoadAvatars()
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT file_id, name FROM avatars";
+
+            var avatars = new Dictionary<string, string>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                avatars[reader.GetString(0)] = reader.GetString(1);
+
+            return avatars;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the stored avatar names"))
+            .GetOrElse(_ => new Dictionary<string, string>());
+    }
+
+    public async Task SaveAvatarAsync(string fileId, string avatarId, string name, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  INSERT INTO avatars (file_id, avatar_id, name, fetched_at)
+                                  VALUES ($fileId, $avatarId, $name, $fetchedAt)
+                                  ON CONFLICT (file_id) DO UPDATE SET
+                                      avatar_id = excluded.avatar_id,
+                                      name = excluded.name,
+                                      fetched_at = excluded.fetched_at
+                                  """;
+
+            command.Parameters.AddWithValue("$fileId", fileId);
+            command.Parameters.AddWithValue("$avatarId", avatarId);
+            command.Parameters.AddWithValue("$name", name);
+            command.Parameters.AddWithValue("$fetchedAt", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not store the avatar {FileId}", fileId));
     }
 
     private void Prune()

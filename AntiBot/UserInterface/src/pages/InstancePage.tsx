@@ -118,6 +118,7 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
                         {user.name}
                     </span>
                     {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
+                    {user.isRobot && <Robot>robot</Robot>}
                     {user.local && <You>you</You>}
                 </NameText>
             </Name>
@@ -155,6 +156,7 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
                     <h2>{user.name}</h2>
                     <Badges>
                         {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
+                        {user.isRobot && <Robot>robot</Robot>}
                         {user.local && <You>you</You>}
                     </Badges>
 
@@ -173,6 +175,10 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
                             </SecretValue>
                         </SecretField>
                         <Field label="Platform" value={user.platform ?? "—"}/>
+                        <Field
+                            label="Avatar"
+                            value={user.avatarName ?? (user.isRobot ? "Robot (default)" : "Unknown")}
+                        />
                         <Field
                             label="VRChat account since"
                             value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
@@ -420,6 +426,16 @@ const You = styled.span`
     border-radius: 999px;
     background: rgba(167, 139, 250, 0.16);
     color: var(--accent-primary);
+    font-family: var(--font-mono);
+    font-size: 9px;
+`;
+
+const Robot = styled.span`
+    padding: 1px 6px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
     font-family: var(--font-mono);
     font-size: 9px;
 `;

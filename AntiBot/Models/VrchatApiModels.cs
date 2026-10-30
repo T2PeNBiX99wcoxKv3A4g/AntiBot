@@ -65,6 +65,9 @@ internal sealed record ApiDeviceStatus(ApiAuthUser? User);
 
 internal sealed record ApiDeviceStatusRequest(string DeviceCode);
 
+/// <summary>One avatar from the external avatar database, looked up by its image file id.</summary>
+internal sealed record AvatarLookup(string? Id, string? Name);
+
 /// <summary>One entry of the session cookie jar, as it is written to disk.</summary>
 internal sealed record CookieRecord(
     string Name,
@@ -88,5 +91,6 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiDeviceCode))]
 [JsonSerializable(typeof(ApiDeviceStatus))]
 [JsonSerializable(typeof(ApiDeviceStatusRequest))]
+[JsonSerializable(typeof(AvatarLookup))]
 [JsonSerializable(typeof(CookieRecord[]))]
 internal sealed partial class VrchatJsonContext : JsonSerializerContext;

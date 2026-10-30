@@ -12,6 +12,10 @@ export interface InstanceUser {
     trust?: string;
     dateJoined?: string;
     platform?: string;
+    /** Resolved from the avatar's image file id; absent while unknown. */
+    avatarName?: string;
+    /** True when the avatar is VRChat's default Robot avatar. */
+    isRobot?: boolean;
 }
 
 export interface InstanceSnapshot {

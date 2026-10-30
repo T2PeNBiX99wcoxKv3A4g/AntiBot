@@ -10,7 +10,9 @@ public sealed record InstanceUser(
     string? AvatarImageUrl = null,
     string? Trust = null,
     string? DateJoined = null,
-    string? Platform = null);
+    string? Platform = null,
+    string? AvatarName = null,
+    bool IsRobot = false);
 
 /// <summary>
 ///     Who is in the instance, and which instance that is. <see cref="Source" /> says whether the list

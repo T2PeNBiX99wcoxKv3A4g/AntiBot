@@ -73,6 +73,8 @@ internal static class Program
             Database.Instance.Initialize();
             _ = PlayerService.Instance;
             PlayerService.Instance.Start();
+            _ = AvatarService.Instance;
+            AvatarService.Instance.Start();
 
             // Construct the auth service before the instance list, which subscribes to it.
             _ = AuthService.Instance;

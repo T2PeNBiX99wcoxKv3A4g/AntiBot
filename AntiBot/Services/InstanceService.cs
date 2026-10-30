@@ -37,6 +37,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         VrchatLogService.Instance.LinesRead += OnLinesRead;
         AuthService.Instance.Changed += OnAuthChanged;
         PlayerService.Instance.Updated += Publish;
+        AvatarService.Instance.Updated += Publish;
 
         _ = RestoreAsync();
         _ = RunApiLoopAsync(_stop.Token);
@@ -438,7 +439,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.UserCount,
         snapshot.Capacity,
         string.Join(',', snapshot.Users.Select(user =>
-            $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}")));
+            $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
+            $"{user.AvatarName}:{user.IsRobot}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -485,17 +487,23 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     {
         var known = _users.Find(user => user.UserId == userId);
         var profile = PlayerService.Instance.Get(userId);
+        var avatar = profile?.AvatarUrl ?? avatarUrl;
+        var fileId = AvatarService.FileIdOf(avatar);
+
+        AvatarService.Instance.Request(fileId);
 
         return new InstanceUser(
             userId,
             profile?.DisplayName ?? name,
             known?.Local ?? false,
             known?.JoinedAt ?? "",
-            profile?.AvatarUrl ?? avatarUrl,
+            avatar,
             profile?.AvatarImageUrl,
             TrustLevel(profile?.Tags),
             profile?.DateJoined,
-            profile?.Platform);
+            profile?.Platform,
+            AvatarService.Instance.NameFor(fileId),
+            AvatarService.IsRobot(fileId));
     }
 
     /// <summary>VRChat's trust tags, highest first.</summary>
