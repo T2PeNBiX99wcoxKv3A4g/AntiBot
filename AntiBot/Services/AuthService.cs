@@ -36,9 +36,13 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
 
-        // The TPM probe creates and deletes a key, so it runs in the background before the account
-        // page asks whether that mode is available.
-        _ = Task.Run(() => _ = AuthStore.IsTpmAvailable);
+        // The TPM and Hello probes touch the system, so they run in the background before the account
+        // page asks whether those modes are available.
+        _ = Task.Run(() =>
+        {
+            _ = AuthStore.IsTpmAvailable;
+            _ = AuthStore.IsHelloAvailable;
+        });
     }
 
     /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
@@ -168,12 +172,19 @@ internal sealed class AuthService : Singleton<AuthService>
     private async Task<NativeResponse?> UnlockAsync(NativeContext context)
     {
         var password = context.Payload<AuthUnlockRequest>()?.Password;
-        if (password is not { Length: > 0 })
+        var hello = _storage == AuthStorage.Hello;
+
+        if (!hello && password is not { Length: > 0 })
             return context.Fail("auth.unlock.result", "Enter your password to unlock the saved session.");
 
-        var payload = await AuthStore.LoadAsync(password);
-        if (payload is null)
-            return context.Fail("auth.unlock.result", "That password does not unlock the saved session.");
+        var (status, payload) = await AuthStore.LoadAsync(hello ? null : password);
+
+        if (status == SessionLoadStatus.Cancelled)
+            return context.Fail("auth.unlock.result", "The Windows Hello prompt was cancelled.");
+
+        if (status == SessionLoadStatus.None || payload is null)
+            return context.Fail("auth.unlock.result",
+                hello ? "The saved session could not be unlocked." : "That password does not unlock the saved session.");
 
         try
         {
@@ -199,6 +210,7 @@ internal sealed class AuthService : Singleton<AuthService>
             "password" => AuthStorage.Password,
             "system" => AuthStorage.System,
             "tpm" => AuthStorage.Tpm,
+            "hello" => AuthStorage.Hello,
             _ => AuthStorage.None
         };
 
@@ -286,7 +298,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
         // A fresh sign-in issues a new cookie. System storage can be updated silently; a password-
         // protected file cannot, because the password is not kept, so it is dropped and asked for again.
-        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm)
+        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello)
             await PersistAsync(storage);
         else if (fresh && storage == AuthStorage.Password)
         {
@@ -350,8 +362,19 @@ internal sealed class AuthService : Singleton<AuthService>
             return;
         }
 
-        var payload = await AuthStore.LoadAsync(null);
-        if (payload is null)
+        var (status, payload) = await AuthStore.LoadAsync(null);
+
+        if (status == SessionLoadStatus.Cancelled)
+        {
+            // The session is still there; the account page offers to ask Windows Hello again.
+            lock (_gate)
+                _state = "locked";
+
+            Notify();
+            return;
+        }
+
+        if (status == SessionLoadStatus.None || payload is null)
         {
             Forget();
             return;
@@ -418,7 +441,7 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
             return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
-                AuthStore.IsTpmAvailable, expiresAt);
+                AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, expiresAt);
     }
 
     /// <summary>When the stored <c>auth</c> cookie expires, or null for a session cookie.</summary>
@@ -446,6 +469,7 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage.Password => "password",
         AuthStorage.System => "system",
         AuthStorage.Tpm => "tpm",
+        AuthStorage.Hello => "hello",
         _ => "none"
     };
 }

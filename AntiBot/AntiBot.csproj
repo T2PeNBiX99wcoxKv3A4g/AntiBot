@@ -25,6 +25,23 @@
         <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
     </PropertyGroup>
 
+    <!-- Windows Hello needs the WinRT projection, which is only compiled into Windows builds. -->
+    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(DisableHello)' != 'true'">
+        <DefineConstants>$(DefineConstants);WINDOWS_DESKTOP</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows')) and '$(DisableHello)' != 'true'">
+        <PackageDownload Include="Microsoft.Windows.SDK.NET.Ref" Version="[10.0.26100.87]" />
+        <Reference Include="Microsoft.Windows.SDK.NET">
+            <HintPath>$(NuGetPackageRoot)microsoft.windows.sdk.net.ref\10.0.26100.87\lib\net9.0\Microsoft.Windows.SDK.NET.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
+        <Reference Include="WinRT.Runtime">
+            <HintPath>$(NuGetPackageRoot)microsoft.windows.sdk.net.ref\10.0.26100.87\lib\net9.0\WinRT.Runtime.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
+    </ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
         <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.14" />

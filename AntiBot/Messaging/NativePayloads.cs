@@ -32,6 +32,7 @@ internal sealed record AuthPayload(
     bool SystemStorage,
     string SystemStorageName,
     bool TpmStorage,
+    bool HelloStorage,
     string? ExpiresAt);
 
 /// <summary>Payload for <c>auth.login</c>.</summary>

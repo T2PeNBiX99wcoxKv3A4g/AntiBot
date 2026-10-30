@@ -62,7 +62,7 @@ export function AccountPage() {
     if (auth.state === "loggedIn" && auth.user)
         content = <Profile auth={auth} busy={busy} error={error} run={run}/>;
     else if (auth.state === "locked")
-        content = <UnlockForm busy={busy} error={error} run={run}/>;
+        content = <UnlockForm auth={auth} busy={busy} error={error} run={run}/>;
     else if (auth.state === "twoFactor")
         content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}/>;
     else
@@ -218,12 +218,18 @@ function TwoFactorForm({auth, busy, error, run}: {
     );
 }
 
-function UnlockForm({busy, error, run}: { busy: boolean; error: string; run: Run }) {
+function UnlockForm({auth, busy, error, run}: {
+    auth: AuthSnapshot;
+    busy: boolean;
+    error: string;
+    run: Run;
+}) {
     const [password, setPassword] = useState("");
+    const hello = auth.storage === "hello";
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        void run(() => unlock(password));
+        void run(() => unlock(hello ? "" : password));
     };
 
     return (
@@ -232,33 +238,36 @@ function UnlockForm({busy, error, run}: { busy: boolean; error: string; run: Run
                 <CardHead>
                     <KeyIcon size={20}/>
                     <div>
-                        <h2>Unlock the saved session</h2>
+                        <h2>{hello ? "Unlock with Windows Hello" : "Unlock the saved session"}</h2>
                         <p>
-                            The session was encrypted with a key derived from your password. It is never
-                            stored, so it has to be typed again.
+                            {hello
+                                ? "The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face."
+                                : "The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again."}
                         </p>
                     </div>
                 </CardHead>
 
                 <Form onSubmit={submit}>
-                    <Field>
-                        <Label htmlFor="unlock-password">Password</Label>
-                        <Input
-                            autoComplete="current-password"
-                            autoFocus
-                            id="unlock-password"
-                            onChange={(event) => setPassword(event.target.value)}
-                            placeholder="••••••••"
-                            type="password"
-                            value={password}
-                        />
-                    </Field>
+                    {!hello && (
+                        <Field>
+                            <Label htmlFor="unlock-password">Password</Label>
+                            <Input
+                                autoComplete="current-password"
+                                autoFocus
+                                id="unlock-password"
+                                onChange={(event) => setPassword(event.target.value)}
+                                placeholder="••••••••"
+                                type="password"
+                                value={password}
+                            />
+                        </Field>
+                    )}
 
                     {error && <ErrorText>{error}</ErrorText>}
 
                     <Actions>
                         <Primary disabled={busy} type="submit">
-                            {busy ? "Unlocking…" : "Unlock"}
+                            {busy ? "Unlocking…" : hello ? "Unlock with Windows Hello" : "Unlock"}
                         </Primary>
                         <Secondary onClick={() => void run(async () => {
                             return await saveStorage("none");
@@ -312,8 +321,10 @@ function StorageChoice({auth, busy, error, run}: {
     const systemAvailable = auth.systemStorage;
     const systemName = auth.systemStorageName || "System protection";
     const tpmAvailable = auth.tpmStorage;
+    const helloAvailable = auth.helloStorage;
     const [mode, setMode] = useState<AuthStorage>(() => {
         if (auth.storage !== "none") return auth.storage;
+        if (helloAvailable) return "hello";
         if (tpmAvailable) return "tpm";
         if (systemAvailable) return "system";
         return "password";
@@ -413,6 +424,27 @@ function StorageChoice({auth, busy, error, run}: {
                         </p>
                     ) : (
                         <p>No usable TPM was found on this machine.</p>
+                    )}
+                </Option>
+
+                <Option
+                    $active={mode === "hello"}
+                    $disabled={!helloAvailable}
+                    onClick={() => helloAvailable && setMode("hello")}
+                    type="button"
+                >
+                    <OptionHead>
+                        <strong>Windows Hello</strong>
+                        <Tag>{helloAvailable ? "asks for PIN / biometrics" : "unavailable"}</Tag>
+                    </OptionHead>
+                    {helloAvailable ? (
+                        <p>
+                            The session is encrypted with an AES-256 key wrapped by a key that only Windows
+                            Hello can use. Each launch asks for your PIN, fingerprint or face before
+                            unlocking; no VRChat password is involved.
+                        </p>
+                    ) : (
+                        <p>Windows Hello is only available on Windows.</p>
                     )}
                 </Option>
 
@@ -601,6 +633,8 @@ function storageLabel(storage: AuthStorage) {
             return "system-protected";
         case "tpm":
             return "TPM-protected";
+        case "hello":
+            return "Windows Hello";
         default:
             return "not stored";
     }

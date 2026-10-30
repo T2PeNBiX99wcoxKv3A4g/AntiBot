@@ -23,5 +23,8 @@ public enum AuthStorage
     System,
 
     /// <summary>The AES key is wrapped by a key held in the machine's TPM; no prompt.</summary>
-    Tpm
+    Tpm,
+
+    /// <summary>The AES key is wrapped by a key that needs the Windows Hello prompt to be used.</summary>
+    Hello
 }

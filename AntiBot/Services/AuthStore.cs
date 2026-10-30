@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
@@ -7,6 +6,19 @@ using PhotinoNetUtils.Utils;
 using Serilog;
 
 namespace AntiBot.Services;
+
+/// <summary>How a stored session was read back.</summary>
+internal enum SessionLoadStatus
+{
+    /// <summary>There is no stored session, or it can no longer be opened.</summary>
+    None,
+
+    /// <summary>The payload was decrypted.</summary>
+    Loaded,
+
+    /// <summary>The user dismissed the Windows Hello prompt; the session is still there.</summary>
+    Cancelled
+}
 
 /// <summary>
 ///     Keeps the VRChat session cookies between launches, in the way the account page offers.
@@ -23,8 +35,8 @@ namespace AntiBot.Services;
 ///         otherwise instead of falling back to an unprotected file.
 ///     </para>
 ///     <para>
-///         TPM mode wraps the AES key with an RSA key held by the machine's TPM, so the file cannot be
-///         decrypted anywhere else and no prompt is needed.
+///         TPM mode wraps the AES key with a key held by the machine's TPM; Hello mode wraps it with a
+///         key whose use requires the Windows Hello prompt.
 ///     </para>
 /// </remarks>
 internal static class AuthStore
@@ -39,6 +51,7 @@ internal static class AuthStore
     private const byte DpapiMode = 1;
     private const byte PasswordMode = 2;
     private const byte TpmMode = 3;
+    private const byte HelloMode = 4;
 
     // OWASP's floor for PBKDF2-HMAC-SHA256; the cost only shows on unlock, once per launch.
     private const int Iterations = 600_000;
@@ -47,11 +60,7 @@ internal static class AuthStore
     private const int TagSize = 16;
     private const int KeySize = 32;
 
-    private const string TpmKeyName = "AntiBot-Session";
-
     private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
-
-    private static bool? _tpmAvailable;
 
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
@@ -64,7 +73,10 @@ internal static class AuthStore
         "Not available";
 
     /// <summary>Whether this machine has a TPM that can hold the wrapping key.</summary>
-    public static bool IsTpmAvailable => _tpmAvailable ??= OperatingSystem.IsWindows() && ProbeTpm();
+    public static bool IsTpmAvailable => TpmStore.IsAvailable;
+
+    /// <summary>Whether Windows Hello can gate a wrapping key on this machine.</summary>
+    public static bool IsHelloAvailable => OperatingSystem.IsWindows() && HelloStore.IsAvailable;
 
     public static bool Exists =>
         File.Exists(FilePath) || (OperatingSystem.IsLinux() && Keyring.HasEntry());
@@ -117,8 +129,12 @@ internal static class AuthStore
                 Try.Run(() => File.Delete(FilePath));
                 return true;
 
-            case AuthStorage.Tpm when OperatingSystem.IsWindows() && IsTpmAvailable:
-                await WriteAsync(TpmMode, ProtectWithTpm(payload), token);
+            case AuthStorage.Tpm when TpmStore.IsAvailable:
+                await WriteAsync(TpmMode, TpmStore.Protect(payload), token);
+                return true;
+
+            case AuthStorage.Hello when OperatingSystem.IsWindows() && HelloStore.IsAvailable:
+                await WriteAsync(HelloMode, HelloStore.Protect(payload), token);
                 return true;
 
             default:
@@ -127,14 +143,22 @@ internal static class AuthStore
     }
 
     /// <summary>
-    ///     Reads the payload back, or null when the session is missing, damaged, or needs another password.
+    ///     Reads the payload back. <see cref="SessionLoadStatus.Cancelled" /> means the session exists but
+    ///     the user dismissed the Windows Hello prompt.
     /// </summary>
-    public static async Task<byte[]?> LoadAsync(string? password, CancellationToken token = default)
+    public static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadAsync(string? password,
+        CancellationToken token = default)
     {
         if (File.Exists(FilePath))
             return await LoadFileAsync(password, token);
 
-        return OperatingSystem.IsLinux() ? Keyring.Load() : null;
+        if (OperatingSystem.IsLinux() && Keyring.HasEntry())
+        {
+            var payload = Keyring.Load();
+            return payload is null ? (SessionLoadStatus.None, null) : (SessionLoadStatus.Loaded, payload);
+        }
+
+        return (SessionLoadStatus.None, null);
     }
 
     public static void Delete()
@@ -144,8 +168,10 @@ internal static class AuthStore
         if (OperatingSystem.IsLinux() && Keyring.Available)
             Keyring.Clear();
 
+        TpmStore.Delete();
+
         if (OperatingSystem.IsWindows())
-            DeleteTpmKey();
+            HelloStore.Delete();
     }
 
     private static AuthStorage FileMode()
@@ -161,6 +187,7 @@ internal static class AuthStore
             {
                 PasswordMode => AuthStorage.Password,
                 TpmMode => AuthStorage.Tpm,
+                HelloMode => AuthStorage.Hello,
                 DpapiMode or PlainMode => AuthStorage.System,
                 _ => AuthStorage.None
             };
@@ -172,7 +199,8 @@ internal static class AuthStore
         }
     }
 
-    private static async Task<byte[]?> LoadFileAsync(string? password, CancellationToken token)
+    private static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadFileAsync(string? password,
+        CancellationToken token)
     {
         try
         {
@@ -180,29 +208,44 @@ internal static class AuthStore
             if (file.Length < Magic.Length + 2 ||
                 !file.AsSpan(0, Magic.Length).SequenceEqual(Magic) ||
                 file[Magic.Length] != Version)
-                return null;
+                return (SessionLoadStatus.None, null);
 
             var body = file.AsSpan(Magic.Length + 2);
 
-            return file[Magic.Length + 1] switch
+            switch (file[Magic.Length + 1])
             {
-                DpapiMode when OperatingSystem.IsWindows() =>
-                    ProtectedData.Unprotect(body.ToArray(), Entropy, DataProtectionScope.CurrentUser),
+                case DpapiMode when OperatingSystem.IsWindows():
+                    return (SessionLoadStatus.Loaded,
+                        ProtectedData.Unprotect(body.ToArray(), Entropy, DataProtectionScope.CurrentUser));
 
-                TpmMode when OperatingSystem.IsWindows() => UnprotectWithTpm(body),
+                case TpmMode when TpmStore.IsAvailable:
+                    var tpmPayload = TpmStore.Unprotect(body);
+                    return tpmPayload is null ? (SessionLoadStatus.None, null) : (SessionLoadStatus.Loaded, tpmPayload);
+
+                case HelloMode when OperatingSystem.IsWindows() && HelloStore.IsAvailable:
+                    var (cancelled, helloPayload) = HelloStore.Unprotect(body);
+                    return cancelled ? (SessionLoadStatus.Cancelled, null) :
+                        helloPayload is null ? (SessionLoadStatus.None, null) :
+                        (SessionLoadStatus.Loaded, helloPayload);
 
                 // A plain file is only left over from the old Linux fallback; reading it lets the next
                 // save move the session into the keyring.
-                PlainMode => body.ToArray(),
+                case PlainMode:
+                    return (SessionLoadStatus.Loaded, body.ToArray());
 
-                PasswordMode when password is { Length: > 0 } => UnprotectWithPassword(body, password),
-                _ => null
-            };
+                case PasswordMode when password is { Length: > 0 }:
+                    var passwordPayload = UnprotectWithPassword(body, password);
+                    return passwordPayload is null ? (SessionLoadStatus.None, null) :
+                        (SessionLoadStatus.Loaded, passwordPayload);
+
+                default:
+                    return (SessionLoadStatus.None, null);
+            }
         }
         catch (Exception ex)
         {
             Log.Warning(ex, "Could not read the stored VRChat session");
-            return null;
+            return (SessionLoadStatus.None, null);
         }
     }
 
@@ -280,128 +323,6 @@ internal static class AuthStore
             CryptographicOperations.ZeroMemory(cipher);
         }
     }
-
-    [SupportedOSPlatform("windows")]
-    private static bool ProbeTpm()
-    {
-        try
-        {
-            using var key = CngKey.Create(CngAlgorithm.Rsa, TpmKeyName + "-probe", TpmKeyCreation());
-            key.Delete();
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Log.Debug(ex, "No usable TPM");
-            return false;
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static byte[] ProtectWithTpm(byte[] payload)
-    {
-        using var key = OpenOrCreateTpmKey();
-        using var rsa = new RSACng(key);
-
-        var sessionKey = RandomNumberGenerator.GetBytes(KeySize);
-        var nonce = RandomNumberGenerator.GetBytes(NonceSize);
-        var tag = new byte[TagSize];
-        var cipher = new byte[payload.Length];
-
-        try
-        {
-            using (var aes = new AesGcm(sessionKey, TagSize))
-                aes.Encrypt(nonce, payload, cipher, tag);
-
-            var wrapped = rsa.Encrypt(sessionKey, RSAEncryptionPadding.OaepSHA256);
-
-            var body = new byte[2 + wrapped.Length + NonceSize + TagSize + cipher.Length];
-            body[0] = (byte)(wrapped.Length >> 8);
-            body[1] = (byte)wrapped.Length;
-            wrapped.CopyTo(body, 2);
-            nonce.CopyTo(body, 2 + wrapped.Length);
-            tag.CopyTo(body, 2 + wrapped.Length + NonceSize);
-            cipher.CopyTo(body, 2 + wrapped.Length + NonceSize + TagSize);
-            return body;
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(sessionKey);
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static byte[]? UnprotectWithTpm(ReadOnlySpan<byte> body)
-    {
-        if (body.Length < 2 + NonceSize + TagSize)
-            return null;
-
-        var wrappedLength = (body[0] << 8) | body[1];
-        if (body.Length < 2 + wrappedLength + NonceSize + TagSize)
-            return null;
-
-        var wrapped = body.Slice(2, wrappedLength).ToArray();
-        var nonce = body.Slice(2 + wrappedLength, NonceSize).ToArray();
-        var tag = body.Slice(2 + wrappedLength + NonceSize, TagSize).ToArray();
-        var cipher = body[(2 + wrappedLength + NonceSize + TagSize)..].ToArray();
-
-        try
-        {
-            using var key = CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
-            using var rsa = new RSACng(key);
-
-            var sessionKey = rsa.Decrypt(wrapped, RSAEncryptionPadding.OaepSHA256);
-            try
-            {
-                var plain = new byte[cipher.Length];
-                using var aes = new AesGcm(sessionKey, TagSize);
-                aes.Decrypt(nonce, cipher, tag, plain);
-                return plain;
-            }
-            finally
-            {
-                CryptographicOperations.ZeroMemory(sessionKey);
-            }
-        }
-        catch (CryptographicException ex)
-        {
-            Log.Warning(ex, "Could not unwrap the session with the TPM key");
-            return null;
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static CngKey OpenOrCreateTpmKey()
-    {
-        try
-        {
-            return CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
-        }
-        catch (CryptographicException)
-        {
-            return CngKey.Create(CngAlgorithm.Rsa, TpmKeyName, TpmKeyCreation());
-        }
-    }
-
-    [SupportedOSPlatform("windows")]
-    private static CngKeyCreationParameters TpmKeyCreation() => new()
-    {
-        Provider = new CngProvider("Microsoft Platform Crypto Provider"),
-        KeyUsage = CngKeyUsages.AllUsages,
-        ExportPolicy = CngExportPolicies.None,
-        Parameters =
-        {
-            new CngProperty("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None)
-        }
-    };
-
-    [SupportedOSPlatform("windows")]
-    private static void DeleteTpmKey() =>
-        Try.Run(() =>
-        {
-            using var key = CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
-            key.Delete();
-        });
 
     /// <summary>
     ///     The freedesktop Secret Service, reached through <c>secret-tool</c>. It is only used when the
