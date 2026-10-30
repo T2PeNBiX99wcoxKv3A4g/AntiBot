@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using AntiBot.Models;
+using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -10,6 +11,10 @@ namespace AntiBot.Services;
 ///     remove one, and entering a new room starts over. Once an account is signed in, the VRChat API
 ///     is asked instead, because the log cannot tell two running clients apart.
 /// </summary>
+/// <remarks>
+///     What the log says is also written to the database as a small stream of events, so the list is
+///     rebuilt on the next launch instead of starting empty.
+/// </remarks>
 internal sealed partial class InstanceService : Singleton<InstanceService>
 {
     private static readonly TimeSpan ApiInterval = TimeSpan.FromSeconds(10);
@@ -31,6 +36,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         NativeBridge.MessageReceived += HandleMessageAsync;
         VrchatLogService.Instance.LinesRead += OnLinesRead;
         AuthService.Instance.Changed += OnAuthChanged;
+        PlayerService.Instance.Updated += Publish;
+
+        _ = RestoreAsync();
         _ = RunApiLoopAsync(_stop.Token);
     }
 
@@ -41,6 +49,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
     private void OnLinesRead(VrchatLogBatch batch)
     {
+        var events = new List<GameEvent>();
         bool changed;
 
         lock (_gate)
@@ -55,11 +64,13 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 _running = true;
 
                 if (batch.Reset)
-                    changed |= ResetSession();
+                    changed |= Record(new("", "reset"), events);
 
                 foreach (var line in batch.Lines)
-                    changed |= Apply(line);
+                    changed |= Apply(line, events);
             }
+
+        Persist(events);
 
         if (changed)
             Publish();
@@ -71,6 +82,35 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         {
             _apiInstance = null;
             _apiLocation = "";
+
+            // Signing in makes profiles available for everyone already in the instance.
+            if (AuthService.Instance.IsLoggedIn)
+                foreach (var user in _users)
+                    PlayerService.Instance.Request(user.UserId);
+        }
+
+        Publish();
+    }
+
+    /// <summary>Rebuilds the list from the events the previous launch stored.</summary>
+    private async Task RestoreAsync()
+    {
+        var events = await Database.Instance.LoadSessionAsync();
+        if (events.Count == 0)
+            return;
+
+        lock (_gate)
+        {
+            _users.Clear();
+            _world = "";
+            _instance = "";
+            _localName = "";
+
+            foreach (var gameEvent in events)
+                ApplyEvent(gameEvent);
+
+            Log.Information("Restored {Count} stored instance event(s) for {Users} player(s)",
+                events.Count, _users.Count);
         }
 
         Publish();
@@ -177,80 +217,143 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         }
     }
 
-    /// <summary>Updates the list from one log line; returns whether anything the UI shows changed.</summary>
-    private bool Apply(VrchatLogLine line)
+    /// <summary>Turns one log line into an event, records it and applies it.</summary>
+    private bool Apply(VrchatLogLine line, List<GameEvent> events)
+    {
+        if (ToEvent(line) is not { } gameEvent)
+            return false;
+
+        return Record(gameEvent, events);
+    }
+
+    private bool Record(GameEvent gameEvent, List<GameEvent> events)
+    {
+        events.Add(gameEvent);
+        return ApplyEvent(gameEvent);
+    }
+
+    private GameEvent? ToEvent(VrchatLogLine line)
     {
         // A new log file means a new VRChat session; nothing from the old one carries over.
         if (line.Level == "session")
-            return ResetSession();
+            return new(line.Time, "reset");
 
         var message = line.Message;
 
+        if (message == "[Behaviour] OnPlayerLeftRoom")
+            return new(line.Time, "clear");
+
         var joined = PlayerJoinedPattern().Match(message);
         if (joined.Success)
-            return Upsert(
-                joined.Groups["id"].Value,
-                joined.Groups["name"].Value.Trim(),
-                line.Time);
+            return new(line.Time, "join",
+                UserId: joined.Groups["id"].Value,
+                DisplayName: joined.Groups["name"].Value.Trim());
 
         var left = PlayerLeftPattern().Match(message);
         if (left.Success)
-        {
-            var index = _users.FindIndex(user => user.UserId == left.Groups["id"].Value);
-            if (index < 0)
-                return false;
-
-            _users.RemoveAt(index);
-            return true;
-        }
-
-        if (message == "[Behaviour] OnPlayerLeftRoom")
-        {
-            if (_users.Count == 0)
-                return false;
-
-            _users.Clear();
-            return true;
-        }
+            return new(line.Time, "leave",
+                UserId: left.Groups["id"].Value,
+                DisplayName: left.Groups["name"].Value.Trim());
 
         var entering = EnteringRoomPattern().Match(message);
         if (entering.Success)
-        {
-            var world = entering.Groups["world"].Value.Trim();
-            var changed = _users.Count > 0 || world != _world;
-
-            _users.Clear();
-            _world = world;
-            return changed;
-        }
+            // Both halves are stored on each transition, so replaying from the last one rebuilds the
+            // whole location even when the two log lines arrive in the other order.
+            return new(line.Time, "location",
+                World: entering.Groups["world"].Value.Trim(),
+                Instance: _instance);
 
         var joining = JoiningPattern().Match(message);
         if (joining.Success)
-        {
-            var instance = joining.Groups["instance"].Value;
-            if (instance == _instance)
-                return false;
-
-            _instance = instance;
-            return true;
-        }
+            return new(line.Time, "instance",
+                World: _world,
+                Instance: joining.Groups["instance"].Value);
 
         var local = LocalPlayerPattern().Match(message);
         if (local.Success)
+            return new(line.Time, "local", DisplayName: local.Groups["name"].Value);
+
+        return null;
+    }
+
+    /// <summary>Applies one event to the state; returns whether anything the UI shows changed.</summary>
+    private bool ApplyEvent(GameEvent gameEvent)
+    {
+        switch (gameEvent.Kind)
         {
-            _localName = local.Groups["name"].Value;
-            var index = _users.FindIndex(user => user.Name == _localName);
-            if (index < 0 || _users[index].Local)
+            case "reset":
+                return ResetSession();
+
+            case "clear":
+                return ClearUsers();
+
+            case "location":
+                var located = SetWorld(gameEvent.World);
+                located |= SetInstance(gameEvent.Instance);
+                return located;
+
+            case "instance":
+                // The world name may only be known from the transition before this one.
+                var restoredWorld = _world.Length == 0 && gameEvent.World.Length > 0 && SetWorld(gameEvent.World);
+                restoredWorld |= SetInstance(gameEvent.Instance);
+                return restoredWorld;
+
+            case "join":
+                PlayerService.Instance.Request(gameEvent.UserId);
+                return Upsert(gameEvent.UserId, gameEvent.DisplayName, gameEvent.At);
+
+            case "leave":
+                return Remove(gameEvent.UserId);
+
+            case "local":
+                return SetLocal(gameEvent.DisplayName);
+
+            default:
                 return false;
-
-            _users[index] = _users[index] with
-            {
-                Local = true
-            };
-            return true;
         }
+    }
 
-        return false;
+    private bool SetWorld(string world)
+    {
+        var changed = _users.Count > 0 || world != _world;
+
+        _users.Clear();
+        _world = world;
+        return changed;
+    }
+
+    private bool SetInstance(string instance)
+    {
+        if (instance == _instance)
+            return false;
+
+        _instance = instance;
+        return true;
+    }
+
+    private bool SetLocal(string name)
+    {
+        _localName = name;
+
+        var index = _users.FindIndex(user => user.Name == _localName);
+        if (index < 0 || _users[index].Local)
+            return false;
+
+        _users[index] = _users[index] with
+        {
+            Local = true
+        };
+        return true;
+    }
+
+    private bool Remove(string userId)
+    {
+        var index = _users.FindIndex(user => user.UserId == userId);
+        if (index < 0)
+            return false;
+
+        _users.RemoveAt(index);
+        return true;
     }
 
     private bool Upsert(string userId, string name, string joinedAt)
@@ -271,9 +374,18 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         return true;
     }
 
+    private bool ClearUsers()
+    {
+        if (_users.Count == 0)
+            return false;
+
+        _users.Clear();
+        return true;
+    }
+
     private bool ResetSession()
     {
-        var changed = _users.Count > 0 || _world.Length > 0 || _instance.Length > 0;
+        var changed = _users.Count > 0 || _world.Length > 0 || _instance.Length > 0 || _localName.Length > 0;
 
         _users.Clear();
         _world = "";
@@ -286,6 +398,19 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     {
         lock (_gate)
             return _instance;
+    }
+
+    /// <summary>Writes the batch to the database without holding up the log loop.</summary>
+    private void Persist(List<GameEvent> events)
+    {
+        if (events.Count == 0)
+            return;
+
+        _ = Task.Run(async () =>
+        {
+            var attempt = await Try.Run(() => Database.Instance.AddEventsAsync(events));
+            attempt.OnFailure(ex => Log.Warning(ex, "Failed to store {Count} instance event(s)", events.Count));
+        });
     }
 
     /// <summary>Pushes the snapshot when it really changed, so a poll does not redraw the page.</summary>
@@ -312,7 +437,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.WorldName,
         snapshot.UserCount,
         snapshot.Capacity,
-        string.Join(',', snapshot.Users.Select(user => $"{user.UserId}:{user.Name}:{user.Local}")));
+        string.Join(',', snapshot.Users.Select(user =>
+            $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -322,8 +448,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             {
                 // The API lists who is really there; the log still supplies join times and who is local.
                 var users = api.Users is { } apiUsers
-                    ? apiUsers.Select(user => Enrich(user.Id ?? "", user.DisplayName ?? "")).ToArray()
-                    : _users.ToArray();
+                    ? apiUsers.Select(user =>
+                        Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl)).ToArray()
+                    : _users.Select(user => Enrich(user.UserId, user.Name)).ToArray();
 
                 var count = api.UserCount ?? api.Users?.Length ?? 0;
 
@@ -338,15 +465,44 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                     api.Capacity ?? 0);
             }
 
-            return new InstanceSnapshot(_running, _world, _instance, _users.ToArray());
+            return new InstanceSnapshot(_running, _world, _instance,
+                _users.Select(user => Enrich(user.UserId, user.Name)).ToArray());
         }
     }
 
-    /// <summary>One API user, with the log's join time and local flag when it knows them.</summary>
-    private InstanceUser Enrich(string userId, string name)
+    /// <summary>One player, with the cached profile and the log's join time and local flag.</summary>
+    private InstanceUser Enrich(string userId, string name, string? avatarUrl = null)
     {
         var known = _users.Find(user => user.UserId == userId);
-        return new InstanceUser(userId, name, known?.Local ?? false, known?.JoinedAt ?? "");
+        var profile = PlayerService.Instance.Get(userId);
+
+        return new InstanceUser(
+            userId,
+            profile?.DisplayName ?? name,
+            known?.Local ?? false,
+            known?.JoinedAt ?? "",
+            profile?.AvatarUrl ?? avatarUrl,
+            TrustLevel(profile?.Tags),
+            profile?.DateJoined,
+            profile?.Platform);
+    }
+
+    /// <summary>VRChat's trust tags, highest first.</summary>
+    private static string? TrustLevel(string[]? tags)
+    {
+        if (tags is null)
+            return null;
+
+        if (tags.Contains("system_trust_veteran"))
+            return "Trusted";
+        if (tags.Contains("system_trust_trusted"))
+            return "Known";
+        if (tags.Contains("system_trust_known"))
+            return "User";
+        if (tags.Contains("system_trust_basic"))
+            return "New";
+
+        return "Visitor";
     }
 
     [GeneratedRegex(@"^\[Behaviour\] OnPlayerJoined (?<name>.+) \((?<id>usr_[^)]+)\)$",

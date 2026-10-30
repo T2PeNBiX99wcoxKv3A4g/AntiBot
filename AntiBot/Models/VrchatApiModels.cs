@@ -21,6 +21,17 @@ internal sealed record ApiInstanceUser(
     string? DisplayName,
     string? CurrentAvatarThumbnailImageUrl);
 
+internal sealed record ApiUser(
+    string? Id,
+    string? DisplayName,
+    string? CurrentAvatarThumbnailImageUrl,
+    [property: JsonPropertyName("date_joined")]
+    string? DateJoined,
+    string[]? Tags,
+    string? Platform,
+    [property: JsonPropertyName("last_activity")]
+    string? LastActivity);
+
 internal sealed record ApiInstance(
     string? Id,
     string? Location,
@@ -66,6 +77,7 @@ internal sealed record CookieRecord(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(ApiAuthUser))]
 [JsonSerializable(typeof(ApiInstance))]
+[JsonSerializable(typeof(ApiUser))]
 [JsonSerializable(typeof(ApiErrorBody))]
 [JsonSerializable(typeof(ApiVerifyResult))]
 [JsonSerializable(typeof(ApiCodeRequest))]

@@ -88,6 +88,11 @@ internal sealed class AuthService : Singleton<AuthService>
             ? _api.GetInstanceAsync(location, token)
             : Task.FromResult<(ApiInstance?, string?)>((null, null));
 
+    public Task<(ApiUser? User, string? Error)> GetUserAsync(string userId, CancellationToken token) =>
+        IsLoggedIn
+            ? _api.GetUserAsync(userId, token)
+            : Task.FromResult<(ApiUser?, string?)>((null, null));
+
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "auth.state" => Task.FromResult<NativeResponse?>(context.Reply("auth.state.result", Snapshot())),

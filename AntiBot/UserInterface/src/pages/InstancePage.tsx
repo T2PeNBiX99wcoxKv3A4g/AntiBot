@@ -96,8 +96,15 @@ function UserRow({user}: { user: InstanceUser }) {
     return (
         <Row $local={user.local}>
             <Name>
-                <span>{user.name}</span>
-                {user.local && <You>you</You>}
+                <Avatar $src={user.avatarUrl}>{user.name.slice(0, 1).toUpperCase()}</Avatar>
+                <NameText>
+                    <span title={[user.platform, user.dateJoined && `joined VRChat ${user.dateJoined}`]
+                        .filter(Boolean).join(" · ")}>
+                        {user.name}
+                    </span>
+                    {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
+                    {user.local && <You>you</You>}
+                </NameText>
             </Name>
             <Id title={user.userId}>{user.userId}</Id>
             <Time>{user.joinedAt || "—"}</Time>
@@ -256,16 +263,49 @@ const Row = styled.div<{ $local: boolean }>`
 const Name = styled.span`
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     min-width: 0;
     font-size: 12.5px;
     font-weight: 500;
+`;
+
+const Avatar = styled.span<{ $src?: string }>`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--bg-primary) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+    color: ${({$src}) => $src ? "transparent" : "var(--text-muted)"};
+    font-size: 10px;
+    font-weight: 600;
+`;
+
+const NameText = styled.span`
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
 
     > span:first-child {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+`;
+
+const Trust = styled.span<{ $trust: string }>`
+    padding: 1px 6px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: ${({$trust}) => trustBackground($trust)};
+    color: ${({$trust}) => trustColor($trust)};
+    font-family: var(--font-mono);
+    font-size: 9px;
 `;
 
 const You = styled.span`
@@ -276,6 +316,37 @@ const You = styled.span`
     font-family: var(--font-mono);
     font-size: 9px;
 `;
+
+/** VRChat's trust tags, in the colours the site uses for them. */
+function trustColor(trust: string) {
+    switch (trust) {
+        case "Trusted":
+            return "#c4b5fd";
+        case "Known":
+            return "#93c5fd";
+        case "User":
+            return "#86efac";
+        case "New":
+            return "#fcd34d";
+        default:
+            return "#94a3b8";
+    }
+}
+
+function trustBackground(trust: string) {
+    switch (trust) {
+        case "Trusted":
+            return "rgba(167, 139, 250, 0.16)";
+        case "Known":
+            return "rgba(96, 165, 250, 0.16)";
+        case "User":
+            return "rgba(74, 222, 128, 0.14)";
+        case "New":
+            return "rgba(250, 204, 21, 0.14)";
+        default:
+            return "rgba(148, 163, 184, 0.14)";
+    }
+}
 
 const Id = styled.span`
     overflow: hidden;

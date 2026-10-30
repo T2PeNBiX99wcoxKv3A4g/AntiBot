@@ -1,0 +1,265 @@
+using System.Text.Json;
+using AntiBot.Models;
+using Microsoft.Data.Sqlite;
+using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Utils;
+
+namespace AntiBot.Services;
+
+/// <summary>
+///     The app's local database: the ordered stream of instance events, and the player profiles fetched
+///     from the API.
+/// </summary>
+/// <remarks>
+///     SQLite in WAL mode, so a write never blocks the reader. Both tables stay small on purpose: events
+///     are only joins, leaves and location changes, and a profile is one row per user. Events older than
+///     <see cref="RetentionDays" /> are pruned on startup.
+/// </remarks>
+internal sealed class Database : Singleton<Database>
+{
+    private const int RetentionDays = 30;
+
+    private static readonly string ConnectionString = new SqliteConnectionStringBuilder
+    {
+        DataSource = Path.Combine(Constants.DataDirectory, "antibot.db"),
+        Mode = SqliteOpenMode.ReadWriteCreate,
+        Pooling = true
+    }.ToString();
+
+    private static readonly JsonSerializerOptions TagsFormat = new();
+
+    /// <summary>Creates the schema and drops expired events. Called once, before the services start.</summary>
+    public void Initialize()
+    {
+        Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  PRAGMA journal_mode=WAL;
+                                  PRAGMA busy_timeout=5000;
+
+                                  CREATE TABLE IF NOT EXISTS game_events (
+                                      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                                      created_at   INTEGER NOT NULL,
+                                      at           TEXT NOT NULL,
+                                      kind         TEXT NOT NULL,
+                                      world        TEXT NOT NULL DEFAULT '',
+                                      instance     TEXT NOT NULL DEFAULT '',
+                                      user_id      TEXT NOT NULL DEFAULT '',
+                                      display_name TEXT NOT NULL DEFAULT ''
+                                  );
+
+                                  CREATE TABLE IF NOT EXISTS players (
+                                      id            TEXT PRIMARY KEY,
+                                      display_name  TEXT NOT NULL,
+                                      avatar_url    TEXT,
+                                      date_joined   TEXT,
+                                      tags          TEXT,
+                                      platform      TEXT,
+                                      last_activity TEXT,
+                                      fetched_at    INTEGER NOT NULL
+                                  );
+
+                                  CREATE INDEX IF NOT EXISTS ix_game_events_kind ON game_events (kind, id);
+                                  """;
+            command.ExecuteNonQuery();
+        }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
+
+        Prune();
+    }
+
+    /// <summary>Appends events to the stream; one transaction per batch.</summary>
+    public async Task AddEventsAsync(IReadOnlyList<GameEvent> events, CancellationToken token = default)
+    {
+        if (events.Count == 0)
+            return;
+
+        await using var connection = await OpenAsync(token);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(token);
+
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+                              INSERT INTO game_events (created_at, at, kind, world, instance, user_id, display_name)
+                              VALUES ($createdAt, $at, $kind, $world, $instance, $userId, $displayName)
+                              """;
+
+        var createdAt = command.CreateParameter();
+        createdAt.ParameterName = "$createdAt";
+        createdAt.Value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        command.Parameters.Add(createdAt);
+
+        var at = command.CreateParameter();
+        at.ParameterName = "$at";
+        command.Parameters.Add(at);
+
+        var kind = command.CreateParameter();
+        kind.ParameterName = "$kind";
+        command.Parameters.Add(kind);
+
+        var world = command.CreateParameter();
+        world.ParameterName = "$world";
+        command.Parameters.Add(world);
+
+        var instance = command.CreateParameter();
+        instance.ParameterName = "$instance";
+        command.Parameters.Add(instance);
+
+        var userId = command.CreateParameter();
+        userId.ParameterName = "$userId";
+        command.Parameters.Add(userId);
+
+        var displayName = command.CreateParameter();
+        displayName.ParameterName = "$displayName";
+        command.Parameters.Add(displayName);
+
+        foreach (var item in events)
+        {
+            at.Value = item.At;
+            kind.Value = item.Kind;
+            world.Value = item.World;
+            instance.Value = item.Instance;
+            userId.Value = item.UserId;
+            displayName.Value = item.DisplayName;
+            await command.ExecuteNonQueryAsync(token);
+        }
+
+        await transaction.CommitAsync(token);
+    }
+
+    /// <summary>
+    ///     The events of the last session: everything from its last location change onwards, so replaying
+    ///     them rebuilds the player list the app had before it was closed.
+    /// </summary>
+    public async Task<IReadOnlyList<GameEvent>> LoadSessionAsync(CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  SELECT at, kind, world, instance, user_id, display_name
+                                  FROM game_events
+                                  WHERE id >= COALESCE(
+                                      (SELECT MAX(id) FROM game_events WHERE kind IN ('reset', 'location', 'instance')),
+                                      0)
+                                  ORDER BY id
+                                  """;
+
+            var events = new List<GameEvent>();
+            await using var reader = await command.ExecuteReaderAsync(token);
+            while (await reader.ReadAsync(token))
+                events.Add(new(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetString(4), reader.GetString(5)));
+
+            return events;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the stored instance events"))
+            .GetOrElse(_ => []);
+    }
+
+    /// <summary>Every cached profile, so the list is complete before the API is asked anything.</summary>
+    public IReadOnlyDictionary<string, PlayerProfile> LoadPlayers()
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                "SELECT id, display_name, avatar_url, date_joined, tags, platform, last_activity FROM players";
+
+            var players = new Dictionary<string, PlayerProfile>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var id = reader.GetString(0);
+                players[id] = new(id, reader.GetString(1), reader.GetStringOrNull(2), reader.GetStringOrNull(3),
+                    ParseTags(reader.GetStringOrNull(4)), reader.GetStringOrNull(5), reader.GetStringOrNull(6));
+            }
+
+            return players;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the stored player profiles"))
+            .GetOrElse(_ => new Dictionary<string, PlayerProfile>());
+    }
+
+    public async Task SavePlayerAsync(PlayerProfile player, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  INSERT INTO players (id, display_name, avatar_url, date_joined, tags, platform,
+                                                       last_activity, fetched_at)
+                                  VALUES ($id, $displayName, $avatarUrl, $dateJoined, $tags, $platform, $lastActivity,
+                                          $fetchedAt)
+                                  ON CONFLICT (id) DO UPDATE SET
+                                      display_name = excluded.display_name,
+                                      avatar_url = excluded.avatar_url,
+                                      date_joined = excluded.date_joined,
+                                      tags = excluded.tags,
+                                      platform = excluded.platform,
+                                      last_activity = excluded.last_activity,
+                                      fetched_at = excluded.fetched_at
+                                  """;
+
+            command.Parameters.AddWithValue("$id", player.Id);
+            command.Parameters.AddWithValue("$displayName", player.DisplayName);
+            command.Parameters.AddWithValue("$avatarUrl", (object?)player.AvatarUrl ?? DBNull.Value);
+            command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
+            command.Parameters.AddWithValue("$tags", JsonSerializer.Serialize(player.Tags, TagsFormat));
+            command.Parameters.AddWithValue("$platform", (object?)player.Platform ?? DBNull.Value);
+            command.Parameters.AddWithValue("$lastActivity", (object?)player.LastActivity ?? DBNull.Value);
+            command.Parameters.AddWithValue("$fetchedAt", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not store the profile of {UserId}", player.Id));
+    }
+
+    private void Prune()
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddDays(-RetentionDays).ToUnixTimeMilliseconds();
+
+        Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM game_events WHERE created_at < $cutoff";
+            command.Parameters.AddWithValue("$cutoff", cutoff);
+            command.ExecuteNonQuery();
+        }).OnFailure(ex => Log.Warning(ex, "Could not prune the stored instance events"));
+    }
+
+    private static string[] ParseTags(string? json) =>
+        string.IsNullOrEmpty(json)
+            ? []
+            : Try.Run(() => JsonSerializer.Deserialize<string[]>(json, TagsFormat)).GetOrNull() ?? [];
+
+    private static SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(ConnectionString);
+        connection.Open();
+        return connection;
+    }
+
+    private static async Task<SqliteConnection> OpenAsync(CancellationToken token)
+    {
+        var connection = new SqliteConnection(ConnectionString);
+        await connection.OpenAsync(token);
+        return connection;
+    }
+}
+
+internal static class SqliteReaderExtensions
+{
+    public static string? GetStringOrNull(this SqliteDataReader reader, int ordinal) =>
+        reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+}

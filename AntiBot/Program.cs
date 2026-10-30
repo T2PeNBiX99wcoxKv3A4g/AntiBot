@@ -69,7 +69,12 @@ internal static class Program
             SettingsService.Instance.Load();
             _ = VrchatLogService.Instance;
 
-            // Construct the auth service first: the instance list subscribes to it.
+            // The instance events and the player cache live in the local database.
+            Database.Instance.Initialize();
+            _ = PlayerService.Instance;
+            PlayerService.Instance.Start();
+
+            // Construct the auth service before the instance list, which subscribes to it.
             _ = AuthService.Instance;
             AuthService.Instance.Initialize();
 

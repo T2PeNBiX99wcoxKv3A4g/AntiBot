@@ -1,11 +1,15 @@
 namespace AntiBot.Models;
 
-/// <summary>One player in the current instance.</summary>
+/// <summary>One player in the current instance, with whatever the cached profile adds.</summary>
 public sealed record InstanceUser(
     string UserId,
     string Name,
     bool Local,
-    string JoinedAt);
+    string JoinedAt,
+    string? AvatarUrl = null,
+    string? Trust = null,
+    string? DateJoined = null,
+    string? Platform = null);
 
 /// <summary>
 ///     Who is in the instance, and which instance that is. <see cref="Source" /> says whether the list

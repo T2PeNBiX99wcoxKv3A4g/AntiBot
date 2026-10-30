@@ -28,6 +28,7 @@
     <ItemGroup>
         <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
         <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.14" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
         <PackageReference Include="Photino.NET" Version="4.0.16" />
         <!-- PhotinoNETUtils is referenced as a DLL, so its own dependencies have to be listed here too. -->
         <PackageReference Include="securifybv.ShellLink" Version="0.1.0" />

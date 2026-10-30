@@ -86,6 +86,18 @@ internal sealed class VrchatApi : IDisposable
         return (Deserialize(body, VrchatJsonContext.Default.ApiInstance), null);
     }
 
+    /// <summary>One player's profile. This endpoint is tightly rate limited, so callers must cache.</summary>
+    public async Task<(ApiUser? User, string? Error)> GetUserAsync(string userId, CancellationToken token)
+    {
+        using var response = await _http.GetAsync(new Uri(BaseUri, $"users/{Uri.EscapeDataString(userId)}"), token);
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        if (!response.IsSuccessStatusCode)
+            return (null, Describe(response.StatusCode, body));
+
+        return (Deserialize(body, VrchatJsonContext.Default.ApiUser), null);
+    }
+
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
     public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
     {

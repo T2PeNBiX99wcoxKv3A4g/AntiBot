@@ -6,6 +6,11 @@ export interface InstanceUser {
     name: string;
     local: boolean;
     joinedAt: string;
+    /** From the cached VRChat profile; absent until it was fetched. */
+    avatarUrl?: string;
+    trust?: string;
+    dateJoined?: string;
+    platform?: string;
 }
 
 export interface InstanceSnapshot {
