@@ -8,7 +8,8 @@ import {
     onInstanceChanged,
 } from "../api/instance";
 import {desktopAvailable} from "../api/logs";
-import {UsersIcon} from "../components/Icons";
+import {openUrl} from "../api/system";
+import {EyeIcon, EyeOffIcon, UsersIcon} from "../components/Icons";
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage() {
@@ -38,7 +39,7 @@ export function InstancePage() {
         };
     }, []);
 
-    const {running, world, instance, users, source, worldName, userCount, capacity} = snapshot;
+    const {running, world, users, source, worldName, userCount, capacity, worldId = "", worldThumbnail} = snapshot;
 
     return (
         <Page>
@@ -53,9 +54,19 @@ export function InstancePage() {
                 <>
                     <Summary>
                         <World>
-                            <Label>Instance</Label>
-                            <h2>{worldName || world || "—"}</h2>
-                            {instance && <InstanceId title={instance}>{instance}</InstanceId>}
+                            <WorldThumb $src={worldThumbnail}/>
+                            <WorldText>
+                                <Label>World</Label>
+                                <WorldName
+                                    $link={worldId.length > 0}
+                                    onClick={worldId
+                                        ? () => void openUrl(`https://vrchat.com/home/world/${worldId}`)
+                                        : undefined}
+                                    title={worldId ? "Open on vrchat.com" : undefined}
+                                >
+                                    {worldName || world || "—"}
+                                </WorldName>
+                            </WorldText>
                         </World>
 
                         <Meta>
@@ -77,7 +88,7 @@ export function InstancePage() {
                     <ListCard>
                         <ListHeader>
                             <span>Name</span>
-                            <span>User ID</span>
+                            <span>Avatar</span>
                             <span>Joined</span>
                         </ListHeader>
 
@@ -101,7 +112,6 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
     return (
         <Row $local={user.local} onClick={() => onSelect(user)}>
             <Name>
-                <Avatar $src={user.avatarUrl}>{user.name.slice(0, 1).toUpperCase()}</Avatar>
                 <NameText>
                     <span title={[user.platform, user.dateJoined && `joined VRChat ${user.dateJoined}`]
                         .filter(Boolean).join(" · ")}>
@@ -111,7 +121,9 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
                     {user.local && <You>you</You>}
                 </NameText>
             </Name>
-            <Id title={user.userId}>{user.userId}</Id>
+            <AvatarCell>
+                {user.avatarUrl ? <AvatarLarge $src={user.avatarUrl}/> : <Dash>—</Dash>}
+            </AvatarCell>
             <Time>{user.joinedAt || "—"}</Time>
         </Row>
     );
@@ -119,6 +131,8 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
 
 /** The player's profile, with the avatar they are wearing as the API last reported it. */
 function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void }) {
+    const [revealed, setRevealed] = useState(false);
+
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             if (event.key === "Escape") onClose();
@@ -145,7 +159,19 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
                     </Badges>
 
                     <Fields>
-                        <Field label="User ID" value={user.userId}/>
+                        <SecretField>
+                            <span>User ID</span>
+                            <SecretValue>
+                                <code>{revealed ? user.userId : "••••••••••••••••"}</code>
+                                <RevealButton
+                                    aria-label={revealed ? "Hide user ID" : "Show user ID"}
+                                    onClick={() => setRevealed((value) => !value)}
+                                    type="button"
+                                >
+                                    {revealed ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+                                </RevealButton>
+                            </SecretValue>
+                        </SecretField>
                         <Field label="Platform" value={user.platform ?? "—"}/>
                         <Field
                             label="VRChat account since"
@@ -204,14 +230,39 @@ const Summary = styled.section`
 
 const World = styled.div`
     display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+`;
+
+const WorldThumb = styled.div<{ $src?: string }>`
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+`;
+
+const WorldText = styled.div`
+    display: flex;
     flex-direction: column;
     gap: 3px;
     min-width: 0;
+`;
 
-    h2 {
-        font-size: 16px;
-        font-weight: 600;
-        letter-spacing: -0.01em;
+const WorldName = styled.h2<{ $link: boolean }>`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: ${({$link}) => $link ? "pointer" : "default"};
+
+    &:hover {
+        color: ${({$link}) => $link ? "var(--accent-primary)" : "inherit"};
     }
 `;
 
@@ -221,16 +272,6 @@ const Label = styled.span`
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`;
-
-const InstanceId = styled.code`
-    max-width: 760px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 10px;
 `;
 
 const Meta = styled.div`
@@ -286,7 +327,7 @@ const ListCard = styled.section`
 
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 74px;
+    grid-template-columns: minmax(0, 1fr) 52px 74px;
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
@@ -305,7 +346,7 @@ const Rows = styled.div`
 
 const Row = styled.div<{ $local: boolean }>`
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 74px;
+    grid-template-columns: minmax(0, 1fr) 52px 74px;
     gap: 12px;
     padding: 10px 16px;
     border-left: 2px solid ${({$local}) => $local ? "var(--accent-primary)" : "transparent"};
@@ -330,20 +371,25 @@ const Name = styled.span`
     font-weight: 500;
 `;
 
-const Avatar = styled.span<{ $src?: string }>`
-    display: inline-flex;
+const AvatarCell = styled.span`
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-    border-radius: 50%;
+    justify-content: flex-end;
+`;
+
+const AvatarLarge = styled.span<{ $src?: string }>`
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
     box-shadow: inset 0 0 0 1px var(--border-color);
-    color: ${({$src}) => $src ? "transparent" : "var(--text-muted)"};
-    font-size: 10px;
-    font-weight: 600;
+`;
+
+const Dash = styled.span`
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
 `;
 
 const NameText = styled.span`
@@ -408,16 +454,6 @@ function trustBackground(trust: string) {
             return "rgba(148, 163, 184, 0.14)";
     }
 }
-
-const Id = styled.span`
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    user-select: text;
-`;
 
 const Time = styled.span`
     text-align: right;
@@ -511,6 +547,55 @@ const FieldRow = styled.div`
         font-family: var(--font-mono);
         font-size: 11px;
         user-select: text;
+    }
+`;
+
+const SecretField = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    span {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+`;
+
+const SecretValue = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        user-select: text;
+    }
+`;
+
+const RevealButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
     }
 `;
 

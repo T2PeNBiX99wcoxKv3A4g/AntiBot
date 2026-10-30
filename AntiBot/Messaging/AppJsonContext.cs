@@ -34,6 +34,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(DeviceCodePayload))]
 [JsonSerializable(typeof(DevicePollRequest))]
 [JsonSerializable(typeof(DevicePollPayload))]
+[JsonSerializable(typeof(OpenUrlRequest))]
 [JsonSerializable(typeof(InstanceSnapshot))]
 [JsonSerializable(typeof(InstanceUser))]
 [JsonSerializable(typeof(VrchatLogLine))]

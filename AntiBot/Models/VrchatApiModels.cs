@@ -10,11 +10,14 @@ internal sealed record ApiAuthUser(
     string? DisplayName,
     string? CurrentAvatarImageUrl,
     string? CurrentAvatarThumbnailImageUrl,
+    string? UserIcon,
+    string? ProfilePicOverride,
+    string? ProfilePicOverrideThumbnail,
     string? StatusDescription,
     string? Location,
     string[]? RequiresTwoFactorAuth);
 
-internal sealed record ApiWorld(string? Id, string? Name);
+internal sealed record ApiWorld(string? Id, string? Name, string? ThumbnailImageUrl, string? ImageUrl);
 
 internal sealed record ApiInstanceUser(
     string? Id,

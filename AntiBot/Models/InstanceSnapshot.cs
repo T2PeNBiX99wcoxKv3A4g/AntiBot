@@ -24,4 +24,6 @@ public sealed record InstanceSnapshot(
     string Source = "log",
     string WorldName = "",
     int UserCount = 0,
-    int Capacity = 0);
+    int Capacity = 0,
+    string WorldId = "",
+    string WorldThumbnail = "");

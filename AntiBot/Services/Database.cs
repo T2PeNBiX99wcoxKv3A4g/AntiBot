@@ -1,4 +1,3 @@
-using System.Text.Json;
 using AntiBot.Models;
 using Microsoft.Data.Sqlite;
 using PhotinoNetUtils.Extensions;
@@ -19,18 +18,20 @@ internal sealed class Database : Singleton<Database>
 {
     private const int RetentionDays = 30;
 
+    private static readonly string DatabasePath = Path.Combine(Constants.SettingsDirectory, "antibot.db");
+
     private static readonly string ConnectionString = new SqliteConnectionStringBuilder
     {
-        DataSource = Path.Combine(Constants.DataDirectory, "antibot.db"),
+        DataSource = DatabasePath,
         Mode = SqliteOpenMode.ReadWriteCreate,
         Pooling = true
     }.ToString();
 
-    private static readonly JsonSerializerOptions TagsFormat = new();
-
     /// <summary>Creates the schema and drops expired events. Called once, before the services start.</summary>
     public void Initialize()
     {
+        MoveFromTheDataFolder();
+
         Try.Run(() =>
         {
             using var connection = Open();
@@ -225,7 +226,7 @@ internal sealed class Database : Singleton<Database>
             command.Parameters.AddWithValue("$avatarUrl", (object?)player.AvatarUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$avatarImageUrl", (object?)player.AvatarImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
-            command.Parameters.AddWithValue("$tags", JsonSerializer.Serialize(player.Tags, TagsFormat));
+            command.Parameters.AddWithValue("$tags", string.Join(',', player.Tags));
             command.Parameters.AddWithValue("$platform", (object?)player.Platform ?? DBNull.Value);
             command.Parameters.AddWithValue("$lastActivity", (object?)player.LastActivity ?? DBNull.Value);
             command.Parameters.AddWithValue("$fetchedAt", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -250,10 +251,30 @@ internal sealed class Database : Singleton<Database>
         }).OnFailure(ex => Log.Warning(ex, "Could not prune the stored instance events"));
     }
 
-    private static string[] ParseTags(string? json) =>
-        string.IsNullOrEmpty(json)
-            ? []
-            : Try.Run(() => JsonSerializer.Deserialize<string[]>(json, TagsFormat)).GetOrNull() ?? [];
+    /// <summary>
+    ///     Tags are simple identifiers (<c>system_trust_known</c>), so a comma-separated column keeps the
+    ///     database free of the reflection-based serializer the trimmed build turns off.
+    /// </summary>
+    private static string[] ParseTags(string? tags) =>
+        string.IsNullOrEmpty(tags) ? [] : tags.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+    /// <summary>Moves the database an older build left in the data folder, next to the settings instead.</summary>
+    private void MoveFromTheDataFolder()
+    {
+        var legacy = Path.Combine(Constants.DataDirectory, "antibot.db");
+        if (!File.Exists(legacy) || File.Exists(DatabasePath))
+            return;
+
+        foreach (var suffix in new[] { "", "-wal", "-shm" })
+        {
+            var from = legacy + suffix;
+            if (!File.Exists(from))
+                continue;
+
+            Try.Run(() => File.Move(from, DatabasePath + suffix, true))
+                .OnFailure(ex => Log.Warning(ex, "Could not move {File} next to the settings", from));
+        }
+    }
 
     private static SqliteConnection Open()
     {

@@ -1,6 +1,7 @@
 using AntiBot.Messaging;
 using JetBrains.Annotations;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -25,11 +26,30 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
 
     public AppInfoService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
-    private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
-        context.Request.Type == "app.info"
-            ? Task.FromResult<NativeResponse?>(context.Reply("app.info.result",
-                new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners)))
-            : Task.FromResult<NativeResponse?>(null);
+    private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
+    {
+        "app.info" => Task.FromResult<NativeResponse?>(context.Reply("app.info.result",
+            new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners))),
+        "system.openUrl" => Task.FromResult<NativeResponse?>(OpenUrl(context)),
+        _ => Task.FromResult<NativeResponse?>(null)
+    };
+
+    /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
+    private static NativeResponse OpenUrl(NativeContext context)
+    {
+        var url = context.Payload<OpenUrlRequest>()?.Url;
+
+        if (!IsVrchatLink(url))
+            return context.Fail("system.openUrl.result", "Only VRChat links can be opened.");
+
+        SystemLauncher.Open(url!);
+        return context.Reply("system.openUrl.result", new OkPayload());
+    }
+
+    private static bool IsVrchatLink(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
+        uri.Scheme == Uri.UriSchemeHttps &&
+        (uri.Host == "vrchat.com" || uri.Host.EndsWith(".vrchat.com", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>The executable's write time, which a replacement binary always changes.</summary>
     private static string ResolveBuildToken()

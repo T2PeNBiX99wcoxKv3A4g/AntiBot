@@ -17,9 +17,18 @@ export interface AuthSnapshot {
     user?: Account;
     storage: AuthStorage;
     twoFactorMethods: string[];
+    /** Whether the platform can protect the session without a password (DPAPI, keyring). */
+    systemStorage: boolean;
+    systemStorageName: string;
 }
 
-export const signedOut: AuthSnapshot = {state: "loggedOut", storage: "none", twoFactorMethods: []};
+export const signedOut: AuthSnapshot = {
+    state: "loggedOut",
+    storage: "none",
+    twoFactorMethods: [],
+    systemStorage: false,
+    systemStorageName: "",
+};
 
 export interface DeviceCode {
     deviceCode: string;

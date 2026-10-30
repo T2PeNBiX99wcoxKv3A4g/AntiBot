@@ -128,3 +128,21 @@ export function QrIcon({size = 18}: IconProps) {
         </svg>
     );
 }
+
+export function EyeIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6z"/>
+            <circle cx="12" cy="12" r="2.6"/>
+        </svg>
+    );
+}
+
+export function EyeOffIcon({size = 16}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M4 4l16 16"/>
+            <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c6.1 0 9.5 7 9.5 7a16 16 0 0 1-3 3.6M6.2 7.3A16.6 16.6 0 0 0 2.5 12s3.4 7 9.5 7a10.4 10.4 0 0 0 4-.8"/>
+        </svg>
+    );
+}

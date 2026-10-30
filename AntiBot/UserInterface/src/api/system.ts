@@ -13,3 +13,13 @@ export async function getAppInfo(): Promise<AppInfo> {
 
     return await Native.request<AppInfo>("app.info");
 }
+
+/** Hands a VRChat link to the default browser; the host refuses anything else. */
+export async function openUrl(url: string): Promise<void> {
+    if (!Native.available) {
+        window.open(url, "_blank", "noreferrer");
+        return;
+    }
+
+    await Native.request("system.openUrl", {url});
+}

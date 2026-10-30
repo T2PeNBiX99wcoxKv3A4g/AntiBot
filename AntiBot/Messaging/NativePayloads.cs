@@ -24,7 +24,13 @@ internal sealed record WindowStatePayload(bool Maximized);
 internal sealed record WindowResizeRequest(string Direction);
 
 /// <summary>Body for <c>auth.state</c> and for the <c>auth.changed</c> event.</summary>
-internal sealed record AuthPayload(string State, VrchatAccount? User, string Storage, string[] TwoFactorMethods);
+internal sealed record AuthPayload(
+    string State,
+    VrchatAccount? User,
+    string Storage,
+    string[] TwoFactorMethods,
+    bool SystemStorage,
+    string SystemStorageName);
 
 /// <summary>Payload for <c>auth.login</c>.</summary>
 internal sealed record AuthLoginRequest(string Username, string Password);
@@ -46,3 +52,6 @@ internal sealed record DevicePollRequest(string DeviceCode);
 
 /// <summary>Body for <c>auth.device.poll</c>: pending with a reason, or the signed-in session.</summary>
 internal sealed record DevicePollPayload(bool Approved, string? Reason, AuthPayload? Auth);
+
+/// <summary>Payload for <c>system.openUrl</c>: a VRChat link to hand to the default browser.</summary>
+internal sealed record OpenUrlRequest(string Url);

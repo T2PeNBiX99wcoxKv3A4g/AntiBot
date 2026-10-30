@@ -462,12 +462,22 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                     "api",
                     api.World?.Name ?? "",
                     count,
-                    api.Capacity ?? 0);
+                    api.Capacity ?? 0,
+                    api.WorldId ?? api.World?.Id ?? "",
+                    api.World?.ThumbnailImageUrl ?? api.World?.ImageUrl ?? "");
             }
 
             return new InstanceSnapshot(_running, _world, _instance,
-                _users.Select(user => Enrich(user.UserId, user.Name)).ToArray());
+                _users.Select(user => Enrich(user.UserId, user.Name)).ToArray(),
+                "log", "", 0, 0, WorldIdOf(_instance));
         }
+    }
+
+    /// <summary>The world id at the front of an instance location (<c>wrld_…:123</c>).</summary>
+    private static string WorldIdOf(string instance)
+    {
+        var colon = instance.IndexOf(':');
+        return colon > 0 ? instance[..colon] : "";
     }
 
     /// <summary>One player, with the cached profile and the log's join time and local flag.</summary>

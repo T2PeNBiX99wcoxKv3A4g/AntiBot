@@ -21,6 +21,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     public void Load()
     {
+        MoveFromTheDataFolder();
+
         if (!File.Exists(FilePath))
             return;
 
@@ -34,6 +36,20 @@ internal sealed class SettingsService : Singleton<SettingsService>
             {
                 LogDirectory = directory
             };
+    }
+
+    /// <summary>
+    ///     Older builds wrote the settings into the data folder, next to the session; move them once so
+    ///     the settings and the key no longer share a directory.
+    /// </summary>
+    private void MoveFromTheDataFolder()
+    {
+        var legacy = Path.Combine(Constants.DataDirectory, "settings.json");
+        if (!File.Exists(legacy) || File.Exists(FilePath))
+            return;
+
+        Try.Run(() => File.Move(legacy, FilePath, true))
+            .OnFailure(ex => Log.Warning(ex, "Could not move the settings next to the other settings files"));
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch

@@ -24,6 +24,8 @@ export interface InstanceSnapshot {
     worldName?: string;
     userCount?: number;
     capacity?: number;
+    worldId?: string;
+    worldThumbnail?: string;
 }
 
 export const emptyInstance: InstanceSnapshot = {running: false, world: "", instance: "", users: []};

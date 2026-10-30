@@ -268,8 +268,7 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage storage;
         lock (_gate)
         {
-            _account = new VrchatAccount(id, user.DisplayName ?? id,
-                user.CurrentAvatarImageUrl ?? user.CurrentAvatarThumbnailImageUrl, user.StatusDescription);
+            _account = new VrchatAccount(id, user.DisplayName ?? id, ProfileIcon(user), user.StatusDescription);
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
             _state = "loggedIn";
@@ -407,8 +406,16 @@ internal sealed class AuthService : Singleton<AuthService>
     private AuthPayload Snapshot()
     {
         lock (_gate)
-            return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods);
+            return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods,
+                AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName);
     }
+
+    /// <summary>
+    ///     The account's profile picture: its own icon when it has one, otherwise the avatar's thumbnail.
+    /// </summary>
+    private static string? ProfileIcon(ApiAuthUser user) =>
+        user.UserIcon ?? user.ProfilePicOverride ?? user.ProfilePicOverrideThumbnail ??
+        user.CurrentAvatarThumbnailImageUrl;
 
     private static string StorageName(AuthStorage storage) => storage switch
     {

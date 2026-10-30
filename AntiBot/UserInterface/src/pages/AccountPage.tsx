@@ -57,16 +57,23 @@ export function AccountPage() {
         }
     };
 
+    let content;
+
     if (auth.state === "loggedIn" && auth.user)
-        return <Profile auth={auth} busy={busy} error={error} run={run}/>;
+        content = <Profile auth={auth} busy={busy} error={error} run={run}/>;
+    else if (auth.state === "locked")
+        content = <UnlockForm busy={busy} error={error} run={run}/>;
+    else if (auth.state === "twoFactor")
+        content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}/>;
+    else
+        content = <LoginForm busy={busy} error={error} run={run} onSignedIn={setAuth}/>;
 
-    if (auth.state === "locked")
-        return <UnlockForm busy={busy} error={error} run={run}/>;
-
-    if (auth.state === "twoFactor")
-        return <TwoFactorForm auth={auth} busy={busy} error={error} run={run}/>;
-
-    return <LoginForm busy={busy} error={error} run={run} onSignedIn={setAuth}/>;
+    return (
+        <Page>
+            {content}
+            <StorageChoice auth={auth} busy={busy} error={error} run={run}/>
+        </Page>
+    );
 }
 
 function LoginForm({busy, error, run, onSignedIn}: {
@@ -85,7 +92,7 @@ function LoginForm({busy, error, run, onSignedIn}: {
     };
 
     return (
-        <Page>
+        <>
             <Card>
                 <CardHead>
                     <UserIcon size={20}/>
@@ -139,7 +146,7 @@ function LoginForm({busy, error, run, onSignedIn}: {
             </Card>
 
             {device && <DeviceLogin onSignedIn={onSignedIn}/>}
-        </Page>
+        </>
     );
 }
 
@@ -166,7 +173,7 @@ function TwoFactorForm({auth, busy, error, run}: {
     };
 
     return (
-        <Page>
+        <>
             <Card>
                 <CardHead>
                     <ShieldIcon size={20}/>
@@ -207,7 +214,7 @@ function TwoFactorForm({auth, busy, error, run}: {
                     </Actions>
                 </Form>
             </Card>
-        </Page>
+        </>
     );
 }
 
@@ -220,7 +227,7 @@ function UnlockForm({busy, error, run}: { busy: boolean; error: string; run: Run
     };
 
     return (
-        <Page>
+        <>
             <Card>
                 <CardHead>
                     <KeyIcon size={20}/>
@@ -261,7 +268,7 @@ function UnlockForm({busy, error, run}: { busy: boolean; error: string; run: Run
                     </Actions>
                 </Form>
             </Card>
-        </Page>
+        </>
     );
 }
 
@@ -274,14 +281,13 @@ function Profile({auth, busy, error, run}: {
     const user = auth.user!;
 
     return (
-        <Page>
+        <>
             <Card>
                 <ProfileRow>
                     <Avatar $src={user.avatarUrl}/>
                     <Identity>
                         <h2>{user.displayName}</h2>
                         <p>{user.statusDescription || "Signed in to VRChat"}</p>
-                        <UserId>{user.id}</UserId>
                     </Identity>
                     <Secondary disabled={busy} onClick={() => void run(logout)} type="button">
                         Sign out
@@ -290,26 +296,33 @@ function Profile({auth, busy, error, run}: {
 
                 {error && <ErrorText>{error}</ErrorText>}
             </Card>
-
-            <StorageChoice storage={auth.storage} busy={busy} error={error} run={run}/>
-        </Page>
+        </>
     );
 }
 
-function StorageChoice({storage, busy, error, run}: {
-    storage: AuthStorage;
+function StorageChoice({auth, busy, error, run}: {
+    auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
 }) {
-    const [mode, setMode] = useState<AuthStorage>(storage === "none" ? "system" : storage);
+    const available = auth.systemStorage;
+    const systemName = auth.systemStorageName || "System protection";
+    const [mode, setMode] = useState<AuthStorage>(
+        auth.storage !== "none" ? auth.storage : available ? "system" : "password",
+    );
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [localError, setLocalError] = useState("");
 
-    const isWindows = typeof navigator !== "undefined" && navigator.userAgent.includes("Windows");
+    const signedIn = auth.state === "loggedIn";
 
     const save = () => {
+        if (!signedIn) {
+            setLocalError("Sign in first.");
+            return;
+        }
+
         if (mode === "password") {
             if (password.length < 1) {
                 setLocalError("Enter the password that unlocks the session.");
@@ -333,8 +346,8 @@ function StorageChoice({storage, busy, error, run}: {
                 <div>
                     <h2>Keep the session between launches</h2>
                     <p>
-                        The stored file is only the VRChat session cookie, never your password. It lives in
-                        the app's local data folder, not in the roaming settings.
+                        Only the VRChat session cookie is stored, never your password. It is written beside
+                        the settings, and unlocking it is what avoids signing in — and answering 2FA — again.
                     </p>
                 </div>
             </CardHead>
@@ -351,21 +364,26 @@ function StorageChoice({storage, busy, error, run}: {
                     </p>
                 </Option>
 
-                <Option $active={mode === "system"} onClick={() => setMode("system")} type="button">
+                <Option
+                    $active={mode === "system"}
+                    $disabled={!available}
+                    onClick={() => available && setMode("system")}
+                    type="button"
+                >
                     <OptionHead>
-                        <strong>{isWindows ? "Windows DPAPI" : "Owner-only file"}</strong>
-                        <Tag>{isWindows ? "recommended" : "no encryption"}</Tag>
+                        <strong>{systemName}</strong>
+                        <Tag>{available ? "recommended" : "unavailable"}</Tag>
                     </OptionHead>
-                    {isWindows ? (
+                    {available ? (
                         <p>
-                            Encrypted with Windows DPAPI for the current Windows account. Another machine or
-                            another Windows user cannot decrypt it. Any program running as you can, which is
-                            the price of unlocking without asking.
+                            {systemName === "Windows DPAPI"
+                                ? "Encrypted with Windows DPAPI for the current Windows account. Another machine or another Windows user cannot decrypt it. Any program running as you can, which is the price of unlocking without asking."
+                                : "Held in the desktop keyring (Secret Service), unlocked with your login session. Any program running as you can read it, which is the price of unlocking without asking."}
                         </p>
                     ) : (
                         <p>
-                            Written with owner-only permissions (0600). There is no DPAPI on Linux, so the
-                            file is not encrypted: any process running as you, or root, can read it.
+                            This system has no equivalent of DPAPI and no Secret Service keyring, so the
+                            session cannot be protected without a password here.
                         </p>
                     )}
                 </Option>
@@ -408,10 +426,12 @@ function StorageChoice({storage, busy, error, run}: {
             {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
 
             <Actions>
-                <Primary disabled={busy} onClick={save} type="button">
+                <Primary disabled={busy || !signedIn} onClick={save} type="button">
                     {busy ? "Saving…" : "Save"}
                 </Primary>
-                <Muted>Currently: {storageLabel(storage)}</Muted>
+                <Muted>
+                    {signedIn ? `Currently: ${storageLabel(auth.storage)}` : "Sign in to change this."}
+                </Muted>
             </Actions>
         </Card>
     );
@@ -729,19 +749,13 @@ const Identity = styled.div`
     }
 `;
 
-const UserId = styled.code`
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-muted);
-`;
-
 const Options = styled.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
 `;
 
-const Option = styled.button<{ $active: boolean }>`
+const Option = styled.button<{ $active: boolean; $disabled?: boolean }>`
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -752,7 +766,8 @@ const Option = styled.button<{ $active: boolean }>`
     color: var(--text-primary);
     font: inherit;
     text-align: left;
-    cursor: pointer;
+    cursor: ${({$disabled}) => $disabled ? "not-allowed" : "pointer"};
+    opacity: ${({$disabled}) => $disabled ? 0.55 : 1};
 
     p {
         font-size: 11px;
