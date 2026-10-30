@@ -77,7 +77,8 @@ internal static class Program
             using var tray = CreateTray(manager.IconPath);
 
             manager.MainWindowCreated +=
-                [SuppressMessage("ReSharper", "AccessToDisposedClosure")]() =>
+                [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
+                () =>
                     singleInstance.StartServer(_ => manager.ShowMainWindow());
 
             manager.CreateMainWindow();
