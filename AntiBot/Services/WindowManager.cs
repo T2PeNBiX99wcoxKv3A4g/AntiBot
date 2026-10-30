@@ -91,7 +91,13 @@ internal sealed class WindowManager : Singleton<WindowManager>
         window.RegisterWindowCreatedHandler((_, _) =>
         {
             if (OperatingSystem.IsWindows())
+            {
                 WindowFrame.RemoveTitleBar(window.WindowHandle);
+
+                // Photino drops a Start Menu shortcut for the toast registration and never revisits
+                // it, so a build that moved or changed its icon would keep the old one.
+                StartMenuShortcut.Refresh(Constants.WindowTitle);
+            }
             else if (OperatingSystem.IsLinux())
             {
                 LinuxWindow.UseClientSideFrame(window.Title);
