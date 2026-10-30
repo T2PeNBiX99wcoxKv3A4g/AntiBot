@@ -26,13 +26,13 @@ internal sealed class WindowManager : Singleton<WindowManager>
     /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
     private bool _mainWindowReady;
 
+    public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
+
     /// <summary>
     ///     Whether the interface has to paint the window's rounded corners, because the platform leaves
     ///     an undecorated window without a frame (Linux).
     /// </summary>
     public bool DrawsWindowCorners { get; private set; }
-
-    public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     /// <summary>Address the window loads the interface from, set before the window is created.</summary>
     public string AppUrl { get; set; } = "";
@@ -211,7 +211,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
             return;
         }
 
-        var maximized = window.Maximized != true;
+        var maximized = !window.Maximized;
         window.SetMaximized(maximized);
         NotifyWindowState(maximized);
     }

@@ -1,7 +1,5 @@
 using System.Text.RegularExpressions;
-using AntiBot.Messaging;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -37,7 +35,6 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         bool changed;
 
         lock (_gate)
-        {
             if (!batch.Running)
             {
                 changed = ResetSession();
@@ -54,7 +51,6 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 foreach (var line in batch.Lines)
                     changed |= Apply(line);
             }
-        }
 
         if (changed)
             WindowManager.Instance.NotifyMainWindow("instance.changed", Snapshot());
@@ -126,7 +122,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             if (index < 0 || _users[index].Local)
                 return false;
 
-            _users[index] = _users[index] with { Local = true };
+            _users[index] = _users[index] with
+            {
+                Local = true
+            };
             return true;
         }
 

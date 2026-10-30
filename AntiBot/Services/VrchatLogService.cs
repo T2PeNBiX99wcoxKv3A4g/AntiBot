@@ -43,17 +43,19 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private bool _dropPartialLine;
 
     private string? _file;
-    private long _lastId;
 
     /// <summary>The file and byte offset last read, kept after closing so it is never read twice.</summary>
     private string? _lastFile;
+
+    private long _lastId;
     private long _lastPosition;
+    private long _processCheckedAt;
+
+    private bool _processRunning;
 
     /// <summary>Last state the viewer was told about, so a start or stop is pushed exactly once.</summary>
     private volatile bool _running;
 
-    private bool _processRunning;
-    private long _processCheckedAt;
     private bool _started;
     private FileStream? _stream;
 
@@ -216,9 +218,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             _stream = stream;
 
             if (resumeAt is { } position && position <= stream.Length)
-            {
                 stream.Seek(position, SeekOrigin.Begin);
-            }
             else
             {
                 // Start near the end, so attaching to a long session does not send megabytes to the page.
@@ -320,8 +320,14 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
         return match.Success
             ? new(++_lastId, match.Groups["time"].Value, match.Groups["level"].Value.ToLowerInvariant(),
-                match.Groups["message"].Value) { Raw = text }
-            : new(++_lastId, "", "", text) { Raw = text };
+                match.Groups["message"].Value)
+            {
+                Raw = text
+            }
+            : new(++_lastId, "", "", text)
+            {
+                Raw = text
+            };
     }
 
     /// <summary>Marks where one session log ends and the next begins; the viewer draws it as a rule.</summary>
@@ -377,14 +383,12 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             return;
 
         lock (_gate)
-        {
             foreach (var line in lines)
             {
                 _buffer.Enqueue(line);
                 if (_buffer.Count > BufferLimit)
                     _buffer.Dequeue();
             }
-        }
     }
 
     private bool HasBufferedLines()

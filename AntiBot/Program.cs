@@ -3,14 +3,14 @@ using System.Runtime.Versioning;
 using AntiBot.Messaging;
 using AntiBot.Services;
 using PhotinoNetUtils;
-using PhotinoNetUtils.Messaging;
-#if !DEBUG
-using PhotinoNetUtils.Hosting;
-#endif
 using PhotinoNetUtils.Interop;
+using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Services;
 using Serilog;
+#if !DEBUG
+using PhotinoNetUtils.Hosting;
+#endif
 
 namespace AntiBot;
 
@@ -76,7 +76,9 @@ internal static class Program
 
             using var tray = CreateTray(manager.IconPath);
 
-            manager.MainWindowCreated += [SuppressMessage("ReSharper", "AccessToDisposedClosure")]() => singleInstance.StartServer(_ => manager.ShowMainWindow());
+            manager.MainWindowCreated +=
+                [SuppressMessage("ReSharper", "AccessToDisposedClosure")]() =>
+                    singleInstance.StartServer(_ => manager.ShowMainWindow());
 
             manager.CreateMainWindow();
             StartTray(tray);
