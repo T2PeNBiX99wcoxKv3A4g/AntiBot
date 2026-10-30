@@ -50,7 +50,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private long _lastPosition;
 
     /// <summary>Last state the viewer was told about, so a start or stop is pushed exactly once.</summary>
-    private bool _running;
+    private volatile bool _running;
 
     private bool _processRunning;
     private long _processCheckedAt;
@@ -96,7 +96,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     {
         while (!token.IsCancellationRequested)
         {
-            if (Poll() is { } batch)
+            if (await PollOnceAsync(token) is { } batch)
             {
                 Try.Run(() => LinesRead?.Invoke(batch))
                     .OnFailure(ex => Log.Warning(ex, "A log line handler failed"));
@@ -117,81 +117,78 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     }
 
     /// <summary>Reads whatever was appended since the last poll; null when nothing changed.</summary>
-    private VrchatLogBatch? Poll()
+    private async Task<VrchatLogBatch?> PollOnceAsync(CancellationToken token)
     {
-        lock (_gate)
+        var directory = SettingsService.Instance.LogDirectory;
+        var directoryChanged = _directory is not null &&
+                               !string.Equals(directory, _directory, StringComparison.OrdinalIgnoreCase);
+
+        if (directoryChanged)
         {
-            var directory = SettingsService.Instance.LogDirectory;
-            var directoryChanged = _directory is not null &&
-                                   !string.Equals(directory, _directory, StringComparison.OrdinalIgnoreCase);
-
-            if (directoryChanged)
-            {
-                Log.Information("Log folder changed to {Directory}", directory);
-                Reset();
-            }
-
-            _directory = directory;
-
-            var running = IsVrchatRunning();
-            var reset = directoryChanged;
-            var stateChanged = directoryChanged;
-
-            if (running != _running)
-            {
-                Log.Information(running
-                    ? "VRChat started; following its log"
-                    : "VRChat stopped; keeping the log on screen");
-                _running = running;
-                stateChanged = true;
-            }
-
-            // Nothing is opened or read while VRChat is not running.
-            if (!running)
-            {
-                if (_file is not null)
-                    CloseFile();
-
-                return reset || stateChanged ? State(directory, reset, []) : null;
-            }
-
-            var newest = FindNewestLog(directory);
-
-            if (newest is null)
-            {
-                if (_file is not null)
-                {
-                    Reset();
-                    reset = true;
-                }
-
-                return reset || stateChanged ? State(directory, reset, []) : null;
-            }
-
-            if (!string.Equals(newest, _file, StringComparison.OrdinalIgnoreCase))
-            {
-                var switched = new List<VrchatLogLine>();
-
-                // Resuming the same file (VRChat relaunched without a new log) continues where it stopped;
-                // a different file is a new session, marked off from what is still on screen.
-                var resumed = string.Equals(newest, _lastFile, StringComparison.OrdinalIgnoreCase);
-                if (!resumed && !reset && _buffer.Count > 0)
-                    switched.Add(AddDivider());
-
-                if (!Attach(newest, resumed ? _lastPosition : null))
-                    return null;
-
-                switched.AddRange(ReadNewLines());
-
-                return State(directory, reset, switched);
-            }
-
-            var lines = ReadNewLines();
-
-            return reset || stateChanged || lines.Count > 0
-                ? State(directory, reset, lines)
-                : null;
+            Log.Information("Log folder changed to {Directory}", directory);
+            Reset();
         }
+
+        _directory = directory;
+
+        var running = IsVrchatRunning();
+        var reset = directoryChanged;
+        var stateChanged = directoryChanged;
+
+        if (running != _running)
+        {
+            Log.Information(running
+                ? "VRChat started; following its log"
+                : "VRChat stopped; keeping the log on screen");
+            _running = running;
+            stateChanged = true;
+        }
+
+        // Nothing is opened or read while VRChat is not running.
+        if (!running)
+        {
+            if (_file is not null)
+                CloseFile();
+
+            return reset || stateChanged ? State(directory, reset, []) : null;
+        }
+
+        var newest = FindNewestLog(directory);
+
+        if (newest is null)
+        {
+            if (_file is not null)
+            {
+                Reset();
+                reset = true;
+            }
+
+            return reset || stateChanged ? State(directory, reset, []) : null;
+        }
+
+        if (!string.Equals(newest, _file, StringComparison.OrdinalIgnoreCase))
+        {
+            var switched = new List<VrchatLogLine>();
+
+            // Resuming the same file (VRChat relaunched without a new log) continues where it stopped;
+            // a different file is a new session, marked off from what is still on screen.
+            var resumed = string.Equals(newest, _lastFile, StringComparison.OrdinalIgnoreCase);
+            if (!resumed && !reset && HasBufferedLines())
+                switched.Add(CreateDivider());
+
+            if (!Attach(newest, resumed ? _lastPosition : null))
+                return null;
+
+            switched.AddRange(await ReadNewLinesAsync(token));
+
+            return State(directory, reset, switched);
+        }
+
+        var lines = await ReadNewLinesAsync(token);
+
+        return reset || stateChanged || lines.Count > 0
+            ? State(directory, reset, lines)
+            : null;
     }
 
     /// <summary>
@@ -241,8 +238,8 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         return false;
     }
 
-    /// <summary>Reads every byte appended since the last read. Callers must hold the gate.</summary>
-    private List<VrchatLogLine> ReadNewLines()
+    /// <summary>Reads every byte appended since the last read, yielding the thread while it waits.</summary>
+    private async Task<List<VrchatLogLine>> ReadNewLinesAsync(CancellationToken token)
     {
         var lines = new List<VrchatLogLine>();
 
@@ -259,13 +256,21 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             Log.Information("VRChat log was truncated; reading it again from the start");
         }
 
-        while (true)
+        while (!token.IsCancellationRequested)
         {
-            var read = Try.Run(() => stream.Read(_readBuffer, 0, _readBuffer.Length)).GetOrNull();
-            if (read <= 0)
+            var attempt = await Try.Run(() =>
+                stream.ReadAsync(_readBuffer, 0, _readBuffer.Length, token));
+
+            if (!attempt.IsSuccess)
+            {
+                Log.Debug(attempt.Exception, "Failed to read the VRChat log");
+                break;
+            }
+
+            if (attempt.Value <= 0)
                 break;
 
-            var decoded = _decoder.GetChars(_readBuffer, 0, read, _charBuffer, 0);
+            var decoded = _decoder.GetChars(_readBuffer, 0, attempt.Value, _charBuffer, 0);
             Append(decoded, lines);
         }
 
@@ -305,12 +310,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             var text = _pending.ToString().TrimEnd('\r');
             _pending.Clear();
 
-            var line = Parse(text);
-            lines.Add(line);
-
-            _buffer.Enqueue(line);
-            if (_buffer.Count > BufferLimit)
-                _buffer.Dequeue();
+            lines.Add(Parse(text));
         }
     }
 
@@ -325,16 +325,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     }
 
     /// <summary>Marks where one session log ends and the next begins; the viewer draws it as a rule.</summary>
-    private VrchatLogLine AddDivider()
-    {
-        var line = new VrchatLogLine(++_lastId, "", "session", "");
-
-        _buffer.Enqueue(line);
-        if (_buffer.Count > BufferLimit)
-            _buffer.Dequeue();
-
-        return line;
-    }
+    private VrchatLogLine CreateDivider() => new(++_lastId, "", "session", "");
 
     /// <summary>Closes the log and drops the unfinished line, keeping the lines already read.</summary>
     private void CloseFile()
@@ -357,7 +348,10 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private void Reset()
     {
         CloseFile();
-        _buffer.Clear();
+
+        lock (_gate)
+            _buffer.Clear();
+
         _lastFile = null;
         _lastPosition = 0;
     }
@@ -365,14 +359,39 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
     private VrchatLogSnapshot Snapshot()
     {
         var directory = SettingsService.Instance.LogDirectory;
-        var running = IsVrchatRunning();
 
         lock (_gate)
-            return new(Directory.Exists(directory), running, _buffer.ToArray());
+            return new(Directory.Exists(directory), _running, _buffer.ToArray());
     }
 
-    private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines) =>
-        new(Directory.Exists(directory), _running, reset, lines);
+    private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines)
+    {
+        Commit(lines);
+        return new(Directory.Exists(directory), _running, reset, lines);
+    }
+
+    /// <summary>Adds a finished batch to what a page mounting later receives. Never held during I/O.</summary>
+    private void Commit(List<VrchatLogLine> lines)
+    {
+        if (lines.Count == 0)
+            return;
+
+        lock (_gate)
+        {
+            foreach (var line in lines)
+            {
+                _buffer.Enqueue(line);
+                if (_buffer.Count > BufferLimit)
+                    _buffer.Dequeue();
+            }
+        }
+    }
+
+    private bool HasBufferedLines()
+    {
+        lock (_gate)
+            return _buffer.Count > 0;
+    }
 
     private NativeResponse OpenFolder(NativeContext context)
     {
