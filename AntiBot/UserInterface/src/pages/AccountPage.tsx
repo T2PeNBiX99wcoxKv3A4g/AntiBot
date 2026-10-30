@@ -105,13 +105,7 @@ function LoginForm({busy, error, run, onSignedIn}: {
                 <Form onSubmit={submit}>
                     <Field>
                         <Label htmlFor="username">Username or email</Label>
-                        <Input
-                            autoComplete="username"
-                            id="username"
-                            onChange={(event) => setUsername(event.target.value)}
-                            placeholder="username"
-                            value={username}
-                        />
+                        <UsernameInput onChange={setUsername} value={username}/>
                     </Field>
 
                     <Field>
@@ -284,7 +278,6 @@ function Profile({auth, busy, error, run}: {
     run: Run;
 }) {
     const user = auth.user!;
-    const [nameVisible, setNameVisible] = useState(false);
 
     return (
         <>
@@ -292,16 +285,7 @@ function Profile({auth, busy, error, run}: {
                 <ProfileRow>
                     <Avatar $src={user.avatarUrl}/>
                     <Identity>
-                        <NameRow>
-                            <h2>{nameVisible ? user.displayName : maskName(user.displayName)}</h2>
-                            <IconButton
-                                aria-label={nameVisible ? "Hide the account name" : "Show the account name"}
-                                onClick={() => setNameVisible((current) => !current)}
-                                type="button"
-                            >
-                                {nameVisible ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
-                            </IconButton>
-                        </NameRow>
+                        <h2>{user.displayName}</h2>
                         <p>{user.statusDescription || "Signed in to VRChat"}</p>
                         {auth.expiresAt && (
                             <p>Session expires {new Date(auth.expiresAt).toLocaleDateString()}</p>
@@ -318,10 +302,29 @@ function Profile({auth, busy, error, run}: {
     );
 }
 
-/** The name as it would look on a password field: the first letter, then dots. */
-function maskName(name: string): string {
-    if (name.length === 0) return "—";
-    return `${name[0]}••••••••`;
+/** The login name, masked like a password until the eye is used. */
+function UsernameInput({value, onChange}: { value: string; onChange: (value: string) => void }) {
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <PasswordWrap>
+            <Input
+                autoComplete="username"
+                id="username"
+                onChange={(event) => onChange(event.target.value)}
+                placeholder="username"
+                type={visible ? "text" : "password"}
+                value={value}
+            />
+            <PasswordReveal
+                aria-label={visible ? "Hide the username" : "Show the username"}
+                onClick={() => setVisible((current) => !current)}
+                type="button"
+            >
+                {visible ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+            </PasswordReveal>
+        </PasswordWrap>
+    );
 }
 
 /** A password field with its own reveal button, instead of relying on the web view's. */
@@ -853,18 +856,6 @@ const Identity = styled.div`
     p {
         font-size: 12px;
         color: var(--text-secondary);
-    }
-`;
-
-const NameRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    h2 {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 `;
 
