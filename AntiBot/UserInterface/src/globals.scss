@@ -55,6 +55,12 @@ button {
   -webkit-appearance: none;
 }
 
+/* The web view's own reveal button does not work here; the account page draws its own. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 html,
 body {
   width: 100%;

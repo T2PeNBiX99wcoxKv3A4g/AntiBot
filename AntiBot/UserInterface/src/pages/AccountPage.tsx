@@ -15,7 +15,7 @@ import {
     unlock,
     verify,
 } from "../api/auth";
-import {KeyIcon, QrIcon, ShieldIcon, UserIcon} from "../components/Icons";
+import {EyeIcon, EyeOffIcon, KeyIcon, QrIcon, ShieldIcon, UserIcon} from "../components/Icons";
 
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<void>;
 
@@ -116,12 +116,10 @@ function LoginForm({busy, error, run, onSignedIn}: {
 
                     <Field>
                         <Label htmlFor="password">Password</Label>
-                        <Input
+                        <PasswordInput
                             autoComplete="current-password"
                             id="password"
-                            onChange={(event) => setPassword(event.target.value)}
-                            placeholder="••••••••"
-                            type="password"
+                            onChange={setPassword}
                             value={password}
                         />
                     </Field>
@@ -251,13 +249,11 @@ function UnlockForm({auth, busy, error, run}: {
                     {!hello && (
                         <Field>
                             <Label htmlFor="unlock-password">Password</Label>
-                            <Input
+                            <PasswordInput
                                 autoComplete="current-password"
                                 autoFocus
                                 id="unlock-password"
-                                onChange={(event) => setPassword(event.target.value)}
-                                placeholder="••••••••"
-                                type="password"
+                                onChange={setPassword}
                                 value={password}
                             />
                         </Field>
@@ -288,6 +284,7 @@ function Profile({auth, busy, error, run}: {
     run: Run;
 }) {
     const user = auth.user!;
+    const [nameVisible, setNameVisible] = useState(false);
 
     return (
         <>
@@ -295,7 +292,16 @@ function Profile({auth, busy, error, run}: {
                 <ProfileRow>
                     <Avatar $src={user.avatarUrl}/>
                     <Identity>
-                        <h2>{user.displayName}</h2>
+                        <NameRow>
+                            <h2>{nameVisible ? user.displayName : maskName(user.displayName)}</h2>
+                            <IconButton
+                                aria-label={nameVisible ? "Hide the account name" : "Show the account name"}
+                                onClick={() => setNameVisible((current) => !current)}
+                                type="button"
+                            >
+                                {nameVisible ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+                            </IconButton>
+                        </NameRow>
                         <p>{user.statusDescription || "Signed in to VRChat"}</p>
                         {auth.expiresAt && (
                             <p>Session expires {new Date(auth.expiresAt).toLocaleDateString()}</p>
@@ -309,6 +315,45 @@ function Profile({auth, busy, error, run}: {
                 {error && <ErrorText>{error}</ErrorText>}
             </Card>
         </>
+    );
+}
+
+/** The name as it would look on a password field: the first letter, then dots. */
+function maskName(name: string): string {
+    if (name.length === 0) return "—";
+    return `${name[0]}••••••••`;
+}
+
+/** A password field with its own reveal button, instead of relying on the web view's. */
+function PasswordInput({id, value, onChange, placeholder = "••••••••", autoComplete, autoFocus}: {
+    id?: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    autoComplete?: string;
+    autoFocus?: boolean;
+}) {
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <PasswordWrap>
+            <Input
+                autoComplete={autoComplete}
+                autoFocus={autoFocus}
+                id={id}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={placeholder}
+                type={visible ? "text" : "password"}
+                value={value}
+            />
+            <PasswordReveal
+                aria-label={visible ? "Hide password" : "Show password"}
+                onClick={() => setVisible((current) => !current)}
+                type="button"
+            >
+                {visible ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+            </PasswordReveal>
+        </PasswordWrap>
     );
 }
 
@@ -466,19 +511,16 @@ function StorageChoice({auth, busy, error, run}: {
             {mode === "password" && (
                 <Field>
                     <Label htmlFor="storage-password">Password for this session</Label>
-                    <Input
+                    <PasswordInput
                         autoComplete="current-password"
                         id="storage-password"
-                        onChange={(event) => setPassword(event.target.value)}
-                        placeholder="••••••••"
-                        type="password"
+                        onChange={setPassword}
                         value={password}
                     />
-                    <Input
+                    <PasswordInput
                         autoComplete="current-password"
-                        onChange={(event) => setConfirm(event.target.value)}
+                        onChange={setConfirm}
                         placeholder="repeat the password"
-                        type="password"
                         value={confirm}
                     />
                 </Field>
@@ -812,6 +854,54 @@ const Identity = styled.div`
         font-size: 12px;
         color: var(--text-secondary);
     }
+`;
+
+const NameRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    h2 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+`;
+
+const IconButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
+`;
+
+const PasswordWrap = styled.div`
+    position: relative;
+    display: flex;
+
+    input {
+        width: 100%;
+        padding-right: 34px;
+    }
+`;
+
+const PasswordReveal = styled(IconButton)`
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
 `;
 
 const Options = styled.div`

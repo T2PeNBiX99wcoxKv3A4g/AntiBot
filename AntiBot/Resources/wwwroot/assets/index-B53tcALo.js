@@ -140,7 +140,7 @@ Error generating stack: `+e.message+`
         background: #e81123;
         color: #fff;
     }
-`,Vr=N.available,Hr={exists:!1,running:!1};async function Ur(){return N.available?await N.request(`log.snapshot`):{...Hr,lines:[]}}function Wr(e){return N.on(t=>{t.type===`log.lines`&&e(t.data)})}async function Gr(){N.available&&await N.request(`log.openFolder`)}async function Kr(){return N.available?await N.request(`log.export`):{saved:!1,lines:0}}var qr=3e3;function Jr(){let[e,t]=(0,_.useState)(Hr),[n,r]=(0,_.useState)([]),i=(0,_.useRef)(0),a=(0,_.useRef)(!1);return(0,_.useEffect)(()=>{let e=!1,n=Wr(n=>{e||(a.current=!0,t({exists:n.exists??!1,running:n.running??!1}),r(e=>Yr(e,n,i.current)))});return Ur().then(n=>{e||(a.current||t({exists:n.exists??!1,running:n.running??!1}),r(e=>Xr(e,n.lines,i.current)))},()=>{}),()=>{e=!0,n()}},[]),{status:e,lines:n,clear:()=>{i.current=n.at(-1)?.id??i.current,r([])}}}function Yr(e,t,n){let r=t.lines.filter(e=>e.id>n);if(t.reset)return r.slice(-3e3);let i=[...e,...r];return i.length>qr?i.slice(-3e3):i}function Xr(e,t,n){let r=e.at(-1)?.id??0,i=[...e,...t.filter(e=>e.id>r&&e.id>n)];return i.length>qr?i.slice(-3e3):i}var Zr={state:`loggedOut`,storage:`none`,twoFactorMethods:[],systemStorage:!1,systemStorageName:``,tpmStorage:!1,helloStorage:!1};async function Qr(){return N.available?await N.request(`auth.state`):Zr}async function $r(e,t){return await N.request(`auth.login`,{username:e,password:t},3e4)}async function ei(e,t){return await N.request(`auth.verify`,{method:e,code:t},3e4)}async function ti(e){return await N.request(`auth.unlock`,{password:e},3e4)}async function ni(e,t){return await N.request(`auth.storage.save`,{mode:e,password:t},3e4)}async function ri(){return await N.request(`auth.logout`,void 0,3e4)}async function ii(){return await N.request(`auth.device.start`,void 0,3e4)}async function ai(e){return await N.request(`auth.device.poll`,{deviceCode:e},3e4)}function oi(e){return N.on(t=>{t.type===`auth.changed`&&e(t.data)})}function si(){let[e,t]=(0,_.useState)(Zr),[n,r]=(0,_.useState)(``),[i,a]=(0,_.useState)(!1);(0,_.useEffect)(()=>{let e=!1,n=oi(n=>{e||t(n)});return Qr().then(n=>{e||t(n)},()=>{}),()=>{e=!0,n()}},[]);let o=async e=>{a(!0),r(``);try{t(await e())}catch(e){r(e instanceof Error?e.message:String(e))}finally{a(!1)}},s;return s=e.state===`loggedIn`&&e.user?(0,P.jsx)(di,{auth:e,busy:i,error:n,run:o}):e.state===`locked`?(0,P.jsx)(ui,{auth:e,busy:i,error:n,run:o}):e.state===`twoFactor`?(0,P.jsx)(li,{auth:e,busy:i,error:n,run:o}):(0,P.jsx)(ci,{busy:i,error:n,run:o,onSignedIn:t}),(0,P.jsxs)(_i,{children:[s,(0,P.jsx)(fi,{auth:e,busy:i,error:n,run:o})]})}function ci({busy:e,error:t,run:n,onSignedIn:r}){let[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(``),[c,l]=(0,_.useState)(!1);return(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(vr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Sign in to VRChat`}),(0,P.jsx)(`p`,{children:`The password is used for this one request and is never stored.`})]})]}),(0,P.jsxs)(bi,{onSubmit:e=>{e.preventDefault(),n(()=>$r(i.trim(),o))},children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(Si,{htmlFor:`username`,children:`Username or email`}),(0,P.jsx)(Ci,{autoComplete:`username`,id:`username`,onChange:e=>a(e.target.value),placeholder:`username`,value:i})]}),(0,P.jsxs)(xi,{children:[(0,P.jsx)(Si,{htmlFor:`password`,children:`Password`}),(0,P.jsx)(Ci,{autoComplete:`current-password`,id:`password`,onChange:e=>s(e.target.value),placeholder:`••••••••`,type:`password`,value:o})]}),t&&(0,P.jsx)(Ai,{children:t}),(0,P.jsxs)(wi,{children:[(0,P.jsx)(Ei,{disabled:e,type:`submit`,children:e?`Signing in…`:`Sign in`}),(0,P.jsxs)(Di,{onClick:()=>l(e=>!e),type:`button`,children:[(0,P.jsx)(xr,{size:15}),`Use a device code`]})]})]}),(0,P.jsx)(ji,{children:`VRChat's terms do not cover third-party clients. Signing in is your own decision; the session is what an attacker would want, so it is kept out of the settings folder.`})]}),c&&(0,P.jsx)(pi,{onSignedIn:r})]})}function li({auth:e,busy:t,error:n,run:r}){let i=e.twoFactorMethods.length>0?e.twoFactorMethods:[`totp`,`otp`],[a,o]=(0,_.useState)(i[0]),[s,c]=(0,_.useState)(``);return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(yr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Two-factor authentication`}),(0,P.jsx)(`p`,{children:`VRChat wants a second factor before it hands over the session.`})]})]}),(0,P.jsx)(Oi,{children:i.map(e=>(0,P.jsx)(ki,{$active:a===e,onClick:()=>o(e),type:`button`,children:mi(e)},e))}),(0,P.jsxs)(bi,{onSubmit:e=>{e.preventDefault();let t=s.trim(),n=a===`otp`&&/^\d{8}$/.test(t)?`${t.slice(0,4)}-${t.slice(4)}`:t;r(()=>ei(a,n))},children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(Si,{htmlFor:`code`,children:hi(a)}),(0,P.jsx)(Ci,{autoComplete:`one-time-code`,autoFocus:!0,id:`code`,inputMode:`numeric`,onChange:e=>c(e.target.value),placeholder:`123456`,value:s})]}),n&&(0,P.jsx)(Ai,{children:n}),(0,P.jsx)(wi,{children:(0,P.jsx)(Ei,{disabled:t,type:`submit`,children:t?`Verifying…`:`Verify`})})]})]})})}function ui({auth:e,busy:t,error:n,run:r}){let[i,a]=(0,_.useState)(``),o=e.storage===`hello`;return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(br,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:o?`Unlock with Windows Hello`:`Unlock the saved session`}),(0,P.jsx)(`p`,{children:o?`The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face.`:`The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.`})]})]}),(0,P.jsxs)(bi,{onSubmit:e=>{e.preventDefault(),r(()=>ti(o?``:i))},children:[!o&&(0,P.jsxs)(xi,{children:[(0,P.jsx)(Si,{htmlFor:`unlock-password`,children:`Password`}),(0,P.jsx)(Ci,{autoComplete:`current-password`,autoFocus:!0,id:`unlock-password`,onChange:e=>a(e.target.value),placeholder:`••••••••`,type:`password`,value:i})]}),n&&(0,P.jsx)(Ai,{children:n}),(0,P.jsxs)(wi,{children:[(0,P.jsx)(Ei,{disabled:t,type:`submit`,children:t?`Unlocking…`:o?`Unlock with Windows Hello`:`Unlock`}),(0,P.jsx)(Di,{onClick:()=>void r(async()=>await ni(`none`)),type:`button`,children:`Forget it`})]})]})]})})}function di({auth:e,busy:t,error:n,run:r}){let i=e.user;return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(vi,{children:[(0,P.jsxs)(Ni,{children:[(0,P.jsx)(Pi,{$src:i.avatarUrl}),(0,P.jsxs)(Fi,{children:[(0,P.jsx)(`h2`,{children:i.displayName}),(0,P.jsx)(`p`,{children:i.statusDescription||`Signed in to VRChat`}),e.expiresAt&&(0,P.jsxs)(`p`,{children:[`Session expires `,new Date(e.expiresAt).toLocaleDateString()]})]}),(0,P.jsx)(Di,{disabled:t,onClick:()=>void r(ri),type:`button`,children:`Sign out`})]}),n&&(0,P.jsx)(Ai,{children:n})]})})}function fi({auth:e,busy:t,error:n,run:r}){let i=e.systemStorage,a=e.systemStorageName||`System protection`,o=e.tpmStorage,s=e.helloStorage,[c,l]=(0,_.useState)(()=>e.storage===`none`?s?`hello`:o?`tpm`:i?`system`:`password`:e.storage),[u,d]=(0,_.useState)(``),[f,p]=(0,_.useState)(``),[m,h]=(0,_.useState)(``),g=e.state===`loggedIn`;return(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(yr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Keep the session between launches`}),(0,P.jsx)(`p`,{children:`Only the VRChat session cookie is stored, never your password. Every mode except "Do not remember" encrypts it at rest; the difference is what unlocks it.`})]})]}),(0,P.jsxs)(Ii,{children:[(0,P.jsxs)(Li,{$active:c===`none`,onClick:()=>l(`none`),type:`button`,children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`strong`,{children:`Do not remember`}),(0,P.jsx)(zi,{children:`nothing on disk`})]}),(0,P.jsx)(`p`,{children:`Nothing is written. The next launch has to sign in again, which also means another 2FA prompt.`})]}),(0,P.jsxs)(Li,{$active:c===`system`,$disabled:!i,onClick:()=>i&&l(`system`),type:`button`,children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`strong`,{children:a}),(0,P.jsx)(zi,{children:i?`encrypted`:`unavailable`})]}),i?(0,P.jsx)(`p`,{children:a===`Windows DPAPI`?`The session is encrypted by Windows DPAPI for your Windows account; copying the file to another user or machine does not help. It unlocks automatically.`:`The session is held in the desktop keyring (Secret Service), encrypted by it and unlocked with your login session. It unlocks automatically.`}):(0,P.jsx)(`p`,{children:`This system has neither DPAPI nor a Secret Service keyring, so the session cannot be protected here without a password.`})]}),(0,P.jsxs)(Li,{$active:c===`tpm`,$disabled:!o,onClick:()=>o&&l(`tpm`),type:`button`,children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`strong`,{children:`TPM (hardware-backed)`}),(0,P.jsx)(zi,{children:o?`no prompt`:`no TPM`})]}),o?(0,P.jsx)(`p`,{children:`The session is encrypted with an AES-256 key that is wrapped by a key held in this PC's TPM. The file cannot be decrypted on another machine, and it unlocks automatically without a prompt.`}):(0,P.jsx)(`p`,{children:`No usable TPM was found on this machine.`})]}),(0,P.jsxs)(Li,{$active:c===`hello`,$disabled:!s,onClick:()=>s&&l(`hello`),type:`button`,children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`strong`,{children:`Windows Hello`}),(0,P.jsx)(zi,{children:s?`asks for PIN / biometrics`:`unavailable`})]}),s?(0,P.jsx)(`p`,{children:`The session is encrypted with an AES-256 key wrapped by a key that only Windows Hello can use. Each launch asks for your PIN, fingerprint or face before unlocking; no VRChat password is involved.`}):(0,P.jsx)(`p`,{children:`Windows Hello is only available on Windows.`})]}),(0,P.jsxs)(Li,{$active:c===`password`,onClick:()=>l(`password`),type:`button`,children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`strong`,{children:`Password`}),(0,P.jsx)(zi,{children:`asks every launch`})]}),(0,P.jsx)(`p`,{children:`The session is encrypted with AES-256-GCM using a key derived from your password (PBKDF2-SHA256, 600,000 rounds, random per-install salt). Your password is not stored; you type it each launch to unlock, so no 2FA prompt. Anyone who copies the file can try to guess that password offline, and changing it makes the stored session unusable.`})]})]}),c===`password`&&(0,P.jsxs)(xi,{children:[(0,P.jsx)(Si,{htmlFor:`storage-password`,children:`Password for this session`}),(0,P.jsx)(Ci,{autoComplete:`current-password`,id:`storage-password`,onChange:e=>d(e.target.value),placeholder:`••••••••`,type:`password`,value:u}),(0,P.jsx)(Ci,{autoComplete:`current-password`,onChange:e=>p(e.target.value),placeholder:`repeat the password`,type:`password`,value:f})]}),(m||n)&&(0,P.jsx)(Ai,{children:m||n}),(0,P.jsxs)(wi,{children:[(0,P.jsx)(Ei,{disabled:t||!g,onClick:()=>{if(!g)h(`Sign in first.`);else{if(c===`password`){if(u.length<1){h(`Enter the password that unlocks the session.`);return}if(u!==f){h(`The passwords do not match.`);return}}h(``),r(()=>ni(c,c===`password`?u:void 0))}},type:`button`,children:t?`Saving…`:`Save`}),(0,P.jsx)(Mi,{children:g?`Currently: ${gi(e.storage)}`:`Sign in to change this.`})]})]})}function pi({onSignedIn:e}){let[t,n]=(0,_.useState)(null),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(!1);(0,_.useEffect)(()=>{if(!t)return;let n=!1,r=0,a=Math.max(t.interval,2)*1e3,s=Date.now()+Math.max(t.expiresIn,60)*1e3,c=async()=>{if(Date.now()>s)o(!0);else try{let i=await ai(t.deviceCode);if(n)return;if(i.approved&&i.auth){e(i.auth);return}if(i.reason===`expired_token`){o(!0);return}i.reason===`slow_down`&&(a+=5e3),r=window.setTimeout(()=>void c(),a)}catch(e){n||i(e instanceof Error?e.message:String(e))}};return r=window.setTimeout(()=>void c(),a),()=>{n=!0,window.clearTimeout(r)}},[t,e]);let s=async()=>{i(``),o(!1);try{n(await ii())}catch(e){i(e instanceof Error?e.message:String(e))}};return t?(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(xr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Approve this sign-in`}),(0,P.jsx)(`p`,{children:`Scan the code, or open the link, and approve it in the VRChat app or site.`})]})]}),(0,P.jsxs)(Bi,{children:[t.qrDataUrl?(0,P.jsx)(Vi,{alt:`Device sign-in QR code`,src:t.qrDataUrl}):(0,P.jsx)(`p`,{children:t.url}),(0,P.jsx)(Hi,{children:(0,P.jsx)(`a`,{href:t.url,rel:`noreferrer`,target:`_blank`,children:t.url})})]}),a?(0,P.jsx)(Ai,{children:`The code expired. Start again.`}):(0,P.jsx)(Mi,{children:`Waiting for approval…`}),r&&(0,P.jsx)(Ai,{children:r}),(0,P.jsxs)(wi,{children:[(0,P.jsx)(Di,{onClick:()=>n(null),type:`button`,children:`Cancel`}),a&&(0,P.jsx)(Ei,{onClick:()=>void s(),type:`button`,children:`Try again`})]})]}):(0,P.jsxs)(vi,{children:[(0,P.jsxs)(yi,{children:[(0,P.jsx)(xr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Device sign-in`}),(0,P.jsx)(`p`,{children:`Approve the sign-in on your phone; the password never reaches AntiBot.`})]})]}),r&&(0,P.jsx)(Ai,{children:r}),(0,P.jsx)(wi,{children:(0,P.jsx)(Di,{onClick:()=>void s(),type:`button`,children:`Start`})})]})}function mi(e){switch(e){case`totp`:return`Authenticator`;case`emailOtp`:return`Email code`;default:return`Recovery code`}}function hi(e){switch(e){case`totp`:return`Code from your authenticator app`;case`emailOtp`:return`Code VRChat emailed you`;default:return`One of your recovery codes`}}function gi(e){switch(e){case`password`:return`password-encrypted`;case`system`:return`system-protected`;case`tpm`:return`TPM-protected`;case`hello`:return`Windows Hello`;default:return`not stored`}}var _i=M.div`
+`,Vr=N.available,Hr={exists:!1,running:!1};async function Ur(){return N.available?await N.request(`log.snapshot`):{...Hr,lines:[]}}function Wr(e){return N.on(t=>{t.type===`log.lines`&&e(t.data)})}async function Gr(){N.available&&await N.request(`log.openFolder`)}async function Kr(){return N.available?await N.request(`log.export`):{saved:!1,lines:0}}var qr=3e3;function Jr(){let[e,t]=(0,_.useState)(Hr),[n,r]=(0,_.useState)([]),i=(0,_.useRef)(0),a=(0,_.useRef)(!1);return(0,_.useEffect)(()=>{let e=!1,n=Wr(n=>{e||(a.current=!0,t({exists:n.exists??!1,running:n.running??!1}),r(e=>Yr(e,n,i.current)))});return Ur().then(n=>{e||(a.current||t({exists:n.exists??!1,running:n.running??!1}),r(e=>Xr(e,n.lines,i.current)))},()=>{}),()=>{e=!0,n()}},[]),{status:e,lines:n,clear:()=>{i.current=n.at(-1)?.id??i.current,r([])}}}function Yr(e,t,n){let r=t.lines.filter(e=>e.id>n);if(t.reset)return r.slice(-3e3);let i=[...e,...r];return i.length>qr?i.slice(-3e3):i}function Xr(e,t,n){let r=e.at(-1)?.id??0,i=[...e,...t.filter(e=>e.id>r&&e.id>n)];return i.length>qr?i.slice(-3e3):i}var Zr={state:`loggedOut`,storage:`none`,twoFactorMethods:[],systemStorage:!1,systemStorageName:``,tpmStorage:!1,helloStorage:!1};async function Qr(){return N.available?await N.request(`auth.state`):Zr}async function $r(e,t){return await N.request(`auth.login`,{username:e,password:t},3e4)}async function ei(e,t){return await N.request(`auth.verify`,{method:e,code:t},3e4)}async function ti(e){return await N.request(`auth.unlock`,{password:e},3e4)}async function ni(e,t){return await N.request(`auth.storage.save`,{mode:e,password:t},3e4)}async function ri(){return await N.request(`auth.logout`,void 0,3e4)}async function ii(){return await N.request(`auth.device.start`,void 0,3e4)}async function ai(e){return await N.request(`auth.device.poll`,{deviceCode:e},3e4)}function oi(e){return N.on(t=>{t.type===`auth.changed`&&e(t.data)})}function si(){let[e,t]=(0,_.useState)(Zr),[n,r]=(0,_.useState)(``),[i,a]=(0,_.useState)(!1);(0,_.useEffect)(()=>{let e=!1,n=oi(n=>{e||t(n)});return Qr().then(n=>{e||t(n)},()=>{}),()=>{e=!0,n()}},[]);let o=async e=>{a(!0),r(``);try{t(await e())}catch(e){r(e instanceof Error?e.message:String(e))}finally{a(!1)}},s;return s=e.state===`loggedIn`&&e.user?(0,P.jsx)(di,{auth:e,busy:i,error:n,run:o}):e.state===`locked`?(0,P.jsx)(ui,{auth:e,busy:i,error:n,run:o}):e.state===`twoFactor`?(0,P.jsx)(li,{auth:e,busy:i,error:n,run:o}):(0,P.jsx)(ci,{busy:i,error:n,run:o,onSignedIn:t}),(0,P.jsxs)(yi,{children:[s,(0,P.jsx)(mi,{auth:e,busy:i,error:n,run:o})]})}function ci({busy:e,error:t,run:n,onSignedIn:r}){let[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(``),[c,l]=(0,_.useState)(!1);return(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(vr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Sign in to VRChat`}),(0,P.jsx)(`p`,{children:`The password is used for this one request and is never stored.`})]})]}),(0,P.jsxs)(Si,{onSubmit:e=>{e.preventDefault(),n(()=>$r(i.trim(),o))},children:[(0,P.jsxs)(Ci,{children:[(0,P.jsx)(wi,{htmlFor:`username`,children:`Username or email`}),(0,P.jsx)(Ti,{autoComplete:`username`,id:`username`,onChange:e=>a(e.target.value),placeholder:`username`,value:i})]}),(0,P.jsxs)(Ci,{children:[(0,P.jsx)(wi,{htmlFor:`password`,children:`Password`}),(0,P.jsx)(pi,{autoComplete:`current-password`,id:`password`,onChange:s,value:o})]}),t&&(0,P.jsx)(Mi,{children:t}),(0,P.jsxs)(Ei,{children:[(0,P.jsx)(Oi,{disabled:e,type:`submit`,children:e?`Signing in…`:`Sign in`}),(0,P.jsxs)(ki,{onClick:()=>l(e=>!e),type:`button`,children:[(0,P.jsx)(xr,{size:15}),`Use a device code`]})]})]}),(0,P.jsx)(Ni,{children:`VRChat's terms do not cover third-party clients. Signing in is your own decision; the session is what an attacker would want, so it is kept out of the settings folder.`})]}),c&&(0,P.jsx)(hi,{onSignedIn:r})]})}function li({auth:e,busy:t,error:n,run:r}){let i=e.twoFactorMethods.length>0?e.twoFactorMethods:[`totp`,`otp`],[a,o]=(0,_.useState)(i[0]),[s,c]=(0,_.useState)(``);return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(yr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Two-factor authentication`}),(0,P.jsx)(`p`,{children:`VRChat wants a second factor before it hands over the session.`})]})]}),(0,P.jsx)(Ai,{children:i.map(e=>(0,P.jsx)(ji,{$active:a===e,onClick:()=>o(e),type:`button`,children:gi(e)},e))}),(0,P.jsxs)(Si,{onSubmit:e=>{e.preventDefault();let t=s.trim(),n=a===`otp`&&/^\d{8}$/.test(t)?`${t.slice(0,4)}-${t.slice(4)}`:t;r(()=>ei(a,n))},children:[(0,P.jsxs)(Ci,{children:[(0,P.jsx)(wi,{htmlFor:`code`,children:_i(a)}),(0,P.jsx)(Ti,{autoComplete:`one-time-code`,autoFocus:!0,id:`code`,inputMode:`numeric`,onChange:e=>c(e.target.value),placeholder:`123456`,value:s})]}),n&&(0,P.jsx)(Mi,{children:n}),(0,P.jsx)(Ei,{children:(0,P.jsx)(Oi,{disabled:t,type:`submit`,children:t?`Verifying…`:`Verify`})})]})]})})}function ui({auth:e,busy:t,error:n,run:r}){let[i,a]=(0,_.useState)(``),o=e.storage===`hello`;return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(br,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:o?`Unlock with Windows Hello`:`Unlock the saved session`}),(0,P.jsx)(`p`,{children:o?`The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face.`:`The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.`})]})]}),(0,P.jsxs)(Si,{onSubmit:e=>{e.preventDefault(),r(()=>ti(o?``:i))},children:[!o&&(0,P.jsxs)(Ci,{children:[(0,P.jsx)(wi,{htmlFor:`unlock-password`,children:`Password`}),(0,P.jsx)(pi,{autoComplete:`current-password`,autoFocus:!0,id:`unlock-password`,onChange:a,value:i})]}),n&&(0,P.jsx)(Mi,{children:n}),(0,P.jsxs)(Ei,{children:[(0,P.jsx)(Oi,{disabled:t,type:`submit`,children:t?`Unlocking…`:o?`Unlock with Windows Hello`:`Unlock`}),(0,P.jsx)(ki,{onClick:()=>void r(async()=>await ni(`none`)),type:`button`,children:`Forget it`})]})]})]})})}function di({auth:e,busy:t,error:n,run:r}){let i=e.user,[a,o]=(0,_.useState)(!1);return(0,P.jsx)(P.Fragment,{children:(0,P.jsxs)(bi,{children:[(0,P.jsxs)(Fi,{children:[(0,P.jsx)(Ii,{$src:i.avatarUrl}),(0,P.jsxs)(Li,{children:[(0,P.jsxs)(Ri,{children:[(0,P.jsx)(`h2`,{children:a?i.displayName:fi(i.displayName)}),(0,P.jsx)(zi,{"aria-label":a?`Hide the account name`:`Show the account name`,onClick:()=>o(e=>!e),type:`button`,children:a?(0,P.jsx)(Cr,{size:14}):(0,P.jsx)(Sr,{size:14})})]}),(0,P.jsx)(`p`,{children:i.statusDescription||`Signed in to VRChat`}),e.expiresAt&&(0,P.jsxs)(`p`,{children:[`Session expires `,new Date(e.expiresAt).toLocaleDateString()]})]}),(0,P.jsx)(ki,{disabled:t,onClick:()=>void r(ri),type:`button`,children:`Sign out`})]}),n&&(0,P.jsx)(Mi,{children:n})]})})}function fi(e){return e.length===0?`—`:`${e[0]}••••••••`}function pi({id:e,value:t,onChange:n,placeholder:r=`••••••••`,autoComplete:i,autoFocus:a}){let[o,s]=(0,_.useState)(!1);return(0,P.jsxs)(Bi,{children:[(0,P.jsx)(Ti,{autoComplete:i,autoFocus:a,id:e,onChange:e=>n(e.target.value),placeholder:r,type:o?`text`:`password`,value:t}),(0,P.jsx)(Vi,{"aria-label":o?`Hide password`:`Show password`,onClick:()=>s(e=>!e),type:`button`,children:o?(0,P.jsx)(Cr,{size:14}):(0,P.jsx)(Sr,{size:14})})]})}function mi({auth:e,busy:t,error:n,run:r}){let i=e.systemStorage,a=e.systemStorageName||`System protection`,o=e.tpmStorage,s=e.helloStorage,[c,l]=(0,_.useState)(()=>e.storage===`none`?s?`hello`:o?`tpm`:i?`system`:`password`:e.storage),[u,d]=(0,_.useState)(``),[f,p]=(0,_.useState)(``),[m,h]=(0,_.useState)(``),g=e.state===`loggedIn`;return(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(yr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Keep the session between launches`}),(0,P.jsx)(`p`,{children:`Only the VRChat session cookie is stored, never your password. Every mode except "Do not remember" encrypts it at rest; the difference is what unlocks it.`})]})]}),(0,P.jsxs)(Hi,{children:[(0,P.jsxs)(Ui,{$active:c===`none`,onClick:()=>l(`none`),type:`button`,children:[(0,P.jsxs)(Wi,{children:[(0,P.jsx)(`strong`,{children:`Do not remember`}),(0,P.jsx)(Gi,{children:`nothing on disk`})]}),(0,P.jsx)(`p`,{children:`Nothing is written. The next launch has to sign in again, which also means another 2FA prompt.`})]}),(0,P.jsxs)(Ui,{$active:c===`system`,$disabled:!i,onClick:()=>i&&l(`system`),type:`button`,children:[(0,P.jsxs)(Wi,{children:[(0,P.jsx)(`strong`,{children:a}),(0,P.jsx)(Gi,{children:i?`encrypted`:`unavailable`})]}),i?(0,P.jsx)(`p`,{children:a===`Windows DPAPI`?`The session is encrypted by Windows DPAPI for your Windows account; copying the file to another user or machine does not help. It unlocks automatically.`:`The session is held in the desktop keyring (Secret Service), encrypted by it and unlocked with your login session. It unlocks automatically.`}):(0,P.jsx)(`p`,{children:`This system has neither DPAPI nor a Secret Service keyring, so the session cannot be protected here without a password.`})]}),(0,P.jsxs)(Ui,{$active:c===`tpm`,$disabled:!o,onClick:()=>o&&l(`tpm`),type:`button`,children:[(0,P.jsxs)(Wi,{children:[(0,P.jsx)(`strong`,{children:`TPM (hardware-backed)`}),(0,P.jsx)(Gi,{children:o?`no prompt`:`no TPM`})]}),o?(0,P.jsx)(`p`,{children:`The session is encrypted with an AES-256 key that is wrapped by a key held in this PC's TPM. The file cannot be decrypted on another machine, and it unlocks automatically without a prompt.`}):(0,P.jsx)(`p`,{children:`No usable TPM was found on this machine.`})]}),(0,P.jsxs)(Ui,{$active:c===`hello`,$disabled:!s,onClick:()=>s&&l(`hello`),type:`button`,children:[(0,P.jsxs)(Wi,{children:[(0,P.jsx)(`strong`,{children:`Windows Hello`}),(0,P.jsx)(Gi,{children:s?`asks for PIN / biometrics`:`unavailable`})]}),s?(0,P.jsx)(`p`,{children:`The session is encrypted with an AES-256 key wrapped by a key that only Windows Hello can use. Each launch asks for your PIN, fingerprint or face before unlocking; no VRChat password is involved.`}):(0,P.jsx)(`p`,{children:`Windows Hello is only available on Windows.`})]}),(0,P.jsxs)(Ui,{$active:c===`password`,onClick:()=>l(`password`),type:`button`,children:[(0,P.jsxs)(Wi,{children:[(0,P.jsx)(`strong`,{children:`Password`}),(0,P.jsx)(Gi,{children:`asks every launch`})]}),(0,P.jsx)(`p`,{children:`The session is encrypted with AES-256-GCM using a key derived from your password (PBKDF2-SHA256, 600,000 rounds, random per-install salt). Your password is not stored; you type it each launch to unlock, so no 2FA prompt. Anyone who copies the file can try to guess that password offline, and changing it makes the stored session unusable.`})]})]}),c===`password`&&(0,P.jsxs)(Ci,{children:[(0,P.jsx)(wi,{htmlFor:`storage-password`,children:`Password for this session`}),(0,P.jsx)(pi,{autoComplete:`current-password`,id:`storage-password`,onChange:d,value:u}),(0,P.jsx)(pi,{autoComplete:`current-password`,onChange:p,placeholder:`repeat the password`,value:f})]}),(m||n)&&(0,P.jsx)(Mi,{children:m||n}),(0,P.jsxs)(Ei,{children:[(0,P.jsx)(Oi,{disabled:t||!g,onClick:()=>{if(!g)h(`Sign in first.`);else{if(c===`password`){if(u.length<1){h(`Enter the password that unlocks the session.`);return}if(u!==f){h(`The passwords do not match.`);return}}h(``),r(()=>ni(c,c===`password`?u:void 0))}},type:`button`,children:t?`Saving…`:`Save`}),(0,P.jsx)(Pi,{children:g?`Currently: ${vi(e.storage)}`:`Sign in to change this.`})]})]})}function hi({onSignedIn:e}){let[t,n]=(0,_.useState)(null),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(!1);(0,_.useEffect)(()=>{if(!t)return;let n=!1,r=0,a=Math.max(t.interval,2)*1e3,s=Date.now()+Math.max(t.expiresIn,60)*1e3,c=async()=>{if(Date.now()>s)o(!0);else try{let i=await ai(t.deviceCode);if(n)return;if(i.approved&&i.auth){e(i.auth);return}if(i.reason===`expired_token`){o(!0);return}i.reason===`slow_down`&&(a+=5e3),r=window.setTimeout(()=>void c(),a)}catch(e){n||i(e instanceof Error?e.message:String(e))}};return r=window.setTimeout(()=>void c(),a),()=>{n=!0,window.clearTimeout(r)}},[t,e]);let s=async()=>{i(``),o(!1);try{n(await ii())}catch(e){i(e instanceof Error?e.message:String(e))}};return t?(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(xr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Approve this sign-in`}),(0,P.jsx)(`p`,{children:`Scan the code, or open the link, and approve it in the VRChat app or site.`})]})]}),(0,P.jsxs)(Ki,{children:[t.qrDataUrl?(0,P.jsx)(qi,{alt:`Device sign-in QR code`,src:t.qrDataUrl}):(0,P.jsx)(`p`,{children:t.url}),(0,P.jsx)(Ji,{children:(0,P.jsx)(`a`,{href:t.url,rel:`noreferrer`,target:`_blank`,children:t.url})})]}),a?(0,P.jsx)(Mi,{children:`The code expired. Start again.`}):(0,P.jsx)(Pi,{children:`Waiting for approval…`}),r&&(0,P.jsx)(Mi,{children:r}),(0,P.jsxs)(Ei,{children:[(0,P.jsx)(ki,{onClick:()=>n(null),type:`button`,children:`Cancel`}),a&&(0,P.jsx)(Oi,{onClick:()=>void s(),type:`button`,children:`Try again`})]})]}):(0,P.jsxs)(bi,{children:[(0,P.jsxs)(xi,{children:[(0,P.jsx)(xr,{size:20}),(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Device sign-in`}),(0,P.jsx)(`p`,{children:`Approve the sign-in on your phone; the password never reaches AntiBot.`})]})]}),r&&(0,P.jsx)(Mi,{children:r}),(0,P.jsx)(Ei,{children:(0,P.jsx)(ki,{onClick:()=>void s(),type:`button`,children:`Start`})})]})}function gi(e){switch(e){case`totp`:return`Authenticator`;case`emailOtp`:return`Email code`;default:return`Recovery code`}}function _i(e){switch(e){case`totp`:return`Code from your authenticator app`;case`emailOtp`:return`Code VRChat emailed you`;default:return`One of your recovery codes`}}function vi(e){switch(e){case`password`:return`password-encrypted`;case`system`:return`system-protected`;case`tpm`:return`TPM-protected`;case`hello`:return`Windows Hello`;default:return`not stored`}}var yi=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -148,7 +148,7 @@ Error generating stack: `+e.message+`
     min-height: 0;
     max-width: 720px;
     overflow: auto;
-`,vi=M.section`
+`,bi=M.section`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -156,7 +156,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,yi=M.div`
+`,xi=M.div`
     display: flex;
     gap: 12px;
 
@@ -177,18 +177,18 @@ Error generating stack: `+e.message+`
         line-height: 1.5;
         color: var(--text-secondary);
     }
-`,bi=M.form`
+`,Si=M.form`
     display: flex;
     flex-direction: column;
     gap: 12px;
-`,xi=M.div`
+`,Ci=M.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
-`,Si=M.label`
+`,wi=M.label`
     font-size: 11px;
     color: var(--text-secondary);
-`,Ci=M.input`
+`,Ti=M.input`
     padding: 9px 11px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -201,11 +201,11 @@ Error generating stack: `+e.message+`
         outline: 2px solid var(--border-color-focus);
         outline-offset: 1px;
     }
-`,wi=M.div`
+`,Ei=M.div`
     display: flex;
     align-items: center;
     gap: 10px;
-`,Ti=M.button`
+`,Di=M.button`
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -227,10 +227,10 @@ Error generating stack: `+e.message+`
     &:hover:not(:disabled) {
         background: ${({$primary:e})=>e?`var(--accent-primary)`:`var(--bg-card-hover)`};
     }
-`,Ei=M(Ti).attrs({$primary:!0})``,Di=M(Ti).attrs({$primary:!1})``,Oi=M.div`
+`,Oi=M(Di).attrs({$primary:!0})``,ki=M(Di).attrs({$primary:!1})``,Ai=M.div`
     display: flex;
     gap: 8px;
-`,ki=M.button`
+`,ji=M.button`
     padding: 6px 11px;
     border: 1px solid ${({$active:e})=>e?`var(--accent-primary)`:`var(--border-color)`};
     border-radius: 999px;
@@ -239,22 +239,22 @@ Error generating stack: `+e.message+`
     font: inherit;
     font-size: 11px;
     cursor: pointer;
-`,Ai=M.p`
+`,Mi=M.p`
     font-size: 12px;
     color: #f87171;
-`,ji=M.p`
+`,Ni=M.p`
     font-size: 11px;
     line-height: 1.5;
     color: var(--text-muted);
-`,Mi=M.span`
+`,Pi=M.span`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
-`,Ni=M.div`
+`,Fi=M.div`
     display: flex;
     align-items: center;
     gap: 16px;
-`,Pi=M.div`
+`,Ii=M.div`
     width: 64px;
     height: 64px;
     flex-shrink: 0;
@@ -262,7 +262,7 @@ Error generating stack: `+e.message+`
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,Fi=M.div`
+`,Li=M.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -277,11 +277,51 @@ Error generating stack: `+e.message+`
         font-size: 12px;
         color: var(--text-secondary);
     }
-`,Ii=M.div`
+`,Ri=M.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    h2 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+`,zi=M.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
+`,Bi=M.div`
+    position: relative;
+    display: flex;
+
+    input {
+        width: 100%;
+        padding-right: 34px;
+    }
+`,Vi=M(zi)`
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+`,Hi=M.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
-`,Li=M.button`
+`,Ui=M.button`
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -300,7 +340,7 @@ Error generating stack: `+e.message+`
         line-height: 1.55;
         color: var(--text-secondary);
     }
-`,Ri=M.div`
+`,Wi=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -309,25 +349,25 @@ Error generating stack: `+e.message+`
         font-size: 12px;
         font-weight: 600;
     }
-`,zi=M.span`
+`,Gi=M.span`
     padding: 2px 7px;
     border-radius: 999px;
     background: var(--bg-primary);
     font-family: var(--font-mono);
     font-size: 9px;
     color: var(--text-muted);
-`,Bi=M.div`
+`,Ki=M.div`
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-`,Vi=M.img`
+`,qi=M.img`
     width: 184px;
     height: 184px;
     border-radius: var(--radius-sm);
     background: #fff;
     padding: 8px;
-`,Hi=M.div`
+`,Ji=M.div`
     max-width: 100%;
     overflow: hidden;
 
@@ -337,13 +377,13 @@ Error generating stack: `+e.message+`
         color: var(--accent-primary);
         word-break: break-all;
     }
-`,Ui={running:!1,world:``,instance:``,users:[]};async function Wi(){return N.available?await N.request(`instance.snapshot`):Ui}function Gi(e){return N.on(t=>{t.type===`instance.changed`&&e(t.data)})}function Ki(){let[e,t]=(0,_.useState)(Ui),[n,r]=(0,_.useState)(null),i=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,n=Gi(n=>{e||(i.current=!0,t(n))});return Wi().then(n=>{!e&&!i.current&&t(n)},()=>{}),()=>{e=!0,n()}},[]);let{running:a,world:o,users:s,source:c,worldName:l,userCount:u,capacity:d,worldId:f=``,worldThumbnail:p}=e;return(0,P.jsxs)(Zi,{children:[Vr?a?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(Qi,{children:[(0,P.jsxs)($i,{children:[(0,P.jsx)(ea,{$src:p}),(0,P.jsxs)(ta,{children:[(0,P.jsx)(ra,{children:`World`}),(0,P.jsx)(na,{$link:f.length>0,onClick:f?()=>void sr(`https://vrchat.com/home/world/${f}`):void 0,title:f?`Open on vrchat.com`:void 0,children:l||o||`—`})]})]}),(0,P.jsxs)(ia,{children:[(0,P.jsx)(aa,{$api:c===`api`,children:c===`api`?`VRChat API`:`local log`}),(0,P.jsxs)(oa,{children:[(0,P.jsx)(`strong`,{children:s.length}),(0,P.jsxs)(`span`,{children:[u&&u!==s.length?`of ${u} players`:s.length===1?`player`:`players`,d?` · ${d} slots`:``]})]})]})]}),(0,P.jsxs)(sa,{children:[(0,P.jsxs)(ca,{children:[(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Avatar`}),(0,P.jsx)(`span`,{children:`Joined`})]}),(0,P.jsx)(F,{children:s.length===0?(0,P.jsx)(Ma,{children:`No players in this instance yet.`}):s.map(e=>(0,P.jsx)(qi,{user:e,onSelect:r},e.userId))})]})]}):(0,P.jsx)(Xi,{hint:`Players appear here as VRChat writes join and leave lines, or once an account is signed in.`,title:`VRChat is not running`}):(0,P.jsx)(Xi,{hint:`The list is built by the desktop host.`,title:`Desktop host required`}),n&&(0,P.jsx)(Ji,{user:n,onClose:()=>r(null)})]})}function qi({user:e,onSelect:t}){return(0,P.jsxs)(I,{$local:e.local,onClick:()=>t(e),children:[(0,P.jsx)(la,{children:(0,P.jsxs)(pa,{children:[(0,P.jsx)(`span`,{title:[e.platform,e.dateJoined&&`joined VRChat ${e.dateJoined}`].filter(Boolean).join(` · `),children:e.name}),e.trust&&(0,P.jsx)(ma,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(ga,{children:`robot`}),e.local&&(0,P.jsx)(ha,{children:`you`})]})}),(0,P.jsx)(ua,{children:e.avatarUrl?(0,P.jsx)(da,{$src:e.avatarUrl}):(0,P.jsx)(fa,{children:`—`})}),(0,P.jsx)(ya,{children:e.joinedAt||`—`})]})}function Ji({user:e,onClose:t}){let[n,r]=(0,_.useState)(!1);(0,_.useEffect)(()=>{let e=e=>{e.key===`Escape`&&t()};return window.addEventListener(`keydown`,e),()=>window.removeEventListener(`keydown`,e)},[t]);let i=e.avatarImageUrl||e.avatarUrl;return(0,P.jsx)(ba,{onClick:t,children:(0,P.jsxs)(xa,{onClick:e=>e.stopPropagation(),children:[(0,P.jsx)(Sa,{$src:i,children:!i&&e.name.slice(0,1).toUpperCase()}),(0,P.jsxs)(Ca,{children:[(0,P.jsx)(`h2`,{children:e.name}),(0,P.jsxs)(wa,{children:[e.trust&&(0,P.jsx)(ma,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(ga,{children:`robot`}),e.local&&(0,P.jsx)(ha,{children:`you`})]}),(0,P.jsxs)(Ta,{children:[(0,P.jsxs)(Da,{children:[(0,P.jsx)(`span`,{children:`User ID`}),(0,P.jsxs)(Oa,{children:[(0,P.jsx)(`code`,{children:n?e.userId:`••••••••••••••••`}),(0,P.jsx)(ka,{"aria-label":n?`Hide user ID`:`Show user ID`,onClick:()=>r(e=>!e),type:`button`,children:n?(0,P.jsx)(Cr,{size:14}):(0,P.jsx)(Sr,{size:14})})]})]}),(0,P.jsx)(Yi,{label:`Platform`,value:e.platform??`—`}),(0,P.jsx)(Yi,{label:`Avatar`,value:e.avatarName??(e.isRobot?`Robot (default)`:`Unknown`)}),(0,P.jsx)(Yi,{label:`VRChat account since`,value:e.dateJoined?new Date(e.dateJoined).toLocaleDateString():`—`}),(0,P.jsx)(Yi,{label:`In this instance since`,value:e.joinedAt||`—`})]}),!i&&(0,P.jsx)(Aa,{children:`No avatar yet; it appears once the profile is fetched.`})]}),(0,P.jsx)(ja,{onClick:t,type:`button`,children:`×`})]})})}function Yi({label:e,value:t}){return(0,P.jsxs)(Ea,{children:[(0,P.jsx)(`span`,{children:e}),(0,P.jsx)(`code`,{title:t,children:t})]})}function Xi({title:e,hint:t,children:n}){return(0,P.jsxs)(Na,{children:[(0,P.jsx)(gr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var Zi=M.div`
+`,Yi={running:!1,world:``,instance:``,users:[]};async function Xi(){return N.available?await N.request(`instance.snapshot`):Yi}function Zi(e){return N.on(t=>{t.type===`instance.changed`&&e(t.data)})}function Qi(){let[e,t]=(0,_.useState)(Yi),[n,r]=(0,_.useState)(null),i=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,n=Zi(n=>{e||(i.current=!0,t(n))});return Xi().then(n=>{!e&&!i.current&&t(n)},()=>{}),()=>{e=!0,n()}},[]);let{running:a,world:o,users:s,source:c,worldName:l,userCount:u,capacity:d,worldId:f=``,worldThumbnail:p}=e;return(0,P.jsxs)(ra,{children:[Vr?a?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(ia,{children:[(0,P.jsxs)(aa,{children:[(0,P.jsx)(oa,{$src:p}),(0,P.jsxs)(sa,{children:[(0,P.jsx)(F,{children:`World`}),(0,P.jsx)(ca,{$link:f.length>0,onClick:f?()=>void sr(`https://vrchat.com/home/world/${f}`):void 0,title:f?`Open on vrchat.com`:void 0,children:l||o||`—`})]})]}),(0,P.jsxs)(I,{children:[(0,P.jsx)(la,{$api:c===`api`,children:c===`api`?`VRChat API`:`local log`}),(0,P.jsxs)(ua,{children:[(0,P.jsx)(`strong`,{children:s.length}),(0,P.jsxs)(`span`,{children:[u&&u!==s.length?`of ${u} players`:s.length===1?`player`:`players`,d?` · ${d} slots`:``]})]})]})]}),(0,P.jsxs)(da,{children:[(0,P.jsxs)(fa,{children:[(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Avatar`}),(0,P.jsx)(`span`,{children:`Joined`})]}),(0,P.jsx)(pa,{children:s.length===0?(0,P.jsx)(La,{children:`No players in this instance yet.`}):s.map(e=>(0,P.jsx)($i,{user:e,onSelect:r},e.userId))})]})]}):(0,P.jsx)(na,{hint:`Players appear here as VRChat writes join and leave lines, or once an account is signed in.`,title:`VRChat is not running`}):(0,P.jsx)(na,{hint:`The list is built by the desktop host.`,title:`Desktop host required`}),n&&(0,P.jsx)(ea,{user:n,onClose:()=>r(null)})]})}function $i({user:e,onSelect:t}){return(0,P.jsxs)(ma,{$local:e.local,onClick:()=>t(e),children:[(0,P.jsx)(ha,{children:(0,P.jsxs)(ya,{children:[(0,P.jsx)(`span`,{title:[e.platform,e.dateJoined&&`joined VRChat ${e.dateJoined}`].filter(Boolean).join(` · `),children:e.name}),e.trust&&(0,P.jsx)(ba,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(Sa,{children:`robot`}),e.local&&(0,P.jsx)(xa,{children:`you`})]})}),(0,P.jsx)(ga,{children:e.avatarUrl?(0,P.jsx)(_a,{$src:e.avatarUrl}):(0,P.jsx)(va,{children:`—`})}),(0,P.jsx)(Ta,{children:e.joinedAt||`—`})]})}function ea({user:e,onClose:t}){let[n,r]=(0,_.useState)(!1);(0,_.useEffect)(()=>{let e=e=>{e.key===`Escape`&&t()};return window.addEventListener(`keydown`,e),()=>window.removeEventListener(`keydown`,e)},[t]);let i=e.avatarImageUrl||e.avatarUrl;return(0,P.jsx)(Ea,{onClick:t,children:(0,P.jsxs)(Da,{onClick:e=>e.stopPropagation(),children:[(0,P.jsx)(Oa,{$src:i,children:!i&&e.name.slice(0,1).toUpperCase()}),(0,P.jsxs)(ka,{children:[(0,P.jsx)(`h2`,{children:e.name}),(0,P.jsxs)(Aa,{children:[e.trust&&(0,P.jsx)(ba,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(Sa,{children:`robot`}),e.local&&(0,P.jsx)(xa,{children:`you`})]}),(0,P.jsxs)(ja,{children:[(0,P.jsxs)(Na,{children:[(0,P.jsx)(`span`,{children:`User ID`}),(0,P.jsxs)(Pa,{children:[(0,P.jsx)(`code`,{children:n?e.userId:`••••••••••••••••`}),(0,P.jsx)(L,{"aria-label":n?`Hide user ID`:`Show user ID`,onClick:()=>r(e=>!e),type:`button`,children:n?(0,P.jsx)(Cr,{size:14}):(0,P.jsx)(Sr,{size:14})})]})]}),(0,P.jsx)(ta,{label:`Platform`,value:e.platform??`—`}),(0,P.jsx)(ta,{label:`Avatar`,value:e.avatarName??(e.isRobot?`Robot (default)`:`Unknown`)}),(0,P.jsx)(ta,{label:`VRChat account since`,value:e.dateJoined?new Date(e.dateJoined).toLocaleDateString():`—`}),(0,P.jsx)(ta,{label:`In this instance since`,value:e.joinedAt||`—`})]}),!i&&(0,P.jsx)(Fa,{children:`No avatar yet; it appears once the profile is fetched.`})]}),(0,P.jsx)(Ia,{onClick:t,type:`button`,children:`×`})]})})}function ta({label:e,value:t}){return(0,P.jsxs)(Ma,{children:[(0,P.jsx)(`span`,{children:e}),(0,P.jsx)(`code`,{title:t,children:t})]})}function na({title:e,hint:t,children:n}){return(0,P.jsxs)(Ra,{children:[(0,P.jsx)(gr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var ra=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 14px;
     min-height: 0;
-`,Qi=M.section`
+`,ia=M.section`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -352,12 +392,12 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,$i=M.div`
+`,aa=M.div`
     display: flex;
     align-items: center;
     gap: 12px;
     min-width: 0;
-`,ea=M.div`
+`,oa=M.div`
     width: 44px;
     height: 44px;
     flex-shrink: 0;
@@ -365,12 +405,12 @@ Error generating stack: `+e.message+`
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,ta=M.div`
+`,sa=M.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
     min-width: 0;
-`,na=M.h2`
+`,ca=M.h2`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -382,18 +422,18 @@ Error generating stack: `+e.message+`
     &:hover {
         color: ${({$link:e})=>e?`var(--accent-primary)`:`inherit`};
     }
-`,ra=M.span`
+`,F=M.span`
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`,ia=M.div`
+`,I=M.div`
     display: flex;
     align-items: center;
     gap: 16px;
     flex-shrink: 0;
-`,aa=M.span`
+`,la=M.span`
     padding: 4px 9px;
     border: 1px solid ${({$api:e})=>e?`rgba(167, 139, 250, 0.45)`:`var(--border-color)`};
     border-radius: 999px;
@@ -403,7 +443,7 @@ Error generating stack: `+e.message+`
     font-size: 9px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-`,oa=M.div`
+`,ua=M.div`
     display: flex;
     align-items: baseline;
     gap: 7px;
@@ -422,7 +462,7 @@ Error generating stack: `+e.message+`
         text-transform: uppercase;
         color: var(--text-muted);
     }
-`,sa=M.section`
+`,da=M.section`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -431,7 +471,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,ca=M.div`
+`,fa=M.div`
     display: grid;
     grid-template-columns: minmax(0, 1fr) 52px 74px;
     gap: 12px;
@@ -442,11 +482,11 @@ Error generating stack: `+e.message+`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-`,F=M.div`
+`,pa=M.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-`,I=M.div`
+`,ma=M.div`
     display: grid;
     grid-template-columns: minmax(0, 1fr) 52px 74px;
     gap: 12px;
@@ -462,29 +502,29 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(167, 139, 250, 0.06);
     }
-`,la=M.span`
+`,ha=M.span`
     display: flex;
     align-items: center;
     gap: 9px;
     min-width: 0;
     font-size: 12.5px;
     font-weight: 500;
-`,ua=M.span`
+`,ga=M.span`
     display: flex;
     align-items: center;
     justify-content: flex-end;
-`,da=M.span`
+`,_a=M.span`
     width: 34px;
     height: 34px;
     border-radius: var(--radius-sm);
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,fa=M.span`
+`,va=M.span`
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10.5px;
-`,pa=M.span`
+`,ya=M.span`
     display: flex;
     align-items: center;
     gap: 7px;
@@ -495,22 +535,22 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,ma=M.span`
+`,ba=M.span`
     padding: 1px 6px;
     flex-shrink: 0;
     border-radius: 999px;
-    background: ${({$trust:e})=>va(e)};
-    color: ${({$trust:e})=>_a(e)};
+    background: ${({$trust:e})=>wa(e)};
+    color: ${({$trust:e})=>Ca(e)};
     font-family: var(--font-mono);
     font-size: 9px;
-`,ha=M.span`
+`,xa=M.span`
     padding: 1px 6px;
     border-radius: 999px;
     background: rgba(167, 139, 250, 0.16);
     color: var(--accent-primary);
     font-family: var(--font-mono);
     font-size: 9px;
-`,ga=M.span`
+`,Sa=M.span`
     padding: 1px 6px;
     flex-shrink: 0;
     border-radius: 999px;
@@ -518,12 +558,12 @@ Error generating stack: `+e.message+`
     color: #fca5a5;
     font-family: var(--font-mono);
     font-size: 9px;
-`;function _a(e){switch(e){case`Trusted`:return`#c4b5fd`;case`Known`:return`#93c5fd`;case`User`:return`#86efac`;case`New`:return`#fcd34d`;default:return`#94a3b8`}}function va(e){switch(e){case`Trusted`:return`rgba(167, 139, 250, 0.16)`;case`Known`:return`rgba(96, 165, 250, 0.16)`;case`User`:return`rgba(74, 222, 128, 0.14)`;case`New`:return`rgba(250, 204, 21, 0.14)`;default:return`rgba(148, 163, 184, 0.14)`}}var ya=M.span`
+`;function Ca(e){switch(e){case`Trusted`:return`#c4b5fd`;case`Known`:return`#93c5fd`;case`User`:return`#86efac`;case`New`:return`#fcd34d`;default:return`#94a3b8`}}function wa(e){switch(e){case`Trusted`:return`rgba(167, 139, 250, 0.16)`;case`Known`:return`rgba(96, 165, 250, 0.16)`;case`User`:return`rgba(74, 222, 128, 0.14)`;case`New`:return`rgba(250, 204, 21, 0.14)`;default:return`rgba(148, 163, 184, 0.14)`}}var Ta=M.span`
     text-align: right;
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10.5px;
-`,ba=M.div`
+`,Ea=M.div`
     position: fixed;
     inset: 0;
     z-index: 20;
@@ -533,7 +573,7 @@ Error generating stack: `+e.message+`
     padding: 24px;
     background: rgba(6, 4, 12, 0.72);
     backdrop-filter: blur(3px);
-`,xa=M.div`
+`,Da=M.div`
     position: relative;
     display: flex;
     gap: 22px;
@@ -543,7 +583,7 @@ Error generating stack: `+e.message+`
     border-radius: var(--radius-md);
     background: var(--bg-card);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-`,Sa=M.div`
+`,Oa=M.div`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -557,7 +597,7 @@ Error generating stack: `+e.message+`
     color: ${({$src:e})=>e?`transparent`:`var(--text-muted)`};
     font-size: 44px;
     font-weight: 600;
-`,Ca=M.div`
+`,ka=M.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -567,15 +607,15 @@ Error generating stack: `+e.message+`
         font-size: 17px;
         font-weight: 600;
     }
-`,wa=M.div`
+`,Aa=M.div`
     display: flex;
     gap: 6px;
-`,Ta=M.dl`
+`,ja=M.dl`
     display: flex;
     flex-direction: column;
     gap: 8px;
     margin-top: 4px;
-`,Ea=M.div`
+`,Ma=M.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -597,7 +637,7 @@ Error generating stack: `+e.message+`
         font-size: 11px;
         user-select: text;
     }
-`,Da=M.div`
+`,Na=M.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -609,7 +649,7 @@ Error generating stack: `+e.message+`
         text-transform: uppercase;
         color: var(--text-muted);
     }
-`,Oa=M.div`
+`,Pa=M.div`
     display: flex;
     align-items: center;
     gap: 6px;
@@ -623,7 +663,7 @@ Error generating stack: `+e.message+`
         font-size: 11px;
         user-select: text;
     }
-`,ka=M.button`
+`,L=M.button`
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -640,10 +680,10 @@ Error generating stack: `+e.message+`
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`,Aa=M.p`
+`,Fa=M.p`
     font-size: 11px;
     color: var(--text-muted);
-`,ja=M.button`
+`,Ia=M.button`
     position: absolute;
     top: 10px;
     right: 10px;
@@ -661,12 +701,12 @@ Error generating stack: `+e.message+`
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`,Ma=M.div`
+`,La=M.div`
     padding: 32px;
     text-align: center;
     color: var(--text-muted);
     font-size: 12px;
-`,Na=M.div`
+`,Ra=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -691,24 +731,24 @@ Error generating stack: `+e.message+`
         line-height: 1.65;
         color: var(--text-muted);
     }
-`,Pa=[`debug`,`info`,`warning`,`error`],L={debug:`Debug`,info:`Info`,warning:`Warning`,error:`Error`},Fa={debug:`DBG`,info:`INF`,warning:`WRN`,error:`ERR`},Ia=e=>e===`error`?`#fb7185`:e===`warning`?`#fbbf24`:e===`info`?`#60a5fa`:e===`debug`?`#6f6885`:`transparent`;function La({log:e}){let{status:t,lines:n,clear:r}=e,[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(new Set),[c,l]=(0,_.useState)(!0),[u,d]=(0,_.useState)(!1),[f,p]=(0,_.useState)(null),m=(0,_.useRef)(null),h=(0,_.useMemo)(()=>Ra(n,i,o),[n,i,o]);(0,_.useEffect)(()=>{c&&m.current&&(m.current.scrollTop=m.current.scrollHeight)},[h,c]),(0,_.useEffect)(()=>{if(!f)return;let e=window.setTimeout(()=>p(null),5e3);return()=>window.clearTimeout(e)},[f]);let g=e=>s(t=>{let n=new Set(t);return n.delete(e)||n.add(e),n});return(0,P.jsxs)(Va,{children:[(0,P.jsxs)(Ha,{children:[(0,P.jsxs)(Ua,{children:[(0,P.jsxs)(Ga,{children:[(0,P.jsx)(dr,{}),(0,P.jsx)(`input`,{"aria-label":`Filter log lines`,onChange:e=>a(e.target.value),placeholder:`Filter lines…`,spellCheck:!1,type:`search`,value:i}),i&&(0,P.jsx)(Ka,{"aria-label":`Clear the filter`,onClick:()=>a(``),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsx)(Wa,{}),(0,P.jsxs)(Ya,{$active:c,onClick:()=>l(e=>!e),title:c?`Stop scrolling as new lines arrive`:`Scroll to the newest line again`,type:`button`,children:[(0,P.jsx)(Xa,{$active:c}),c?`Following`:`Paused`]}),(0,P.jsxs)(Ya,{disabled:n.length===0,onClick:r,title:`Clear the view; the log itself is untouched`,type:`button`,children:[(0,P.jsx)(pr,{}),`Clear`]}),(0,P.jsxs)(Ya,{disabled:n.length===0||u,onClick:async()=>{p(null),d(!0);try{let e=await Kr();e.saved&&p({text:`Exported ${e.lines} lines to ${e.path}.`})}catch(e){p({text:e instanceof Error?e.message:String(e),error:!0})}finally{d(!1)}},title:`Save every line read so far to a file`,type:`button`,children:[(0,P.jsx)(_r,{}),u?`Exporting…`:`Export`]})]}),(0,P.jsx)(qa,{children:Pa.map(e=>(0,P.jsxs)(Ja,{$level:e,$on:!o.has(e),onClick:()=>g(e),title:`${o.has(e)?`Show`:`Hide`} ${L[e]} lines`,type:`button`,children:[(0,P.jsx)(`i`,{}),L[e]]},e))})]}),f&&(0,P.jsxs)(Za,{$error:f.error,children:[(0,P.jsx)(`span`,{children:f.text}),(0,P.jsx)(`button`,{"aria-label":`Dismiss`,onClick:()=>p(null),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsxs)(Qa,{children:[Vr?n.length===0?t.running?t.exists?(0,P.jsx)(Ba,{hint:`VRChat is starting; lines appear here as soon as it writes them.`,title:`Waiting for the log`}):(0,P.jsx)(Ba,{hint:`The configured log folder cannot be found. Set VRChat's log folder in Settings.`,title:`Log folder not found`}):(0,P.jsx)(Ba,{hint:`Nothing is read while VRChat is closed. Its log appears here once it starts.`,title:`VRChat is not running`}):h.length===0?(0,P.jsx)(Ba,{hint:i.trim()?`No line contains “${i.trim()}”.`:`Every line is hidden by the level filter.`,title:`Nothing matches`}):(0,P.jsx)($a,{onScroll:()=>{let e=m.current;if(!e)return;let t=e.scrollHeight-e.scrollTop-e.clientHeight<48;t!==c&&l(t)},ref:m,children:h.map(({line:e,level:t})=>e.level===`session`?(0,P.jsx)(no,{children:`new session`},e.id):(0,P.jsxs)(eo,{$level:t,children:[(0,P.jsx)(to,{children:e.time}),(0,P.jsx)(ro,{$level:t,children:e.level?Fa[t]??e.level:``}),(0,P.jsx)(io,{$level:t,children:za(e.message,i)})]},e.id))}):(0,P.jsx)(Ba,{hint:`The log is read through the desktop host. Start AntiBot instead of the browser preview.`,title:`Desktop host required`}),!c&&h.length>0&&(0,P.jsxs)(ao,{onClick:()=>l(!0),type:`button`,children:[(0,P.jsx)(hr,{}),`Jump to latest`]})]}),(0,P.jsx)(so,{children:(0,P.jsx)(`span`,{children:h.length===n.length?`${n.length} lines`:`${h.length} of ${n.length} lines`})})]})}function Ra(e,t,n){let r=t.trim().toLowerCase(),i=[],a=``;for(let t of e){t.level&&(a=t.level);let e=t.level||a;n.has(e)||(!r||t.message.toLowerCase().includes(r))&&i.push({line:t,level:e})}return i}function za(e,t){let n=t.trim();if(!n)return e;let r=e.split(RegExp(`(${n.replace(/[.*+?^${}()|[\]\\]/g,`\\$&`)})`,`gi`)),i=n.toLowerCase();return r.map((e,t)=>e.toLowerCase()===i?(0,P.jsx)(`mark`,{children:e},t):e)}function Ba({title:e,hint:t,children:n}){return(0,P.jsxs)(oo,{children:[(0,P.jsx)(lr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var Va=M.div`
+`,za=[`debug`,`info`,`warning`,`error`],Ba={debug:`Debug`,info:`Info`,warning:`Warning`,error:`Error`},Va={debug:`DBG`,info:`INF`,warning:`WRN`,error:`ERR`},Ha=e=>e===`error`?`#fb7185`:e===`warning`?`#fbbf24`:e===`info`?`#60a5fa`:e===`debug`?`#6f6885`:`transparent`;function Ua({log:e}){let{status:t,lines:n,clear:r}=e,[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(new Set),[c,l]=(0,_.useState)(!0),[u,d]=(0,_.useState)(!1),[f,p]=(0,_.useState)(null),m=(0,_.useRef)(null),h=(0,_.useMemo)(()=>Wa(n,i,o),[n,i,o]);(0,_.useEffect)(()=>{c&&m.current&&(m.current.scrollTop=m.current.scrollHeight)},[h,c]),(0,_.useEffect)(()=>{if(!f)return;let e=window.setTimeout(()=>p(null),5e3);return()=>window.clearTimeout(e)},[f]);let g=e=>s(t=>{let n=new Set(t);return n.delete(e)||n.add(e),n});return(0,P.jsxs)(qa,{children:[(0,P.jsxs)(Ja,{children:[(0,P.jsxs)(Ya,{children:[(0,P.jsxs)(Za,{children:[(0,P.jsx)(dr,{}),(0,P.jsx)(`input`,{"aria-label":`Filter log lines`,onChange:e=>a(e.target.value),placeholder:`Filter lines…`,spellCheck:!1,type:`search`,value:i}),i&&(0,P.jsx)(Qa,{"aria-label":`Clear the filter`,onClick:()=>a(``),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsx)(Xa,{}),(0,P.jsxs)(to,{$active:c,onClick:()=>l(e=>!e),title:c?`Stop scrolling as new lines arrive`:`Scroll to the newest line again`,type:`button`,children:[(0,P.jsx)(no,{$active:c}),c?`Following`:`Paused`]}),(0,P.jsxs)(to,{disabled:n.length===0,onClick:r,title:`Clear the view; the log itself is untouched`,type:`button`,children:[(0,P.jsx)(pr,{}),`Clear`]}),(0,P.jsxs)(to,{disabled:n.length===0||u,onClick:async()=>{p(null),d(!0);try{let e=await Kr();e.saved&&p({text:`Exported ${e.lines} lines to ${e.path}.`})}catch(e){p({text:e instanceof Error?e.message:String(e),error:!0})}finally{d(!1)}},title:`Save every line read so far to a file`,type:`button`,children:[(0,P.jsx)(_r,{}),u?`Exporting…`:`Export`]})]}),(0,P.jsx)($a,{children:za.map(e=>(0,P.jsxs)(eo,{$level:e,$on:!o.has(e),onClick:()=>g(e),title:`${o.has(e)?`Show`:`Hide`} ${Ba[e]} lines`,type:`button`,children:[(0,P.jsx)(`i`,{}),Ba[e]]},e))})]}),f&&(0,P.jsxs)(ro,{$error:f.error,children:[(0,P.jsx)(`span`,{children:f.text}),(0,P.jsx)(`button`,{"aria-label":`Dismiss`,onClick:()=>p(null),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsxs)(io,{children:[Vr?n.length===0?t.running?t.exists?(0,P.jsx)(Ka,{hint:`VRChat is starting; lines appear here as soon as it writes them.`,title:`Waiting for the log`}):(0,P.jsx)(Ka,{hint:`The configured log folder cannot be found. Set VRChat's log folder in Settings.`,title:`Log folder not found`}):(0,P.jsx)(Ka,{hint:`Nothing is read while VRChat is closed. Its log appears here once it starts.`,title:`VRChat is not running`}):h.length===0?(0,P.jsx)(Ka,{hint:i.trim()?`No line contains “${i.trim()}”.`:`Every line is hidden by the level filter.`,title:`Nothing matches`}):(0,P.jsx)(ao,{onScroll:()=>{let e=m.current;if(!e)return;let t=e.scrollHeight-e.scrollTop-e.clientHeight<48;t!==c&&l(t)},ref:m,children:h.map(({line:e,level:t})=>e.level===`session`?(0,P.jsx)(co,{children:`new session`},e.id):(0,P.jsxs)(oo,{$level:t,children:[(0,P.jsx)(so,{children:e.time}),(0,P.jsx)(lo,{$level:t,children:e.level?Va[t]??e.level:``}),(0,P.jsx)(uo,{$level:t,children:Ga(e.message,i)})]},e.id))}):(0,P.jsx)(Ka,{hint:`The log is read through the desktop host. Start AntiBot instead of the browser preview.`,title:`Desktop host required`}),!c&&h.length>0&&(0,P.jsxs)(fo,{onClick:()=>l(!0),type:`button`,children:[(0,P.jsx)(hr,{}),`Jump to latest`]})]}),(0,P.jsx)(mo,{children:(0,P.jsx)(`span`,{children:h.length===n.length?`${n.length} lines`:`${h.length} of ${n.length} lines`})})]})}function Wa(e,t,n){let r=t.trim().toLowerCase(),i=[],a=``;for(let t of e){t.level&&(a=t.level);let e=t.level||a;n.has(e)||(!r||t.message.toLowerCase().includes(r))&&i.push({line:t,level:e})}return i}function Ga(e,t){let n=t.trim();if(!n)return e;let r=e.split(RegExp(`(${n.replace(/[.*+?^${}()|[\]\\]/g,`\\$&`)})`,`gi`)),i=n.toLowerCase();return r.map((e,t)=>e.toLowerCase()===i?(0,P.jsx)(`mark`,{children:e},t):e)}function Ka({title:e,hint:t,children:n}){return(0,P.jsxs)(po,{children:[(0,P.jsx)(lr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var qa=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 10px;
     min-height: 0;
-`,Ha=M.div`
+`,Ja=M.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
-`,Ua=M.div`
+`,Ya=M.div`
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-`,Wa=M.span`
+`,Xa=M.span`
     flex: 1;
-`,Ga=M.div`
+`,Za=M.div`
     position: relative;
     display: flex;
     align-items: center;
@@ -746,7 +786,7 @@ Error generating stack: `+e.message+`
             display: none;
         }
     }
-`,Ka=M.button`
+`,Qa=M.button`
     position: absolute;
     right: 6px;
     display: grid;
@@ -763,17 +803,17 @@ Error generating stack: `+e.message+`
         color: var(--text-primary);
         background: var(--bg-card-hover);
     }
-`,qa=M.div`
+`,$a=M.div`
     display: flex;
     gap: 4px;
-`,Ja=M.button`
+`,eo=M.button`
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 6px 9px;
-    border: 1px solid ${({$on:e,$level:t})=>e?`${Ia(t)}66`:`var(--border-color)`};
+    border: 1px solid ${({$on:e,$level:t})=>e?`${Ha(t)}66`:`var(--border-color)`};
     border-radius: 999px;
-    background: ${({$on:e,$level:t})=>e?`${Ia(t)}14`:`transparent`};
+    background: ${({$on:e,$level:t})=>e?`${Ha(t)}14`:`transparent`};
     color: ${({$on:e})=>e?`var(--text-primary)`:`var(--text-muted)`};
     font: inherit;
     font-family: var(--font-mono);
@@ -786,13 +826,13 @@ Error generating stack: `+e.message+`
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: ${({$on:e,$level:t})=>e?Ia(t):`var(--text-muted)`};
+        background: ${({$on:e,$level:t})=>e?Ha(t):`var(--text-muted)`};
     }
 
     &:hover {
         border-color: var(--border-color-hover);
     }
-`,Ya=M.button`
+`,to=M.button`
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -815,13 +855,13 @@ Error generating stack: `+e.message+`
         opacity: 0.45;
         cursor: default;
     }
-`,Xa=M.span`
+`,no=M.span`
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: ${({$active:e})=>e?`var(--accent-primary)`:`var(--text-muted)`};
     box-shadow: ${({$active:e})=>e?`0 0 8px var(--accent-primary)`:`none`};
-`,Za=M.div`
+`,ro=M.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -848,7 +888,7 @@ Error generating stack: `+e.message+`
         color: inherit;
         cursor: pointer;
     }
-`,Qa=M.section`
+`,io=M.section`
     position: relative;
     display: flex;
     flex: 1;
@@ -858,19 +898,19 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: rgba(9, 7, 16, 0.6);
-`,$a=M.div`
+`,ao=M.div`
     flex: 1;
     min-height: 0;
     overflow: auto;
     padding: 6px 0 12px;
     font-family: var(--font-mono);
     font-size: 11.5px;
-`,eo=M.div`
+`,oo=M.div`
     display: grid;
     grid-template-columns: 62px 34px minmax(0, 1fr);
     gap: 10px;
     padding: 0 14px;
-    border-left: 2px solid ${({$level:e})=>Ia(e)};
+    border-left: 2px solid ${({$level:e})=>Ha(e)};
     line-height: 1.7;
     content-visibility: auto;
     contain-intrinsic-size: auto 20px;
@@ -878,10 +918,10 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(167, 139, 250, 0.06);
     }
-`,to=M.span`
+`,so=M.span`
     color: var(--text-muted);
     white-space: nowrap;
-`,no=M.div`
+`,co=M.div`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -902,13 +942,13 @@ Error generating stack: `+e.message+`
     &:hover {
         color: var(--text-secondary);
     }
-`,ro=M.span`
-    color: ${({$level:e})=>Ia(e)};
+`,lo=M.span`
+    color: ${({$level:e})=>Ha(e)};
     font-size: 9px;
     letter-spacing: 0.04em;
     line-height: 1.95;
     opacity: 0.85;
-`,io=M.span`
+`,uo=M.span`
     color: ${({$level:e})=>e===`error`?`#fecaca`:e===`warning`?`#fde68a`:`var(--text-secondary)`};
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -918,7 +958,7 @@ Error generating stack: `+e.message+`
         background: rgba(167, 139, 250, 0.28);
         color: var(--text-primary);
     }
-`,ao=M.button`
+`,fo=M.button`
     position: absolute;
     right: 18px;
     bottom: 14px;
@@ -938,7 +978,7 @@ Error generating stack: `+e.message+`
     &:hover {
         background: var(--bg-card-hover);
     }
-`,oo=M.div`
+`,po=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -963,7 +1003,7 @@ Error generating stack: `+e.message+`
         line-height: 1.65;
         color: var(--text-muted);
     }
-`,so=M.footer`
+`,mo=M.footer`
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -972,16 +1012,16 @@ Error generating stack: `+e.message+`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
-`,co={logDirectory:``,defaultLogDirectory:``};async function lo(){return N.available?await N.request(`settings.get`):co}async function uo(e){N.available&&await N.request(`settings.save`,e)}function fo({info:e}){let[t,n]=(0,_.useState)(``),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(``),[s,c]=(0,_.useState)(null),[l,u]=(0,_.useState)(!1);(0,_.useEffect)(()=>{lo().then(e=>{n(e.logDirectory??``),i(e.logDirectory??``),o(e.defaultLogDirectory??``)},()=>c(`Could not read the settings.`))},[]);let d=t.trim(),f=d!==r;return(0,P.jsxs)(po,{children:[(0,P.jsxs)(mo,{children:[(0,P.jsxs)(ho,{children:[(0,P.jsx)(`h2`,{children:`Log source`}),(0,P.jsx)(`span`,{children:`configurable`})]}),(0,P.jsxs)(go,{children:[(0,P.jsxs)(_o,{children:[(0,P.jsx)(bo,{children:`VRChat log folder`}),(0,P.jsxs)(vo,{children:[(0,P.jsx)(yo,{"aria-label":`VRChat log folder`,onChange:e=>n(e.target.value),placeholder:`VRChat's log folder`,spellCheck:!1,value:t}),(0,P.jsx)(wo,{disabled:!f||d.length===0||l,onClick:async()=>{c(null),u(!0);try{await uo({logDirectory:d}),n(d),i(d)}catch(e){c(e instanceof Error?e.message:String(e))}finally{u(!1)}},type:`button`,children:l?`Saving…`:`Save`})]}),(0,P.jsx)(So,{children:`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`})]}),s&&(0,P.jsx)(To,{children:s}),(0,P.jsxs)(Co,{children:[(0,P.jsxs)(wo,{disabled:!Vr,onClick:async()=>{c(null);try{await Gr()}catch(e){c(e instanceof Error?e.message:String(e))}},type:`button`,children:[(0,P.jsx)(mr,{}),`Open folder`]}),(0,P.jsx)(wo,{disabled:!a||d===a,onClick:()=>n(a),type:`button`,children:`Use VRChat's folder`})]})]})]}),(0,P.jsxs)(mo,{children:[(0,P.jsxs)(ho,{children:[(0,P.jsx)(`h2`,{children:`Build`}),(0,P.jsx)(`span`,{children:`app.info`})]}),(0,P.jsx)(go,{children:(0,P.jsxs)(_o,{children:[(0,P.jsx)(bo,{children:`Version`}),(0,P.jsx)(xo,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:`browser preview`}),(0,P.jsx)(So,{children:`Read from the executable the interface is running in.`})]})})]})]})}var po=M.div`
+`,ho={logDirectory:``,defaultLogDirectory:``};async function go(){return N.available?await N.request(`settings.get`):ho}async function _o(e){N.available&&await N.request(`settings.save`,e)}function vo({info:e}){let[t,n]=(0,_.useState)(``),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(``),[s,c]=(0,_.useState)(null),[l,u]=(0,_.useState)(!1);(0,_.useEffect)(()=>{go().then(e=>{n(e.logDirectory??``),i(e.logDirectory??``),o(e.defaultLogDirectory??``)},()=>c(`Could not read the settings.`))},[]);let d=t.trim(),f=d!==r;return(0,P.jsxs)(yo,{children:[(0,P.jsxs)(bo,{children:[(0,P.jsxs)(xo,{children:[(0,P.jsx)(`h2`,{children:`Log source`}),(0,P.jsx)(`span`,{children:`configurable`})]}),(0,P.jsxs)(So,{children:[(0,P.jsxs)(Co,{children:[(0,P.jsx)(Eo,{children:`VRChat log folder`}),(0,P.jsxs)(wo,{children:[(0,P.jsx)(To,{"aria-label":`VRChat log folder`,onChange:e=>n(e.target.value),placeholder:`VRChat's log folder`,spellCheck:!1,value:t}),(0,P.jsx)(Ao,{disabled:!f||d.length===0||l,onClick:async()=>{c(null),u(!0);try{await _o({logDirectory:d}),n(d),i(d)}catch(e){c(e instanceof Error?e.message:String(e))}finally{u(!1)}},type:`button`,children:l?`Saving…`:`Save`})]}),(0,P.jsx)(Oo,{children:`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`})]}),s&&(0,P.jsx)(jo,{children:s}),(0,P.jsxs)(ko,{children:[(0,P.jsxs)(Ao,{disabled:!Vr,onClick:async()=>{c(null);try{await Gr()}catch(e){c(e instanceof Error?e.message:String(e))}},type:`button`,children:[(0,P.jsx)(mr,{}),`Open folder`]}),(0,P.jsx)(Ao,{disabled:!a||d===a,onClick:()=>n(a),type:`button`,children:`Use VRChat's folder`})]})]})]}),(0,P.jsxs)(bo,{children:[(0,P.jsxs)(xo,{children:[(0,P.jsx)(`h2`,{children:`Build`}),(0,P.jsx)(`span`,{children:`app.info`})]}),(0,P.jsx)(So,{children:(0,P.jsxs)(Co,{children:[(0,P.jsx)(Eo,{children:`Version`}),(0,P.jsx)(Do,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:`browser preview`}),(0,P.jsx)(Oo,{children:`Read from the executable the interface is running in.`})]})})]})]})}var yo=M.div`
     display: flex;
     flex-direction: column;
     gap: 18px;
     max-width: 760px;
-`,mo=M.section`
+`,bo=M.section`
     display: flex;
     flex-direction: column;
     gap: 10px;
-`,ho=M.div`
+`,xo=M.div`
     display: flex;
     align-items: baseline;
     justify-content: space-between;
@@ -997,7 +1037,7 @@ Error generating stack: `+e.message+`
         font-size: 10px;
         color: var(--text-muted);
     }
-`,go=M.div`
+`,So=M.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1005,15 +1045,15 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,_o=M.div`
+`,Co=M.div`
     display: flex;
     flex-direction: column;
     gap: 5px;
-`,vo=M.div`
+`,wo=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
-`,yo=M.input`
+`,To=M.input`
     flex: 1;
     min-width: 0;
     padding: 8px 10px;
@@ -1033,26 +1073,26 @@ Error generating stack: `+e.message+`
         outline: none;
         border-color: var(--border-color-hover);
     }
-`,bo=M.span`
+`,Eo=M.span`
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`,xo=M.span`
+`,Do=M.span`
     font-family: ${({$mono:e})=>e?`var(--font-mono)`:`var(--font-sans)`};
     font-size: 12px;
     color: var(--text-primary);
     overflow-wrap: anywhere;
-`,So=M.span`
+`,Oo=M.span`
     font-size: 10px;
     line-height: 1.5;
     color: var(--text-muted);
-`,Co=M.div`
+`,ko=M.div`
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-`,wo=M.button`
+`,Ao=M.button`
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -1075,10 +1115,10 @@ Error generating stack: `+e.message+`
         opacity: 0.4;
         cursor: default;
     }
-`,To=M.span`
+`,jo=M.span`
     color: var(--danger);
     font-size: 11px;
-`,Eo={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function Do(){let[e,t]=(0,_.useState)(`logs`),[n,r]=(0,_.useState)(null),i=rr(),a=Jr();(0,_.useEffect)(()=>{or().then(r,()=>r(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>N.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:o,subtitle:s}=Eo[e],c=a.status.running;return(0,P.jsxs)(Oo,{$rounded:i,children:[(0,P.jsx)(Pr,{}),(0,P.jsxs)(ko,{children:[(0,P.jsx)(Tr,{onNavigate:t,page:e,status:a.status}),(0,P.jsxs)(Ao,{children:[(0,P.jsxs)(jo,{children:[(0,P.jsxs)(Mo,{children:[(0,P.jsx)(`h1`,{children:o}),(0,P.jsx)(`p`,{children:s})]}),(0,P.jsx)(No,{children:(0,P.jsxs)(Po,{$active:c,children:[(0,P.jsx)(Fo,{$active:c}),c?`VRChat running`:`VRChat not running`]})})]}),(0,P.jsx)(Io,{$flush:e!==`settings`,children:e===`logs`?(0,P.jsx)(La,{log:a}):e===`instance`?(0,P.jsx)(Ki,{}):e===`account`?(0,P.jsx)(si,{}):(0,P.jsx)(fo,{info:n})}),(0,P.jsx)(Lo,{children:(0,P.jsx)(`span`,{children:n?`v${n.version} · ${n.platform}`:`browser preview`})})]})]}),(0,P.jsx)(ar,{})]})}var Oo=M.div`
+`,Mo={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function No(){let[e,t]=(0,_.useState)(`logs`),[n,r]=(0,_.useState)(null),i=rr(),a=Jr();(0,_.useEffect)(()=>{or().then(r,()=>r(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>N.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:o,subtitle:s}=Mo[e],c=a.status.running;return(0,P.jsxs)(Po,{$rounded:i,children:[(0,P.jsx)(Pr,{}),(0,P.jsxs)(Fo,{children:[(0,P.jsx)(Tr,{onNavigate:t,page:e,status:a.status}),(0,P.jsxs)(Io,{children:[(0,P.jsxs)(Lo,{children:[(0,P.jsxs)(Ro,{children:[(0,P.jsx)(`h1`,{children:o}),(0,P.jsx)(`p`,{children:s})]}),(0,P.jsx)(zo,{children:(0,P.jsxs)(Bo,{$active:c,children:[(0,P.jsx)(Vo,{$active:c}),c?`VRChat running`:`VRChat not running`]})})]}),(0,P.jsx)(Ho,{$flush:e!==`settings`,children:e===`logs`?(0,P.jsx)(Ua,{log:a}):e===`instance`?(0,P.jsx)(Qi,{}):e===`account`?(0,P.jsx)(si,{}):(0,P.jsx)(vo,{info:n})}),(0,P.jsx)(Uo,{children:(0,P.jsx)(`span`,{children:n?`v${n.version} · ${n.platform}`:`browser preview`})})]})]}),(0,P.jsx)(ar,{})]})}var Po=M.div`
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -1088,26 +1128,26 @@ Error generating stack: `+e.message+`
     /* An undecorated window gets no frame from the compositor, so the corners are drawn here. */
     border-radius: ${({$rounded:e})=>e?`10px`:`0`};
     box-shadow: ${({$rounded:e})=>e?`inset 0 0 0 1px var(--border-color)`:`none`};
-`,ko=M.div`
+`,Fo=M.div`
     display: flex;
     flex: 1;
     min-height: 0;
     background: radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
     radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
     var(--bg-primary);
-`,Ao=M.main`
+`,Io=M.main`
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
-`,jo=M.header`
+`,Lo=M.header`
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
     padding: 22px 26px 16px;
     border-bottom: 1px solid var(--border-color);
-`,Mo=M.div`
+`,Ro=M.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -1122,12 +1162,12 @@ Error generating stack: `+e.message+`
         font-size: 12px;
         color: var(--text-secondary);
     }
-`,No=M.div`
+`,zo=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
     padding-top: 4px;
-`,Po=M.span`
+`,Bo=M.span`
     display: flex;
     align-items: center;
     gap: 7px;
@@ -1139,20 +1179,20 @@ Error generating stack: `+e.message+`
     font-size: 10px;
     color: ${({$active:e})=>e?`var(--accent-primary)`:`var(--text-secondary)`};
     white-space: nowrap;
-`,Fo=M.span`
+`,Vo=M.span`
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: ${({$active:e})=>e?`var(--accent-primary)`:`var(--text-muted)`};
     box-shadow: ${({$active:e})=>e?`0 0 8px var(--accent-primary)`:`none`};
-`,Io=M.div`
+`,Ho=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
     padding: ${({$flush:e})=>e?`16px 26px 18px`:`22px 30px 30px`};
     overflow: ${({$flush:e})=>e?`hidden`:`auto`};
-`,Lo=M.footer`
+`,Uo=M.footer`
     display: flex;
     justify-content: flex-end;
     gap: 16px;
@@ -1167,4 +1207,4 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,Ro=document.getElementById(`root`);Ro&&(0,v.createRoot)(Ro).render((0,P.jsx)(_.StrictMode,{children:(0,P.jsx)(Do,{})}));
+`,Wo=document.getElementById(`root`);Wo&&(0,v.createRoot)(Wo).render((0,P.jsx)(_.StrictMode,{children:(0,P.jsx)(No,{})}));
