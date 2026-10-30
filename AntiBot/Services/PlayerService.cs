@@ -105,7 +105,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
         }
 
         var profile = new PlayerProfile(id, user.DisplayName ?? id, user.CurrentAvatarThumbnailImageUrl,
-            user.DateJoined, user.Tags ?? [], user.Platform, user.LastActivity);
+            user.CurrentAvatarImageUrl, user.DateJoined, user.Tags ?? [], user.Platform, user.LastActivity);
 
         _profiles[id] = profile;
         _fetchedAt[id] = DateTimeOffset.UtcNow;

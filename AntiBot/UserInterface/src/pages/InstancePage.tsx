@@ -13,6 +13,7 @@ import {UsersIcon} from "../components/Icons";
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage() {
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
+    const [selected, setSelected] = useState<InstanceUser | null>(null);
     const received = useRef(false);
 
     useEffect(() => {
@@ -83,18 +84,22 @@ export function InstancePage() {
                         <Rows>
                             {users.length === 0 ? (
                                 <EmptyRow>No players in this instance yet.</EmptyRow>
-                            ) : users.map((user) => <UserRow key={user.userId} user={user}/>)}
+                            ) : users.map((user) => (
+                                <UserRow key={user.userId} user={user} onSelect={setSelected}/>
+                            ))}
                         </Rows>
                     </ListCard>
                 </>
             )}
+
+            {selected && <PlayerDialog user={selected} onClose={() => setSelected(null)}/>}
         </Page>
     );
 }
 
-function UserRow({user}: { user: InstanceUser }) {
+function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: InstanceUser) => void }) {
     return (
-        <Row $local={user.local}>
+        <Row $local={user.local} onClick={() => onSelect(user)}>
             <Name>
                 <Avatar $src={user.avatarUrl}>{user.name.slice(0, 1).toUpperCase()}</Avatar>
                 <NameText>
@@ -109,6 +114,61 @@ function UserRow({user}: { user: InstanceUser }) {
             <Id title={user.userId}>{user.userId}</Id>
             <Time>{user.joinedAt || "—"}</Time>
         </Row>
+    );
+}
+
+/** The player's profile, with the avatar they are wearing as the API last reported it. */
+function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void }) {
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") onClose();
+        };
+
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+
+    const image = user.avatarImageUrl || user.avatarUrl;
+
+    return (
+        <Overlay onClick={onClose}>
+            <Dialog onClick={(event) => event.stopPropagation()}>
+                <Portrait $src={image}>
+                    {!image && user.name.slice(0, 1).toUpperCase()}
+                </Portrait>
+
+                <Details>
+                    <h2>{user.name}</h2>
+                    <Badges>
+                        {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
+                        {user.local && <You>you</You>}
+                    </Badges>
+
+                    <Fields>
+                        <Field label="User ID" value={user.userId}/>
+                        <Field label="Platform" value={user.platform ?? "—"}/>
+                        <Field
+                            label="VRChat account since"
+                            value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
+                        />
+                        <Field label="In this instance since" value={user.joinedAt || "—"}/>
+                    </Fields>
+
+                    {!image && <Hint>No avatar yet; it appears once the profile is fetched.</Hint>}
+                </Details>
+
+                <Close onClick={onClose} type="button">×</Close>
+            </Dialog>
+        </Overlay>
+    );
+}
+
+function Field({label, value}: { label: string; value: string }) {
+    return (
+        <FieldRow>
+            <span>{label}</span>
+            <code title={value}>{value}</code>
+        </FieldRow>
     );
 }
 
@@ -250,6 +310,7 @@ const Row = styled.div<{ $local: boolean }>`
     padding: 10px 16px;
     border-left: 2px solid ${({$local}) => $local ? "var(--accent-primary)" : "transparent"};
     border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
 
     &:last-child {
         border-bottom: 0;
@@ -363,6 +424,119 @@ const Time = styled.span`
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10.5px;
+`;
+
+const Overlay = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(6, 4, 12, 0.72);
+    backdrop-filter: blur(3px);
+`;
+
+const Dialog = styled.div`
+    position: relative;
+    display: flex;
+    gap: 22px;
+    max-width: 560px;
+    padding: 22px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+`;
+
+const Portrait = styled.div<{ $src?: string }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--bg-primary) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+    color: ${({$src}) => $src ? "transparent" : "var(--text-muted)"};
+    font-size: 44px;
+    font-weight: 600;
+`;
+
+const Details = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+
+    h2 {
+        font-size: 17px;
+        font-weight: 600;
+    }
+`;
+
+const Badges = styled.div`
+    display: flex;
+    gap: 6px;
+`;
+
+const Fields = styled.dl`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+`;
+
+const FieldRow = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    span {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        user-select: text;
+    }
+`;
+
+const Hint = styled.p`
+    font-size: 11px;
+    color: var(--text-muted);
+`;
+
+const Close = styled.button`
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
 `;
 
 const EmptyRow = styled.div`

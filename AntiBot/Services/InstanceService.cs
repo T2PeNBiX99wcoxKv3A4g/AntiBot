@@ -438,7 +438,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.UserCount,
         snapshot.Capacity,
         string.Join(',', snapshot.Users.Select(user =>
-            $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}")));
+            $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -482,6 +482,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             known?.Local ?? false,
             known?.JoinedAt ?? "",
             profile?.AvatarUrl ?? avatarUrl,
+            profile?.AvatarImageUrl,
             TrustLevel(profile?.Tags),
             profile?.DateJoined,
             profile?.Platform);

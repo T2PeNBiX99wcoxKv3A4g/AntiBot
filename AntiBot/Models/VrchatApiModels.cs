@@ -24,6 +24,7 @@ internal sealed record ApiInstanceUser(
 internal sealed record ApiUser(
     string? Id,
     string? DisplayName,
+    string? CurrentAvatarImageUrl,
     string? CurrentAvatarThumbnailImageUrl,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,

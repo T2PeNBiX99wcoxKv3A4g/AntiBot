@@ -8,6 +8,7 @@ export interface InstanceUser {
     joinedAt: string;
     /** From the cached VRChat profile; absent until it was fetched. */
     avatarUrl?: string;
+    avatarImageUrl?: string;
     trust?: string;
     dateJoined?: string;
     platform?: string;
