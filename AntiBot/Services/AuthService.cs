@@ -414,8 +414,9 @@ internal sealed class AuthService : Singleton<AuthService>
     ///     The account's profile picture: its own icon when it has one, otherwise the avatar's thumbnail.
     /// </summary>
     private static string? ProfileIcon(ApiAuthUser user) =>
-        user.UserIcon ?? user.ProfilePicOverride ?? user.ProfilePicOverrideThumbnail ??
-        user.CurrentAvatarThumbnailImageUrl;
+        new[] { user.UserIcon, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail,
+                user.CurrentAvatarThumbnailImageUrl }
+            .FirstOrDefault(url => !string.IsNullOrEmpty(url));
 
     private static string StorageName(AuthStorage storage) => storage switch
     {

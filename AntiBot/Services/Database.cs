@@ -255,8 +255,21 @@ internal sealed class Database : Singleton<Database>
     ///     Tags are simple identifiers (<c>system_trust_known</c>), so a comma-separated column keeps the
     ///     database free of the reflection-based serializer the trimmed build turns off.
     /// </summary>
-    private static string[] ParseTags(string? tags) =>
-        string.IsNullOrEmpty(tags) ? [] : tags.Split(',', StringSplitOptions.RemoveEmptyEntries);
+    private static string[] ParseTags(string? tags)
+    {
+        if (string.IsNullOrEmpty(tags))
+            return [];
+
+        if (tags[0] != '[')
+            return tags.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+        // A row written before tags were stored comma-separated.
+        return tags.Trim('[', ']')
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(tag => tag.Trim().Trim('"'))
+            .Where(tag => tag.Length > 0)
+            .ToArray();
+    }
 
     /// <summary>Moves the database an older build left in the data folder, next to the settings instead.</summary>
     private void MoveFromTheDataFolder()
