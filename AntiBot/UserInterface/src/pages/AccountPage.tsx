@@ -288,6 +288,9 @@ function Profile({auth, busy, error, run}: {
                     <Identity>
                         <h2>{user.displayName}</h2>
                         <p>{user.statusDescription || "Signed in to VRChat"}</p>
+                        {auth.expiresAt && (
+                            <p>Session expires {new Date(auth.expiresAt).toLocaleDateString()}</p>
+                        )}
                     </Identity>
                     <Secondary disabled={busy} onClick={() => void run(logout)} type="button">
                         Sign out
@@ -306,11 +309,15 @@ function StorageChoice({auth, busy, error, run}: {
     error: string;
     run: Run;
 }) {
-    const available = auth.systemStorage;
+    const systemAvailable = auth.systemStorage;
     const systemName = auth.systemStorageName || "System protection";
-    const [mode, setMode] = useState<AuthStorage>(
-        auth.storage !== "none" ? auth.storage : available ? "system" : "password",
-    );
+    const tpmAvailable = auth.tpmStorage;
+    const [mode, setMode] = useState<AuthStorage>(() => {
+        if (auth.storage !== "none") return auth.storage;
+        if (tpmAvailable) return "tpm";
+        if (systemAvailable) return "system";
+        return "password";
+    });
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [localError, setLocalError] = useState("");
@@ -346,8 +353,8 @@ function StorageChoice({auth, busy, error, run}: {
                 <div>
                     <h2>Keep the session between launches</h2>
                     <p>
-                        Only the VRChat session cookie is stored, never your password. It is written beside
-                        the settings, and unlocking it is what avoids signing in — and answering 2FA — again.
+                        Only the VRChat session cookie is stored, never your password. Every mode except
+                        "Do not remember" encrypts it at rest; the difference is what unlocks it.
                     </p>
                 </div>
             </CardHead>
@@ -356,7 +363,7 @@ function StorageChoice({auth, busy, error, run}: {
                 <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
                     <OptionHead>
                         <strong>Do not remember</strong>
-                        <Tag>most private</Tag>
+                        <Tag>nothing on disk</Tag>
                     </OptionHead>
                     <p>
                         Nothing is written. The next launch has to sign in again, which also means another
@@ -366,25 +373,46 @@ function StorageChoice({auth, busy, error, run}: {
 
                 <Option
                     $active={mode === "system"}
-                    $disabled={!available}
-                    onClick={() => available && setMode("system")}
+                    $disabled={!systemAvailable}
+                    onClick={() => systemAvailable && setMode("system")}
                     type="button"
                 >
                     <OptionHead>
                         <strong>{systemName}</strong>
-                        <Tag>{available ? "recommended" : "unavailable"}</Tag>
+                        <Tag>{systemAvailable ? "encrypted" : "unavailable"}</Tag>
                     </OptionHead>
-                    {available ? (
+                    {systemAvailable ? (
                         <p>
                             {systemName === "Windows DPAPI"
-                                ? "Encrypted with Windows DPAPI for the current Windows account. Another machine or another Windows user cannot decrypt it. Any program running as you can, which is the price of unlocking without asking."
-                                : "Held in the desktop keyring (Secret Service), unlocked with your login session. Any program running as you can read it, which is the price of unlocking without asking."}
+                                ? "The session is encrypted by Windows DPAPI for your Windows account; copying the file to another user or machine does not help. It unlocks automatically."
+                                : "The session is held in the desktop keyring (Secret Service), encrypted by it and unlocked with your login session. It unlocks automatically."}
                         </p>
                     ) : (
                         <p>
-                            This system has no equivalent of DPAPI and no Secret Service keyring, so the
-                            session cannot be protected without a password here.
+                            This system has neither DPAPI nor a Secret Service keyring, so the session
+                            cannot be protected here without a password.
                         </p>
+                    )}
+                </Option>
+
+                <Option
+                    $active={mode === "tpm"}
+                    $disabled={!tpmAvailable}
+                    onClick={() => tpmAvailable && setMode("tpm")}
+                    type="button"
+                >
+                    <OptionHead>
+                        <strong>TPM (hardware-backed)</strong>
+                        <Tag>{tpmAvailable ? "no prompt" : "no TPM"}</Tag>
+                    </OptionHead>
+                    {tpmAvailable ? (
+                        <p>
+                            The session is encrypted with an AES-256 key that is wrapped by a key held in
+                            this PC's TPM. The file cannot be decrypted on another machine, and it unlocks
+                            automatically without a prompt.
+                        </p>
+                    ) : (
+                        <p>No usable TPM was found on this machine.</p>
                     )}
                 </Option>
 
@@ -394,10 +422,11 @@ function StorageChoice({auth, busy, error, run}: {
                         <Tag>asks every launch</Tag>
                     </OptionHead>
                     <p>
-                        Encrypted with a key derived from your password (PBKDF2, random per-install salt).
-                        Your password is not stored; you type it each launch to unlock, so no 2FA prompt.
-                        Anyone who copies the file can try to guess that password offline, and changing
-                        your password makes the stored session unusable.
+                        The session is encrypted with AES-256-GCM using a key derived from your password
+                        (PBKDF2-SHA256, 600,000 rounds, random per-install salt). Your password is not
+                        stored; you type it each launch to unlock, so no 2FA prompt. Anyone who copies the
+                        file can try to guess that password offline, and changing it makes the stored
+                        session unusable.
                     </p>
                 </Option>
             </Options>
@@ -570,6 +599,8 @@ function storageLabel(storage: AuthStorage) {
             return "password-encrypted";
         case "system":
             return "system-protected";
+        case "tpm":
+            return "TPM-protected";
         default:
             return "not stored";
     }

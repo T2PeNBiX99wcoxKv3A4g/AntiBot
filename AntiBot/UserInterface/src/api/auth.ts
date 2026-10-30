@@ -3,7 +3,7 @@ import {Native} from "@photino-net-utils/bridge";
 export type AuthState = "loggedOut" | "twoFactor" | "locked" | "loggedIn";
 
 /** How the session cookie is kept between launches. */
-export type AuthStorage = "none" | "password" | "system";
+export type AuthStorage = "none" | "password" | "system" | "tpm";
 
 export interface Account {
     id: string;
@@ -20,6 +20,10 @@ export interface AuthSnapshot {
     /** Whether the platform can protect the session without a password (DPAPI, keyring). */
     systemStorage: boolean;
     systemStorageName: string;
+    /** Whether the machine has a TPM that can hold the wrapping key. */
+    tpmStorage: boolean;
+    /** When the session cookie expires, if VRChat gave it an expiry. */
+    expiresAt?: string;
 }
 
 export const signedOut: AuthSnapshot = {
@@ -28,6 +32,7 @@ export const signedOut: AuthSnapshot = {
     twoFactorMethods: [],
     systemStorage: false,
     systemStorageName: "",
+    tpmStorage: false,
 };
 
 export interface DeviceCode {

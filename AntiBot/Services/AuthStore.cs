@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
@@ -21,6 +22,10 @@ namespace AntiBot.Services;
 ///         used through <c>secret-tool</c> when it is installed, and the mode is reported as unavailable
 ///         otherwise instead of falling back to an unprotected file.
 ///     </para>
+///     <para>
+///         TPM mode wraps the AES key with an RSA key held by the machine's TPM, so the file cannot be
+///         decrypted anywhere else and no prompt is needed.
+///     </para>
 /// </remarks>
 internal static class AuthStore
 {
@@ -33,6 +38,7 @@ internal static class AuthStore
     private const byte PlainMode = 0;
     private const byte DpapiMode = 1;
     private const byte PasswordMode = 2;
+    private const byte TpmMode = 3;
 
     // OWASP's floor for PBKDF2-HMAC-SHA256; the cost only shows on unlock, once per launch.
     private const int Iterations = 600_000;
@@ -41,7 +47,11 @@ internal static class AuthStore
     private const int TagSize = 16;
     private const int KeySize = 32;
 
+    private const string TpmKeyName = "AntiBot-Session";
+
     private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
+
+    private static bool? _tpmAvailable;
 
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
@@ -52,6 +62,9 @@ internal static class AuthStore
         OperatingSystem.IsWindows() ? "Windows DPAPI" :
         OperatingSystem.IsLinux() && Keyring.Available ? "System keyring" :
         "Not available";
+
+    /// <summary>Whether this machine has a TPM that can hold the wrapping key.</summary>
+    public static bool IsTpmAvailable => _tpmAvailable ??= OperatingSystem.IsWindows() && ProbeTpm();
 
     public static bool Exists =>
         File.Exists(FilePath) || (OperatingSystem.IsLinux() && Keyring.HasEntry());
@@ -104,6 +117,10 @@ internal static class AuthStore
                 Try.Run(() => File.Delete(FilePath));
                 return true;
 
+            case AuthStorage.Tpm when OperatingSystem.IsWindows() && IsTpmAvailable:
+                await WriteAsync(TpmMode, ProtectWithTpm(payload), token);
+                return true;
+
             default:
                 return false;
         }
@@ -126,6 +143,9 @@ internal static class AuthStore
 
         if (OperatingSystem.IsLinux() && Keyring.Available)
             Keyring.Clear();
+
+        if (OperatingSystem.IsWindows())
+            DeleteTpmKey();
     }
 
     private static AuthStorage FileMode()
@@ -140,6 +160,7 @@ internal static class AuthStore
             return header[Magic.Length + 1] switch
             {
                 PasswordMode => AuthStorage.Password,
+                TpmMode => AuthStorage.Tpm,
                 DpapiMode or PlainMode => AuthStorage.System,
                 _ => AuthStorage.None
             };
@@ -167,6 +188,8 @@ internal static class AuthStore
             {
                 DpapiMode when OperatingSystem.IsWindows() =>
                     ProtectedData.Unprotect(body.ToArray(), Entropy, DataProtectionScope.CurrentUser),
+
+                TpmMode when OperatingSystem.IsWindows() => UnprotectWithTpm(body),
 
                 // A plain file is only left over from the old Linux fallback; reading it lets the next
                 // save move the session into the keyring.
@@ -257,6 +280,128 @@ internal static class AuthStore
             CryptographicOperations.ZeroMemory(cipher);
         }
     }
+
+    [SupportedOSPlatform("windows")]
+    private static bool ProbeTpm()
+    {
+        try
+        {
+            using var key = CngKey.Create(CngAlgorithm.Rsa, TpmKeyName + "-probe", TpmKeyCreation());
+            key.Delete();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "No usable TPM");
+            return false;
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static byte[] ProtectWithTpm(byte[] payload)
+    {
+        using var key = OpenOrCreateTpmKey();
+        using var rsa = new RSACng(key);
+
+        var sessionKey = RandomNumberGenerator.GetBytes(KeySize);
+        var nonce = RandomNumberGenerator.GetBytes(NonceSize);
+        var tag = new byte[TagSize];
+        var cipher = new byte[payload.Length];
+
+        try
+        {
+            using (var aes = new AesGcm(sessionKey, TagSize))
+                aes.Encrypt(nonce, payload, cipher, tag);
+
+            var wrapped = rsa.Encrypt(sessionKey, RSAEncryptionPadding.OaepSHA256);
+
+            var body = new byte[2 + wrapped.Length + NonceSize + TagSize + cipher.Length];
+            body[0] = (byte)(wrapped.Length >> 8);
+            body[1] = (byte)wrapped.Length;
+            wrapped.CopyTo(body, 2);
+            nonce.CopyTo(body, 2 + wrapped.Length);
+            tag.CopyTo(body, 2 + wrapped.Length + NonceSize);
+            cipher.CopyTo(body, 2 + wrapped.Length + NonceSize + TagSize);
+            return body;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(sessionKey);
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static byte[]? UnprotectWithTpm(ReadOnlySpan<byte> body)
+    {
+        if (body.Length < 2 + NonceSize + TagSize)
+            return null;
+
+        var wrappedLength = (body[0] << 8) | body[1];
+        if (body.Length < 2 + wrappedLength + NonceSize + TagSize)
+            return null;
+
+        var wrapped = body.Slice(2, wrappedLength).ToArray();
+        var nonce = body.Slice(2 + wrappedLength, NonceSize).ToArray();
+        var tag = body.Slice(2 + wrappedLength + NonceSize, TagSize).ToArray();
+        var cipher = body[(2 + wrappedLength + NonceSize + TagSize)..].ToArray();
+
+        try
+        {
+            using var key = CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+            using var rsa = new RSACng(key);
+
+            var sessionKey = rsa.Decrypt(wrapped, RSAEncryptionPadding.OaepSHA256);
+            try
+            {
+                var plain = new byte[cipher.Length];
+                using var aes = new AesGcm(sessionKey, TagSize);
+                aes.Decrypt(nonce, cipher, tag, plain);
+                return plain;
+            }
+            finally
+            {
+                CryptographicOperations.ZeroMemory(sessionKey);
+            }
+        }
+        catch (CryptographicException ex)
+        {
+            Log.Warning(ex, "Could not unwrap the session with the TPM key");
+            return null;
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static CngKey OpenOrCreateTpmKey()
+    {
+        try
+        {
+            return CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+        }
+        catch (CryptographicException)
+        {
+            return CngKey.Create(CngAlgorithm.Rsa, TpmKeyName, TpmKeyCreation());
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static CngKeyCreationParameters TpmKeyCreation() => new()
+    {
+        Provider = new CngProvider("Microsoft Platform Crypto Provider"),
+        KeyUsage = CngKeyUsages.AllUsages,
+        ExportPolicy = CngExportPolicies.None,
+        Parameters =
+        {
+            new CngProperty("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None)
+        }
+    };
+
+    [SupportedOSPlatform("windows")]
+    private static void DeleteTpmKey() =>
+        Try.Run(() =>
+        {
+            using var key = CngKey.Open(TpmKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+            key.Delete();
+        });
 
     /// <summary>
     ///     The freedesktop Secret Service, reached through <c>secret-tool</c>. It is only used when the

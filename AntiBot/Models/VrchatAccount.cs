@@ -20,5 +20,8 @@ public enum AuthStorage
     Password,
 
     /// <summary>DPAPI on Windows, an owner-only file on Linux; unlocks without asking.</summary>
-    System
+    System,
+
+    /// <summary>The AES key is wrapped by a key held in the machine's TPM; no prompt.</summary>
+    Tpm
 }

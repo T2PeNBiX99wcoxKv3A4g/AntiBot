@@ -30,7 +30,9 @@ internal sealed record AuthPayload(
     string Storage,
     string[] TwoFactorMethods,
     bool SystemStorage,
-    string SystemStorageName);
+    string SystemStorageName,
+    bool TpmStorage,
+    string? ExpiresAt);
 
 /// <summary>Payload for <c>auth.login</c>.</summary>
 internal sealed record AuthLoginRequest(string Username, string Password);

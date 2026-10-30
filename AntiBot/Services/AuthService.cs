@@ -32,7 +32,14 @@ internal sealed class AuthService : Singleton<AuthService>
     private string[] _twoFactorMethods = [];
     private DateTimeOffset _userRefreshedAt = DateTimeOffset.MinValue;
 
-    public AuthService() => NativeBridge.MessageReceived += HandleMessageAsync;
+    public AuthService()
+    {
+        NativeBridge.MessageReceived += HandleMessageAsync;
+
+        // The TPM probe creates and deletes a key, so it runs in the background before the account
+        // page asks whether that mode is available.
+        _ = Task.Run(() => _ = AuthStore.IsTpmAvailable);
+    }
 
     /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
     public event Action? Changed;
@@ -191,6 +198,7 @@ internal sealed class AuthService : Singleton<AuthService>
         {
             "password" => AuthStorage.Password,
             "system" => AuthStorage.System,
+            "tpm" => AuthStorage.Tpm,
             _ => AuthStorage.None
         };
 
@@ -278,8 +286,8 @@ internal sealed class AuthService : Singleton<AuthService>
 
         // A fresh sign-in issues a new cookie. System storage can be updated silently; a password-
         // protected file cannot, because the password is not kept, so it is dropped and asked for again.
-        if (fresh && storage == AuthStorage.System)
-            await PersistAsync();
+        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm)
+            await PersistAsync(storage);
         else if (fresh && storage == AuthStorage.Password)
         {
             AuthStore.Delete();
@@ -292,15 +300,15 @@ internal sealed class AuthService : Singleton<AuthService>
         return true;
     }
 
-    /// <summary>Re-writes the system-protected cookie after a fresh sign-in.</summary>
-    private async Task PersistAsync()
+    /// <summary>Re-writes the system- or TPM-protected cookie after a fresh sign-in.</summary>
+    private async Task PersistAsync(AuthStorage storage)
     {
         var cookies = JsonSerializer.SerializeToUtf8Bytes(_api.ExportCookies(),
             VrchatJsonContext.Default.CookieRecordArray);
 
         try
         {
-            await AuthStore.SaveAsync(cookies, AuthStorage.System, null);
+            await AuthStore.SaveAsync(cookies, storage, null);
         }
         finally
         {
@@ -405,9 +413,24 @@ internal sealed class AuthService : Singleton<AuthService>
 
     private AuthPayload Snapshot()
     {
+        var expiresAt = SessionExpiry();
+
         lock (_gate)
             return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods,
-                AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName);
+                AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
+                AuthStore.IsTpmAvailable, expiresAt);
+    }
+
+    /// <summary>When the stored <c>auth</c> cookie expires, or null for a session cookie.</summary>
+    private string? SessionExpiry()
+    {
+        if (!IsLoggedIn)
+            return null;
+
+        var auth = _api.ExportCookies().FirstOrDefault(cookie => cookie.Name == "auth");
+        return auth is { Expires: var expires } && expires > DateTimeOffset.UnixEpoch
+            ? expires.ToUniversalTime().ToString("O")
+            : null;
     }
 
     /// <summary>
@@ -422,6 +445,7 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         AuthStorage.Password => "password",
         AuthStorage.System => "system",
+        AuthStorage.Tpm => "tpm",
         _ => "none"
     };
 }
