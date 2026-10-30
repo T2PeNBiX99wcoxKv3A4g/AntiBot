@@ -1,0 +1,76 @@
+using System.Text.Json.Serialization;
+
+namespace AntiBot.Models;
+
+// VRChat's own response shapes. Only the fields AntiBot reads are declared; the rest of the payload is
+// ignored. They are internal because nothing outside the API client should depend on them.
+
+internal sealed record ApiAuthUser(
+    string? Id,
+    string? DisplayName,
+    string? CurrentAvatarImageUrl,
+    string? CurrentAvatarThumbnailImageUrl,
+    string? StatusDescription,
+    string? Location,
+    string[]? RequiresTwoFactorAuth);
+
+internal sealed record ApiWorld(string? Id, string? Name);
+
+internal sealed record ApiInstanceUser(
+    string? Id,
+    string? DisplayName,
+    string? CurrentAvatarThumbnailImageUrl);
+
+internal sealed record ApiInstance(
+    string? Id,
+    string? Location,
+    string? WorldId,
+    string? InstanceId,
+    string? Name,
+    int? UserCount,
+    int? Capacity,
+    ApiWorld? World,
+    ApiInstanceUser[]? Users);
+
+internal sealed record ApiErrorBody(ApiError? Error);
+
+internal sealed record ApiError(string? Message, int? StatusCode);
+
+internal sealed record ApiVerifyResult(bool? Verified);
+
+internal sealed record ApiCodeRequest(string Code);
+
+internal sealed record ApiDeviceCode(
+    string? DeviceCode,
+    string? VerificationUrlComplete,
+    int? Interval,
+    int? ExpiresIn);
+
+internal sealed record ApiDeviceStatus(ApiAuthUser? User);
+
+internal sealed record ApiDeviceStatusRequest(string DeviceCode);
+
+/// <summary>One entry of the session cookie jar, as it is written to disk.</summary>
+internal sealed record CookieRecord(
+    string Name,
+    string Value,
+    string? Domain,
+    string? Path,
+    DateTimeOffset Expires,
+    bool Secure,
+    bool HttpOnly);
+
+[JsonSourceGenerationOptions(
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+[JsonSerializable(typeof(ApiAuthUser))]
+[JsonSerializable(typeof(ApiInstance))]
+[JsonSerializable(typeof(ApiErrorBody))]
+[JsonSerializable(typeof(ApiVerifyResult))]
+[JsonSerializable(typeof(ApiCodeRequest))]
+[JsonSerializable(typeof(ApiDeviceCode))]
+[JsonSerializable(typeof(ApiDeviceStatus))]
+[JsonSerializable(typeof(ApiDeviceStatusRequest))]
+[JsonSerializable(typeof(CookieRecord[]))]
+internal sealed partial class VrchatJsonContext : JsonSerializerContext;

@@ -1,0 +1,809 @@
+import {type FormEvent, useEffect, useState} from "react";
+import styled from "styled-components";
+import {
+    type AuthSnapshot,
+    type AuthStorage,
+    type DeviceCode,
+    getAuth,
+    login,
+    logout,
+    onAuthChanged,
+    pollDevice,
+    saveStorage,
+    signedOut,
+    startDevice,
+    unlock,
+    verify,
+} from "../api/auth";
+import {KeyIcon, QrIcon, ShieldIcon, UserIcon} from "../components/Icons";
+
+type Run = (action: () => Promise<AuthSnapshot>) => Promise<void>;
+
+/** The VRChat account: sign-in, the second factor, and how the session is kept. */
+export function AccountPage() {
+    const [auth, setAuth] = useState<AuthSnapshot>(signedOut);
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const unsubscribe = onAuthChanged((next) => {
+            if (!cancelled) setAuth(next);
+        });
+
+        void getAuth().then((next) => {
+            if (!cancelled) setAuth(next);
+        }, () => {
+            // The host failed to answer; the signed-out form already covers it.
+        });
+
+        return () => {
+            cancelled = true;
+            unsubscribe();
+        };
+    }, []);
+
+    const run: Run = async (action) => {
+        setBusy(true);
+        setError("");
+
+        try {
+            setAuth(await action());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    if (auth.state === "loggedIn" && auth.user)
+        return <Profile auth={auth} busy={busy} error={error} run={run}/>;
+
+    if (auth.state === "locked")
+        return <UnlockForm busy={busy} error={error} run={run}/>;
+
+    if (auth.state === "twoFactor")
+        return <TwoFactorForm auth={auth} busy={busy} error={error} run={run}/>;
+
+    return <LoginForm busy={busy} error={error} run={run} onSignedIn={setAuth}/>;
+}
+
+function LoginForm({busy, error, run, onSignedIn}: {
+    busy: boolean;
+    error: string;
+    run: Run;
+    onSignedIn: (auth: AuthSnapshot) => void;
+}) {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [device, setDevice] = useState(false);
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        void run(() => login(username.trim(), password));
+    };
+
+    return (
+        <Page>
+            <Card>
+                <CardHead>
+                    <UserIcon size={20}/>
+                    <div>
+                        <h2>Sign in to VRChat</h2>
+                        <p>The password is used for this one request and is never stored.</p>
+                    </div>
+                </CardHead>
+
+                <Form onSubmit={submit}>
+                    <Field>
+                        <Label htmlFor="username">Username or email</Label>
+                        <Input
+                            autoComplete="username"
+                            id="username"
+                            onChange={(event) => setUsername(event.target.value)}
+                            placeholder="username"
+                            value={username}
+                        />
+                    </Field>
+
+                    <Field>
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            autoComplete="current-password"
+                            id="password"
+                            onChange={(event) => setPassword(event.target.value)}
+                            placeholder="••••••••"
+                            type="password"
+                            value={password}
+                        />
+                    </Field>
+
+                    {error && <ErrorText>{error}</ErrorText>}
+
+                    <Actions>
+                        <Primary disabled={busy} type="submit">
+                            {busy ? "Signing in…" : "Sign in"}
+                        </Primary>
+                        <Secondary onClick={() => setDevice((open) => !open)} type="button">
+                            <QrIcon size={15}/>
+                            Use a device code
+                        </Secondary>
+                    </Actions>
+                </Form>
+
+                <Note>
+                    VRChat's terms do not cover third-party clients. Signing in is your own decision; the
+                    session is what an attacker would want, so it is kept out of the settings folder.
+                </Note>
+            </Card>
+
+            {device && <DeviceLogin onSignedIn={onSignedIn}/>}
+        </Page>
+    );
+}
+
+function TwoFactorForm({auth, busy, error, run}: {
+    auth: AuthSnapshot;
+    busy: boolean;
+    error: string;
+    run: Run;
+}) {
+    const methods = auth.twoFactorMethods.length > 0 ? auth.twoFactorMethods : ["totp", "otp"];
+    const [method, setMethod] = useState(methods[0]);
+    const [code, setCode] = useState("");
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+
+        // VRChat's recovery codes are eight digits; the API expects them in two groups of four.
+        const raw = code.trim();
+        const value = method === "otp" && /^\d{8}$/.test(raw)
+            ? `${raw.slice(0, 4)}-${raw.slice(4)}`
+            : raw;
+
+        void run(() => verify(method, value));
+    };
+
+    return (
+        <Page>
+            <Card>
+                <CardHead>
+                    <ShieldIcon size={20}/>
+                    <div>
+                        <h2>Two-factor authentication</h2>
+                        <p>VRChat wants a second factor before it hands over the session.</p>
+                    </div>
+                </CardHead>
+
+                <MethodRow>
+                    {methods.map((id) => (
+                        <Method key={id} $active={method === id} onClick={() => setMethod(id)} type="button">
+                            {methodLabel(id)}
+                        </Method>
+                    ))}
+                </MethodRow>
+
+                <Form onSubmit={submit}>
+                    <Field>
+                        <Label htmlFor="code">{methodHint(method)}</Label>
+                        <Input
+                            autoComplete="one-time-code"
+                            autoFocus
+                            id="code"
+                            inputMode="numeric"
+                            onChange={(event) => setCode(event.target.value)}
+                            placeholder={method === "emailOtp" ? "123456" : "123456"}
+                            value={code}
+                        />
+                    </Field>
+
+                    {error && <ErrorText>{error}</ErrorText>}
+
+                    <Actions>
+                        <Primary disabled={busy} type="submit">
+                            {busy ? "Verifying…" : "Verify"}
+                        </Primary>
+                    </Actions>
+                </Form>
+            </Card>
+        </Page>
+    );
+}
+
+function UnlockForm({busy, error, run}: { busy: boolean; error: string; run: Run }) {
+    const [password, setPassword] = useState("");
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        void run(() => unlock(password));
+    };
+
+    return (
+        <Page>
+            <Card>
+                <CardHead>
+                    <KeyIcon size={20}/>
+                    <div>
+                        <h2>Unlock the saved session</h2>
+                        <p>
+                            The session was encrypted with a key derived from your password. It is never
+                            stored, so it has to be typed again.
+                        </p>
+                    </div>
+                </CardHead>
+
+                <Form onSubmit={submit}>
+                    <Field>
+                        <Label htmlFor="unlock-password">Password</Label>
+                        <Input
+                            autoComplete="current-password"
+                            autoFocus
+                            id="unlock-password"
+                            onChange={(event) => setPassword(event.target.value)}
+                            placeholder="••••••••"
+                            type="password"
+                            value={password}
+                        />
+                    </Field>
+
+                    {error && <ErrorText>{error}</ErrorText>}
+
+                    <Actions>
+                        <Primary disabled={busy} type="submit">
+                            {busy ? "Unlocking…" : "Unlock"}
+                        </Primary>
+                        <Secondary onClick={() => void run(async () => {
+                            return await saveStorage("none");
+                        })} type="button">
+                            Forget it
+                        </Secondary>
+                    </Actions>
+                </Form>
+            </Card>
+        </Page>
+    );
+}
+
+function Profile({auth, busy, error, run}: {
+    auth: AuthSnapshot;
+    busy: boolean;
+    error: string;
+    run: Run;
+}) {
+    const user = auth.user!;
+
+    return (
+        <Page>
+            <Card>
+                <ProfileRow>
+                    <Avatar $src={user.avatarUrl}/>
+                    <Identity>
+                        <h2>{user.displayName}</h2>
+                        <p>{user.statusDescription || "Signed in to VRChat"}</p>
+                        <UserId>{user.id}</UserId>
+                    </Identity>
+                    <Secondary disabled={busy} onClick={() => void run(logout)} type="button">
+                        Sign out
+                    </Secondary>
+                </ProfileRow>
+
+                {error && <ErrorText>{error}</ErrorText>}
+            </Card>
+
+            <StorageChoice storage={auth.storage} busy={busy} error={error} run={run}/>
+        </Page>
+    );
+}
+
+function StorageChoice({storage, busy, error, run}: {
+    storage: AuthStorage;
+    busy: boolean;
+    error: string;
+    run: Run;
+}) {
+    const [mode, setMode] = useState<AuthStorage>(storage === "none" ? "system" : storage);
+    const [password, setPassword] = useState("");
+    const [confirm, setConfirm] = useState("");
+    const [localError, setLocalError] = useState("");
+
+    const isWindows = typeof navigator !== "undefined" && navigator.userAgent.includes("Windows");
+
+    const save = () => {
+        if (mode === "password") {
+            if (password.length < 1) {
+                setLocalError("Enter the password that unlocks the session.");
+                return;
+            }
+
+            if (password !== confirm) {
+                setLocalError("The passwords do not match.");
+                return;
+            }
+        }
+
+        setLocalError("");
+        void run(() => saveStorage(mode, mode === "password" ? password : undefined));
+    };
+
+    return (
+        <Card>
+            <CardHead>
+                <ShieldIcon size={20}/>
+                <div>
+                    <h2>Keep the session between launches</h2>
+                    <p>
+                        The stored file is only the VRChat session cookie, never your password. It lives in
+                        the app's local data folder, not in the roaming settings.
+                    </p>
+                </div>
+            </CardHead>
+
+            <Options>
+                <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
+                    <OptionHead>
+                        <strong>Do not remember</strong>
+                        <Tag>most private</Tag>
+                    </OptionHead>
+                    <p>
+                        Nothing is written. The next launch has to sign in again, which also means another
+                        2FA prompt.
+                    </p>
+                </Option>
+
+                <Option $active={mode === "system"} onClick={() => setMode("system")} type="button">
+                    <OptionHead>
+                        <strong>{isWindows ? "Windows DPAPI" : "Owner-only file"}</strong>
+                        <Tag>{isWindows ? "recommended" : "no encryption"}</Tag>
+                    </OptionHead>
+                    {isWindows ? (
+                        <p>
+                            Encrypted with Windows DPAPI for the current Windows account. Another machine or
+                            another Windows user cannot decrypt it. Any program running as you can, which is
+                            the price of unlocking without asking.
+                        </p>
+                    ) : (
+                        <p>
+                            Written with owner-only permissions (0600). There is no DPAPI on Linux, so the
+                            file is not encrypted: any process running as you, or root, can read it.
+                        </p>
+                    )}
+                </Option>
+
+                <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
+                    <OptionHead>
+                        <strong>Password</strong>
+                        <Tag>asks every launch</Tag>
+                    </OptionHead>
+                    <p>
+                        Encrypted with a key derived from your password (PBKDF2, random per-install salt).
+                        Your password is not stored; you type it each launch to unlock, so no 2FA prompt.
+                        Anyone who copies the file can try to guess that password offline, and changing
+                        your password makes the stored session unusable.
+                    </p>
+                </Option>
+            </Options>
+
+            {mode === "password" && (
+                <Field>
+                    <Label htmlFor="storage-password">Password for this session</Label>
+                    <Input
+                        autoComplete="current-password"
+                        id="storage-password"
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="••••••••"
+                        type="password"
+                        value={password}
+                    />
+                    <Input
+                        autoComplete="current-password"
+                        onChange={(event) => setConfirm(event.target.value)}
+                        placeholder="repeat the password"
+                        type="password"
+                        value={confirm}
+                    />
+                </Field>
+            )}
+
+            {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
+
+            <Actions>
+                <Primary disabled={busy} onClick={save} type="button">
+                    {busy ? "Saving…" : "Save"}
+                </Primary>
+                <Muted>Currently: {storageLabel(storage)}</Muted>
+            </Actions>
+        </Card>
+    );
+}
+
+function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void }) {
+    const [device, setDevice] = useState<DeviceCode | null>(null);
+    const [error, setError] = useState("");
+    const [expired, setExpired] = useState(false);
+
+    useEffect(() => {
+        if (!device) return;
+
+        let cancelled = false;
+        let timer = 0;
+        let interval = Math.max(device.interval, 2) * 1000;
+        const deadline = Date.now() + Math.max(device.expiresIn, 60) * 1000;
+
+        const tick = async () => {
+            if (Date.now() > deadline) {
+                setExpired(true);
+                return;
+            }
+
+            try {
+                const poll = await pollDevice(device.deviceCode);
+                if (cancelled) return;
+
+                if (poll.approved && poll.auth) {
+                    onSignedIn(poll.auth);
+                    return;
+                }
+
+                if (poll.reason === "expired_token") {
+                    setExpired(true);
+                    return;
+                }
+
+                if (poll.reason === "slow_down") interval += 5000;
+                timer = window.setTimeout(() => void tick(), interval);
+            } catch (err) {
+                if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+            }
+        };
+
+        timer = window.setTimeout(() => void tick(), interval);
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [device, onSignedIn]);
+
+    const start = async () => {
+        setError("");
+        setExpired(false);
+
+        try {
+            setDevice(await startDevice());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        }
+    };
+
+    if (!device)
+        return (
+            <Card>
+                <CardHead>
+                    <QrIcon size={20}/>
+                    <div>
+                        <h2>Device sign-in</h2>
+                        <p>Approve the sign-in on your phone; the password never reaches AntiBot.</p>
+                    </div>
+                </CardHead>
+                {error && <ErrorText>{error}</ErrorText>}
+                <Actions>
+                    <Secondary onClick={() => void start()} type="button">Start</Secondary>
+                </Actions>
+            </Card>
+        );
+
+    return (
+        <Card>
+            <CardHead>
+                <QrIcon size={20}/>
+                <div>
+                    <h2>Approve this sign-in</h2>
+                    <p>Scan the code, or open the link, and approve it in the VRChat app or site.</p>
+                </div>
+            </CardHead>
+
+            <DeviceBody>
+                {device.qrDataUrl
+                    ? <Qr alt="Device sign-in QR code" src={device.qrDataUrl}/>
+                    : <p>{device.url}</p>}
+                <LinkBox>
+                    <a href={device.url} rel="noreferrer" target="_blank">{device.url}</a>
+                </LinkBox>
+            </DeviceBody>
+
+            {expired ? <ErrorText>The code expired. Start again.</ErrorText> : <Muted>Waiting for approval…</Muted>}
+            {error && <ErrorText>{error}</ErrorText>}
+
+            <Actions>
+                <Secondary onClick={() => setDevice(null)} type="button">Cancel</Secondary>
+                {expired && <Primary onClick={() => void start()} type="button">Try again</Primary>}
+            </Actions>
+        </Card>
+    );
+}
+
+function methodLabel(method: string) {
+    switch (method) {
+        case "totp":
+            return "Authenticator";
+        case "emailOtp":
+            return "Email code";
+        default:
+            return "Recovery code";
+    }
+}
+
+function methodHint(method: string) {
+    switch (method) {
+        case "totp":
+            return "Code from your authenticator app";
+        case "emailOtp":
+            return "Code VRChat emailed you";
+        default:
+            return "One of your recovery codes";
+    }
+}
+
+function storageLabel(storage: AuthStorage) {
+    switch (storage) {
+        case "password":
+            return "password-encrypted";
+        case "system":
+            return "system-protected";
+        default:
+            return "not stored";
+    }
+}
+
+const Page = styled.div`
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    max-width: 720px;
+    overflow: auto;
+`;
+
+const Card = styled.section`
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+`;
+
+const CardHead = styled.div`
+    display: flex;
+    gap: 12px;
+
+    svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: var(--accent-primary);
+    }
+
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    p {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+    }
+`;
+
+const Form = styled.form`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+`;
+
+const Field = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const Label = styled.label`
+    font-size: 11px;
+    color: var(--text-secondary);
+`;
+
+const Input = styled.input`
+    padding: 9px 11px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 13px;
+
+    &:focus {
+        outline: 2px solid var(--border-color-focus);
+        outline-offset: 1px;
+    }
+`;
+
+const Actions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const buttonBase = styled.button<{ $primary?: boolean }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid ${({$primary}) => $primary ? "transparent" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$primary}) => $primary ? "var(--accent-primary)" : "transparent"};
+    color: ${({$primary}) => $primary ? "#0b0714" : "var(--text-primary)"};
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+        background: ${({$primary}) => $primary ? "var(--accent-primary)" : "var(--bg-card-hover)"};
+    }
+`;
+
+const Primary = styled(buttonBase).attrs({$primary: true})``;
+const Secondary = styled(buttonBase).attrs({$primary: false})``;
+
+const MethodRow = styled.div`
+    display: flex;
+    gap: 8px;
+`;
+
+const Method = styled.button<{ $active: boolean }>`
+    padding: 6px 11px;
+    border: 1px solid ${({$active}) => $active ? "var(--accent-primary)" : "var(--border-color)"};
+    border-radius: 999px;
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.12)" : "transparent"};
+    color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-secondary)"};
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+`;
+
+const ErrorText = styled.p`
+    font-size: 12px;
+    color: #f87171;
+`;
+
+const Note = styled.p`
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-muted);
+`;
+
+const Muted = styled.span`
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+`;
+
+const ProfileRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 16px;
+`;
+
+const Avatar = styled.div<{ $src?: string }>`
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--bg-primary) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+`;
+
+const Identity = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    h2 {
+        font-size: 17px;
+        font-weight: 600;
+    }
+
+    p {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+`;
+
+const UserId = styled.code`
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+`;
+
+const Options = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+`;
+
+const Option = styled.button<{ $active: boolean }>`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid ${({$active}) => $active ? "var(--accent-primary)" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.08)" : "transparent"};
+    color: var(--text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    p {
+        font-size: 11px;
+        line-height: 1.55;
+        color: var(--text-secondary);
+    }
+`;
+
+const OptionHead = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    strong {
+        font-size: 12px;
+        font-weight: 600;
+    }
+`;
+
+const Tag = styled.span`
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--bg-primary);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+`;
+
+const DeviceBody = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+`;
+
+const Qr = styled.img`
+    width: 184px;
+    height: 184px;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    padding: 8px;
+`;
+
+const LinkBox = styled.div`
+    max-width: 100%;
+    overflow: hidden;
+
+    a {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--accent-primary);
+        word-break: break-all;
+    }
+`;

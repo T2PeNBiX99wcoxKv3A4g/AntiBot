@@ -6,16 +6,23 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Builds the in-instance player list purely from VRChat's log. Joins add a player, leaves remove
-///     one, and entering a new room starts over. Nothing is sent anywhere.
+///     Builds the in-instance player list. The local log is always read: joins add a player, leaves
+///     remove one, and entering a new room starts over. Once an account is signed in, the VRChat API
+///     is asked instead, because the log cannot tell two running clients apart.
 /// </summary>
 internal sealed partial class InstanceService : Singleton<InstanceService>
 {
+    private static readonly TimeSpan ApiInterval = TimeSpan.FromSeconds(10);
+
     private readonly Lock _gate = new();
+    private readonly CancellationTokenSource _stop = new();
     private readonly List<InstanceUser> _users = [];
 
+    private ApiInstance? _apiInstance;
+    private string _apiLocation = "";
     private string _instance = "";
     private string _localName = "";
+    private string _pushed = "";
     private bool _running;
     private string _world = "";
 
@@ -23,6 +30,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
         VrchatLogService.Instance.LinesRead += OnLinesRead;
+        AuthService.Instance.Changed += OnAuthChanged;
+        _ = RunApiLoopAsync(_stop.Token);
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
@@ -53,7 +62,119 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             }
 
         if (changed)
-            WindowManager.Instance.NotifyMainWindow("instance.changed", Snapshot());
+            Publish();
+    }
+
+    private void OnAuthChanged()
+    {
+        lock (_gate)
+        {
+            _apiInstance = null;
+            _apiLocation = "";
+        }
+
+        Publish();
+    }
+
+    /// <summary>Polls the API for the instance the signed-in account is in, and publishes changes.</summary>
+    private async Task RunApiLoopAsync(CancellationToken token)
+    {
+        using var timer = new PeriodicTimer(ApiInterval);
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+                await RefreshFromApiAsync(token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutting down.
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "The VRChat API refresh stopped");
+        }
+    }
+
+    private async Task RefreshFromApiAsync(CancellationToken token)
+    {
+        if (!AuthService.Instance.IsLoggedIn)
+        {
+            if (ClearApi())
+                Publish();
+
+            return;
+        }
+
+        // The account's own location is authoritative; the log's is the fallback when VRChat has not
+        // reported one yet (for instance right after signing in).
+        var location = await AuthService.Instance.GetLocationAsync(token);
+
+        if (!LooksLikeInstance(location))
+            location = InstanceLocation();
+
+        if (!LooksLikeInstance(location))
+        {
+            if (ClearApi())
+                Publish();
+
+            return;
+        }
+
+        var target = location!;
+        var (instance, error) = await AuthService.Instance.GetInstanceAsync(target, token);
+        if (instance is null)
+        {
+            if (error is not null)
+                Log.Debug("Instance lookup failed: {Error}", error);
+
+            if (ClearApi())
+                Publish();
+
+            return;
+        }
+
+        bool changed;
+        lock (_gate)
+        {
+            changed = _apiLocation != target || !SameInstance(_apiInstance, instance);
+            _apiInstance = instance;
+            _apiLocation = target;
+        }
+
+        if (changed)
+            Publish();
+    }
+
+    private static bool LooksLikeInstance(string? location) =>
+        location is { Length: > 0 } && location.StartsWith("wrld_", StringComparison.Ordinal);
+
+    private static bool SameInstance(ApiInstance? previous, ApiInstance current)
+    {
+        if (previous is null)
+            return false;
+
+        return previous.Id == current.Id &&
+               previous.UserCount == current.UserCount &&
+               previous.Capacity == current.Capacity &&
+               previous.World?.Name == current.World?.Name &&
+               UserSignature(previous.Users) == UserSignature(current.Users);
+    }
+
+    private static string UserSignature(ApiInstanceUser[]? users) =>
+        users is null ? "" : string.Join(',', users.Select(user => $"{user.Id}:{user.DisplayName}"));
+
+    private bool ClearApi()
+    {
+        lock (_gate)
+        {
+            if (_apiInstance is null && _apiLocation.Length == 0)
+                return false;
+
+            _apiInstance = null;
+            _apiLocation = "";
+            return true;
+        }
     }
 
     /// <summary>Updates the list from one log line; returns whether anything the UI shows changed.</summary>
@@ -161,10 +282,71 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         return changed;
     }
 
+    private string InstanceLocation()
+    {
+        lock (_gate)
+            return _instance;
+    }
+
+    /// <summary>Pushes the snapshot when it really changed, so a poll does not redraw the page.</summary>
+    private void Publish()
+    {
+        var snapshot = Snapshot();
+        var signature = Signature(snapshot);
+
+        lock (_gate)
+        {
+            if (signature == _pushed)
+                return;
+
+            _pushed = signature;
+        }
+
+        WindowManager.Instance.NotifyMainWindow("instance.changed", snapshot);
+    }
+
+    private static string Signature(InstanceSnapshot snapshot) => string.Join('|',
+        snapshot.Source,
+        snapshot.World,
+        snapshot.Instance,
+        snapshot.WorldName,
+        snapshot.UserCount,
+        snapshot.Capacity,
+        string.Join(',', snapshot.Users.Select(user => $"{user.UserId}:{user.Name}:{user.Local}")));
+
     private InstanceSnapshot Snapshot()
     {
         lock (_gate)
-            return new(_running, _world, _instance, _users.ToArray());
+        {
+            if (_apiInstance is { } api && AuthService.Instance.IsLoggedIn && LooksLikeInstance(_apiLocation))
+            {
+                // The API lists who is really there; the log still supplies join times and who is local.
+                var users = api.Users is { } apiUsers
+                    ? apiUsers.Select(user => Enrich(user.Id ?? "", user.DisplayName ?? "")).ToArray()
+                    : _users.ToArray();
+
+                var count = api.UserCount ?? api.Users?.Length ?? 0;
+
+                return new InstanceSnapshot(
+                    _running || count > 0,
+                    api.World?.Name ?? _world,
+                    api.Location ?? _apiLocation,
+                    users,
+                    "api",
+                    api.World?.Name ?? "",
+                    count,
+                    api.Capacity ?? 0);
+            }
+
+            return new InstanceSnapshot(_running, _world, _instance, _users.ToArray());
+        }
+    }
+
+    /// <summary>One API user, with the log's join time and local flag when it knows them.</summary>
+    private InstanceUser Enrich(string userId, string name)
+    {
+        var known = _users.Find(user => user.UserId == userId);
+        return new InstanceUser(userId, name, known?.Local ?? false, known?.JoinedAt ?? "");
     }
 
     [GeneratedRegex(@"^\[Behaviour\] OnPlayerJoined (?<name>.+) \((?<id>usr_[^)]+)\)$",

@@ -92,3 +92,39 @@ export function DownloadIcon({size = 16}: IconProps) {
         </svg>
     );
 }
+
+export function UserIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <circle cx="12" cy="8" r="3.6"/>
+            <path d="M4.5 20c0-3.9 3.4-6.6 7.5-6.6s7.5 2.7 7.5 6.6"/>
+        </svg>
+    );
+}
+
+export function ShieldIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M12 3l7 2.8v5.4c0 4.3-2.9 7.6-7 9.8-4.1-2.2-7-5.5-7-9.8V5.8z"/>
+            <path d="m9.2 12.1 2 2 3.6-3.8"/>
+        </svg>
+    );
+}
+
+export function KeyIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <circle cx="8" cy="8" r="3.4"/>
+            <path d="m10.6 10.6 8 8M15.5 15.5l2-2M18 18l2-2"/>
+        </svg>
+    );
+}
+
+export function QrIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z"/>
+            <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/>
+        </svg>
+    );
+}

@@ -1,0 +1,231 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using AntiBot.Models;
+using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Utils;
+using Serilog;
+
+namespace AntiBot.Services;
+
+/// <summary>
+///     The VRChat web API, as far as AntiBot needs it: sign-in, the session cookie, and the instance
+///     the signed-in account is in.
+/// </summary>
+/// <remarks>
+///     The cookie jar belongs to this client alone, so nothing else in the process can send the session
+///     to another host by accident. A <see cref="User-Agent" /> is mandatory: VRChat refuses requests
+///     without one.
+/// </remarks>
+internal sealed class VrchatApi : IDisposable
+{
+    private static readonly Uri BaseUri = new("https://api.vrchat.cloud/api/1/");
+    private static readonly ILogger Logger = Serilog.Log.ForContext<VrchatApi>();
+
+    private CookieContainer _cookies = new();
+    private HttpClient _http = null!;
+
+    public VrchatApi() => Build();
+
+    public void Dispose() => _http.Dispose();
+
+    /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
+    public async Task<(ApiAuthUser? User, string? Error)> LoginAsync(string username, string password,
+        CancellationToken token)
+    {
+        // VRChat expects both halves percent-encoded, the way its own clients send them.
+        var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes(
+            $"{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}"));
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "auth/user");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+
+        using var response = await _http.SendAsync(request, token);
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        if (!response.IsSuccessStatusCode)
+            return (null, Describe(response.StatusCode, body));
+
+        return (Deserialize(body, VrchatJsonContext.Default.ApiAuthUser), null);
+    }
+
+    public Task<bool> VerifyTotpAsync(string code, CancellationToken token) =>
+        VerifyAsync("auth/twofactorauth/totp/verify", code, token);
+
+    public Task<bool> VerifyEmailOtpAsync(string code, CancellationToken token) =>
+        VerifyAsync("auth/twofactorauth/emailotp/verify", code, token);
+
+    /// <summary>The recovery codes VRChat hands out when 2FA is enabled.</summary>
+    public Task<bool> VerifyRecoveryAsync(string code, CancellationToken token) =>
+        VerifyAsync("auth/twofactorauth/otp/verify", code, token);
+
+    /// <summary>The account behind the current cookies, or null when the session is gone.</summary>
+    public async Task<(ApiAuthUser? User, HttpStatusCode Status)> GetCurrentUserAsync(CancellationToken token)
+    {
+        using var response = await _http.GetAsync("auth/user", token);
+        if (!response.IsSuccessStatusCode)
+            return (null, response.StatusCode);
+
+        var user = Deserialize(await response.Content.ReadAsStringAsync(token),
+            VrchatJsonContext.Default.ApiAuthUser);
+
+        return (user, response.StatusCode);
+    }
+
+    /// <summary>The instance at <paramref name="location" /> (<c>wrld_…:instance</c>).</summary>
+    public async Task<(ApiInstance? Instance, string? Error)> GetInstanceAsync(string location,
+        CancellationToken token)
+    {
+        using var response = await _http.GetAsync(new Uri(BaseUri, $"instances/{location}"), token);
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        if (!response.IsSuccessStatusCode)
+            return (null, Describe(response.StatusCode, body));
+
+        return (Deserialize(body, VrchatJsonContext.Default.ApiInstance), null);
+    }
+
+    /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
+    public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
+    {
+        using var content = Json("{}");
+        using var response = await _http.PostAsync("auth/device/code", content, token);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return Deserialize(await response.Content.ReadAsStringAsync(token),
+            VrchatJsonContext.Default.ApiDeviceCode);
+    }
+
+    /// <summary>
+    ///     One poll of a device sign-in. Returns the account once it was approved, or the reason it is
+    ///     not ready yet (<c>authorization_pending</c>, <c>slow_down</c>, <c>expired_token</c>).
+    /// </summary>
+    public async Task<(bool Approved, string? Reason)> PollDeviceAsync(string deviceCode, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new ApiDeviceStatusRequest(deviceCode),
+            VrchatJsonContext.Default.ApiDeviceStatusRequest));
+        using var response = await _http.PostAsync("auth/device/status", content, token);
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        if (!response.IsSuccessStatusCode)
+            return (false, Describe(response.StatusCode, body));
+
+        var status = Deserialize(body, VrchatJsonContext.Default.ApiDeviceStatus);
+        return (status?.User is not null, status?.User is null ? "authorization_pending" : null);
+    }
+
+    /// <summary>Ends the session on VRChat's side. Best effort: the local state is cleared either way.</summary>
+    public async Task LogoutAsync(CancellationToken token)
+    {
+        try
+        {
+            using var response = await _http.PostAsync("auth/logout", null, token);
+            Logger.Debug("VRChat sign-out answered {Status}", response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "VRChat sign-out request failed");
+        }
+    }
+
+    public CookieRecord[] ExportCookies() =>
+        _cookies.GetCookies(BaseUri).Cast<Cookie>()
+            .Select(cookie => new CookieRecord(cookie.Name, cookie.Value, cookie.Domain, cookie.Path,
+                new DateTimeOffset(cookie.Expires.ToUniversalTime()), cookie.Secure, cookie.HttpOnly))
+            .ToArray();
+
+    public void ImportCookies(IEnumerable<CookieRecord> cookies)
+    {
+        ResetCookies();
+
+        foreach (var record in cookies)
+        {
+            var cookie = new Cookie(record.Name, record.Value, record.Path ?? "/", record.Domain ?? BaseUri.Host)
+            {
+                Secure = record.Secure,
+                HttpOnly = record.HttpOnly
+            };
+
+            if (record.Expires > DateTimeOffset.UnixEpoch)
+                cookie.Expires = record.Expires.UtcDateTime;
+
+            try
+            {
+                _cookies.Add(cookie);
+            }
+            catch (CookieException ex)
+            {
+                Logger.Warning(ex, "Skipping an unusable stored cookie {Name}", record.Name);
+            }
+        }
+    }
+
+    public void ResetCookies()
+    {
+        _http.Dispose();
+        Build();
+    }
+
+    private void Build()
+    {
+        _cookies = new CookieContainer();
+
+        var handler = new SocketsHttpHandler
+        {
+            UseCookies = true,
+            CookieContainer = _cookies,
+            AutomaticDecompression = DecompressionMethods.All,
+            ConnectTimeout = TimeSpan.FromSeconds(15)
+        };
+
+        _http = new HttpClient(handler)
+        {
+            BaseAddress = BaseUri,
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd(
+            $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
+        _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    }
+
+    private async Task<bool> VerifyAsync(string path, string code, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new ApiCodeRequest(code),
+            VrchatJsonContext.Default.ApiCodeRequest));
+        using var response = await _http.PostAsync(path, content, token);
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        var body = await response.Content.ReadAsStringAsync(token);
+        return Deserialize(body, VrchatJsonContext.Default.ApiVerifyResult)?.Verified == true;
+    }
+
+    private static ByteArrayContent Json(string json)
+    {
+        var content = new ByteArrayContent(Encoding.UTF8.GetBytes(json));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+        return content;
+    }
+
+    private static T? Deserialize<T>(string body, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) =>
+        Try.Run(() => JsonSerializer.Deserialize(body, type)).GetOrNull();
+
+    /// <summary>Turns an error response into something the account page can show.</summary>
+    private static string Describe(HttpStatusCode status, string body)
+    {
+        var message = Try.Run(() =>
+                JsonSerializer.Deserialize(body, VrchatJsonContext.Default.ApiErrorBody)?.Error?.Message)
+            .GetOrNull();
+
+        return status switch
+        {
+            HttpStatusCode.Unauthorized => "The username or password is not correct.",
+            HttpStatusCode.Forbidden => "VRChat refused the sign-in. A VPN or a blocked network can cause this.",
+            HttpStatusCode.TooManyRequests => "Too many attempts. Wait a moment, then try again.",
+            _ => message is { Length: > 0 } ? message : $"VRChat answered {(int)status}."
+        };
+    }
+}

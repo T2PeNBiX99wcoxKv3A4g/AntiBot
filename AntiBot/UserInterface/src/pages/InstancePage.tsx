@@ -37,7 +37,7 @@ export function InstancePage() {
         };
     }, []);
 
-    const {running, world, instance, users} = snapshot;
+    const {running, world, instance, users, source, worldName, userCount, capacity} = snapshot;
 
     return (
         <Page>
@@ -45,7 +45,7 @@ export function InstancePage() {
                 <EmptyState hint="The list is built by the desktop host." title="Desktop host required"/>
             ) : !running ? (
                 <EmptyState
-                    hint="Players appear here as VRChat writes join and leave lines."
+                    hint="Players appear here as VRChat writes join and leave lines, or once an account is signed in."
                     title="VRChat is not running"
                 />
             ) : (
@@ -53,14 +53,24 @@ export function InstancePage() {
                     <Summary>
                         <World>
                             <Label>Instance</Label>
-                            <h2>{world || "—"}</h2>
+                            <h2>{worldName || world || "—"}</h2>
                             {instance && <InstanceId title={instance}>{instance}</InstanceId>}
                         </World>
 
-                        <Count>
-                            <strong>{users.length}</strong>
-                            <span>{users.length === 1 ? "player" : "players"}</span>
-                        </Count>
+                        <Meta>
+                            <Source $api={source === "api"}>
+                                {source === "api" ? "VRChat API" : "local log"}
+                            </Source>
+                            <Count>
+                                <strong>{users.length}</strong>
+                                <span>
+                                    {userCount && userCount !== users.length
+                                        ? `of ${userCount} players`
+                                        : users.length === 1 ? "player" : "players"}
+                                    {capacity ? ` · ${capacity} slots` : ""}
+                                </span>
+                            </Count>
+                        </Meta>
                     </Summary>
 
                     <ListCard>
@@ -154,6 +164,25 @@ const InstanceId = styled.code`
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10px;
+`;
+
+const Meta = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+`;
+
+const Source = styled.span<{ $api: boolean }>`
+    padding: 4px 9px;
+    border: 1px solid ${({$api}) => $api ? "rgba(167, 139, 250, 0.45)" : "var(--border-color)"};
+    border-radius: 999px;
+    background: ${({$api}) => $api ? "rgba(167, 139, 250, 0.12)" : "transparent"};
+    color: ${({$api}) => $api ? "var(--accent-primary)" : "var(--text-muted)"};
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 `;
 
 const Count = styled.div`

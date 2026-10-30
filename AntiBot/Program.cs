@@ -68,6 +68,11 @@ internal static class Program
             _ = AppInfoService.Instance;
             SettingsService.Instance.Load();
             _ = VrchatLogService.Instance;
+
+            // Construct the auth service first: the instance list subscribes to it.
+            _ = AuthService.Instance;
+            AuthService.Instance.Initialize();
+
             _ = InstanceService.Instance;
 
             var manager = WindowManager.Instance;

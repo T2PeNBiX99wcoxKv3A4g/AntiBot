@@ -1,1 +1,1 @@
-export type Page = "logs" | "instance" | "settings";
+export type Page = "logs" | "instance" | "account" | "settings";
