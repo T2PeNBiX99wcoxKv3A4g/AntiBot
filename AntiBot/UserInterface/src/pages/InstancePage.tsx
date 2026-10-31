@@ -209,7 +209,9 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         : <Dash>—</Dash>
                     : <SkeletonBar/>}
             </StatusCell>
-            <PlatformCell>{loaded ? platformLabel(user.platform) : <SkeletonBar/>}</PlatformCell>
+            <PlatformCell title={platformTitle(user.platform)}>
+                {loaded ? platformLabel(user.platform) : <SkeletonBar/>}
+            </PlatformCell>
             {showTime && <Time>{trailing ?? timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
         </Row>
     );
@@ -318,14 +320,13 @@ export function PlayerDialog({user, now, onClose}: {
     );
 }
 
-/** The avatar name, with a distinct state for "still loading" and "a custom icon hid it". */
+/** The avatar name, or "Loading…" while the lookup is still running. */
 function avatarName(user: InstanceUser): string {
     if (user.avatarName) return user.avatarName;
     if (user.isRobot) return "Robot (default)";
     if (!(user.avatarLoaded ?? false)) return "Loading…";
 
-    // VRChat hides the avatar image behind a custom profile icon; the name cannot be resolved then.
-    return user.iconUrl ? "Custom icon" : "Unknown";
+    return "Unknown";
 }
 
 function Field({label, value}: { label: string; value: string }) {
@@ -385,12 +386,21 @@ function statusInfo(status?: string): { label: string; color: string } | null {
     }
 }
 
+/** VRChat does not say whether a PC user is in VR; the tooltip explains the limitation. */
+function platformTitle(platform?: string): string | undefined {
+    return platform === "standalonewindows"
+        ? "PC includes both desktop and PCVR users; VRChat does not report which one."
+        : undefined;
+}
+
 function platformLabel(platform?: string): string {
     switch (platform) {
         case "standalonewindows":
-            return "PC";
+            // VRChat reports the same value for desktop and PCVR; the API does not expose which one.
+            return "PC / VR";
         case "android":
-            return "Android";
+            // Android is the Quest client, which is VR (or mobile).
+            return "Quest";
         case "ios":
             return "iOS";
         default:
