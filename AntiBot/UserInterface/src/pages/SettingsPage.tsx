@@ -215,14 +215,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                             </Button>
                         </Row>
                     </Field>
-
-                    {error && <ErrorText>{error}</ErrorText>}
-
-                    <Actions>
-                        <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
-                            {saving ? "Saving…" : "Save"}
-                        </Button>
-                    </Actions>
                 </Card>
             </Section>
 
@@ -337,6 +329,14 @@ export function SettingsPage({info}: SettingsPageProps) {
                     </WhitelistList>
                 </Card>
             </Section>
+
+            {error && <ErrorText>{error}</ErrorText>}
+
+            <Actions>
+                <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
+                    {saving ? "Saving…" : "Save settings"}
+                </Button>
+            </Actions>
 
             <Section>
                 <SectionHeader>
