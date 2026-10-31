@@ -36,10 +36,26 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
         _ = RunAsync(_stop.Token);
     }
 
-    private Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
-        context.Request.Type == "friendRequests.snapshot"
-            ? Task.FromResult<NativeResponse?>(context.Reply("friendRequests.snapshot.result", Build()))
-            : Task.FromResult<NativeResponse?>(null);
+    private async Task<NativeResponse?> HandleMessageAsync(NativeContext context)
+    {
+        switch (context.Request.Type)
+        {
+            case "friendRequests.snapshot":
+                return context.Reply("friendRequests.snapshot.result", Build());
+
+            case "friendRequests.clear":
+                await Database.Instance.ClearFriendRequestsAsync();
+
+                lock (_gate)
+                    _rows = [];
+
+                Publish();
+                return context.Reply("friendRequests.clear.result", new OkPayload());
+
+            default:
+                return null;
+        }
+    }
 
     private void OnAuthChanged()
     {

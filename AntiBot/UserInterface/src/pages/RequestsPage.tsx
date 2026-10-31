@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {type FriendRequest, getFriendRequests, onFriendRequestsChanged} from "../api/friendRequests";
+import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged} from "../api/friendRequests";
 import type {InstanceUser} from "../api/instance";
 import {PlayerDialog, UserRow} from "./InstancePage";
 
@@ -8,6 +8,7 @@ import {PlayerDialog, UserRow} from "./InstancePage";
 export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
     const [requests, setRequests] = useState<FriendRequest[]>([]);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
+    const [confirming, setConfirming] = useState(false);
     const received = useRef(false);
 
     useEffect(() => {
@@ -34,6 +35,18 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 
     const pending = requests.filter((request) => request.active).length;
 
+    const clear = () => {
+        if (!confirming) {
+            setConfirming(true);
+            return;
+        }
+
+        setConfirming(false);
+        void clearFriendRequests().then(() => setRequests([]), () => {
+            // The host failed to answer; the next snapshot will show the real state.
+        });
+    };
+
     return (
         <Page>
             {!signedIn && (
@@ -56,7 +69,18 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                 : `${requests.length} recorded · ${pending} still pending`}
                         </p>
                     </div>
-                    <Legend>Faded rows are no longer pending</Legend>
+                    <CardActions>
+                        <Legend>Faded rows are no longer pending</Legend>
+                        <ClearButton
+                            $confirming={confirming}
+                            disabled={requests.length === 0}
+                            onBlur={() => setConfirming(false)}
+                            onClick={clear}
+                            type="button"
+                        >
+                            {confirming ? "Confirm clear" : "Clear history"}
+                        </ClearButton>
+                    </CardActions>
                 </CardHead>
 
                 <ListHeader>
@@ -199,6 +223,35 @@ const CardHead = styled.div`
         margin-top: 2px;
         font-size: 11px;
         color: var(--text-secondary);
+    }
+`;
+
+const CardActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+`;
+
+const ClearButton = styled.button<{ $confirming: boolean }>`
+    padding: 5px 10px;
+    border: 1px solid ${({$confirming}) => $confirming ? "rgba(251, 113, 133, 0.6)" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$confirming}) => $confirming ? "rgba(251, 113, 133, 0.12)" : "transparent"};
+    color: ${({$confirming}) => $confirming ? "#fb7185" : "var(--text-secondary)"};
+    font: inherit;
+    font-size: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
     }
 `;
 

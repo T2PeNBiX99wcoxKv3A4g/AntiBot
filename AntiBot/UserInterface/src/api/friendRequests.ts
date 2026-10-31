@@ -20,6 +20,12 @@ export async function getFriendRequests(): Promise<FriendRequest[]> {
     return await Native.request<FriendRequest[]>("friendRequests.snapshot");
 }
 
+export async function clearFriendRequests(): Promise<void> {
+    if (!Native.available) return;
+
+    await Native.request("friendRequests.clear");
+}
+
 export function onFriendRequestsChanged(handler: (requests: FriendRequest[]) => void): () => void {
     return Native.on((message) => {
         if (message.type === "friendRequests.changed") handler(message.data as FriendRequest[]);

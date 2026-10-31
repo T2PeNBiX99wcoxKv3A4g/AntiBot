@@ -329,6 +329,20 @@ internal sealed class Database : Singleton<Database>
         attempt.OnFailure(ex => Log.Warning(ex, "Could not store the profile of {UserId}", player.Id));
     }
 
+    /// <summary>Drops the whole request history. Pending requests come back on the next poll.</summary>
+    public async Task ClearFriendRequestsAsync(CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM friend_requests";
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not clear the friend requests"));
+    }
+
     /// <summary>Every friend request ever recorded, newest first.</summary>
     public IReadOnlyList<FriendRequestRow> LoadFriendRequests()
     {
