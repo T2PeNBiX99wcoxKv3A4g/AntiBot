@@ -155,3 +155,13 @@ export function LockIcon({size = 14}: IconProps) {
         </svg>
     );
 }
+
+export function ExternalIcon({size = 14}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M14 4h6v6"/>
+            <path d="M20 4l-9 9"/>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        </svg>
+    );
+}

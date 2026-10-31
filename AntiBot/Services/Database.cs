@@ -59,6 +59,7 @@ internal sealed class Database : Singleton<Database>
                                       avatar_image_url TEXT,
                                       status        TEXT,
                                       status_description TEXT,
+                                      bio           TEXT,
                                       date_joined   TEXT,
                                       tags          TEXT,
                                       platform      TEXT,
@@ -104,6 +105,13 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE players ADD COLUMN status_description TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE players ADD COLUMN bio TEXT";
                 migration.ExecuteNonQuery();
             });
 
@@ -218,7 +226,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText =
-                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, status_description, date_joined, tags, platform, last_platform, last_activity FROM players";
+                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, status_description, bio, date_joined, tags, platform, last_platform, last_activity FROM players";
 
             var players = new Dictionary<string, PlayerProfile>();
             using var reader = command.ExecuteReader();
@@ -227,8 +235,8 @@ internal sealed class Database : Singleton<Database>
                 var id = reader.GetString(0);
                 players[id] = new(id, reader.GetString(1), reader.GetStringOrNull(2), reader.GetStringOrNull(3),
                     reader.GetStringOrNull(4), reader.GetStringOrNull(5), reader.GetStringOrNull(6),
-                    reader.GetStringOrNull(7), ParseTags(reader.GetStringOrNull(8)), reader.GetStringOrNull(9),
-                    reader.GetStringOrNull(10), reader.GetStringOrNull(11));
+                    reader.GetStringOrNull(7), reader.GetStringOrNull(8), ParseTags(reader.GetStringOrNull(9)),
+                    reader.GetStringOrNull(10), reader.GetStringOrNull(11), reader.GetStringOrNull(12));
             }
 
             return players;
@@ -247,10 +255,10 @@ internal sealed class Database : Singleton<Database>
             await using var command = connection.CreateCommand();
             command.CommandText = """
                                   INSERT INTO players (id, display_name, avatar_url, icon_url, avatar_image_url,
-                                                       status, status_description, date_joined, tags, platform,
+                                                       status, status_description, bio, date_joined, tags, platform,
                                                        last_platform, last_activity, fetched_at)
                                   VALUES ($id, $displayName, $avatarUrl, $iconUrl, $avatarImageUrl, $status,
-                                          $statusDescription, $dateJoined, $tags, $platform, $lastPlatform,
+                                          $statusDescription, $bio, $dateJoined, $tags, $platform, $lastPlatform,
                                           $lastActivity, $fetchedAt)
                                   ON CONFLICT (id) DO UPDATE SET
                                       display_name = excluded.display_name,
@@ -259,6 +267,7 @@ internal sealed class Database : Singleton<Database>
                                       avatar_image_url = excluded.avatar_image_url,
                                       status = excluded.status,
                                       status_description = excluded.status_description,
+                                      bio = excluded.bio,
                                       date_joined = excluded.date_joined,
                                       tags = excluded.tags,
                                       platform = excluded.platform,
@@ -274,6 +283,7 @@ internal sealed class Database : Singleton<Database>
             command.Parameters.AddWithValue("$avatarImageUrl", (object?)player.AvatarImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$status", (object?)player.Status ?? DBNull.Value);
             command.Parameters.AddWithValue("$statusDescription", (object?)player.StatusDescription ?? DBNull.Value);
+            command.Parameters.AddWithValue("$bio", (object?)player.Bio ?? DBNull.Value);
             command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
             command.Parameters.AddWithValue("$tags", string.Join(',', player.Tags));
             command.Parameters.AddWithValue("$platform", (object?)player.Platform ?? DBNull.Value);

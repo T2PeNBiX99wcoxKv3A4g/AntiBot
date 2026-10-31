@@ -478,7 +478,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.InstanceRestricted,
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
-            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}")));
+            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -606,8 +606,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var profile = PlayerService.Instance.Get(userId);
         var presence = PresenceService.Instance.Get(userId);
 
-        // The roster is newer than the cached profile, so it wins where it has a value.
-        var avatar = avatarUrl ?? profile?.AvatarUrl;
+        // The roster is newer than the cached profile, so it wins where it has a value. VRChat hides
+        // the avatar URL when the user set a custom icon, so the icon URL is the last candidate: an
+        // avatar image when there is no icon, and a file tagged "icon" (no avatar) when there is one.
+        var avatar = avatarUrl ?? profile?.AvatarUrl ?? profile?.IconUrl;
         var fileId = AvatarService.FileIdOf(avatar);
         var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
             ? value
@@ -626,6 +628,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             TrustLevel(profile?.Tags),
             presence?.Status ?? profile?.Status,
             presence?.StatusDescription ?? profile?.StatusDescription,
+            profile?.Bio,
             profile?.DateJoined,
             platform,
             AvatarService.Instance.NameFor(fileId),

@@ -9,7 +9,7 @@ import {
 } from "../api/instance";
 import {desktopAvailable} from "../api/logs";
 import {openUrl} from "../api/system";
-import {EyeIcon, EyeOffIcon, LockIcon, UsersIcon} from "../components/Icons";
+import {ExternalIcon, LockIcon, UsersIcon} from "../components/Icons";
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
@@ -182,8 +182,6 @@ function PlayerDialog({user, now, onClose}: {
     now: number;
     onClose: () => void;
 }) {
-    const [revealed, setRevealed] = useState(false);
-
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             if (event.key === "Escape") onClose();
@@ -212,19 +210,17 @@ function PlayerDialog({user, now, onClose}: {
                     </Badges>
 
                     <Fields>
-                        <SecretField>
-                            <span>User ID</span>
-                            <SecretValue>
-                                <code>{revealed ? user.userId : "••••••••••••••••"}</code>
-                                <RevealButton
-                                    aria-label={revealed ? "Hide user ID" : "Show user ID"}
-                                    onClick={() => setRevealed((value) => !value)}
-                                    type="button"
-                                >
-                                    {revealed ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
-                                </RevealButton>
-                            </SecretValue>
-                        </SecretField>
+                        <FieldRow>
+                            <span>Profile</span>
+                            <ProfileLink
+                                onClick={() => void openUrl(`https://vrchat.com/home/user/${user.userId}`)}
+                                title="Open on vrchat.com"
+                                type="button"
+                            >
+                                <ExternalIcon size={12}/>
+                                Open on vrchat.com
+                            </ProfileLink>
+                        </FieldRow>
                         <StatusField status={status} text={user.statusDescription}/>
                         <Field label="Platform" value={platformLabel(user.platform)}/>
                         <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
@@ -236,6 +232,7 @@ function PlayerDialog({user, now, onClose}: {
                             label="VRChat account since"
                             value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
                         />
+                        {user.bio && <Bio>{user.bio}</Bio>}
                     </Fields>
                 </Details>
 
@@ -617,7 +614,7 @@ const ListCard = styled.section`
 
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 108px 78px 96px;
+    grid-template-columns: 40px minmax(0, 1fr) 160px 78px 96px;
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
@@ -636,7 +633,7 @@ const Rows = styled.div`
 
 const Row = styled.div<{ $local: boolean }>`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 108px 78px 96px;
+    grid-template-columns: 40px minmax(0, 1fr) 160px 78px 96px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -819,7 +816,10 @@ const Dialog = styled.div`
     position: relative;
     display: flex;
     gap: 22px;
-    max-width: 560px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 100%;
+    overflow-y: auto;
     padding: 22px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
@@ -891,53 +891,42 @@ const FieldRow = styled.div`
     }
 `;
 
-const SecretField = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-
-    span {
-        font-size: 9px;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-    }
-`;
-
-const SecretValue = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    code {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: var(--text-secondary);
-        font-family: var(--font-mono);
-        font-size: 11px;
-        user-select: text;
-    }
-`;
-
-const RevealButton = styled.button`
+const ProfileLink = styled.button`
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 4px 9px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: transparent;
-    color: var(--text-muted);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 10.5px;
     cursor: pointer;
 
-    &:hover {
-        background: var(--bg-card-hover);
-        color: var(--text-primary);
+    svg {
+        flex-shrink: 0;
     }
+
+    &:hover {
+        border-color: var(--border-color-hover);
+        color: var(--accent-primary);
+    }
+`;
+
+const Bio = styled.p`
+    margin-top: 2px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    user-select: text;
 `;
 
 const Close = styled.button`

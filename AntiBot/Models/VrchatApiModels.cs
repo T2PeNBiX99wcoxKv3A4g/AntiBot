@@ -38,6 +38,7 @@ internal sealed record ApiUser(
     string? ProfilePicOverrideThumbnail,
     string? Status,
     string? StatusDescription,
+    string? Bio,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,
     string[]? Tags,

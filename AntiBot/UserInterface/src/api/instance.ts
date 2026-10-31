@@ -16,6 +16,8 @@ export interface InstanceUser {
     status?: string;
     /** The user's custom status text, if they set one. */
     statusDescription?: string;
+    /** The user's profile bio. */
+    bio?: string;
     dateJoined?: string;
     platform?: string;
     /** Resolved from the avatar's image file id; absent while unknown. */
