@@ -10,11 +10,15 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
+    /// <summary>VRChat accepts about one moderation request every few seconds.</summary>
+    private const long ModerationGapMilliseconds = 3000;
+
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _gate = new();
     private readonly HashSet<string> _rejecting = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
+    private long _lastModerationAt;
     private bool _returnedHome;
 
     public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
@@ -53,15 +57,13 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
         // The lighter moderations first: blocking the user may make the rest pointless.
-        if (settings.AutoDisableAvatarInteraction &&
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "interactOff", _stop.Token))
+        if (settings.AutoDisableAvatarInteraction && await ModerateAsync(user.UserId, "interactOff"))
             await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail, avatar);
 
-        if (settings.AutoHideChatBox &&
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "muteChat", _stop.Token))
+        if (settings.AutoHideChatBox && await ModerateAsync(user.UserId, "muteChat"))
             await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
 
-        if (settings.AutoBlock && await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token))
+        if (settings.AutoBlock && await ModerateAsync(user.UserId, "block"))
             await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
 
         if (!settings.AutoReturnHome)
@@ -126,13 +128,37 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)
     {
         if (settings.AutoDisableAvatarInteraction)
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "interactOff", _stop.Token);
+            await ModerateAsync(user.UserId, "interactOff");
 
         if (settings.AutoHideChatBox)
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "muteChat", _stop.Token);
+            await ModerateAsync(user.UserId, "muteChat");
 
         if (settings.AutoBlock)
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token);
+            await ModerateAsync(user.UserId, "block");
+    }
+
+    /// <summary>
+    ///     VRChat allows roughly one moderation request at a time, so calls are paced and a 429 is
+    ///     retried instead of silently dropping the action.
+    /// </summary>
+    private async Task<bool> ModerateAsync(string userId, string type)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var wait = Interlocked.Read(ref _lastModerationAt) + ModerationGapMilliseconds -
+                       Environment.TickCount64;
+            if (wait > 0)
+                await Task.Delay((int)wait, _stop.Token);
+
+            Interlocked.Exchange(ref _lastModerationAt, Environment.TickCount64);
+
+            if (await AuthService.Instance.ModerateUserAsync(userId, type, _stop.Token))
+                return true;
+
+            await Task.Delay(TimeSpan.FromSeconds(2), _stop.Token);
+        }
+
+        return false;
     }
 
     private static string Describe(InstanceUser user) =>

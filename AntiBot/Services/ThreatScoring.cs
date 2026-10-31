@@ -69,9 +69,9 @@ internal static partial class ThreatScoring
         var hexSuffix = HexSuffixPattern().IsMatch(name);
         var body = hexSuffix ? name[..^5] : name;
 
-        // A plain number in a name ("20年はやる", "Alice 2024") is normal; only the generated
-        // pattern (a hex tag plus digits in the name itself) counts.
-        if (hexSuffix && DigitPattern().IsMatch(body))
+        // A plain number in a name ("20年はやる", "Alice 2024") is normal; the generated pattern is a
+        // hex tag plus a digit that sits inside the name's Latin letters ("Lydrav046aen 46f2").
+        if (hexSuffix && LetterDigitPattern().IsMatch(body))
             score += 50;
 
         if (MixedPattern().IsMatch(name))
@@ -86,8 +86,8 @@ internal static partial class ThreatScoring
     [GeneratedRegex(@"[A-Za-z]{4,}\d{2,}[A-Za-z]{2,}", RegexOptions.CultureInvariant)]
     private static partial Regex MixedPattern();
 
-    [GeneratedRegex(@"\d", RegexOptions.CultureInvariant)]
-    private static partial Regex DigitPattern();
+    [GeneratedRegex(@"[A-Za-z]\d|\d[A-Za-z]", RegexOptions.CultureInvariant)]
+    private static partial Regex LetterDigitPattern();
 
     [GeneratedRegex(@"https?://|www\.|\.(com|cc|net|gg|io)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

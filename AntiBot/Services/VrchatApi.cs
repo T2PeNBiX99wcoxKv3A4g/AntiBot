@@ -105,17 +105,17 @@ internal sealed class VrchatApi : IDisposable
     ///     One uploaded file. An avatar image is named <c>Avatar - &lt;name&gt; - Image - &lt;date&gt;</c>,
     ///     which is how the avatar's name is known without a third-party database.
     /// </summary>
-    public async Task<ApiFile?> GetFileAsync(string fileId, CancellationToken token)
+    public async Task<(ApiFile? File, HttpStatusCode Status)> GetFileAsync(string fileId, CancellationToken token)
     {
         using var response = await _http.GetAsync(new Uri(BaseUri, $"file/{Uri.EscapeDataString(fileId)}"), token);
         if (!response.IsSuccessStatusCode)
         {
             Logger.Debug("File lookup {FileId} answered {Status}", fileId, response.StatusCode);
-            return null;
+            return (null, response.StatusCode);
         }
 
         var body = await response.Content.ReadAsStringAsync(token);
-        return Deserialize(body, VrchatJsonContext.Default.ApiFile);
+        return (Deserialize(body, VrchatJsonContext.Default.ApiFile), response.StatusCode);
     }
 
     /// <summary>

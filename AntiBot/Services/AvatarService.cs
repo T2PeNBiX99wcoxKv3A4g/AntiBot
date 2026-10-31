@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
@@ -41,6 +42,7 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     private readonly Channel<string> _queue = Channel.CreateUnbounded<string>();
     private readonly CancellationTokenSource _stop = new();
     private readonly ConcurrentDictionary<string, byte> _unknown = new();
+    private readonly ConcurrentDictionary<string, byte> _retried = new();
 
     /// <summary>Raised when an avatar name arrived, so the list can redraw with it.</summary>
     public event Action? Updated;
@@ -91,7 +93,11 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     }
 
     /// <summary>Lets names that no provider knew be asked for again, e.g. after the list changed.</summary>
-    public void ResetUnknown() => _unknown.Clear();
+    public void ResetUnknown()
+    {
+        _unknown.Clear();
+        _retried.Clear();
+    }
 
     private async Task RunAsync(CancellationToken token)
     {
@@ -130,7 +136,7 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
 
     private async Task LookupAsync(string fileId, CancellationToken token)
     {
-        if (!AuthService.Instance.IsLoggedIn)
+        if (!AuthService.Instance.IsReady)
         {
             // Not signed in yet; leave it queued for the next request instead of giving up.
             _pending.TryRemove(fileId, out _);
@@ -139,9 +145,22 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
 
         // The first-party way: an avatar image is named "Avatar - <name> - Image - <date>". A file
         // tagged "icon" is a custom user icon instead, which carries no avatar information.
-        var file = await AuthService.Instance.GetFileAsync(fileId, token);
-        Log.Debug("Avatar file {FileId}: name={Name} tags={Tags}", fileId, file?.Name,
-            string.Join(',', file?.Tags ?? []));
+        var (file, status) = await AuthService.Instance.GetFileAsync(fileId, token);
+
+        if (status != HttpStatusCode.OK)
+        {
+            if (status is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+            {
+                _unknown[fileId] = 0;
+                return;
+            }
+
+            // A rate limit or a transient error: retry once later instead of remembering "unknown".
+            if (_retried.TryAdd(fileId, 0))
+                _queue.Writer.TryWrite(fileId);
+
+            return;
+        }
 
         if (file?.Tags?.Contains("icon") == true)
         {
