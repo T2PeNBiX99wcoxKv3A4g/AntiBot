@@ -12,6 +12,8 @@ export interface InstanceUser {
     /** The player's custom profile icon, shown in the list when they have one. */
     iconUrl?: string;
     trust?: string;
+    /** VRChat presence: active, join me, ask me, busy or offline. */
+    status?: string;
     dateJoined?: string;
     platform?: string;
     /** Resolved from the avatar's image file id; absent while unknown. */
@@ -32,6 +34,13 @@ export interface InstanceSnapshot {
     capacity?: number;
     worldId?: string;
     worldThumbnail?: string;
+    instanceType?: string;
+    instanceRegion?: string;
+    instanceOwnerId?: string;
+    instanceShortName?: string;
+    instanceNumber?: string;
+    instanceRestricted?: boolean;
+    instanceAgeGated?: boolean;
 }
 
 export const emptyInstance: InstanceSnapshot = {running: false, world: "", instance: "", users: []};

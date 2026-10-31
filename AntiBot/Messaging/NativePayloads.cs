@@ -12,7 +12,8 @@ internal sealed record OkPayload(bool Ok = true);
 internal sealed record AppInfoPayload(string Version, string Platform, bool Rounded);
 
 /// <summary>Body for <c>settings.get</c>.</summary>
-internal sealed record SettingsPayload(string LogDirectory, string DefaultLogDirectory);
+internal sealed record SettingsPayload(string LogDirectory, string DefaultLogDirectory,
+    string[] AvatarApiProviders);
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);

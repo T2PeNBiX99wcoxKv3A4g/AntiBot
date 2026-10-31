@@ -1,9 +1,16 @@
 namespace AntiBot.Models;
 
 /// <summary>Persisted settings. The log folder defaults to VRChat's own folder.</summary>
-public sealed record AppSettings(string LogDirectory)
+public sealed record AppSettings(string LogDirectory, string[] AvatarApiProviders)
 {
-    public static AppSettings Default { get; } = new(ResolveDefaultLogDirectory());
+    /// <summary>The avatar databases VRCX uses, in the same request format.</summary>
+    public static readonly string[] DefaultAvatarApiProviders =
+    [
+        "https://api.avtrdb.com/v3/avatar/search/vrcx",
+        "https://vrcx.vrcdb.com/avatars/Avatar/VRCX"
+    ];
+
+    public static AppSettings Default { get; } = new(ResolveDefaultLogDirectory(), DefaultAvatarApiProviders);
 
     public static string DefaultLogDirectory => Default.LogDirectory;
 

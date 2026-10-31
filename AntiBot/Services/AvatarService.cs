@@ -28,8 +28,6 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     /// <summary>The image file VRChat uses for its default Robot avatar.</summary>
     private const string RobotFileId = "file_0e8c4e32-7444-44ea-ade4-313c010d4bae";
 
-    private const string Provider = "https://api.avtrdb.com/v3/avatar/search/vrcx";
-
     private static readonly TimeSpan RequestInterval = TimeSpan.FromSeconds(1);
 
     private readonly HttpClient _http = new()
@@ -90,6 +88,9 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
         _queue.Writer.TryWrite(fileId);
     }
 
+    /// <summary>Lets names that no provider knew be asked for again, e.g. after the list changed.</summary>
+    public void ResetUnknown() => _unknown.Clear();
+
     private async Task RunAsync(CancellationToken token)
     {
         try
@@ -114,9 +115,30 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
 
     private async Task LookupAsync(string fileId, CancellationToken token)
     {
+        foreach (var provider in SettingsService.Instance.Current.AvatarApiProviders)
+        {
+            var avatar = await LookupFrom(provider, fileId, token);
+            if (avatar?.ResolvedName is not { Length: > 0 } name)
+                continue;
+
+            _names[fileId] = name;
+            await Database.Instance.SaveAvatarAsync(fileId, avatar.Id ?? "", name, token);
+            Updated?.Invoke();
+            return;
+        }
+
+        // No provider knew it; do not ask again this session.
+        _unknown[fileId] = 0;
+    }
+
+    private async Task<AvatarLookup?> LookupFrom(string provider, string fileId, CancellationToken token)
+    {
         var attempt = await Try.Run(async () =>
         {
-            using var response = await _http.GetAsync($"{Provider}?fileId={Uri.EscapeDataString(fileId)}", token);
+            var separator = provider.Contains('?') ? '&' : '?';
+            using var response = await _http.GetAsync(
+                $"{provider}{separator}fileId={Uri.EscapeDataString(fileId)}", token);
+
             if (!response.IsSuccessStatusCode)
                 return null;
 
@@ -124,20 +146,9 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
             return JsonSerializer.Deserialize(body, VrchatJsonContext.Default.AvatarLookup);
         });
 
-        var avatar = attempt
-            .OnFailure(ex => Log.Debug(ex, "Avatar lookup for {FileId} failed", fileId))
+        return attempt
+            .OnFailure(ex => Log.Debug(ex, "Avatar lookup at {Provider} failed", provider))
             .GetOrNull();
-
-        if (avatar?.Name is not { Length: > 0 } name)
-        {
-            // The provider refused or does not know it; do not ask again this session.
-            _unknown[fileId] = 0;
-            return;
-        }
-
-        _names[fileId] = name;
-        await Database.Instance.SaveAvatarAsync(fileId, avatar.Id ?? "", name, token);
-        Updated?.Invoke();
     }
 
     [GeneratedRegex(@"file_[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {getSettings, saveSettings} from "../api/settings";
 import type {AppInfo} from "../api/system";
-import {FolderIcon} from "../components/Icons";
+import {FolderIcon, TrashIcon} from "../components/Icons";
 
 interface SettingsPageProps {
     info: AppInfo | null;
@@ -13,28 +13,37 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [directory, setDirectory] = useState("");
     const [saved, setSaved] = useState("");
     const [defaultDirectory, setDefaultDirectory] = useState("");
+    const [providers, setProviders] = useState<string[]>([]);
+    const [savedProviders, setSavedProviders] = useState<string[]>([]);
+    const [newProvider, setNewProvider] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         void getSettings().then((settings) => {
+            const stored = settings.avatarApiProviders ?? [];
             setDirectory(settings.logDirectory ?? "");
             setSaved(settings.logDirectory ?? "");
             setDefaultDirectory(settings.defaultLogDirectory ?? "");
+            setProviders(stored);
+            setSavedProviders(stored);
         }, () => setError("Could not read the settings."));
     }, []);
 
     const trimmed = directory.trim();
-    const changed = trimmed !== saved;
+    const changed = trimmed !== saved || providers.join("\n") !== savedProviders.join("\n");
 
     const save = async () => {
         setError(null);
         setSaving(true);
 
         try {
-            await saveSettings({logDirectory: trimmed});
+            const cleaned = providers.map((provider) => provider.trim()).filter((provider) => provider.length > 0);
+            await saveSettings({logDirectory: trimmed, avatarApiProviders: cleaned});
             setDirectory(trimmed);
             setSaved(trimmed);
+            setProviders(cleaned);
+            setSavedProviders(cleaned);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
         } finally {
@@ -50,6 +59,14 @@ export function SettingsPage({info}: SettingsPageProps) {
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
         }
+    };
+
+    const addProvider = () => {
+        const value = newProvider.trim();
+        if (value.length === 0 || providers.includes(value)) return;
+
+        setProviders([...providers, value]);
+        setNewProvider("");
     };
 
     return (
@@ -71,17 +88,12 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 spellCheck={false}
                                 value={directory}
                             />
-                            <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
-                                {saving ? "Saving…" : "Save"}
-                            </Button>
                         </Row>
                         <Hint>
                             The newest log in this folder is followed while VRChat is running. Nothing is read
                             while it is closed.
                         </Hint>
                     </Field>
-
-                    {error && <ErrorText>{error}</ErrorText>}
 
                     <Actions>
                         <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
@@ -93,6 +105,70 @@ export function SettingsPage({info}: SettingsPageProps) {
                             type="button"
                         >
                             Use VRChat's folder
+                        </Button>
+                    </Actions>
+                </Card>
+            </Section>
+
+            <Section>
+                <SectionHeader>
+                    <h2>Avatar name lookups</h2>
+                    <span>same format as VRCX</span>
+                </SectionHeader>
+
+                <Card>
+                    <Field>
+                        <Label>API endpoints</Label>
+                        <Hint>
+                            Tried in order; the first name wins. Each is called as
+                            <code> ?fileId=file_…</code> and must answer with JSON containing a
+                            <code> name</code>.
+                        </Hint>
+
+                        <Providers>
+                            {providers.length === 0 && <EmptyHint>No endpoint; avatar names stay unknown.</EmptyHint>}
+                            {providers.map((provider, index) => (
+                                <Row key={`${provider}-${index}`}>
+                                    <Input
+                                        aria-label="Avatar API endpoint"
+                                        onChange={(event) => {
+                                            const next = [...providers];
+                                            next[index] = event.target.value;
+                                            setProviders(next);
+                                        }}
+                                        spellCheck={false}
+                                        value={provider}
+                                    />
+                                    <Button
+                                        aria-label="Remove endpoint"
+                                        onClick={() => setProviders(providers.filter((_, i) => i !== index))}
+                                        type="button"
+                                    >
+                                        <TrashIcon/>
+                                    </Button>
+                                </Row>
+                            ))}
+                        </Providers>
+
+                        <Row>
+                            <Input
+                                aria-label="New avatar API endpoint"
+                                onChange={(event) => setNewProvider(event.target.value)}
+                                placeholder="https://example.com/avatars"
+                                spellCheck={false}
+                                value={newProvider}
+                            />
+                            <Button disabled={newProvider.trim().length === 0} onClick={addProvider} type="button">
+                                Add
+                            </Button>
+                        </Row>
+                    </Field>
+
+                    {error && <ErrorText>{error}</ErrorText>}
+
+                    <Actions>
+                        <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
+                            {saving ? "Saving…" : "Save"}
                         </Button>
                     </Actions>
                 </Card>
@@ -169,6 +245,17 @@ const Row = styled.div`
     gap: 8px;
 `;
 
+const Providers = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const EmptyHint = styled.span`
+    font-size: 11px;
+    color: var(--text-muted);
+`;
+
 const Input = styled.input`
     flex: 1;
     min-width: 0;
@@ -210,6 +297,10 @@ const Hint = styled.span`
     font-size: 10px;
     line-height: 1.5;
     color: var(--text-muted);
+
+    code {
+        font-family: var(--font-mono);
+    }
 `;
 
 const Actions = styled.div`

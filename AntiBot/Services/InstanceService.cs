@@ -438,9 +438,13 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.WorldName,
         snapshot.UserCount,
         snapshot.Capacity,
+        snapshot.InstanceType,
+        snapshot.InstanceShortName,
+        snapshot.InstanceNumber,
+        snapshot.InstanceRestricted,
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
-            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}")));
+            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -466,13 +470,88 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                     count,
                     api.Capacity ?? 0,
                     api.WorldId ?? api.World?.Id ?? "",
-                    api.World?.ThumbnailImageUrl ?? api.World?.ImageUrl ?? "");
+                    api.World?.ThumbnailImageUrl ?? api.World?.ImageUrl ?? "",
+                    api.Type ?? "",
+                    api.Region ?? "",
+                    api.OwnerId ?? "",
+                    api.ShortName ?? "",
+                    api.InstanceId?.Split('~')[0] ?? "",
+                    api.RoleRestricted ?? false,
+                    api.AgeGate ?? false);
             }
+
+            var parsed = ParseLocation(_instance);
 
             return new InstanceSnapshot(_running, _world, _instance,
                 _users.Select(user => Enrich(user.UserId, user.Name)).ToArray(),
-                "log", "", 0, 0, WorldIdOf(_instance));
+                "log", "", 0, 0, WorldIdOf(_instance), "", parsed.Type, parsed.Region, parsed.OwnerId, "",
+                parsed.Number, false, parsed.AgeGated);
         }
+    }
+
+    /// <summary>Reads the instance type, region and owner out of a location string.</summary>
+    private static (string Type, string Region, string OwnerId, string Number, bool AgeGated) ParseLocation(
+        string location)
+    {
+        var colon = location.IndexOf(':');
+        if (colon < 0)
+            return ("", "", "", "", false);
+
+        var parts = location[(colon + 1)..].Split('~');
+        var type = "public";
+        var owner = "";
+        var region = "";
+        var groupAccess = "";
+        var canRequestInvite = false;
+        var ageGated = false;
+
+        foreach (var part in parts.Skip(1))
+        {
+            var open = part.IndexOf('(');
+            var close = part.LastIndexOf(')');
+            var key = open >= 0 ? part[..open] : part;
+            var value = open >= 0 && close > open ? part[(open + 1)..close] : "";
+
+            switch (key)
+            {
+                case "private":
+                    type = "invite";
+                    owner = value;
+                    break;
+                case "friends":
+                    type = "friends";
+                    owner = value;
+                    break;
+                case "hidden":
+                    type = "friends+";
+                    owner = value;
+                    break;
+                case "group":
+                    type = "group";
+                    owner = value;
+                    break;
+                case "groupAccessType":
+                    groupAccess = value;
+                    break;
+                case "region":
+                    region = value;
+                    break;
+                case "canRequestInvite":
+                    canRequestInvite = true;
+                    break;
+                case "ageGate":
+                    ageGated = true;
+                    break;
+            }
+        }
+
+        if (type == "invite" && canRequestInvite)
+            type = "invite+";
+
+        if (type == "group" && groupAccess.Length > 0)
+            type = $"group:{groupAccess}";
+
+        return (type, region, owner, parts[0], ageGated);
     }
 
     /// <summary>The world id at the front of an instance location (<c>wrld_…:123</c>).</summary>
@@ -501,6 +580,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.AvatarImageUrl,
             profile?.IconUrl,
             TrustLevel(profile?.Tags),
+            profile?.Status,
             profile?.DateJoined,
             profile?.Platform,
             AvatarService.Instance.NameFor(fileId),

@@ -10,6 +10,7 @@ public sealed record InstanceUser(
     string? AvatarImageUrl = null,
     string? IconUrl = null,
     string? Trust = null,
+    string? Status = null,
     string? DateJoined = null,
     string? Platform = null,
     string? AvatarName = null,
@@ -29,4 +30,11 @@ public sealed record InstanceSnapshot(
     int UserCount = 0,
     int Capacity = 0,
     string WorldId = "",
-    string WorldThumbnail = "");
+    string WorldThumbnail = "",
+    string InstanceType = "",
+    string InstanceRegion = "",
+    string InstanceOwnerId = "",
+    string InstanceShortName = "",
+    string InstanceNumber = "",
+    bool InstanceRestricted = false,
+    bool InstanceAgeGated = false);

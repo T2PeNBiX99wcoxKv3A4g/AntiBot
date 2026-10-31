@@ -33,6 +33,7 @@ internal sealed record ApiUser(
     string? IconUrl,
     string? ProfilePicOverride,
     string? ProfilePicOverrideThumbnail,
+    string? Status,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,
     string[]? Tags,
@@ -48,6 +49,12 @@ internal sealed record ApiInstance(
     string? Name,
     int? UserCount,
     int? Capacity,
+    string? Type,
+    string? Region,
+    string? OwnerId,
+    string? ShortName,
+    bool? RoleRestricted,
+    bool? AgeGate,
     ApiWorld? World,
     ApiInstanceUser[]? Users);
 
@@ -69,8 +76,12 @@ internal sealed record ApiDeviceStatus(ApiAuthUser? User);
 
 internal sealed record ApiDeviceStatusRequest(string DeviceCode);
 
-/// <summary>One avatar from the external avatar database, looked up by its image file id.</summary>
-internal sealed record AvatarLookup(string? Id, string? Name);
+/// <summary>One avatar from an external avatar database, looked up by its image file id.</summary>
+internal sealed record AvatarLookup(string? Id, string? Name, string? AvatarName, string? ImageUrl)
+{
+    /// <summary>Providers disagree on the field: avtrdb uses <c>name</c>, vrcdb <c>avatarName</c>.</summary>
+    public string? ResolvedName => !string.IsNullOrEmpty(Name) ? Name : AvatarName;
+}
 
 /// <summary>One entry of the session cookie jar, as it is written to disk.</summary>
 internal sealed record CookieRecord(

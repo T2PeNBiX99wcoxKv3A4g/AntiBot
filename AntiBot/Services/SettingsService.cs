@@ -31,10 +31,15 @@ internal sealed class SettingsService : Singleton<SettingsService>
             .OnFailure(ex => Log.Warning(ex, "Failed to read {File}", FilePath))
             .GetOrNull();
 
-        if (stored?.LogDirectory is { Length: > 0 } directory)
+        if (stored is not null)
             Current = stored with
             {
-                LogDirectory = directory
+                LogDirectory = stored.LogDirectory is { Length: > 0 } directory
+                    ? directory
+                    : Current.LogDirectory,
+                AvatarApiProviders = stored.AvatarApiProviders is { Length: > 0 } providers
+                    ? providers
+                    : AppSettings.DefaultAvatarApiProviders
             };
     }
 
@@ -55,24 +60,42 @@ internal sealed class SettingsService : Singleton<SettingsService>
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result",
-            new SettingsPayload(Current.LogDirectory, AppSettings.DefaultLogDirectory))),
+            new SettingsPayload(Current.LogDirectory, AppSettings.DefaultLogDirectory,
+                Current.AvatarApiProviders))),
         "settings.save" => SaveAsync(context),
         _ => Task.FromResult<NativeResponse?>(null)
     };
 
     private async Task<NativeResponse?> SaveAsync(NativeContext context)
     {
-        if (context.Payload<AppSettings>()?.LogDirectory?.Trim() is not { Length: > 0 } directory)
+        if (context.Payload<AppSettings>() is not { } settings)
+            return context.Fail("settings.save.result", "error.invalidSettings");
+
+        if (settings.LogDirectory?.Trim() is not { Length: > 0 } directory)
             return context.Fail("settings.save.result", "error.invalidLogDirectory");
 
-        Current = new(directory);
-        Log.Information("Log folder set to {Directory}", directory);
+        // Only absolute http(s) providers are kept; an empty list falls back to the built-in ones.
+        var providers = (settings.AvatarApiProviders ?? [])
+            .Select(provider => provider.Trim())
+            .Where(IsHttpUrl)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        Current = new(directory, providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders);
+        Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory, Current.AvatarApiProviders.Length);
 
         var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
             JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));
 
         attempt.OnFailure(ex => Log.Warning(ex, "Failed to write {File}", FilePath));
 
+        // A new provider list is a chance to resolve names that failed before.
+        AvatarService.Instance.ResetUnknown();
+
         return context.Reply("settings.save.result", new OkPayload());
     }
+
+    private static bool IsHttpUrl(string value) =>
+        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
 }

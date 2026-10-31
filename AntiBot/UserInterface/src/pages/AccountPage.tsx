@@ -438,11 +438,9 @@ function StorageChoice({auth, busy, error, run}: {
                     <OptionHead>
                         <strong>Do not remember</strong>
                         <Tag>nothing on disk</Tag>
+                        <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
-                    <p>
-                        Nothing is written. The next launch has to sign in again, which also means another
-                        2FA prompt.
-                    </p>
+                    <p>Nothing is written; the next launch signs in again.</p>
                 </Option>
 
                 <Option
@@ -454,19 +452,18 @@ function StorageChoice({auth, busy, error, run}: {
                     <OptionHead>
                         <strong>{systemName}</strong>
                         <Tag>{systemAvailable ? "encrypted" : "unavailable"}</Tag>
+                        <Platforms>
+                            {systemName === "Windows DPAPI" ? "Windows" :
+                                systemName === "System keyring" ? "Linux" : "Windows · Linux"}
+                        </Platforms>
                     </OptionHead>
-                    {systemAvailable ? (
-                        <p>
-                            {systemName === "Windows DPAPI"
-                                ? "The session is encrypted by Windows DPAPI for your Windows account; copying the file to another user or machine does not help. It unlocks automatically."
-                                : "The session is held in the desktop keyring (Secret Service), encrypted by it and unlocked with your login session. It unlocks automatically."}
-                        </p>
-                    ) : (
-                        <p>
-                            This system has neither DPAPI nor a Secret Service keyring, so the session
-                            cannot be protected here without a password.
-                        </p>
-                    )}
+                    <p>
+                        {systemAvailable
+                            ? systemName === "Windows DPAPI"
+                                ? "Encrypted with Windows DPAPI for your account; unlocks automatically."
+                                : "Held in the desktop keyring; unlocks with your login session."
+                            : "No DPAPI or keyring on this system."}
+                    </p>
                 </Option>
 
                 <Option
@@ -476,18 +473,15 @@ function StorageChoice({auth, busy, error, run}: {
                     type="button"
                 >
                     <OptionHead>
-                        <strong>TPM (hardware-backed)</strong>
-                        <Tag>{tpmAvailable ? "no prompt" : "no TPM"}</Tag>
+                        <strong>TPM</strong>
+                        <Tag>{tpmAvailable ? "no prompt" : "unavailable"}</Tag>
+                        <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
-                    {tpmAvailable ? (
-                        <p>
-                            The session is encrypted with an AES-256 key that is wrapped by a key held in
-                            this PC's TPM. The file cannot be decrypted on another machine, and it unlocks
-                            automatically without a prompt.
-                        </p>
-                    ) : (
-                        <p>No usable TPM was found on this machine.</p>
-                    )}
+                    <p>
+                        {tpmAvailable
+                            ? "AES key wrapped by this machine's TPM; unlocks automatically."
+                            : "No usable TPM on this machine."}
+                    </p>
                 </Option>
 
                 <Option
@@ -498,31 +492,23 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>Windows Hello</strong>
-                        <Tag>{helloAvailable ? "asks for PIN / biometrics" : "unavailable"}</Tag>
+                        <Tag>{helloAvailable ? "PIN / biometrics" : "unavailable"}</Tag>
+                        <Platforms>Windows</Platforms>
                     </OptionHead>
-                    {helloAvailable ? (
-                        <p>
-                            The session is encrypted with an AES-256 key wrapped by a key that only Windows
-                            Hello can use. Each launch asks for your PIN, fingerprint or face before
-                            unlocking; no VRChat password is involved.
-                        </p>
-                    ) : (
-                        <p>Windows Hello is only available on Windows.</p>
-                    )}
+                    <p>
+                        {helloAvailable
+                            ? "Windows Hello confirms it is you before unlocking."
+                            : "Only available on Windows."}
+                    </p>
                 </Option>
 
                 <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
                     <OptionHead>
                         <strong>Password</strong>
                         <Tag>asks every launch</Tag>
+                        <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
-                    <p>
-                        The session is encrypted with AES-256-GCM using a key derived from your password
-                        (PBKDF2-SHA256, 600,000 rounds, random per-install salt). Your password is not
-                        stored; you type it each launch to unlock, so no 2FA prompt. Anyone who copies the
-                        file can try to guess that password offline, and changing it makes the stored
-                        session unusable.
-                    </p>
+                    <p>AES-256-GCM with a key derived from your password; asked each launch.</p>
                 </Option>
             </Options>
 
@@ -955,6 +941,16 @@ const Tag = styled.span`
     font-family: var(--font-mono);
     font-size: 9px;
     color: var(--text-muted);
+`;
+
+const Platforms = styled.span`
+    margin-left: auto;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(167, 139, 250, 0.12);
+    color: var(--accent-primary);
+    font-family: var(--font-mono);
+    font-size: 9px;
 `;
 
 const DeviceBody = styled.div`

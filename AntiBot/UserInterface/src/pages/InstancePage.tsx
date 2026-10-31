@@ -9,12 +9,14 @@ import {
 } from "../api/instance";
 import {desktopAvailable} from "../api/logs";
 import {openUrl} from "../api/system";
-import {EyeIcon, EyeOffIcon, UsersIcon} from "../components/Icons";
+import {EyeIcon, EyeOffIcon, LockIcon, UsersIcon} from "../components/Icons";
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage() {
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
+    const [showInstance, setShowInstance] = useState(false);
+    const [now, setNow] = useState(() => Date.now());
     const received = useRef(false);
 
     useEffect(() => {
@@ -39,7 +41,24 @@ export function InstancePage() {
         };
     }, []);
 
-    const {running, world, users, source, worldName, userCount, capacity, worldId = "", worldThumbnail} = snapshot;
+    // "In instance" is a duration, so it has to move as time passes.
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+        return () => window.clearInterval(timer);
+    }, []);
+
+    const {
+        running, world, instance, users, worldName, userCount, capacity,
+        worldId = "", worldThumbnail,
+        instanceType = "", instanceRegion = "", instanceShortName = "", instanceNumber = "",
+        instanceRestricted = false, instanceAgeGated = false,
+    } = snapshot;
+
+    const launchUrl = instance && worldId
+        ? `https://vrchat.com/home/launch?worldId=${encodeURIComponent(worldId)}` +
+        `&instanceId=${encodeURIComponent(instance)}` +
+        (instanceShortName ? `&shortName=${encodeURIComponent(instanceShortName)}` : "")
+        : "";
 
     return (
         <Page>
@@ -66,51 +85,85 @@ export function InstancePage() {
                                 >
                                     {worldName || world || "—"}
                                 </WorldName>
+                                <InstanceRow>
+                                    <InstanceButton
+                                        disabled={launchUrl.length === 0}
+                                        onClick={() => setShowInstance((current) => !current)}
+                                        type="button"
+                                    >
+                                        {instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
+                                        {instanceRestricted && <LockIcon size={12}/>}
+                                        {instanceAgeGated && <AgeGate>18+</AgeGate>}
+                                    </InstanceButton>
+                                    {instanceRegion && <Region>{instanceRegion.toUpperCase()}</Region>}
+                                </InstanceRow>
                             </WorldText>
                         </World>
 
-                        <Meta>
-                            <Source $api={source === "api"}>
-                                {source === "api" ? "VRChat API" : "local log"}
-                            </Source>
-                            <Count>
-                                <strong>{users.length}</strong>
-                                <span>
-                                    {userCount && userCount !== users.length
-                                        ? `of ${userCount} players`
-                                        : users.length === 1 ? "player" : "players"}
-                                    {capacity ? ` · ${capacity} slots` : ""}
-                                </span>
-                            </Count>
-                        </Meta>
+                        <Count>
+                            <strong>{users.length}</strong>
+                            <span>
+                                {userCount && userCount !== users.length
+                                    ? `of ${userCount} players`
+                                    : users.length === 1 ? "player" : "players"}
+                                {capacity ? ` · ${capacity} slots` : ""}
+                            </span>
+                        </Count>
                     </Summary>
+
+                    {showInstance && launchUrl && (
+                        <InstancePanel>
+                            <PanelLabel>Instance link</PanelLabel>
+                            <LinkText>{launchUrl}</LinkText>
+                            <PanelActions>
+                                <SmallButton
+                                    onClick={() => void navigator.clipboard?.writeText(launchUrl)}
+                                    type="button"
+                                >
+                                    Copy
+                                </SmallButton>
+                            </PanelActions>
+                        </InstancePanel>
+                    )}
 
                     <ListCard>
                         <ListHeader>
+                            <span/>
                             <span>Name</span>
-                            <span>Icon</span>
-                            <span>Joined</span>
+                            <span>Status</span>
+                            <span>Platform</span>
+                            <span>In instance</span>
                         </ListHeader>
 
                         <Rows>
                             {users.length === 0 ? (
                                 <EmptyRow>No players in this instance yet.</EmptyRow>
                             ) : users.map((user) => (
-                                <UserRow key={user.userId} user={user} onSelect={setSelected}/>
+                                <UserRow key={user.userId} user={user} now={now} onSelect={setSelected}/>
                             ))}
                         </Rows>
                     </ListCard>
                 </>
             )}
 
-            {selected && <PlayerDialog user={selected} onClose={() => setSelected(null)}/>}
+            {selected && <PlayerDialog user={selected} now={now} onClose={() => setSelected(null)}/>}
         </Page>
     );
 }
 
-function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: InstanceUser) => void }) {
+function UserRow({user, now, onSelect}: {
+    user: InstanceUser;
+    now: number;
+    onSelect: (user: InstanceUser) => void;
+}) {
+    const icon = user.iconUrl ?? user.avatarUrl;
+    const status = statusInfo(user.status);
+
     return (
         <Row $local={user.local} onClick={() => onSelect(user)}>
+            <AvatarCell>
+                {icon ? <AvatarLarge $src={icon}/> : <Dash>—</Dash>}
+            </AvatarCell>
             <Name>
                 <NameText>
                     <span title={[user.platform, user.dateJoined && `joined VRChat ${user.dateJoined}`]
@@ -122,18 +175,23 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
                     {user.local && <You>you</You>}
                 </NameText>
             </Name>
-            <AvatarCell>
-                {(user.iconUrl ?? user.avatarUrl)
-                    ? <AvatarLarge $src={user.iconUrl ?? user.avatarUrl}/>
+            <StatusCell>
+                {status
+                    ? <><StatusDot $color={status.color}/><span>{status.label}</span></>
                     : <Dash>—</Dash>}
-            </AvatarCell>
-            <Time>{user.joinedAt || "—"}</Time>
+            </StatusCell>
+            <PlatformCell>{platformLabel(user.platform)}</PlatformCell>
+            <Time>{durationLabel(user.joinedAt, now)}</Time>
         </Row>
     );
 }
 
-/** The player's profile, with the avatar they are wearing as the API last reported it. */
-function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void }) {
+/** The player's profile: the same icon as the list, and the avatar name when it was resolved. */
+function PlayerDialog({user, now, onClose}: {
+    user: InstanceUser;
+    now: number;
+    onClose: () => void;
+}) {
     const [revealed, setRevealed] = useState(false);
 
     useEffect(() => {
@@ -145,13 +203,14 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
         return () => window.removeEventListener("keydown", onKey);
     }, [onClose]);
 
-    const image = user.avatarImageUrl || user.avatarUrl;
+    const icon = user.iconUrl ?? user.avatarUrl;
+    const status = statusInfo(user.status);
 
     return (
         <Overlay onClick={onClose}>
             <Dialog onClick={(event) => event.stopPropagation()}>
-                <Portrait $src={image}>
-                    {!image && user.name.slice(0, 1).toUpperCase()}
+                <Portrait $src={icon}>
+                    {!icon && user.name.slice(0, 1).toUpperCase()}
                 </Portrait>
 
                 <Details>
@@ -176,7 +235,9 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
                                 </RevealButton>
                             </SecretValue>
                         </SecretField>
-                        <Field label="Platform" value={user.platform ?? "—"}/>
+                        <Field label="Status" value={status ? status.label : "—"}/>
+                        <Field label="Platform" value={platformLabel(user.platform)}/>
+                        <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
                         <Field
                             label="Avatar"
                             value={user.avatarName ?? (user.isRobot ? "Robot (default)" : "Unknown")}
@@ -185,10 +246,8 @@ function PlayerDialog({user, onClose}: { user: InstanceUser; onClose: () => void
                             label="VRChat account since"
                             value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
                         />
-                        <Field label="In this instance since" value={user.joinedAt || "—"}/>
+                        {icon && <Field label="Icon URL" value={icon}/>}
                     </Fields>
-
-                    {!image && <Hint>No avatar yet; it appears once the profile is fetched.</Hint>}
                 </Details>
 
                 <Close onClick={onClose} type="button">×</Close>
@@ -204,6 +263,79 @@ function Field({label, value}: { label: string; value: string }) {
             <code title={value}>{value}</code>
         </FieldRow>
     );
+}
+
+function statusInfo(status?: string): { label: string; color: string } | null {
+    switch (status) {
+        case "active":
+            return {label: "Online", color: "#4ade80"};
+        case "join me":
+            return {label: "Join Me", color: "#60a5fa"};
+        case "ask me":
+            return {label: "Ask Me", color: "#fbbf24"};
+        case "busy":
+            return {label: "Busy", color: "#f87171"};
+        case "offline":
+            return {label: "Offline", color: "#94a3b8"};
+        default:
+            return status && status.length > 0 ? {label: status, color: "#94a3b8"} : null;
+    }
+}
+
+function platformLabel(platform?: string): string {
+    switch (platform) {
+        case "standalonewindows":
+            return "PC";
+        case "android":
+            return "Android";
+        case "ios":
+            return "iOS";
+        default:
+            return platform && platform.length > 0 ? platform : "—";
+    }
+}
+
+/** How long the player has been in the instance, from the log's join time. */
+function durationLabel(joinedAt: string, now: number): string {
+    if (!joinedAt) return "—";
+
+    const [hours, minutes, seconds] = joinedAt.split(":").map(Number);
+    if ([hours, minutes, seconds].some(Number.isNaN)) return joinedAt;
+
+    const start = new Date(now);
+    start.setHours(hours, minutes, seconds, 0);
+    if (start.getTime() > now) start.setDate(start.getDate() - 1);
+
+    const total = Math.max(0, Math.floor((now - start.getTime()) / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function instanceTypeLabel(type?: string): string {
+    switch (type) {
+        case "public":
+            return "Public";
+        case "friends":
+            return "Friends";
+        case "friends+":
+        case "hidden":
+            return "Friends+";
+        case "invite":
+        case "private":
+            return "Invite";
+        case "invite+":
+            return "Invite+";
+        case "group":
+            return "Group";
+        default:
+            if (type?.startsWith("group:")) {
+                const access = type.slice(6);
+                return access === "public" ? "Group Public" : access === "plus" ? "Group+" : "Group Members";
+            }
+            return type && type.length > 0 ? type : "Instance";
+    }
 }
 
 function EmptyState({title, hint, children}: { title: string; hint: string; children?: ReactNode }) {
@@ -282,23 +414,95 @@ const Label = styled.span`
     color: var(--text-muted);
 `;
 
-const Meta = styled.div`
+const InstanceRow = styled.div`
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex-shrink: 0;
+    gap: 8px;
+    min-width: 0;
 `;
 
-const Source = styled.span<{ $api: boolean }>`
-    padding: 4px 9px;
-    border: 1px solid ${({$api}) => $api ? "rgba(167, 139, 250, 0.45)" : "var(--border-color)"};
+const InstanceButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border: 1px solid var(--border-color);
     border-radius: 999px;
-    background: ${({$api}) => $api ? "rgba(167, 139, 250, 0.12)" : "transparent"};
-    color: ${({$api}) => $api ? "var(--accent-primary)" : "var(--text-muted)"};
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+`;
+
+const AgeGate = styled.span`
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+    font-size: 9px;
+`;
+
+const Region = styled.span`
     font-family: var(--font-mono);
     font-size: 9px;
-    letter-spacing: 0.06em;
+    color: var(--text-muted);
+`;
+
+const InstancePanel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+`;
+
+const PanelLabel = styled.span`
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    color: var(--text-muted);
+`;
+
+const LinkText = styled.code`
+    overflow-wrap: anywhere;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    user-select: text;
+`;
+
+const PanelActions = styled.div`
+    display: flex;
+    gap: 8px;
+`;
+
+const SmallButton = styled.button`
+    padding: 5px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
 `;
 
 const Count = styled.div`
@@ -335,7 +539,7 @@ const ListCard = styled.section`
 
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 52px 74px;
+    grid-template-columns: 40px minmax(0, 1fr) 108px 78px 96px;
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
@@ -354,9 +558,10 @@ const Rows = styled.div`
 
 const Row = styled.div<{ $local: boolean }>`
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 52px 74px;
+    grid-template-columns: 40px minmax(0, 1fr) 108px 78px 96px;
     gap: 12px;
-    padding: 10px 16px;
+    align-items: center;
+    padding: 8px 16px;
     border-left: 2px solid ${({$local}) => $local ? "var(--accent-primary)" : "transparent"};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
@@ -370,19 +575,10 @@ const Row = styled.div<{ $local: boolean }>`
     }
 `;
 
-const Name = styled.span`
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 0;
-    font-size: 12.5px;
-    font-weight: 500;
-`;
-
 const AvatarCell = styled.span`
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
 `;
 
 const AvatarLarge = styled.span<{ $src?: string }>`
@@ -400,6 +596,15 @@ const Dash = styled.span`
     font-size: 10.5px;
 `;
 
+const Name = styled.span`
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+`;
+
 const NameText = styled.span`
     display: flex;
     align-items: center;
@@ -411,6 +616,33 @@ const NameText = styled.span`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+`;
+
+const StatusCell = styled.span`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+`;
+
+const StatusDot = styled.span<{ $color: string }>`
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: ${({$color}) => $color};
+    box-shadow: 0 0 6px ${({$color}) => $color};
+`;
+
+const PlatformCell = styled.span`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+    font-size: 11px;
 `;
 
 const Trust = styled.span<{ $trust: string }>`
@@ -615,11 +847,6 @@ const RevealButton = styled.button`
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`;
-
-const Hint = styled.p`
-    font-size: 11px;
-    color: var(--text-muted);
 `;
 
 const Close = styled.button`
