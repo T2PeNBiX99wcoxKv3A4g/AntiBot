@@ -71,7 +71,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
         if (context.Payload<AppSettings>() is not { } settings)
             return context.Fail("settings.save.result", "error.invalidSettings");
 
-        if (settings.LogDirectory?.Trim() is not { Length: > 0 } directory)
+        if (settings.LogDirectory.Trim() is not { Length: > 0 } directory)
             return context.Fail("settings.save.result", "error.invalidLogDirectory");
 
         // Only absolute http(s) providers are kept; an empty list falls back to the built-in ones.
@@ -82,7 +82,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
             .ToArray();
 
         Current = new(directory, providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders);
-        Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory, Current.AvatarApiProviders.Length);
+        Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory,
+            Current.AvatarApiProviders.Length);
 
         var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
             JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));

@@ -21,9 +21,9 @@ namespace AntiBot.Services;
 internal sealed class AuthService : Singleton<AuthService>
 {
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
+    private readonly VrchatApi _api = new();
 
     private readonly Lock _gate = new();
-    private readonly VrchatApi _api = new();
     private readonly VrchatPipeline _pipeline = new();
 
     private VrchatAccount? _account;
@@ -52,9 +52,6 @@ internal sealed class AuthService : Singleton<AuthService>
         });
     }
 
-    /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
-    public event Action? Changed;
-
     public bool IsLoggedIn => State == "loggedIn";
 
     public string State
@@ -65,6 +62,9 @@ internal sealed class AuthService : Singleton<AuthService>
                 return _state;
         }
     }
+
+    /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
+    public event Action? Changed;
 
     /// <summary>Restores a stored session. Called once, after the singletons exist.</summary>
     public void Initialize() => _ = RestoreAsync();
@@ -302,7 +302,7 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage storage;
         lock (_gate)
         {
-            _account = new VrchatAccount(id, user.DisplayName ?? id, ProfileIcon(user), user.Status,
+            _account = new(id, user.DisplayName ?? id, ProfileIcon(user), user.Status,
                 user.StatusDescription);
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
@@ -493,7 +493,7 @@ internal sealed class AuthService : Singleton<AuthService>
         var expiresAt = SessionExpiry();
 
         lock (_gate)
-            return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods,
+            return new(_state, _account, StorageName(_storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
                 AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt);
     }
@@ -514,8 +514,11 @@ internal sealed class AuthService : Singleton<AuthService>
     ///     The account's profile picture: its own icon when it has one, otherwise the avatar's thumbnail.
     /// </summary>
     private static string? ProfileIcon(ApiAuthUser user) =>
-        new[] { user.IconUrl, user.UserIcon, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail,
-                user.CurrentAvatarThumbnailImageUrl }
+        new[]
+            {
+                user.IconUrl, user.UserIcon, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail,
+                user.CurrentAvatarThumbnailImageUrl
+            }
             .FirstOrDefault(url => !string.IsNullOrEmpty(url));
 
     private static string StorageName(AuthStorage storage) => storage switch

@@ -244,7 +244,7 @@ internal sealed class Database : Singleton<Database>
 
         return attempt
             .OnFailure(ex => Log.Warning(ex, "Could not read the stored player profiles"))
-            .GetOrElse(_ => new Dictionary<string, PlayerProfile>());
+            .GetOrElse(_ => new());
     }
 
     public async Task SavePlayerAsync(PlayerProfile player, CancellationToken token = default)
@@ -316,7 +316,7 @@ internal sealed class Database : Singleton<Database>
 
         return attempt
             .OnFailure(ex => Log.Warning(ex, "Could not read the stored avatar names"))
-            .GetOrElse(_ => new Dictionary<string, string>());
+            .GetOrElse(_ => new());
     }
 
     public async Task SaveAvatarAsync(string fileId, string avatarId, string name, CancellationToken token = default)
@@ -372,11 +372,13 @@ internal sealed class Database : Singleton<Database>
             return tags.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
         // A row written before tags were stored comma-separated.
-        return tags.Trim('[', ']')
-            .Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(tag => tag.Trim().Trim('"'))
-            .Where(tag => tag.Length > 0)
-            .ToArray();
+        return
+        [
+            .. tags.Trim('[', ']')
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(tag => tag.Trim().Trim('"'))
+                .Where(tag => tag.Length > 0)
+        ];
     }
 
     /// <summary>Moves the database an older build left in the data folder, next to the settings instead.</summary>
@@ -386,7 +388,10 @@ internal sealed class Database : Singleton<Database>
         if (!File.Exists(legacy) || File.Exists(DatabasePath))
             return;
 
-        foreach (var suffix in new[] { "", "-wal", "-shm" })
+        foreach (var suffix in new[]
+                 {
+                     "", "-wal", "-shm"
+                 })
         {
             var from = legacy + suffix;
             if (!File.Exists(from))

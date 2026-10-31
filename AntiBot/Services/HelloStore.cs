@@ -4,10 +4,8 @@
 #pragma warning disable CA1416
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
-using Serilog;
 using Windows.Security.Credentials.UI;
+using Serilog;
 
 namespace AntiBot.Services;
 
@@ -22,7 +20,7 @@ namespace AntiBot.Services;
 [SupportedOSPlatform("windows")]
 internal static class HelloStore
 {
-    private static readonly byte[] Entropy = "AntiBot/auth/hello/v1"u8.ToArray();
+    private static readonly byte[] Entropy = [.. "AntiBot/auth/hello/v1"u8];
 
     private static bool? _available;
 
@@ -39,7 +37,7 @@ internal static class HelloStore
 
         try
         {
-            return (false, ProtectedData.Unprotect(body.ToArray(), Entropy, DataProtectionScope.CurrentUser));
+            return (false, ProtectedData.Unprotect([.. body], Entropy, DataProtectionScope.CurrentUser));
         }
         catch (CryptographicException ex)
         {

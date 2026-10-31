@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Utils;
 using Serilog;
 
@@ -12,8 +11,12 @@ namespace AntiBot.Services;
 ///     command-line tools on Linux.
 /// </summary>
 /// <remarks>
-///     The body layout is the same on both platforms: <c>wrappedLen(2) | wrapped | nonce(12) |
-///     tag(16) | ciphertext</c>. On Windows <c>wrapped</c> is the RSA-OAEP encrypted session key; on
+///     The body layout is the same on both platforms:
+///     <c>
+///         wrappedLen(2) | wrapped | nonce(12) |
+///         tag(16) | ciphertext
+///     </c>
+///     . On Windows <c>wrapped</c> is the RSA-OAEP encrypted session key; on
 ///     Linux it is the TPM sealed blob (public and private parts).
 /// </remarks>
 internal static class TpmStore
@@ -92,7 +95,7 @@ internal static class TpmStore
 
         try
         {
-            using var key = CngKey.Open(WindowsKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+            using var key = CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
             using var rsa = new RSACng(key);
 
             var sessionKey = rsa.Decrypt(wrapped, RSAEncryptionPadding.OaepSHA256);
@@ -117,7 +120,7 @@ internal static class TpmStore
     {
         try
         {
-            return CngKey.Open(WindowsKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+            return CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
         }
         catch (CryptographicException)
         {
@@ -128,12 +131,12 @@ internal static class TpmStore
     [SupportedOSPlatform("windows")]
     private static CngKeyCreationParameters WindowsKeyCreation() => new()
     {
-        Provider = new CngProvider("Microsoft Platform Crypto Provider"),
+        Provider = new("Microsoft Platform Crypto Provider"),
         KeyUsage = CngKeyUsages.AllUsages,
         ExportPolicy = CngExportPolicies.None,
         Parameters =
         {
-            new CngProperty("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None)
+            new("Length", BitConverter.GetBytes(2048), CngPropertyOptions.None)
         }
     };
 
@@ -141,7 +144,7 @@ internal static class TpmStore
     private static void DeleteWindowsKey() =>
         Try.Run(() =>
         {
-            using var key = CngKey.Open(WindowsKeyName, new CngProvider("Microsoft Platform Crypto Provider"));
+            using var key = CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
             key.Delete();
         });
 
@@ -297,14 +300,14 @@ internal static class TpmStore
         if (body.Length < 2 + NonceSize + TagSize)
             return false;
 
-        var wrappedLength = (body[0] << 8) | body[1];
+        var wrappedLength = body[0] << 8 | body[1];
         if (body.Length < 2 + wrappedLength + NonceSize + TagSize)
             return false;
 
-        wrapped = body.Slice(2, wrappedLength).ToArray();
-        nonce = body.Slice(2 + wrappedLength, NonceSize).ToArray();
-        tag = body.Slice(2 + wrappedLength + NonceSize, TagSize).ToArray();
-        cipher = body[(2 + wrappedLength + NonceSize + TagSize)..].ToArray();
+        wrapped = [.. body.Slice(2, wrappedLength)];
+        nonce = [.. body.Slice(2 + wrappedLength, NonceSize)];
+        tag = [.. body.Slice(2 + wrappedLength + NonceSize, TagSize)];
+        cipher = [.. body[(2 + wrappedLength + NonceSize + TagSize)..]];
         return true;
     }
 

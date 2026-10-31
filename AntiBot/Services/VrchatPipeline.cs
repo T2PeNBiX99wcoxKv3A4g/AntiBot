@@ -26,6 +26,8 @@ internal sealed class VrchatPipeline : IDisposable
     private CancellationTokenSource? _cancellation;
     private ClientWebSocket? _socket;
 
+    public void Dispose() => Stop();
+
     public void Start(string token)
     {
         Stop();
@@ -64,8 +66,6 @@ internal sealed class VrchatPipeline : IDisposable
         cancellation?.Cancel();
         socket?.Dispose();
     }
-
-    public void Dispose() => Stop();
 
     private async Task RunAsync(string token, CancellationToken cancellationToken)
     {
@@ -152,7 +152,8 @@ internal sealed class VrchatPipeline : IDisposable
             } while (!result.EndOfMessage);
 
             if (result.MessageType == WebSocketMessageType.Text)
-                Handle(Encoding.UTF8.GetString(message.ToArray()));        }
+                Handle(Encoding.UTF8.GetString(message.ToArray()));
+        }
     }
 
     private static void Handle(string json)

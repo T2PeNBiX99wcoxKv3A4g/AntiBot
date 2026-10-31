@@ -96,12 +96,12 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
         try
         {
             while (await _queue.Reader.WaitToReadAsync(token))
-                while (_queue.Reader.TryRead(out var fileId))
-                {
-                    _pending.TryRemove(fileId, out _);
-                    await LookupAsync(fileId, token);
-                    await Task.Delay(RequestInterval, token);
-                }
+            while (_queue.Reader.TryRead(out var fileId))
+            {
+                _pending.TryRemove(fileId, out _);
+                await LookupAsync(fileId, token);
+                await Task.Delay(RequestInterval, token);
+            }
         }
         catch (OperationCanceledException)
         {

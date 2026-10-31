@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -68,12 +67,12 @@ internal sealed class PlayerService : Singleton<PlayerService>
         try
         {
             while (await _queue.Reader.WaitToReadAsync(token))
-                while (_queue.Reader.TryRead(out var userId))
-                {
-                    _pending.TryRemove(userId, out _);
-                    await FetchAsync(userId, token);
-                    await Task.Delay(RequestInterval, token);
-                }
+            while (_queue.Reader.TryRead(out var userId))
+            {
+                _pending.TryRemove(userId, out _);
+                await FetchAsync(userId, token);
+                await Task.Delay(RequestInterval, token);
+            }
         }
         catch (OperationCanceledException)
         {

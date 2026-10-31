@@ -1,7 +1,7 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Utils;
@@ -21,17 +21,17 @@ namespace AntiBot.Services;
 internal sealed class VrchatApi : IDisposable
 {
     private static readonly Uri BaseUri = new("https://api.vrchat.cloud/api/1/");
-    private static readonly ILogger Logger = Serilog.Log.ForContext<VrchatApi>();
+    private static readonly ILogger Logger = Log.ForContext<VrchatApi>();
 
     private CookieContainer _cookies = new();
     private HttpClient _http = null!;
 
     public VrchatApi() => Build();
 
-    public void Dispose() => _http.Dispose();
-
     /// <summary>The value of the <c>auth</c> cookie, which the pipeline websocket accepts.</summary>
     public string? AuthToken => _cookies.GetCookies(BaseUri)["auth"]?.Value;
+
+    public void Dispose() => _http.Dispose();
 
     /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
     public async Task<(ApiAuthUser? User, string? Error)> LoginAsync(string username, string password,
@@ -42,7 +42,7 @@ internal sealed class VrchatApi : IDisposable
             $"{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}"));
 
         using var request = new HttpRequestMessage(HttpMethod.Get, "auth/user");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+        request.Headers.Authorization = new("Basic", basic);
 
         using var response = await _http.SendAsync(request, token);
         var body = await response.Content.ReadAsStringAsync(token);
@@ -136,7 +136,7 @@ internal sealed class VrchatApi : IDisposable
     /// </summary>
     public async Task<(bool Approved, string? Reason)> PollDeviceAsync(string deviceCode, CancellationToken token)
     {
-        using var content = Json(JsonSerializer.Serialize(new ApiDeviceStatusRequest(deviceCode),
+        using var content = Json(JsonSerializer.Serialize(new(deviceCode),
             VrchatJsonContext.Default.ApiDeviceStatusRequest));
         using var response = await _http.PostAsync("auth/device/status", content, token);
         var body = await response.Content.ReadAsStringAsync(token);
@@ -163,10 +163,11 @@ internal sealed class VrchatApi : IDisposable
     }
 
     public CookieRecord[] ExportCookies() =>
-        _cookies.GetCookies(BaseUri).Cast<Cookie>()
+    [
+        .. _cookies.GetCookies(BaseUri)
             .Select(cookie => new CookieRecord(cookie.Name, cookie.Value, cookie.Domain, cookie.Path,
-                new DateTimeOffset(cookie.Expires.ToUniversalTime()), cookie.Secure, cookie.HttpOnly))
-            .ToArray();
+                new(cookie.Expires.ToUniversalTime()), cookie.Secure, cookie.HttpOnly))
+    ];
 
     public void ImportCookies(IEnumerable<CookieRecord> cookies)
     {
@@ -202,7 +203,7 @@ internal sealed class VrchatApi : IDisposable
 
     private void Build()
     {
-        _cookies = new CookieContainer();
+        _cookies = new();
 
         var handler = new SocketsHttpHandler
         {
@@ -212,7 +213,7 @@ internal sealed class VrchatApi : IDisposable
             ConnectTimeout = TimeSpan.FromSeconds(15)
         };
 
-        _http = new HttpClient(handler)
+        _http = new(handler)
         {
             BaseAddress = BaseUri,
             Timeout = TimeSpan.FromSeconds(30)
@@ -220,12 +221,12 @@ internal sealed class VrchatApi : IDisposable
 
         _http.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
-        _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        _http.DefaultRequestHeaders.Accept.Add(new("application/json"));
     }
 
     private async Task<bool> VerifyAsync(string path, string code, CancellationToken token)
     {
-        using var content = Json(JsonSerializer.Serialize(new ApiCodeRequest(code),
+        using var content = Json(JsonSerializer.Serialize(new(code),
             VrchatJsonContext.Default.ApiCodeRequest));
         using var response = await _http.PostAsync(path, content, token);
         if (!response.IsSuccessStatusCode)
@@ -238,11 +239,14 @@ internal sealed class VrchatApi : IDisposable
     private static ByteArrayContent Json(string json)
     {
         var content = new ByteArrayContent(Encoding.UTF8.GetBytes(json));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+        content.Headers.ContentType = new("application/json")
+        {
+            CharSet = "utf-8"
+        };
         return content;
     }
 
-    private static T? Deserialize<T>(string body, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type) =>
+    private static T? Deserialize<T>(string body, JsonTypeInfo<T> type) =>
         Try.Run(() => JsonSerializer.Deserialize(body, type)).GetOrNull();
 
     /// <summary>Turns an error response into something the account page can show.</summary>

@@ -41,11 +41,6 @@ internal enum SessionLoadStatus
 /// </remarks>
 internal static class AuthStore
 {
-    private static readonly byte[] Magic = "ABAT"u8.ToArray();
-
-    /// <summary>Extra DPAPI entropy, so another app's blob cannot be swapped in.</summary>
-    private static readonly byte[] Entropy = "AntiBot/auth/v1"u8.ToArray();
-
     private const byte Version = 1;
     private const byte PlainMode = 0;
     private const byte DpapiMode = 1;
@@ -60,13 +55,17 @@ internal static class AuthStore
     private const int NonceSize = 12;
     private const int TagSize = 16;
     private const int KeySize = 32;
+    private static readonly byte[] Magic = [.. "ABAT"u8];
+
+    /// <summary>Extra DPAPI entropy, so another app's blob cannot be swapped in.</summary>
+    private static readonly byte[] Entropy = [.. "AntiBot/auth/v1"u8];
 
     private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
     private static readonly string KeyPath = Path.Combine(Constants.DataDirectory, "auth.key");
 
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
-        OperatingSystem.IsWindows() || (OperatingSystem.IsLinux() && Keyring.Available);
+        OperatingSystem.IsWindows() || OperatingSystem.IsLinux() && Keyring.Available;
 
     /// <summary>The name the account page shows for <see cref="AuthStorage.System" />.</summary>
     public static string SystemStorageName =>
@@ -84,7 +83,7 @@ internal static class AuthStore
     public static bool IsSoftwareAvailable => OperatingSystem.IsLinux();
 
     public static bool Exists =>
-        File.Exists(FilePath) || (OperatingSystem.IsLinux() && Keyring.HasEntry());
+        File.Exists(FilePath) || OperatingSystem.IsLinux() && Keyring.HasEntry();
 
     /// <summary>How the session on disk is protected, or <see cref="AuthStorage.None" /> when there is none.</summary>
     public static AuthStorage StoredMode
@@ -227,7 +226,7 @@ internal static class AuthStore
             {
                 case DpapiMode when OperatingSystem.IsWindows():
                     return (SessionLoadStatus.Loaded,
-                        ProtectedData.Unprotect(body.ToArray(), Entropy, DataProtectionScope.CurrentUser));
+                        ProtectedData.Unprotect([.. body], Entropy, DataProtectionScope.CurrentUser));
 
                 case TpmMode when TpmStore.IsAvailable:
                     var tpmPayload = TpmStore.Unprotect(body);
@@ -241,18 +240,20 @@ internal static class AuthStore
 
                 case SoftwareMode when IsSoftwareAvailable:
                     var softwarePayload = UnprotectWithSoftwareKey(body);
-                    return softwarePayload is null ? (SessionLoadStatus.None, null) :
-                        (SessionLoadStatus.Loaded, softwarePayload);
+                    return softwarePayload is null
+                        ? (SessionLoadStatus.None, null)
+                        : (SessionLoadStatus.Loaded, softwarePayload);
 
                 // A plain file is only left over from the old Linux fallback; reading it lets the next
                 // save move the session into the keyring.
                 case PlainMode:
-                    return (SessionLoadStatus.Loaded, body.ToArray());
+                    return (SessionLoadStatus.Loaded, [.. body]);
 
                 case PasswordMode when password is { Length: > 0 }:
                     var passwordPayload = UnprotectWithPassword(body, password);
-                    return passwordPayload is null ? (SessionLoadStatus.None, null) :
-                        (SessionLoadStatus.Loaded, passwordPayload);
+                    return passwordPayload is null
+                        ? (SessionLoadStatus.None, null)
+                        : (SessionLoadStatus.Loaded, passwordPayload);
 
                 default:
                     return (SessionLoadStatus.None, null);
@@ -439,39 +440,37 @@ internal static class AuthStore
 
         public static bool Available => _available ??= Probe();
 
-        public static bool HasEntry() => Run(["lookup", ..Attributes]).Output is { Length: > 0 };
+        public static bool HasEntry() => Run(["lookup", .. Attributes]).Output is { Length: > 0 };
 
         public static byte[]? Load()
         {
-            var output = Run(["lookup", ..Attributes]).Output;
+            var output = Run(["lookup", .. Attributes]).Output;
             return output is { Length: > 0 }
                 ? Try.Run(() => Convert.FromBase64String(output)).GetOrNull()
                 : null;
         }
 
         public static bool Store(byte[] payload) =>
-            Run(["store", $"--label={Label}", ..Attributes], Convert.ToBase64String(payload)).Ran;
+            Run(["store", $"--label={Label}", .. Attributes], Convert.ToBase64String(payload)).Ran;
 
-        public static void Clear() => Run(["clear", ..Attributes]);
+        public static void Clear() => Run(["clear", .. Attributes]);
 
         private static bool Probe() =>
-            OperatingSystem.IsLinux() && Run(["lookup", ..Attributes]).Ran;
+            OperatingSystem.IsLinux() && Run(["lookup", .. Attributes]).Ran;
 
         private static (bool Ran, string? Output) Run(string[] arguments, string? input = null)
         {
             try
             {
-                using var process = new Process
+                using var process = new Process();
+                process.StartInfo = new()
                 {
-                    StartInfo = new()
-                    {
-                        FileName = Command,
-                        RedirectStandardInput = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
+                    FileName = Command,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
                 };
 
                 foreach (var argument in arguments)

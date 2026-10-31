@@ -81,7 +81,7 @@ internal sealed class PresenceService : Singleton<PresenceService>
                       current.Status != nextStatus ||
                       current.StatusDescription != nextDescription;
 
-        _presence[userId] = new Presence(nextStatus, nextDescription, source, now);
+        _presence[userId] = new(nextStatus, nextDescription, source, now);
         return changed;
     }
 }

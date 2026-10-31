@@ -93,7 +93,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 foreach (var user in _users)
                 {
                     PlayerService.Instance.Request(user.UserId);
-                    AvatarService.Instance.Request(AvatarService.FileIdOf(PlayerService.Instance.Get(user.UserId)?.AvatarUrl));
+                    AvatarService.Instance.Request(
+                        AvatarService.FileIdOf(PlayerService.Instance.Get(user.UserId)?.AvatarUrl));
                 }
             }
         }
@@ -199,8 +200,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
             // Whoever is in the instance: the roster when VRChat sends one, otherwise the log.
             refresh = instance.Users is { Length: > 0 } list
-                ? list.Select(user => user.Id ?? "").ToArray()
-                : _users.Select(user => user.UserId).ToArray();
+                ? [.. list.Select(user => user.Id ?? "")]
+                : [.. _users.Select(user => user.UserId)];
         }
 
         // The roster has no custom status text, so the profiles keep it (and the avatar and name) fresh.
@@ -294,14 +295,14 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             // Both halves are stored on each transition, so replaying from the last one rebuilds the
             // whole location even when the two log lines arrive in the other order.
             return new(line.Time, "location",
-                World: entering.Groups["world"].Value.Trim(),
-                Instance: _instance);
+                entering.Groups["world"].Value.Trim(),
+                _instance);
 
         var joining = JoiningPattern().Match(message);
         if (joining.Success)
             return new(line.Time, "instance",
-                World: _world,
-                Instance: joining.Groups["instance"].Value);
+                _world,
+                joining.Groups["instance"].Value);
 
         var local = LocalPlayerPattern().Match(message);
         if (local.Success)
@@ -498,7 +499,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
                 var count = api.UserCount ?? apiUsers?.Length ?? 0;
 
-                return new InstanceSnapshot(
+                return new(
                     _running || count > 0,
                     api.World?.Name ?? _world,
                     api.Location ?? _apiLocation,
@@ -521,7 +522,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
             var parsed = ParseLocation(_instance);
 
-            return new InstanceSnapshot(_running, _world, _instance,
+            return new(_running, _world, _instance,
                 Ordered(_users.Select(user => Enrich(user.UserId, user.Name))),
                 "log", "", 0, 0, WorldIdOf(_instance), "", parsed.Type, parsed.Region, parsed.OwnerId, "",
                 parsed.Number, "", false, parsed.AgeGated);
@@ -530,7 +531,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
     /// <summary>You first, then friends, then everyone else, the way VRChat orders the instance list.</summary>
     private static InstanceUser[] Ordered(IEnumerable<InstanceUser> users) =>
-        users.OrderBy(user => user.Local ? 0 : user.IsFriend ? 1 : 2).ToArray();
+        [.. users.OrderBy(user => user.Local ? 0 : user.IsFriend ? 1 : 2)];
 
     /// <summary>Reads the instance type, region and owner out of a location string.</summary>
     private static (string Type, string Region, string OwnerId, string Number, bool AgeGated) ParseLocation(
@@ -622,7 +623,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         AvatarService.Instance.Request(fileId);
 
-        return new InstanceUser(
+        return new(
             userId,
             name.Length > 0 ? name : profile?.DisplayName ?? userId,
             known?.Local ?? false,

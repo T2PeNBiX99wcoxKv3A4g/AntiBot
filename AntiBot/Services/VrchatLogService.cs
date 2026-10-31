@@ -101,7 +101,10 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
                 // The parsers need every line, but a page that just mounted only needs the tail.
                 var visible = batch.Lines.Count > BufferLimit
-                    ? batch with { Lines = batch.Lines.Skip(batch.Lines.Count - BufferLimit).ToArray() }
+                    ? batch with
+                    {
+                        Lines = [.. batch.Lines.Skip(batch.Lines.Count - BufferLimit)]
+                    }
                     : batch;
 
                 WindowManager.Instance.NotifyMainWindow("log.lines", visible);
@@ -349,7 +352,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         var directory = SettingsService.Instance.LogDirectory;
 
         lock (_gate)
-            return new(Directory.Exists(directory), _running, _buffer.ToArray());
+            return new(Directory.Exists(directory), _running, [.. _buffer]);
     }
 
     private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines)
@@ -402,7 +405,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         string[] lines;
 
         lock (_gate)
-            lines = _buffer.Where(line => line.Raw.Length > 0).Select(line => line.Raw).ToArray();
+            lines = [.. _buffer.Where(line => line.Raw.Length > 0).Select(line => line.Raw)];
 
         if (lines.Length == 0)
             return context.Fail("log.export.result", "error.noLog");
