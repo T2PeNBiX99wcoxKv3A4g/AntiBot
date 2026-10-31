@@ -24,7 +24,9 @@ public sealed record PlayerProfile(
     string? IconUrl,
     string? AvatarImageUrl,
     string? Status,
+    string? StatusDescription,
     string? DateJoined,
     string[] Tags,
     string? Platform,
+    string? LastPlatform,
     string? LastActivity);

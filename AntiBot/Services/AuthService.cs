@@ -107,6 +107,9 @@ internal sealed class AuthService : Singleton<AuthService>
             ? _api.GetUserAsync(userId, token)
             : Task.FromResult<(ApiUser?, string?)>((null, null));
 
+    public Task<ApiFile?> GetFileAsync(string fileId, CancellationToken token) =>
+        IsLoggedIn ? _api.GetFileAsync(fileId, token) : Task.FromResult<ApiFile?>(null);
+
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "auth.state" => Task.FromResult<NativeResponse?>(context.Reply("auth.state.result", Snapshot())),
@@ -214,6 +217,7 @@ internal sealed class AuthService : Singleton<AuthService>
             "system" => AuthStorage.System,
             "tpm" => AuthStorage.Tpm,
             "hello" => AuthStorage.Hello,
+            "software" => AuthStorage.Software,
             _ => AuthStorage.None
         };
 
@@ -291,7 +295,8 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage storage;
         lock (_gate)
         {
-            _account = new VrchatAccount(id, user.DisplayName ?? id, ProfileIcon(user), user.StatusDescription);
+            _account = new VrchatAccount(id, user.DisplayName ?? id, ProfileIcon(user), user.Status,
+                user.StatusDescription);
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
             _state = "loggedIn";
@@ -301,7 +306,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
         // A fresh sign-in issues a new cookie. System storage can be updated silently; a password-
         // protected file cannot, because the password is not kept, so it is dropped and asked for again.
-        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello)
+        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello or AuthStorage.Software)
             await PersistAsync(storage);
         else if (fresh && storage == AuthStorage.Password)
         {
@@ -444,7 +449,7 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
             return new AuthPayload(_state, _account, StorageName(_storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
-                AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, expiresAt);
+                AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt);
     }
 
     /// <summary>When the stored <c>auth</c> cookie expires, or null for a session cookie.</summary>
@@ -473,6 +478,7 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage.System => "system",
         AuthStorage.Tpm => "tpm",
         AuthStorage.Hello => "hello",
+        AuthStorage.Software => "software",
         _ => "none"
     };
 }

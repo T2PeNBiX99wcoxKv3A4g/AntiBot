@@ -14,6 +14,7 @@ internal sealed record ApiAuthUser(
     string? UserIcon,
     string? ProfilePicOverride,
     string? ProfilePicOverrideThumbnail,
+    string? Status,
     string? StatusDescription,
     string? Location,
     string[]? RequiresTwoFactorAuth);
@@ -34,12 +35,22 @@ internal sealed record ApiUser(
     string? ProfilePicOverride,
     string? ProfilePicOverrideThumbnail,
     string? Status,
+    string? StatusDescription,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,
     string[]? Tags,
     string? Platform,
+    [property: JsonPropertyName("last_platform")]
+    string? LastPlatform,
     [property: JsonPropertyName("last_activity")]
     string? LastActivity);
+
+/// <summary>One uploaded file; an avatar image's name carries the avatar name.</summary>
+internal sealed record ApiFile(
+    string? Id,
+    string? Name,
+    string? OwnerId,
+    string[]? Tags);
 
 internal sealed record ApiInstance(
     string? Id,
@@ -47,6 +58,7 @@ internal sealed record ApiInstance(
     string? WorldId,
     string? InstanceId,
     string? Name,
+    string? DisplayName,
     int? UserCount,
     int? Capacity,
     string? Type,
@@ -100,6 +112,7 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiAuthUser))]
 [JsonSerializable(typeof(ApiInstance))]
 [JsonSerializable(typeof(ApiUser))]
+[JsonSerializable(typeof(ApiFile))]
 [JsonSerializable(typeof(ApiErrorBody))]
 [JsonSerializable(typeof(ApiVerifyResult))]
 [JsonSerializable(typeof(ApiCodeRequest))]

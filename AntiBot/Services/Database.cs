@@ -58,9 +58,11 @@ internal sealed class Database : Singleton<Database>
                                       icon_url      TEXT,
                                       avatar_image_url TEXT,
                                       status        TEXT,
+                                      status_description TEXT,
                                       date_joined   TEXT,
                                       tags          TEXT,
                                       platform      TEXT,
+                                      last_platform TEXT,
                                       last_activity TEXT,
                                       fetched_at    INTEGER NOT NULL
                                   );
@@ -95,6 +97,20 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE players ADD COLUMN status TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE players ADD COLUMN status_description TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE players ADD COLUMN last_platform TEXT";
                 migration.ExecuteNonQuery();
             });
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
@@ -202,7 +218,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText =
-                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, date_joined, tags, platform, last_activity FROM players";
+                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, status_description, date_joined, tags, platform, last_platform, last_activity FROM players";
 
             var players = new Dictionary<string, PlayerProfile>();
             using var reader = command.ExecuteReader();
@@ -211,7 +227,8 @@ internal sealed class Database : Singleton<Database>
                 var id = reader.GetString(0);
                 players[id] = new(id, reader.GetString(1), reader.GetStringOrNull(2), reader.GetStringOrNull(3),
                     reader.GetStringOrNull(4), reader.GetStringOrNull(5), reader.GetStringOrNull(6),
-                    ParseTags(reader.GetStringOrNull(7)), reader.GetStringOrNull(8), reader.GetStringOrNull(9));
+                    reader.GetStringOrNull(7), ParseTags(reader.GetStringOrNull(8)), reader.GetStringOrNull(9),
+                    reader.GetStringOrNull(10), reader.GetStringOrNull(11));
             }
 
             return players;
@@ -230,18 +247,22 @@ internal sealed class Database : Singleton<Database>
             await using var command = connection.CreateCommand();
             command.CommandText = """
                                   INSERT INTO players (id, display_name, avatar_url, icon_url, avatar_image_url,
-                                                       status, date_joined, tags, platform, last_activity, fetched_at)
+                                                       status, status_description, date_joined, tags, platform,
+                                                       last_platform, last_activity, fetched_at)
                                   VALUES ($id, $displayName, $avatarUrl, $iconUrl, $avatarImageUrl, $status,
-                                          $dateJoined, $tags, $platform, $lastActivity, $fetchedAt)
+                                          $statusDescription, $dateJoined, $tags, $platform, $lastPlatform,
+                                          $lastActivity, $fetchedAt)
                                   ON CONFLICT (id) DO UPDATE SET
                                       display_name = excluded.display_name,
                                       avatar_url = excluded.avatar_url,
                                       icon_url = excluded.icon_url,
                                       avatar_image_url = excluded.avatar_image_url,
                                       status = excluded.status,
+                                      status_description = excluded.status_description,
                                       date_joined = excluded.date_joined,
                                       tags = excluded.tags,
                                       platform = excluded.platform,
+                                      last_platform = excluded.last_platform,
                                       last_activity = excluded.last_activity,
                                       fetched_at = excluded.fetched_at
                                   """;
@@ -252,9 +273,11 @@ internal sealed class Database : Singleton<Database>
             command.Parameters.AddWithValue("$iconUrl", (object?)player.IconUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$avatarImageUrl", (object?)player.AvatarImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$status", (object?)player.Status ?? DBNull.Value);
+            command.Parameters.AddWithValue("$statusDescription", (object?)player.StatusDescription ?? DBNull.Value);
             command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
             command.Parameters.AddWithValue("$tags", string.Join(',', player.Tags));
             command.Parameters.AddWithValue("$platform", (object?)player.Platform ?? DBNull.Value);
+            command.Parameters.AddWithValue("$lastPlatform", (object?)player.LastPlatform ?? DBNull.Value);
             command.Parameters.AddWithValue("$lastActivity", (object?)player.LastActivity ?? DBNull.Value);
             command.Parameters.AddWithValue("$fetchedAt", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 

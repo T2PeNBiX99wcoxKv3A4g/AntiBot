@@ -115,20 +115,61 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
 
     private async Task LookupAsync(string fileId, CancellationToken token)
     {
+        if (!AuthService.Instance.IsLoggedIn)
+        {
+            // Not signed in yet; leave it queued for the next request instead of giving up.
+            _pending.TryRemove(fileId, out _);
+            return;
+        }
+
+        // The first-party way: an avatar image is named "Avatar - <name> - Image - <date>". A file
+        // tagged "icon" is a custom user icon instead, which carries no avatar information.
+        var file = await AuthService.Instance.GetFileAsync(fileId, token);
+        Log.Debug("Avatar file {FileId}: name={Name} tags={Tags}", fileId, file?.Name,
+            string.Join(',', file?.Tags ?? []));
+
+        if (file?.Tags?.Contains("icon") == true)
+        {
+            _unknown[fileId] = 0;
+            return;
+        }
+
+        if (AvatarNameFrom(file?.Name) is { Length: > 0 } fileName)
+        {
+            await RememberAsync(fileId, file!.OwnerId ?? "", fileName, token);
+            return;
+        }
+
+        // Then the external databases, in the configured order.
         foreach (var provider in SettingsService.Instance.Current.AvatarApiProviders)
         {
             var avatar = await LookupFrom(provider, fileId, token);
             if (avatar?.ResolvedName is not { Length: > 0 } name)
                 continue;
 
-            _names[fileId] = name;
-            await Database.Instance.SaveAvatarAsync(fileId, avatar.Id ?? "", name, token);
-            Updated?.Invoke();
+            await RememberAsync(fileId, avatar.Id ?? "", name, token);
             return;
         }
 
-        // No provider knew it; do not ask again this session.
+        // No source knew it; do not ask again this session.
         _unknown[fileId] = 0;
+    }
+
+    private async Task RememberAsync(string fileId, string avatarId, string name, CancellationToken token)
+    {
+        _names[fileId] = name;
+        await Database.Instance.SaveAvatarAsync(fileId, avatarId, name, token);
+        Updated?.Invoke();
+    }
+
+    /// <summary>Pulls the avatar name out of a file name such as <c>Avatar - Robot - Image - 2024.01.01</c>.</summary>
+    private static string? AvatarNameFrom(string? fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+            return null;
+
+        var match = AvatarFileNamePattern().Match(fileName);
+        return match.Success ? match.Groups["name"].Value.Trim() : null;
     }
 
     private async Task<AvatarLookup?> LookupFrom(string provider, string fileId, CancellationToken token)
@@ -154,4 +195,7 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     [GeneratedRegex(@"file_[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         RegexOptions.CultureInvariant)]
     private static partial Regex FileIdPattern();
+
+    [GeneratedRegex(@"Avatar - (?<name>.*) - Image -", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex AvatarFileNamePattern();
 }

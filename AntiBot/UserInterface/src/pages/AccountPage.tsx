@@ -278,6 +278,7 @@ function Profile({auth, busy, error, run}: {
     run: Run;
 }) {
     const user = auth.user!;
+    const status = statusInfo(user.status);
 
     return (
         <>
@@ -286,7 +287,10 @@ function Profile({auth, busy, error, run}: {
                     <Avatar $src={user.avatarUrl}/>
                     <Identity>
                         <h2>{user.displayName}</h2>
-                        <p>{user.statusDescription || "Signed in to VRChat"}</p>
+                        <StatusLine>
+                            {status && <StatusDot $color={status.color}/>}
+                            <p>{user.statusDescription || status?.label || "Signed in to VRChat"}</p>
+                        </StatusLine>
                         {auth.expiresAt && (
                             <p>Session expires {new Date(auth.expiresAt).toLocaleDateString()}</p>
                         )}
@@ -300,6 +304,24 @@ function Profile({auth, busy, error, run}: {
             </Card>
         </>
     );
+}
+
+/** The presence label and colour the site uses. */
+function statusInfo(status?: string): { label: string; color: string } | null {
+    switch (status) {
+        case "active":
+            return {label: "Online", color: "#4ade80"};
+        case "join me":
+            return {label: "Join Me", color: "#60a5fa"};
+        case "ask me":
+            return {label: "Ask Me", color: "#fbbf24"};
+        case "busy":
+            return {label: "Busy", color: "#f87171"};
+        case "offline":
+            return {label: "Offline", color: "#94a3b8"};
+        default:
+            return status && status.length > 0 ? {label: status, color: "#94a3b8"} : null;
+    }
 }
 
 /** The login name, masked like a password until the eye is used. */
@@ -370,6 +392,7 @@ function StorageChoice({auth, busy, error, run}: {
     const systemName = auth.systemStorageName || "System protection";
     const tpmAvailable = auth.tpmStorage;
     const helloAvailable = auth.helloStorage;
+    const softwareAvailable = auth.softwareStorage;
 
     // What the account is actually using, or the best available mode when nothing is stored yet.
     const preferred: AuthStorage = auth.storage !== "none"
@@ -380,7 +403,9 @@ function StorageChoice({auth, busy, error, run}: {
                 ? "tpm"
                 : systemAvailable
                     ? "system"
-                    : "password";
+                    : softwareAvailable
+                        ? "software"
+                        : "password";
 
     const [mode, setMode] = useState<AuthStorage>(preferred);
     const lastPreferred = useRef(preferred);
@@ -499,6 +524,24 @@ function StorageChoice({auth, busy, error, run}: {
                         {helloAvailable
                             ? "Windows Hello confirms it is you before unlocking."
                             : "Only available on Windows."}
+                    </p>
+                </Option>
+
+                <Option
+                    $active={mode === "software"}
+                    $disabled={!softwareAvailable}
+                    onClick={() => softwareAvailable && setMode("software")}
+                    type="button"
+                >
+                    <OptionHead>
+                        <strong>Software key</strong>
+                        <Tag>{softwareAvailable ? "obfuscation" : "unavailable"}</Tag>
+                        <Platforms>Linux</Platforms>
+                    </OptionHead>
+                    <p>
+                        {softwareAvailable
+                            ? "AES-256-GCM with a key file next to the session; obfuscation only, not real protection."
+                            : "Only offered on Linux."}
                     </p>
                 </Option>
 
@@ -681,6 +724,8 @@ function storageLabel(storage: AuthStorage) {
             return "TPM-protected";
         case "hello":
             return "Windows Hello";
+        case "software":
+            return "software key";
         default:
             return "not stored";
     }
@@ -858,6 +903,21 @@ const Identity = styled.div`
         font-size: 12px;
         color: var(--text-secondary);
     }
+`;
+
+const StatusLine = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+`;
+
+const StatusDot = styled.span<{ $color: string }>`
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: ${({$color}) => $color};
+    box-shadow: 0 0 6px ${({$color}) => $color};
 `;
 
 const IconButton = styled.button`

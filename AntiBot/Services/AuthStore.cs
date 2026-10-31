@@ -52,6 +52,7 @@ internal static class AuthStore
     private const byte PasswordMode = 2;
     private const byte TpmMode = 3;
     private const byte HelloMode = 4;
+    private const byte SoftwareMode = 5;
 
     // OWASP's floor for PBKDF2-HMAC-SHA256; the cost only shows on unlock, once per launch.
     private const int Iterations = 600_000;
@@ -61,6 +62,7 @@ internal static class AuthStore
     private const int KeySize = 32;
 
     private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
+    private static readonly string KeyPath = Path.Combine(Constants.DataDirectory, "auth.key");
 
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
@@ -77,6 +79,9 @@ internal static class AuthStore
 
     /// <summary>Whether Windows Hello can gate a wrapping key on this machine.</summary>
     public static bool IsHelloAvailable => OperatingSystem.IsWindows() && HelloStore.IsAvailable;
+
+    /// <summary>The key-file mode is offered on Linux, where the other options depend on extra packages.</summary>
+    public static bool IsSoftwareAvailable => OperatingSystem.IsLinux();
 
     public static bool Exists =>
         File.Exists(FilePath) || (OperatingSystem.IsLinux() && Keyring.HasEntry());
@@ -137,6 +142,10 @@ internal static class AuthStore
                 await WriteAsync(HelloMode, HelloStore.Protect(payload), token);
                 return true;
 
+            case AuthStorage.Software when IsSoftwareAvailable:
+                await WriteAsync(SoftwareMode, ProtectWithSoftwareKey(payload), token);
+                return true;
+
             default:
                 return false;
         }
@@ -164,6 +173,7 @@ internal static class AuthStore
     public static void Delete()
     {
         Try.Run(() => File.Delete(FilePath)).OnFailure(ex => Log.Warning(ex, "Could not delete the stored session"));
+        Try.Run(() => File.Delete(KeyPath));
 
         if (OperatingSystem.IsLinux() && Keyring.Available)
             Keyring.Clear();
@@ -188,6 +198,7 @@ internal static class AuthStore
                 PasswordMode => AuthStorage.Password,
                 TpmMode => AuthStorage.Tpm,
                 HelloMode => AuthStorage.Hello,
+                SoftwareMode => AuthStorage.Software,
                 DpapiMode or PlainMode => AuthStorage.System,
                 _ => AuthStorage.None
             };
@@ -227,6 +238,11 @@ internal static class AuthStore
                     return cancelled ? (SessionLoadStatus.Cancelled, null) :
                         helloPayload is null ? (SessionLoadStatus.None, null) :
                         (SessionLoadStatus.Loaded, helloPayload);
+
+                case SoftwareMode when IsSoftwareAvailable:
+                    var softwarePayload = UnprotectWithSoftwareKey(body);
+                    return softwarePayload is null ? (SessionLoadStatus.None, null) :
+                        (SessionLoadStatus.Loaded, softwarePayload);
 
                 // A plain file is only left over from the old Linux fallback; reading it lets the next
                 // save move the session into the keyring.
@@ -321,6 +337,90 @@ internal static class AuthStore
         {
             CryptographicOperations.ZeroMemory(key);
             CryptographicOperations.ZeroMemory(cipher);
+        }
+    }
+
+    private static byte[] ProtectWithSoftwareKey(byte[] payload)
+    {
+        var key = LoadOrCreateSoftwareKey();
+        try
+        {
+            var nonce = RandomNumberGenerator.GetBytes(NonceSize);
+            var tag = new byte[TagSize];
+            var cipher = new byte[payload.Length];
+
+            using (var aes = new AesGcm(key, TagSize))
+                aes.Encrypt(nonce, payload, cipher, tag);
+
+            var body = new byte[NonceSize + TagSize + cipher.Length];
+            nonce.CopyTo(body, 0);
+            tag.CopyTo(body, NonceSize);
+            cipher.CopyTo(body, NonceSize + TagSize);
+            return body;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
+    }
+
+    private static byte[]? UnprotectWithSoftwareKey(ReadOnlySpan<byte> body)
+    {
+        if (body.Length < NonceSize + TagSize)
+            return null;
+
+        var key = TryLoadSoftwareKey();
+        if (key is null)
+            return null;
+
+        try
+        {
+            var nonce = body[..NonceSize].ToArray();
+            var tag = body.Slice(NonceSize, TagSize).ToArray();
+            var cipher = body[(NonceSize + TagSize)..].ToArray();
+
+            var plain = new byte[cipher.Length];
+            using var aes = new AesGcm(key, TagSize);
+            aes.Decrypt(nonce, cipher, tag, plain);
+            return plain;
+        }
+        catch (CryptographicException)
+        {
+            return null;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
+    }
+
+    /// <summary>The key file is written owner-only; anyone who can read it can decrypt the session.</summary>
+    private static byte[] LoadOrCreateSoftwareKey()
+    {
+        if (TryLoadSoftwareKey() is { } existing)
+            return existing;
+
+        var key = RandomNumberGenerator.GetBytes(KeySize);
+        var temporary = KeyPath + ".tmp";
+        File.WriteAllBytes(temporary, key);
+
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+
+        File.Move(temporary, KeyPath, true);
+        return key;
+    }
+
+    private static byte[]? TryLoadSoftwareKey()
+    {
+        try
+        {
+            return File.Exists(KeyPath) ? File.ReadAllBytes(KeyPath) : null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Could not read the session key file");
+            return null;
         }
     }
 

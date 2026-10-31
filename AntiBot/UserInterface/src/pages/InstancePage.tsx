@@ -15,7 +15,6 @@ import {EyeIcon, EyeOffIcon, LockIcon, UsersIcon} from "../components/Icons";
 export function InstancePage() {
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
-    const [showInstance, setShowInstance] = useState(false);
     const [now, setNow] = useState(() => Date.now());
     const received = useRef(false);
 
@@ -48,17 +47,11 @@ export function InstancePage() {
     }, []);
 
     const {
-        running, world, instance, users, worldName, userCount, capacity,
+        running, world, users, worldName, userCount, capacity,
         worldId = "", worldThumbnail,
-        instanceType = "", instanceRegion = "", instanceShortName = "", instanceNumber = "",
+        instanceType = "", instanceRegion = "", instanceNumber = "", instanceDisplayName = "",
         instanceRestricted = false, instanceAgeGated = false,
     } = snapshot;
-
-    const launchUrl = instance && worldId
-        ? `https://vrchat.com/home/launch?worldId=${encodeURIComponent(worldId)}` +
-        `&instanceId=${encodeURIComponent(instance)}` +
-        (instanceShortName ? `&shortName=${encodeURIComponent(instanceShortName)}` : "")
-        : "";
 
     return (
         <Page>
@@ -86,16 +79,12 @@ export function InstancePage() {
                                     {worldName || world || "—"}
                                 </WorldName>
                                 <InstanceRow>
-                                    <InstanceButton
-                                        disabled={launchUrl.length === 0}
-                                        onClick={() => setShowInstance((current) => !current)}
-                                        type="button"
-                                    >
-                                        {instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
+                                    <InstanceBadge>
+                                        {instanceDisplayName || instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
+                                        {instanceRegion && <RegionFlag>{regionFlag(instanceRegion)}</RegionFlag>}
                                         {instanceRestricted && <LockIcon size={12}/>}
                                         {instanceAgeGated && <AgeGate>18+</AgeGate>}
-                                    </InstanceButton>
-                                    {instanceRegion && <Region>{instanceRegion.toUpperCase()}</Region>}
+                                    </InstanceBadge>
                                 </InstanceRow>
                             </WorldText>
                         </World>
@@ -110,21 +99,6 @@ export function InstancePage() {
                             </span>
                         </Count>
                     </Summary>
-
-                    {showInstance && launchUrl && (
-                        <InstancePanel>
-                            <PanelLabel>Instance link</PanelLabel>
-                            <LinkText>{launchUrl}</LinkText>
-                            <PanelActions>
-                                <SmallButton
-                                    onClick={() => void navigator.clipboard?.writeText(launchUrl)}
-                                    type="button"
-                                >
-                                    Copy
-                                </SmallButton>
-                            </PanelActions>
-                        </InstancePanel>
-                    )}
 
                     <ListCard>
                         <ListHeader>
@@ -175,9 +149,9 @@ function UserRow({user, now, onSelect}: {
                     {user.local && <You>you</You>}
                 </NameText>
             </Name>
-            <StatusCell>
+            <StatusCell title={user.statusDescription || undefined}>
                 {status
-                    ? <><StatusDot $color={status.color}/><span>{status.label}</span></>
+                    ? <><StatusDot $color={status.color}/><span>{user.statusDescription || status.label}</span></>
                     : <Dash>—</Dash>}
             </StatusCell>
             <PlatformCell>{platformLabel(user.platform)}</PlatformCell>
@@ -236,6 +210,7 @@ function PlayerDialog({user, now, onClose}: {
                             </SecretValue>
                         </SecretField>
                         <Field label="Status" value={status ? status.label : "—"}/>
+                        <Field label="Status text" value={user.statusDescription || "—"}/>
                         <Field label="Platform" value={platformLabel(user.platform)}/>
                         <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
                         <Field
@@ -246,7 +221,6 @@ function PlayerDialog({user, now, onClose}: {
                             label="VRChat account since"
                             value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
                         />
-                        {icon && <Field label="Icon URL" value={icon}/>}
                     </Fields>
                 </Details>
 
@@ -311,6 +285,20 @@ function durationLabel(joinedAt: string, now: number): string {
     const m = Math.floor((total % 3600) / 60);
 
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function regionFlag(region: string): string {
+    switch (region.toLowerCase()) {
+        case "jp":
+            return "🇯🇵";
+        case "us":
+        case "use":
+            return "🇺🇸";
+        case "eu":
+            return "🇪🇺";
+        default:
+            return region.toUpperCase();
+    }
 }
 
 function instanceTypeLabel(type?: string): string {
@@ -421,7 +409,7 @@ const InstanceRow = styled.div`
     min-width: 0;
 `;
 
-const InstanceButton = styled.button`
+const InstanceBadge = styled.span`
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -432,16 +420,6 @@ const InstanceButton = styled.button`
     color: var(--text-secondary);
     font-family: var(--font-mono);
     font-size: 10px;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-        border-color: var(--border-color-hover);
-        color: var(--text-primary);
-    }
-
-    &:disabled {
-        cursor: default;
-    }
 `;
 
 const AgeGate = styled.span`
@@ -452,57 +430,9 @@ const AgeGate = styled.span`
     font-size: 9px;
 `;
 
-const Region = styled.span`
-    font-family: var(--font-mono);
-    font-size: 9px;
-    color: var(--text-muted);
-`;
-
-const InstancePanel = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 12px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: var(--bg-card);
-`;
-
-const PanelLabel = styled.span`
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-`;
-
-const LinkText = styled.code`
-    overflow-wrap: anywhere;
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    user-select: text;
-`;
-
-const PanelActions = styled.div`
-    display: flex;
-    gap: 8px;
-`;
-
-const SmallButton = styled.button`
-    padding: 5px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-secondary);
-    font: inherit;
-    font-size: 10px;
-    cursor: pointer;
-
-    &:hover {
-        border-color: var(--border-color-hover);
-        color: var(--text-primary);
-    }
+const RegionFlag = styled.span`
+    font-size: 12px;
+    line-height: 1;
 `;
 
 const Count = styled.div`

@@ -86,8 +86,15 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
             // Signing in makes profiles available for everyone already in the instance.
             if (AuthService.Instance.IsLoggedIn)
+            {
+                AvatarService.Instance.ResetUnknown();
+
                 foreach (var user in _users)
+                {
                     PlayerService.Instance.Request(user.UserId);
+                    AvatarService.Instance.Request(AvatarService.FileIdOf(PlayerService.Instance.Get(user.UserId)?.AvatarUrl));
+                }
+            }
         }
 
         Publish();
@@ -441,10 +448,11 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.InstanceType,
         snapshot.InstanceShortName,
         snapshot.InstanceNumber,
+        snapshot.InstanceDisplayName,
         snapshot.InstanceRestricted,
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
-            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}")));
+            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -453,12 +461,15 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             if (_apiInstance is { } api && AuthService.Instance.IsLoggedIn && LooksLikeInstance(_apiLocation))
             {
                 // The API lists who is really there; the log still supplies join times and who is local.
-                var users = api.Users is { } apiUsers
+                // For instances the account did not create the API sends an empty roster, so fall back.
+                var apiUsers = api.Users is { Length: > 0 } list ? list : null;
+
+                var users = apiUsers is not null
                     ? apiUsers.Select(user =>
                         Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl)).ToArray()
                     : _users.Select(user => Enrich(user.UserId, user.Name)).ToArray();
 
-                var count = api.UserCount ?? api.Users?.Length ?? 0;
+                var count = api.UserCount ?? apiUsers?.Length ?? 0;
 
                 return new InstanceSnapshot(
                     _running || count > 0,
@@ -476,6 +487,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                     api.OwnerId ?? "",
                     api.ShortName ?? "",
                     api.InstanceId?.Split('~')[0] ?? "",
+                    api.DisplayName ?? "",
                     api.RoleRestricted ?? false,
                     api.AgeGate ?? false);
             }
@@ -485,7 +497,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             return new InstanceSnapshot(_running, _world, _instance,
                 _users.Select(user => Enrich(user.UserId, user.Name)).ToArray(),
                 "log", "", 0, 0, WorldIdOf(_instance), "", parsed.Type, parsed.Region, parsed.OwnerId, "",
-                parsed.Number, false, parsed.AgeGated);
+                parsed.Number, "", false, parsed.AgeGated);
         }
     }
 
@@ -568,6 +580,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var profile = PlayerService.Instance.Get(userId);
         var avatar = profile?.AvatarUrl ?? avatarUrl;
         var fileId = AvatarService.FileIdOf(avatar);
+        var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
+            ? value
+            : profile?.LastPlatform;
 
         AvatarService.Instance.Request(fileId);
 
@@ -581,8 +596,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.IconUrl,
             TrustLevel(profile?.Tags),
             profile?.Status,
+            profile?.StatusDescription,
             profile?.DateJoined,
-            profile?.Platform,
+            platform,
             AvatarService.Instance.NameFor(fileId),
             AvatarService.IsRobot(fileId));
     }

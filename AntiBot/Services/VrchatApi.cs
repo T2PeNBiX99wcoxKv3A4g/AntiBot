@@ -98,6 +98,23 @@ internal sealed class VrchatApi : IDisposable
         return (Deserialize(body, VrchatJsonContext.Default.ApiUser), null);
     }
 
+    /// <summary>
+    ///     One uploaded file. An avatar image is named <c>Avatar - &lt;name&gt; - Image - &lt;date&gt;</c>,
+    ///     which is how the avatar's name is known without a third-party database.
+    /// </summary>
+    public async Task<ApiFile?> GetFileAsync(string fileId, CancellationToken token)
+    {
+        using var response = await _http.GetAsync(new Uri(BaseUri, $"file/{Uri.EscapeDataString(fileId)}"), token);
+        if (!response.IsSuccessStatusCode)
+        {
+            Logger.Debug("File lookup {FileId} answered {Status}", fileId, response.StatusCode);
+            return null;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(token);
+        return Deserialize(body, VrchatJsonContext.Default.ApiFile);
+    }
+
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
     public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
     {

@@ -14,6 +14,8 @@ export interface InstanceUser {
     trust?: string;
     /** VRChat presence: active, join me, ask me, busy or offline. */
     status?: string;
+    /** The user's custom status text, if they set one. */
+    statusDescription?: string;
     dateJoined?: string;
     platform?: string;
     /** Resolved from the avatar's image file id; absent while unknown. */
@@ -39,6 +41,7 @@ export interface InstanceSnapshot {
     instanceOwnerId?: string;
     instanceShortName?: string;
     instanceNumber?: string;
+    instanceDisplayName?: string;
     instanceRestricted?: boolean;
     instanceAgeGated?: boolean;
 }

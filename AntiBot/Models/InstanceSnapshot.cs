@@ -11,6 +11,7 @@ public sealed record InstanceUser(
     string? IconUrl = null,
     string? Trust = null,
     string? Status = null,
+    string? StatusDescription = null,
     string? DateJoined = null,
     string? Platform = null,
     string? AvatarName = null,
@@ -36,5 +37,6 @@ public sealed record InstanceSnapshot(
     string InstanceOwnerId = "",
     string InstanceShortName = "",
     string InstanceNumber = "",
+    string InstanceDisplayName = "",
     bool InstanceRestricted = false,
     bool InstanceAgeGated = false);

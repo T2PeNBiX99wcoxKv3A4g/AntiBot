@@ -8,6 +8,7 @@ public sealed record VrchatAccount(
     string Id,
     string DisplayName,
     string? AvatarUrl,
+    string? Status,
     string? StatusDescription);
 
 /// <summary>How the session cookie is kept between launches.</summary>
@@ -26,5 +27,8 @@ public enum AuthStorage
     Tpm,
 
     /// <summary>The AES key is wrapped by a key that needs the Windows Hello prompt to be used.</summary>
-    Hello
+    Hello,
+
+    /// <summary>A key file stored beside the session; obfuscation only, not real protection.</summary>
+    Software
 }

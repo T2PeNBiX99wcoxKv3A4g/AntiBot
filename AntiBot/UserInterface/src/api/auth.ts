@@ -3,12 +3,13 @@ import {Native} from "@photino-net-utils/bridge";
 export type AuthState = "loggedOut" | "twoFactor" | "locked" | "loggedIn";
 
 /** How the session cookie is kept between launches. */
-export type AuthStorage = "none" | "password" | "system" | "tpm" | "hello";
+export type AuthStorage = "none" | "password" | "system" | "tpm" | "hello" | "software";
 
 export interface Account {
     id: string;
     displayName: string;
     avatarUrl?: string;
+    status?: string;
     statusDescription?: string;
 }
 
@@ -24,6 +25,8 @@ export interface AuthSnapshot {
     tpmStorage: boolean;
     /** Whether Windows Hello can gate the wrapping key. */
     helloStorage: boolean;
+    /** Whether the plain key-file mode is offered (Linux). */
+    softwareStorage: boolean;
     /** When the session cookie expires, if VRChat gave it an expiry. */
     expiresAt?: string;
 }
@@ -36,6 +39,7 @@ export const signedOut: AuthSnapshot = {
     systemStorageName: "",
     tpmStorage: false,
     helloStorage: false,
+    softwareStorage: false,
 };
 
 export interface DeviceCode {
