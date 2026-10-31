@@ -21,7 +21,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
     private static readonly TimeSpan RequestInterval = TimeSpan.FromSeconds(1.5);
 
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
-    private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(3);
+    private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);
 
     /// <summary>How long the queue pauses after VRChat answered 429.</summary>
     private static readonly TimeSpan RateLimitPause = TimeSpan.FromSeconds(60);

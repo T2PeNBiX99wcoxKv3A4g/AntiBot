@@ -425,6 +425,9 @@ function StorageChoice({auth, busy, error, run}: {
 
     const signedIn = auth.state === "loggedIn";
 
+    // Saving is only meaningful when the choice differs from what is stored.
+    const dirty = mode !== auth.storage || (mode === "password" && password.length > 0);
+
     const save = () => {
         if (!signedIn) {
             setLocalError("Sign in first.");
@@ -444,7 +447,10 @@ function StorageChoice({auth, busy, error, run}: {
         }
 
         setLocalError("");
-        void run(() => saveStorage(mode, mode === "password" ? password : undefined));
+        void run(() => saveStorage(mode, mode === "password" ? password : undefined)).then(() => {
+            setPassword("");
+            setConfirm("");
+        });
     };
 
     return (
@@ -584,7 +590,7 @@ function StorageChoice({auth, busy, error, run}: {
             {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
 
             <Actions>
-                <Primary disabled={busy || !signedIn} onClick={save} type="button">
+                <Primary disabled={busy || !signedIn || !dirty} onClick={save} type="button">
                     {busy ? "Saving…" : "Save"}
                 </Primary>
                 <Muted>

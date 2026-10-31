@@ -87,11 +87,27 @@ internal sealed class AuthService : Singleton<AuthService>
             return null;
         }
 
+        bool changed;
         lock (_gate)
         {
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
+
+            // The account page shows the presence too, so keep it in step with the poll.
+            var account = _account;
+            changed = account is not null &&
+                      (account.Status != user.Status || account.StatusDescription != user.StatusDescription);
+
+            if (changed)
+                _account = account! with
+                {
+                    Status = user.Status,
+                    StatusDescription = user.StatusDescription
+                };
         }
+
+        if (changed)
+            Notify();
 
         return _location;
     }
