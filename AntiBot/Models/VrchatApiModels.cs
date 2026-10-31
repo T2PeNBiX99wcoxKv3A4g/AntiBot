@@ -64,8 +64,16 @@ internal sealed record ApiNotification(
     string? SenderUserId,
     string? SenderUsername,
     [property: JsonPropertyName("created_at")]
-    string? CreatedAt,
-    bool? Seen);
+    string? CreatedAtLegacy,
+    [property: JsonPropertyName("createdAt")]
+    string? CreatedAtV2,
+    bool? Seen,
+    bool Hidden = false)
+{
+    /// <summary>The v1 API writes <c>created_at</c>, the v2 one <c>createdAt</c>.</summary>
+    [JsonIgnore]
+    public string? CreatedAt => CreatedAtV2 ?? CreatedAtLegacy;
+}
 
 internal sealed record ApiInstance(
     string? Id,

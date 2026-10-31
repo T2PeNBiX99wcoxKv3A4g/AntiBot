@@ -119,32 +119,69 @@ internal sealed class VrchatApi : IDisposable
     }
 
     /// <summary>
-    ///     The pending friend requests, as notifications. VRChat also keeps a hidden list (requests the
-    ///     user dismissed), and both matter for the history, so both are fetched.
+    ///     The pending friend requests, as notifications. VRChat has two notification APIs and its own
+    ///     <c>type</c> filter is unreliable, so the lists are fetched whole and filtered here.
     /// </summary>
     public async Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token)
     {
-        var pending = await FetchAsync("auth/user/notifications?type=friendRequest&n=100&offset=0", token);
+        // The visible v1 list is the only one that says what is still pending.
+        var pending = await FetchAsync("auth/user/notifications?hidden=false", token);
         if (pending is null)
             return null;
 
-        var hidden = await FetchAsync("auth/user/notifications?type=friendRequest&hidden=true&n=100&offset=0",
-            token);
+        var requests = new Dictionary<string, ApiNotification>();
 
-        return hidden is null ? pending : [.. pending, .. hidden];
+        foreach (var notification in pending)
+            if (FriendRequestId(notification) is { } id)
+                requests[id] = notification;
+
+        // The hidden and v2 lists only add history; a failure there must not stop the poll.
+        foreach (var path in new[] { "auth/user/notifications?hidden=true", "notifications" })
+            foreach (var notification in await FetchAllAsync(path, token))
+                if (FriendRequestId(notification) is { } id)
+                    requests.TryAdd(id, notification with { Hidden = true });
+
+        return [.. requests.Values];
+    }
+
+    private static string? FriendRequestId(ApiNotification notification) =>
+        notification.Type == "friendRequest" && notification.Id is { Length: > 0 } id ? id : null;
+
+    private async Task<ApiNotification[]> FetchAllAsync(string path, CancellationToken token)
+    {
+        var all = new List<ApiNotification>();
+
+        for (var offset = 0; offset < 500; offset += 100)
+        {
+            var separator = path.Contains('?') ? '&' : '?';
+            var page = await FetchAsync($"{path}{separator}n=100&offset={offset}", token);
+            if (page is null)
+                break;
+
+            all.AddRange(page);
+
+            if (page.Length < 100)
+                break;
+        }
+
+        return [.. all];
     }
 
     private async Task<ApiNotification[]?> FetchAsync(string path, CancellationToken token)
     {
-        using var response = await _http.GetAsync(path, token);
-        if (!response.IsSuccessStatusCode)
+        var attempt = await Try.Run(async () =>
         {
-            Logger.Debug("Friend request lookup answered {Status}", response.StatusCode);
-            return null;
-        }
+            using var response = await _http.GetAsync(path, token);
+            if (!response.IsSuccessStatusCode)
+                return null;
 
-        var body = await response.Content.ReadAsStringAsync(token);
-        return Deserialize(body, VrchatJsonContext.Default.ApiNotificationArray);
+            return Deserialize(await response.Content.ReadAsStringAsync(token),
+                VrchatJsonContext.Default.ApiNotificationArray);
+        });
+
+        return attempt
+            .OnFailure(ex => Logger.Warning(ex, "Notifications request {Path} failed", path))
+            .GetOrNull();
     }
 
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>

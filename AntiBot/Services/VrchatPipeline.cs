@@ -26,6 +26,9 @@ internal sealed class VrchatPipeline : IDisposable
     private CancellationTokenSource? _cancellation;
     private ClientWebSocket? _socket;
 
+    /// <summary>Raised when VRChat pushes a notification, so the request list can refresh at once.</summary>
+    public event Action? NotificationReceived;
+
     public void Dispose() => Stop();
 
     public void Start(string token)
@@ -156,35 +159,53 @@ internal sealed class VrchatPipeline : IDisposable
         }
     }
 
-    private static void Handle(string json)
+    private void Handle(string json)
     {
-        if (Try.Run(() => Read(json)).GetOrNull() is not { Id.Length: > 0 } presence)
+        var attempt = Try.Run(() => Read(json));
+        if (!attempt.IsSuccess)
             return;
 
-        PresenceService.Instance.Set(presence.Id, presence.Status, presence.Description, PresenceSource.Pipeline);
+        var frame = attempt.Value;
+
+        if (frame.Type == "notification")
+        {
+            NotificationReceived?.Invoke();
+            return;
+        }
+
+        if (frame.Id.Length == 0)
+            return;
+
+        PresenceService.Instance.Set(frame.Id, frame.Status, frame.Description, PresenceSource.Pipeline);
     }
 
-    /// <summary>Pulls the user out of one frame, or empty when the frame carries no status.</summary>
-    private static (string Id, string? Status, string? Description) Read(string json)
+    /// <summary>Pulls the user out of one frame, or the frame type when it carries no status.</summary>
+    private static (string Type, string Id, string? Status, string? Description) Read(string json)
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
 
-        if (!root.TryGetProperty("type", out var type) ||
-            type.GetString() is not ("friend-update" or "friend-online" or "friend-active" or "friend-location"
-                or "user-update"))
-            return ("", null, null);
+        if (!root.TryGetProperty("type", out var typeElement) || typeElement.GetString() is not { } type)
+            return ("", "", null, null);
 
         if (!root.TryGetProperty("content", out var contentElement) ||
             contentElement.ValueKind != JsonValueKind.String ||
             contentElement.GetString() is not { Length: > 0 } contentJson)
-            return ("", null, null);
+            return (type, "", null, null);
+
+        if (type == "notification")
+            return (type, "", null, null);
+
+        if (type is not ("friend-update" or "friend-online" or "friend-active" or "friend-location"
+            or "user-update"))
+            return (type, "", null, null);
 
         using var content = JsonDocument.Parse(contentJson);
         if (!content.RootElement.TryGetProperty("user", out var user))
-            return ("", null, null);
+            return (type, "", null, null);
 
         return (
+            type,
             user.TryGetProperty("id", out var idElement) ? idElement.GetString() ?? "" : "",
             user.TryGetProperty("status", out var statusElement) ? statusElement.GetString() : null,
             user.TryGetProperty("statusDescription", out var descriptionElement)

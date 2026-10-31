@@ -12,10 +12,12 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed class FriendRequestService : Singleton<FriendRequestService>
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan NotificationDebounce = TimeSpan.FromSeconds(3);
 
     private readonly Lock _gate = new();
     private readonly CancellationTokenSource _stop = new();
+    private long _lastRefreshAt;
     private string _pushed = "";
     private FriendRequestRow[] _rows;
 
@@ -23,6 +25,7 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
         AuthService.Instance.Changed += OnAuthChanged;
+        AuthService.Instance.Notification += OnNotification;
         PlayerService.Instance.Updated += Publish;
         PresenceService.Instance.Updated += Publish;
         AvatarService.Instance.Updated += Publish;
@@ -44,6 +47,15 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
             _ = RefreshAsync(_stop.Token);
         else
             Publish();
+    }
+
+    /// <summary>A notification just arrived; refresh unless the pipeline is sending a burst.</summary>
+    private void OnNotification()
+    {
+        if (Environment.TickCount64 - Interlocked.Read(ref _lastRefreshAt) < NotificationDebounce.TotalMilliseconds)
+            return;
+
+        _ = RefreshAsync(_stop.Token);
     }
 
     private async Task RunAsync(CancellationToken token)
@@ -70,6 +82,8 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
         if (!AuthService.Instance.IsLoggedIn)
             return;
 
+        Interlocked.Exchange(ref _lastRefreshAt, Environment.TickCount64);
+
         var notifications = await AuthService.Instance.GetFriendRequestsAsync(token);
 
         // A failed poll is not an empty history, so keep what is already recorded.
@@ -81,7 +95,7 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
                                    notification.SenderUserId is { Length: > 0 })
             .Select(notification => new FriendRequestRow(notification.Id ?? "", notification.SenderUserId!,
                 notification.SenderUsername ?? "", notification.CreatedAt ?? "", notification.Seen ?? false,
-                true, 0, 0))
+                !notification.Hidden, 0, 0))
             .ToArray();
 
         await Database.Instance.SaveFriendRequestsAsync(rows, token);

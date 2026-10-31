@@ -40,6 +40,9 @@ internal sealed class AuthService : Singleton<AuthService>
         // The pipeline updates the account's presence within seconds; the account page reads it from here.
         PresenceService.Instance.Updated += OnPresenceUpdated;
 
+        // VRChat pushes notifications (friend requests included) over the same socket.
+        _pipeline.NotificationReceived += () => Notification?.Invoke();
+
         // The TPM and Hello probes touch the system, so they run in the background before the account
         // page asks whether those modes are available.
         _ = Task.Run(() =>
@@ -65,6 +68,9 @@ internal sealed class AuthService : Singleton<AuthService>
 
     /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
     public event Action? Changed;
+
+    /// <summary>Raised when VRChat pushes a notification over the pipeline.</summary>
+    public event Action? Notification;
 
     /// <summary>Restores a stored session. Called once, after the singletons exist.</summary>
     public void Initialize() => _ = RestoreAsync();

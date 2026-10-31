@@ -376,13 +376,13 @@ internal sealed class Database : Singleton<Database>
                 command.CommandText = """
                                       INSERT INTO friend_requests
                                           (id, user_id, display_name, created_at, seen, active, first_seen, last_seen)
-                                      VALUES ($id, $userId, $displayName, $createdAt, $seen, 1, $now, $now)
+                                      VALUES ($id, $userId, $displayName, $createdAt, $seen, $active, $now, $now)
                                       ON CONFLICT (id) DO UPDATE SET
                                           user_id = excluded.user_id,
                                           display_name = excluded.display_name,
                                           created_at = excluded.created_at,
                                           seen = excluded.seen,
-                                          active = 1,
+                                          active = excluded.active,
                                           last_seen = excluded.last_seen
                                       """;
 
@@ -391,6 +391,7 @@ internal sealed class Database : Singleton<Database>
                 command.Parameters.AddWithValue("$displayName", request.DisplayName);
                 command.Parameters.AddWithValue("$createdAt", request.CreatedAt);
                 command.Parameters.AddWithValue("$seen", request.Seen ? 1 : 0);
+                command.Parameters.AddWithValue("$active", request.Active ? 1 : 0);
                 command.Parameters.AddWithValue("$now", now);
 
                 await command.ExecuteNonQueryAsync(token);

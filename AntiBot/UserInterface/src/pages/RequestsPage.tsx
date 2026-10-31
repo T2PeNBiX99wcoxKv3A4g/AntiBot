@@ -112,11 +112,11 @@ function dayLabel(ms: number): string {
 
     return date.toDateString() === new Date().toDateString()
         ? "Today"
-        : date.toLocaleDateString(undefined, {year: "numeric", month: "short", day: "numeric"});
+        : date.toLocaleDateString("en", {year: "numeric", month: "short", day: "numeric"});
 }
 
 function timeLabel(ms: number): string {
-    return new Date(ms).toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"});
+    return new Date(ms).toLocaleTimeString("en", {hour: "2-digit", minute: "2-digit"});
 }
 
 const Page = styled.div`
