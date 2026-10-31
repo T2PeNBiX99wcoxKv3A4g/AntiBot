@@ -47,7 +47,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     }, []);
 
     const {
-        running, world, users, worldName, userCount, capacity,
+        running, world, users, worldName, capacity,
         worldId = "", worldThumbnail,
         instanceType = "", instanceRegion = "", instanceNumber = "", instanceDisplayName = "",
         instanceRestricted = false, instanceAgeGated = false,
@@ -106,13 +106,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                         </World>
 
                         <Count>
-                            <strong>{users.length}</strong>
-                            <span>
-                                {userCount && userCount !== users.length
-                                    ? `of ${userCount} players`
-                                    : users.length === 1 ? "player" : "players"}
-                                {capacity ? ` · ${capacity} slots` : ""}
-                            </span>
+                            <strong>{capacity ? `${users.length}/${capacity}` : users.length}</strong>
                         </Count>
                     </Summary>
 

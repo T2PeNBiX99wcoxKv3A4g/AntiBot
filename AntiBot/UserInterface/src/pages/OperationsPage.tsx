@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {type OperationEntry, clearOperations, getOperations, onOperationsChanged} from "../api/operations";
+import {openUrl} from "../api/system";
+import {ExternalIcon} from "../components/Icons";
 
 /** Every automatic action AntiBot took, newest first. */
 export function OperationsPage() {
@@ -71,8 +73,17 @@ export function OperationsPage() {
                         <Item key={entry.id}>
                             <Time>{formatTime(entry.at)}</Time>
                             <Kind>{kindLabel(entry.kind)}</Kind>
-                            <Who>{entry.displayName || entry.userId}</Who>
+                            <Who>{entry.displayName || "Unknown user"}</Who>
                             <Detail title={entry.detail}>{entry.detail}</Detail>
+                            <ProfileButton
+                                disabled={entry.userId.length === 0}
+                                onClick={() => void openUrl(`https://vrchat.com/home/user/${entry.userId}`)}
+                                title="Open the VRChat profile"
+                                type="button"
+                            >
+                                <ExternalIcon size={11}/>
+                                Profile
+                            </ProfileButton>
                         </Item>
                     ))}
                 </List>
@@ -192,7 +203,7 @@ const List = styled.div`
 
 const Item = styled.div`
     display: grid;
-    grid-template-columns: 170px 150px minmax(0, 160px) minmax(0, 1fr);
+    grid-template-columns: 170px 150px minmax(0, 160px) minmax(0, 1fr) 74px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -230,6 +241,32 @@ const Detail = styled.span`
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
+`;
+
+const ProfileButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 3px 7px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 9.5px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
 `;
 
 const Empty = styled.p`
