@@ -81,8 +81,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
             ) : (
                 <>
                     <Summary>
-                        <World>
-                            <WorldThumb $src={thumbnail}/>
+                        <World $src={thumbnail}>
                             <WorldText>
                                 <Label>World</Label>
                                 <WorldName
@@ -483,37 +482,56 @@ const NoticeButton = styled.button`
 
 const Summary = styled.section`
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
-    gap: 20px;
-    padding: 16px 18px;
+    gap: 18px;
+    overflow: hidden;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
 `;
 
-const World = styled.div`
+const World = styled.div<{ $src?: string }>`
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex: 1;
     min-width: 0;
-`;
+    overflow: hidden;
 
-const WorldThumb = styled.div<{ $src?: string }>`
-    width: 44px;
-    height: 44px;
-    flex-shrink: 0;
-    border-radius: var(--radius-sm);
-    background: var(--bg-primary) center / cover no-repeat;
-    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
-    box-shadow: inset 0 0 0 1px var(--border-color);
+    /* The thumbnail is the card's backdrop: full on the left, fading out to the right. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+        background-position: center;
+        background-size: cover;
+        opacity: 0.75;
+        mask-image: linear-gradient(90deg, #000 0%, #000 30%, transparent 88%);
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 30%, transparent 88%);
+    }
+
+    /* Keeps the text readable over the picture. */
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg,
+        rgba(8, 7, 15, 0.68) 0%,
+        rgba(8, 7, 15, 0.32) 55%,
+        rgba(8, 7, 15, 0) 100%);
+    }
 `;
 
 const WorldText = styled.div`
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 3px;
     min-width: 0;
+    padding: 14px 16px;
 `;
 
 const WorldName = styled.h2<{ $link: boolean }>`
@@ -591,8 +609,10 @@ const RegionText = styled.span`
 const Count = styled.div`
     display: flex;
     align-items: baseline;
+    align-self: center;
     gap: 7px;
     flex-shrink: 0;
+    padding: 14px 18px;
     font-family: var(--font-mono);
 
     strong {
