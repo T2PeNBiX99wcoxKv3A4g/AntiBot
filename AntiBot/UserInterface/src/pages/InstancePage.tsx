@@ -121,7 +121,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             <span>Pronouns</span>
                             <span>Status</span>
                             <span>Platform</span>
-                            <span>In instance</span>
+                            <span title="Time in this instance">Time</span>
                         </ListHeader>
 
                         <Rows>
@@ -750,6 +750,10 @@ const ListHeader = styled.div`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+
+    span {
+        white-space: nowrap;
+    }
 
     span:nth-last-child(2) {
         text-align: center;
