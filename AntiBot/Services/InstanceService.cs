@@ -38,6 +38,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         AuthService.Instance.Changed += OnAuthChanged;
         PlayerService.Instance.Updated += Publish;
         AvatarService.Instance.Updated += Publish;
+        PresenceService.Instance.Updated += Publish;
 
         _ = RestoreAsync();
         _ = RunApiLoopAsync(_stop.Token);
@@ -189,6 +190,11 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             _apiInstance = instance;
             _apiLocation = target;
         }
+
+        // The roster is a live source of everyone's presence, so it feeds the same store as the pipeline.
+        if (instance.Users is { Length: > 0 } roster)
+            PresenceService.Instance.Set(roster.Select(user =>
+                (user.Id ?? "", user.Status, user.StatusDescription)));
 
         if (changed)
             Publish();
@@ -578,6 +584,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     {
         var known = _users.Find(user => user.UserId == userId);
         var profile = PlayerService.Instance.Get(userId);
+        var presence = PresenceService.Instance.Get(userId);
         var avatar = profile?.AvatarUrl ?? avatarUrl;
         var fileId = AvatarService.FileIdOf(avatar);
         var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
@@ -595,8 +602,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.AvatarImageUrl,
             profile?.IconUrl,
             TrustLevel(profile?.Tags),
-            profile?.Status,
-            profile?.StatusDescription,
+            presence?.Status ?? profile?.Status,
+            presence?.StatusDescription ?? profile?.StatusDescription,
             profile?.DateJoined,
             platform,
             AvatarService.Instance.NameFor(fileId),

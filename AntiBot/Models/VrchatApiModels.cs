@@ -24,7 +24,9 @@ internal sealed record ApiWorld(string? Id, string? Name, string? ThumbnailImage
 internal sealed record ApiInstanceUser(
     string? Id,
     string? DisplayName,
-    string? CurrentAvatarThumbnailImageUrl);
+    string? CurrentAvatarThumbnailImageUrl,
+    string? Status,
+    string? StatusDescription);
 
 internal sealed record ApiUser(
     string? Id,

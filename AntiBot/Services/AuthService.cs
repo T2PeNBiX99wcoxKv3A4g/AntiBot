@@ -24,6 +24,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
     private readonly Lock _gate = new();
     private readonly VrchatApi _api = new();
+    private readonly VrchatPipeline _pipeline = new();
 
     private VrchatAccount? _account;
     private string _location = "";
@@ -35,6 +36,9 @@ internal sealed class AuthService : Singleton<AuthService>
     public AuthService()
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
+
+        // The pipeline updates the account's presence within seconds; the account page reads it from here.
+        PresenceService.Instance.Updated += OnPresenceUpdated;
 
         // The TPM and Hello probes touch the system, so they run in the background before the account
         // page asks whether those modes are available.
@@ -87,27 +91,14 @@ internal sealed class AuthService : Singleton<AuthService>
             return null;
         }
 
-        bool changed;
         lock (_gate)
         {
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
-
-            // The account page shows the presence too, so keep it in step with the poll.
-            var account = _account;
-            changed = account is not null &&
-                      (account.Status != user.Status || account.StatusDescription != user.StatusDescription);
-
-            if (changed)
-                _account = account! with
-                {
-                    Status = user.Status,
-                    StatusDescription = user.StatusDescription
-                };
         }
 
-        if (changed)
-            Notify();
+        // The account page shows the presence too, so feed the same store the pipeline and the list use.
+        PresenceService.Instance.Set(user.Id ?? "", user.Status, user.StatusDescription);
 
         return _location;
     }
@@ -332,6 +323,15 @@ internal sealed class AuthService : Singleton<AuthService>
         }
 
         Log.Information("Signed in as {Name}", user.DisplayName ?? id);
+
+        // The pipeline is what makes the account page and the list update within seconds.
+        PresenceService.Instance.Set(id, user.Status, user.StatusDescription);
+
+        if (_api.AuthToken is { Length: > 0 } token)
+            _pipeline.Start(token);
+        else
+            Log.Warning("No auth cookie, so the pipeline cannot be started");
+
         Notify();
         return true;
     }
@@ -422,6 +422,8 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         AuthStore.Delete();
         _api.ResetCookies();
+        _pipeline.Stop();
+        PresenceService.Instance.Clear();
 
         lock (_gate)
         {
@@ -439,6 +441,9 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>The session stopped working. The stored cookie stays, so an unlock can still try it.</summary>
     private void Expire()
     {
+        _pipeline.Stop();
+        PresenceService.Instance.Clear();
+
         lock (_gate)
         {
             _account = null;
@@ -450,6 +455,31 @@ internal sealed class AuthService : Singleton<AuthService>
 
         Log.Warning("The VRChat session expired");
         Notify();
+    }
+
+    /// <summary>Takes the account's own presence from the shared store, so the page follows the pipeline.</summary>
+    private void OnPresenceUpdated()
+    {
+        bool changed;
+
+        lock (_gate)
+        {
+            var account = _account;
+            var presence = account is null ? null : PresenceService.Instance.Get(account.Id);
+
+            changed = account is not null && presence is not null &&
+                      (account.Status != presence.Status || account.StatusDescription != presence.StatusDescription);
+
+            if (changed)
+                _account = account! with
+                {
+                    Status = presence!.Status,
+                    StatusDescription = presence.StatusDescription
+                };
+        }
+
+        if (changed)
+            Notify();
     }
 
     private void Notify()

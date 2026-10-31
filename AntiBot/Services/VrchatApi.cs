@@ -30,6 +30,9 @@ internal sealed class VrchatApi : IDisposable
 
     public void Dispose() => _http.Dispose();
 
+    /// <summary>The value of the <c>auth</c> cookie, which the pipeline websocket accepts.</summary>
+    public string? AuthToken => _cookies.GetCookies(BaseUri)["auth"]?.Value;
+
     /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
     public async Task<(ApiAuthUser? User, string? Error)> LoginAsync(string username, string password,
         CancellationToken token)
