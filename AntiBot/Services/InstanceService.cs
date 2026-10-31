@@ -177,24 +177,41 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             if (error is not null)
                 Log.Debug("Instance lookup failed: {Error}", error);
 
-            if (ClearApi())
+            // A failed poll is not the same as leaving: keep the last snapshot and retry on the next
+            // tick, so a rate limit does not blank the world card and the player list.
+            bool moved;
+            lock (_gate)
+                moved = _apiLocation.Length > 0 && _apiLocation != target;
+
+            if (moved && ClearApi())
                 Publish();
 
             return;
         }
 
         bool changed;
+        string[] refresh;
         lock (_gate)
         {
             changed = _apiLocation != target || !SameInstance(_apiInstance, instance);
             _apiInstance = instance;
             _apiLocation = target;
+
+            // Whoever is in the instance: the roster when VRChat sends one, otherwise the log.
+            refresh = instance.Users is { Length: > 0 } list
+                ? list.Select(user => user.Id ?? "").ToArray()
+                : _users.Select(user => user.UserId).ToArray();
         }
 
-        // The roster is a live source of everyone's presence, so it feeds the same store as the pipeline.
+        // The roster has no custom status text, so the profiles keep it (and the avatar and name) fresh.
+        foreach (var userId in refresh)
+            PlayerService.Instance.Request(userId);
+
+        // The roster carries everyone's status but not their custom status text: VRChat reports that
+        // field empty even when the user has one, so the text is left to the pipeline and the profile.
         if (instance.Users is { Length: > 0 } roster)
-            PresenceService.Instance.Set(roster.Select(user =>
-                (user.Id ?? "", user.Status, user.StatusDescription)));
+            PresenceService.Instance.Set(
+                roster.Select(user => (user.Id ?? "", user.Status, (string?)null)), PresenceSource.Instance);
 
         if (changed)
             Publish();
@@ -216,7 +233,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     }
 
     private static string UserSignature(ApiInstanceUser[]? users) =>
-        users is null ? "" : string.Join(',', users.Select(user => $"{user.Id}:{user.DisplayName}"));
+        users is null
+            ? ""
+            : string.Join(',', users.Select(user =>
+                $"{user.Id}:{user.DisplayName}:{user.Status}:{user.CurrentAvatarThumbnailImageUrl}"));
 
     private bool ClearApi()
     {
@@ -585,7 +605,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var known = _users.Find(user => user.UserId == userId);
         var profile = PlayerService.Instance.Get(userId);
         var presence = PresenceService.Instance.Get(userId);
-        var avatar = profile?.AvatarUrl ?? avatarUrl;
+
+        // The roster is newer than the cached profile, so it wins where it has a value.
+        var avatar = avatarUrl ?? profile?.AvatarUrl;
         var fileId = AvatarService.FileIdOf(avatar);
         var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
             ? value
@@ -595,7 +617,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         return new InstanceUser(
             userId,
-            profile?.DisplayName ?? name,
+            name.Length > 0 ? name : profile?.DisplayName ?? userId,
             known?.Local ?? false,
             known?.JoinedAt ?? "",
             avatar,

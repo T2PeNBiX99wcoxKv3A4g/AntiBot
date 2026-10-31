@@ -53,6 +53,8 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
         instanceRestricted = false, instanceAgeGated = false,
     } = snapshot;
 
+    const thumbnail = useWorldThumbnail(worldId, worldThumbnail);
+
     return (
         <Page>
             {!signedIn && (
@@ -80,7 +82,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                 <>
                     <Summary>
                         <World>
-                            <WorldThumb $src={worldThumbnail}/>
+                            <WorldThumb $src={thumbnail}/>
                             <WorldText>
                                 <Label>World</Label>
                                 <WorldName
@@ -268,6 +270,19 @@ function StatusField({status, text}: {
             </StatusValue>
         </FieldRow>
     );
+}
+
+/** Remembers the last picture for a world, so a poll that briefly lost it does not blank the card. */
+function useWorldThumbnail(worldId: string, thumbnail?: string): string {
+    const cache = useRef({worldId: "", url: ""});
+
+    if (thumbnail) {
+        cache.current = {worldId, url: thumbnail};
+    } else if (cache.current.worldId !== worldId) {
+        cache.current = {worldId, url: ""};
+    }
+
+    return cache.current.url;
 }
 
 function statusInfo(status?: string): { label: string; color: string } | null {

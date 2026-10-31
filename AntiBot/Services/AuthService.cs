@@ -98,7 +98,7 @@ internal sealed class AuthService : Singleton<AuthService>
         }
 
         // The account page shows the presence too, so feed the same store the pipeline and the list use.
-        PresenceService.Instance.Set(user.Id ?? "", user.Status, user.StatusDescription);
+        PresenceService.Instance.Set(user.Id ?? "", user.Status, user.StatusDescription, PresenceSource.Pipeline);
 
         return _location;
     }
@@ -163,7 +163,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private async Task<NativeResponse?> VerifyAsync(NativeContext context)
     {
         var request = context.Payload<AuthVerifyRequest>();
-        if (request?.Code?.Trim() is not { Length: > 0 } code)
+        if (request?.Code.Trim() is not { Length: > 0 } code)
             return context.Fail("auth.verify.result", "Enter the code.");
 
         var verified = request.Method switch
@@ -325,7 +325,7 @@ internal sealed class AuthService : Singleton<AuthService>
         Log.Information("Signed in as {Name}", user.DisplayName ?? id);
 
         // The pipeline is what makes the account page and the list update within seconds.
-        PresenceService.Instance.Set(id, user.Status, user.StatusDescription);
+        PresenceService.Instance.Set(id, user.Status, user.StatusDescription, PresenceSource.Pipeline);
 
         if (_api.AuthToken is { Length: > 0 } token)
             _pipeline.Start(token);

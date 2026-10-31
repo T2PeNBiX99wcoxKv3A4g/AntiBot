@@ -160,7 +160,7 @@ internal sealed class VrchatPipeline : IDisposable
         if (Try.Run(() => Read(json)).GetOrNull() is not { Id.Length: > 0 } presence)
             return;
 
-        PresenceService.Instance.Set(presence.Id, presence.Status, presence.Description);
+        PresenceService.Instance.Set(presence.Id, presence.Status, presence.Description, PresenceSource.Pipeline);
     }
 
     /// <summary>Pulls the user out of one frame, or empty when the frame carries no status.</summary>
