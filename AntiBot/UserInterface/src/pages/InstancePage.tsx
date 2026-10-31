@@ -499,27 +499,29 @@ const World = styled.div<{ $src?: string }>`
     min-width: 0;
     overflow: hidden;
 
-    /* The thumbnail is the card's backdrop: full on the left, fading out to the right. */
+    /* The thumbnail is the card's backdrop: full on the left, fading out before the middle. */
     &::before {
         content: "";
         position: absolute;
-        inset: 0;
+        inset: 0 auto 0 0;
+        width: 45%;
         background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
         background-position: center;
         background-size: cover;
         opacity: 0.75;
-        mask-image: linear-gradient(90deg, #000 0%, #000 30%, transparent 88%);
-        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 30%, transparent 88%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 100%);
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 100%);
     }
 
     /* Keeps the text readable over the picture. */
     &::after {
         content: "";
         position: absolute;
-        inset: 0;
+        inset: 0 auto 0 0;
+        width: 60%;
         background: linear-gradient(90deg,
         rgba(8, 7, 15, 0.68) 0%,
-        rgba(8, 7, 15, 0.32) 55%,
+        rgba(8, 7, 15, 0.3) 55%,
         rgba(8, 7, 15, 0) 100%);
     }
 `;
@@ -609,10 +611,12 @@ const RegionText = styled.span`
 const Count = styled.div`
     display: flex;
     align-items: baseline;
+    justify-content: flex-end;
     align-self: center;
     gap: 7px;
     flex-shrink: 0;
     padding: 14px 18px;
+    white-space: nowrap;
     font-family: var(--font-mono);
 
     strong {
