@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {BellIcon, LogIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
+import {BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
@@ -13,6 +13,7 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
     {id: "logs", label: "Log viewer", icon: LogIcon},
     {id: "instance", label: "Instance", icon: UsersIcon},
     {id: "requests", label: "Friend requests", icon: BellIcon},
+    {id: "operations", label: "Operations", icon: ShieldIcon},
     {id: "account", label: "Account", icon: UserIcon},
     {id: "settings", label: "Settings", icon: SlidersIcon},
 ];

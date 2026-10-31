@@ -28,6 +28,12 @@ export interface InstanceUser {
     isRobot?: boolean;
     /** True when this player is on the signed-in account's friend list. */
     isFriend?: boolean;
+    /** 0-100 bot threat score. */
+    threat?: number;
+    /** Why the score is what it is. */
+    threatReasons?: string[];
+    /** True when the user is on the whitelist and never acted on. */
+    whitelisted?: boolean;
 }
 
 export interface InstanceSnapshot {

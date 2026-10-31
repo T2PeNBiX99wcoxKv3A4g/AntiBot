@@ -15,7 +15,14 @@ internal sealed record AppInfoPayload(string Version, string Platform, bool Roun
 internal sealed record SettingsPayload(
     string LogDirectory,
     string DefaultLogDirectory,
-    string[] AvatarApiProviders);
+    string[] AvatarApiProviders,
+    bool AutoBlock,
+    bool AutoDisableAvatarInteraction,
+    bool AutoHideChatBox,
+    bool AutoReturnHome,
+    bool AutoRejectFriendRequests,
+    int ThreatThreshold,
+    string[] Whitelist);
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);
@@ -62,3 +69,6 @@ internal sealed record DevicePollPayload(bool Approved, string? Reason, AuthPayl
 
 /// <summary>Payload for <c>system.openUrl</c>: a VRChat link to hand to the default browser.</summary>
 internal sealed record OpenUrlRequest(string Url);
+
+/// <summary>Payload for <c>friendRequests.undo</c>: the request to take back.</summary>
+internal sealed record FriendRequestActionRequest(string Id);

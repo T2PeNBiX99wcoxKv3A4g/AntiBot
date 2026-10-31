@@ -52,6 +52,20 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
                 Publish();
                 return context.Reply("friendRequests.clear.result", new OkPayload());
 
+            case "friendRequests.undo":
+                var requestId = context.Payload<FriendRequestActionRequest>()?.Id;
+                var request = requestId is { Length: > 0 }
+                    ? Build().FirstOrDefault(item => item.Id == requestId)
+                    : null;
+
+                if (request is not null)
+                {
+                    await ThreatActionService.Instance.UndoAsync(request);
+                    await RefreshAsync(_stop.Token);
+                }
+
+                return context.Reply("friendRequests.undo.result", new OkPayload());
+
             default:
                 return null;
         }
@@ -111,7 +125,7 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
                                    notification.SenderUserId is { Length: > 0 })
             .Select(notification => new FriendRequestRow(notification.Id ?? "", notification.SenderUserId!,
                 notification.SenderUsername ?? "", notification.CreatedAt ?? "", notification.Seen ?? false,
-                !notification.Hidden, 0, 0))
+                !notification.Hidden, false, 0, 0))
             .ToArray();
 
         await Database.Instance.SaveFriendRequestsAsync(rows, token);
@@ -136,7 +150,7 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
 
         return
         [
-            .. rows.Select(row => new FriendRequest(row.Id, row.UserId, row.CreatedAt, row.Active,
+            .. rows.Select(row => new FriendRequest(row.Id, row.UserId, row.CreatedAt, row.Active, row.Rejected,
                 row.FirstSeen, InstanceService.Instance.Describe(row.UserId, row.DisplayName)))
         ];
     }
@@ -146,9 +160,9 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
         var requests = Build();
 
         var signature = string.Join('|', requests.Select(request =>
-            $"{request.Id}:{request.Active}:{request.User.Name}:{request.User.Status}:" +
+            $"{request.Id}:{request.Active}:{request.Rejected}:{request.User.Name}:{request.User.Status}:" +
             $"{request.User.StatusDescription}:{request.User.Pronouns}:{request.User.AvatarUrl}:" +
-            $"{request.User.AvatarName}:{request.User.Bio}"));
+            $"{request.User.AvatarName}:{request.User.Bio}:{request.User.Threat}"));
 
         lock (_gate)
         {
@@ -159,5 +173,9 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
         }
 
         WindowManager.Instance.NotifyMainWindow("friendRequests.changed", requests);
+
+        // A request from a high-threat user is hidden and moderated, once.
+        foreach (var request in requests)
+            _ = ThreatActionService.Instance.RejectIfNeededAsync(request);
     }
 }

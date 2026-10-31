@@ -61,8 +61,12 @@ internal sealed class SettingsService : Singleton<SettingsService>
     {
         "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result",
             new SettingsPayload(Current.LogDirectory, AppSettings.DefaultLogDirectory,
-                Current.AvatarApiProviders))),
+                Current.AvatarApiProviders, Current.AutoBlock, Current.AutoDisableAvatarInteraction,
+                Current.AutoHideChatBox, Current.AutoReturnHome, Current.AutoRejectFriendRequests,
+                Current.ThreatThreshold, Current.Whitelist))),
         "settings.save" => SaveAsync(context),
+        "whitelist.people" => Task.FromResult<NativeResponse?>(context.Reply("whitelist.people.result",
+            Current.Whitelist.Select(id => InstanceService.Instance.Describe(id, "")).ToArray())),
         _ => Task.FromResult<NativeResponse?>(null)
     };
 
@@ -81,7 +85,22 @@ internal sealed class SettingsService : Singleton<SettingsService>
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        Current = new(directory, providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders);
+        Current = new()
+        {
+            LogDirectory = directory,
+            AvatarApiProviders = providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders,
+            AutoBlock = settings.AutoBlock,
+            AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
+            AutoHideChatBox = settings.AutoHideChatBox,
+            AutoReturnHome = settings.AutoReturnHome,
+            AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
+            ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
+            Whitelist = (settings.Whitelist ?? [])
+                .Select(id => id.Trim())
+                .Where(id => id.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray()
+        };
         Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory,
             Current.AvatarApiProviders.Length);
 
@@ -92,6 +111,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
         // A new provider list is a chance to resolve names that failed before.
         AvatarService.Instance.ResetUnknown();
+
+        foreach (var id in Current.Whitelist)
+            PlayerService.Instance.Request(id);
 
         return context.Reply("settings.save.result", new OkPayload());
     }

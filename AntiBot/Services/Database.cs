@@ -83,8 +83,18 @@ internal sealed class Database : Singleton<Database>
                                       created_at   TEXT NOT NULL DEFAULT '',
                                       seen         INTEGER NOT NULL DEFAULT 0,
                                       active       INTEGER NOT NULL DEFAULT 1,
+                                      rejected     INTEGER NOT NULL DEFAULT 0,
                                       first_seen   INTEGER NOT NULL,
                                       last_seen    INTEGER NOT NULL
+                                  );
+
+                                  CREATE TABLE IF NOT EXISTS operations (
+                                      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                                      at           INTEGER NOT NULL,
+                                      kind         TEXT NOT NULL,
+                                      user_id      TEXT NOT NULL DEFAULT '',
+                                      display_name TEXT NOT NULL DEFAULT '',
+                                      detail       TEXT NOT NULL DEFAULT ''
                                   );
 
                                   CREATE INDEX IF NOT EXISTS ix_game_events_kind ON game_events (kind, id);
@@ -138,6 +148,12 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE players ADD COLUMN last_platform TEXT";
+                migration.ExecuteNonQuery();
+            });
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE friend_requests ADD COLUMN rejected INTEGER NOT NULL DEFAULT 0";
                 migration.ExecuteNonQuery();
             });
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
@@ -329,6 +345,22 @@ internal sealed class Database : Singleton<Database>
         attempt.OnFailure(ex => Log.Warning(ex, "Could not store the profile of {UserId}", player.Id));
     }
 
+    /// <summary>Marks a request as auto-rejected (or undoes that mark).</summary>
+    public async Task SetFriendRequestRejectedAsync(string id, bool rejected, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE friend_requests SET rejected = $rejected WHERE id = $id";
+            command.Parameters.AddWithValue("$rejected", rejected ? 1 : 0);
+            command.Parameters.AddWithValue("$id", id);
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not update the friend request state"));
+    }
+
     /// <summary>Drops the whole request history. Pending requests come back on the next poll.</summary>
     public async Task ClearFriendRequestsAsync(CancellationToken token = default)
     {
@@ -343,6 +375,71 @@ internal sealed class Database : Singleton<Database>
         attempt.OnFailure(ex => Log.Warning(ex, "Could not clear the friend requests"));
     }
 
+    /// <summary>Records one automatic action.</summary>
+    public async Task AddOperationAsync(string kind, string userId, string displayName, string detail,
+        CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  INSERT INTO operations (at, kind, user_id, display_name, detail)
+                                  VALUES ($at, $kind, $userId, $displayName, $detail)
+                                  """;
+            command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            command.Parameters.AddWithValue("$kind", kind);
+            command.Parameters.AddWithValue("$userId", userId);
+            command.Parameters.AddWithValue("$displayName", displayName);
+            command.Parameters.AddWithValue("$detail", detail);
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not record the operation"));
+    }
+
+    /// <summary>The recorded actions, newest first.</summary>
+    public IReadOnlyList<OperationEntry> LoadOperations(int limit = 300)
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  SELECT id, at, kind, user_id, display_name, detail
+                                  FROM operations
+                                  ORDER BY id DESC
+                                  LIMIT $limit
+                                  """;
+            command.Parameters.AddWithValue("$limit", limit);
+
+            var rows = new List<OperationEntry>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                rows.Add(new(reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetString(4), reader.GetString(5)));
+
+            return rows;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the operations"))
+            .GetOrElse(_ => new List<OperationEntry>());
+    }
+
+    public async Task ClearOperationsAsync(CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM operations";
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not clear the operations"));
+    }
+
     /// <summary>Every friend request ever recorded, newest first.</summary>
     public IReadOnlyList<FriendRequestRow> LoadFriendRequests()
     {
@@ -351,7 +448,8 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
-                                  SELECT id, user_id, display_name, created_at, seen, active, first_seen, last_seen
+                                  SELECT id, user_id, display_name, created_at, seen, active, rejected,
+                                         first_seen, last_seen
                                   FROM friend_requests
                                   ORDER BY first_seen DESC
                                   """;
@@ -360,7 +458,8 @@ internal sealed class Database : Singleton<Database>
             using var reader = command.ExecuteReader();
             while (reader.Read())
                 rows.Add(new(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
-                    reader.GetInt64(4) != 0, reader.GetInt64(5) != 0, reader.GetInt64(6), reader.GetInt64(7)));
+                    reader.GetInt64(4) != 0, reader.GetInt64(5) != 0, reader.GetInt64(6) != 0,
+                    reader.GetInt64(7), reader.GetInt64(8)));
 
             return rows;
         });
@@ -389,8 +488,10 @@ internal sealed class Database : Singleton<Database>
                 command.Transaction = transaction;
                 command.CommandText = """
                                       INSERT INTO friend_requests
-                                          (id, user_id, display_name, created_at, seen, active, first_seen, last_seen)
-                                      VALUES ($id, $userId, $displayName, $createdAt, $seen, $active, $now, $now)
+                                          (id, user_id, display_name, created_at, seen, active, rejected,
+                                           first_seen, last_seen)
+                                      VALUES ($id, $userId, $displayName, $createdAt, $seen, $active, 0,
+                                              $now, $now)
                                       ON CONFLICT (id) DO UPDATE SET
                                           user_id = excluded.user_id,
                                           display_name = excluded.display_name,

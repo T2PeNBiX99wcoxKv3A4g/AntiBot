@@ -17,6 +17,8 @@ internal sealed record ApiAuthUser(
     string? Status,
     string? StatusDescription,
     string? Location,
+    [property: JsonPropertyName("home_location")]
+    string? HomeLocation,
     string[]? RequiresTwoFactorAuth);
 
 internal sealed record ApiWorld(string? Id, string? Name, string? ThumbnailImageUrl, string? ImageUrl);
@@ -111,6 +113,11 @@ internal sealed record ApiDeviceStatus(ApiAuthUser? User);
 
 internal sealed record ApiDeviceStatusRequest(string DeviceCode);
 
+/// <summary>One player moderation, e.g. <c>block</c>, <c>interactOff</c> or <c>muteChat</c>.</summary>
+internal sealed record ApiModerationRequest(
+    [property: JsonPropertyName("moderated")] string Moderated,
+    [property: JsonPropertyName("type")] string Type);
+
 /// <summary>One avatar from an external avatar database, looked up by its image file id.</summary>
 internal sealed record AvatarLookup(string? Id, string? Name, string? AvatarName, string? ImageUrl)
 {
@@ -143,6 +150,7 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiDeviceCode))]
 [JsonSerializable(typeof(ApiDeviceStatus))]
 [JsonSerializable(typeof(ApiDeviceStatusRequest))]
+[JsonSerializable(typeof(ApiModerationRequest))]
 [JsonSerializable(typeof(AvatarLookup))]
 [JsonSerializable(typeof(CookieRecord[]))]
 internal sealed partial class VrchatJsonContext : JsonSerializerContext;

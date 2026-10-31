@@ -9,6 +9,7 @@ import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
+import {OperationsPage} from "./pages/OperationsPage";
 import {RequestsPage} from "./pages/RequestsPage";
 import {SettingsPage} from "./pages/SettingsPage";
 import type {Page} from "./pages";
@@ -19,6 +20,10 @@ const pageMeta: Record<Page, { title: string; subtitle: string }> = {
     requests: {
         title: "Friend requests",
         subtitle: "Every incoming request AntiBot has recorded, with the sender's profile.",
+    },
+    operations: {
+        title: "Operations",
+        subtitle: "The automatic actions AntiBot has taken, newest first.",
     },
     account: {title: "Account", subtitle: "Sign in to VRChat so the instance comes from the API, not the log."},
     settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
@@ -44,7 +49,6 @@ export default function App() {
     }, []);
 
     const {title, subtitle} = pageMeta[page];
-    const running = log.status.running;
 
     return (
         <Root $rounded={corners}>
@@ -65,10 +69,6 @@ export default function App() {
                                     Not signed in · only the log is available
                                 </SignInPill>
                             )}
-                            <StatusPill $active={running}>
-                                <Dot $active={running}/>
-                                {running ? "VRChat running" : "VRChat not running"}
-                            </StatusPill>
                         </HeaderMeta>
                     </Header>
 
@@ -79,9 +79,11 @@ export default function App() {
                                 ? <InstancePage signedIn={signedIn} onSignIn={() => setPage("account")}/>
                                 : page === "requests"
                                     ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
-                                    : page === "account"
-                                        ? <AccountPage/>
-                                        : <SettingsPage info={info}/>}
+                                    : page === "operations"
+                                        ? <OperationsPage/>
+                                        : page === "account"
+                                            ? <AccountPage/>
+                                            : <SettingsPage info={info}/>}
                     </Content>
 
                     <Footer>
@@ -156,20 +158,6 @@ const HeaderMeta = styled.div`
     padding-top: 4px;
 `;
 
-const StatusPill = styled.span<{ $active: boolean }>`
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 10px;
-    border: 1px solid ${({$active}) => $active ? "var(--border-color-hover)" : "var(--border-color)"};
-    border-radius: 999px;
-    background: var(--bg-card);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-secondary)"};
-    white-space: nowrap;
-`;
-
 const SignInPill = styled.button`
     display: flex;
     align-items: center;
@@ -187,14 +175,6 @@ const SignInPill = styled.button`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
-`;
-
-const Dot = styled.span<{ $active: boolean }>`
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
-    box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};
 `;
 
 const Content = styled.div<{ $flush: boolean }>`

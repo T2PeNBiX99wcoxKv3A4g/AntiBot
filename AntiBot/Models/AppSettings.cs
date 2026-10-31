@@ -1,7 +1,7 @@
 namespace AntiBot.Models;
 
 /// <summary>Persisted settings. The log folder defaults to VRChat's own folder.</summary>
-public sealed record AppSettings(string LogDirectory, string[] AvatarApiProviders)
+public sealed record AppSettings
 {
     /// <summary>The avatar databases VRCX uses, in the same request format.</summary>
     public static readonly string[] DefaultAvatarApiProviders =
@@ -10,7 +10,32 @@ public sealed record AppSettings(string LogDirectory, string[] AvatarApiProvider
         "https://vrcx.vrcdb.com/avatars/Avatar/VRCX"
     ];
 
-    public static AppSettings Default { get; } = new(ResolveDefaultLogDirectory(), DefaultAvatarApiProviders);
+    public string LogDirectory { get; init; } = ResolveDefaultLogDirectory();
+
+    public string[] AvatarApiProviders { get; init; } = DefaultAvatarApiProviders;
+
+    /// <summary>Block a user whose threat reaches <see cref="ThreatThreshold" />.</summary>
+    public bool AutoBlock { get; init; } = true;
+
+    /// <summary>Turn avatar interactions off for a high-threat user.</summary>
+    public bool AutoDisableAvatarInteraction { get; init; } = true;
+
+    /// <summary>Hide a high-threat user's chat box.</summary>
+    public bool AutoHideChatBox { get; init; } = true;
+
+    /// <summary>Send the account home when a high-threat user appears.</summary>
+    public bool AutoReturnHome { get; init; } = true;
+
+    /// <summary>Hide friend requests from high-threat users.</summary>
+    public bool AutoRejectFriendRequests { get; init; } = true;
+
+    /// <summary>0-100; at or above this the automatic actions run.</summary>
+    public int ThreatThreshold { get; init; } = 50;
+
+    /// <summary>Users that are never acted on, whatever their score.</summary>
+    public string[] Whitelist { get; init; } = [];
+
+    public static AppSettings Default { get; } = new();
 
     public static string DefaultLogDirectory => Default.LogDirectory;
 

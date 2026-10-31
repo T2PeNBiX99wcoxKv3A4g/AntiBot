@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged} from "../api/friendRequests";
+import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged, undoFriendRequest} from "../api/friendRequests";
 import type {InstanceUser} from "../api/instance";
 import {PlayerDialog, UserRow} from "./InstancePage";
 
@@ -45,6 +45,10 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
         void clearFriendRequests().then(() => setRequests([]), () => {
             // The host failed to answer; the next snapshot will show the real state.
         });
+    };
+
+    const undo = (request: FriendRequest) => {
+        void undoFriendRequest(request.id);
     };
 
     return (
@@ -99,12 +103,23 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             <Day>{group.day}</Day>
                             {group.items.map((request) => (
                                 <UserRow
+                                    badge={request.rejected ? <Rejected>rejected</Rejected> : undefined}
                                     dim={!request.active}
                                     key={request.id}
                                     now={request.firstSeen}
                                     onSelect={setSelected}
                                     timeLabel={timeLabel(request.firstSeen)}
-                                    tone={request.active ? "risk" : undefined}
+                                    trailing={request.rejected ? (
+                                        <UndoButton
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                undo(request);
+                                            }}
+                                            type="button"
+                                        >
+                                            Undo
+                                        </UndoButton>
+                                    ) : undefined}
                                     user={request.user}
                                 />
                             ))}
@@ -305,4 +320,30 @@ const Empty = styled.p`
     text-align: center;
     font-size: 11.5px;
     color: var(--text-muted);
+`;
+
+const Rejected = styled.span`
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(251, 113, 133, 0.14);
+    color: #fb7185;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    white-space: nowrap;
+`;
+
+const UndoButton = styled.button`
+    padding: 3px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 9.5px;
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
 `;

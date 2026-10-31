@@ -18,7 +18,10 @@ public sealed record InstanceUser(
     string? Platform = null,
     string? AvatarName = null,
     bool IsRobot = false,
-    bool IsFriend = false);
+    bool IsFriend = false,
+    int Threat = 0,
+    string[]? ThreatReasons = null,
+    bool Whitelisted = false);
 
 /// <summary>
 ///     Who is in the instance, and which instance that is. <see cref="Source" /> says whether the list

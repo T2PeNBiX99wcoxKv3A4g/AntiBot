@@ -82,6 +82,8 @@ internal static class Program
 
             _ = InstanceService.Instance;
             _ = FriendRequestService.Instance;
+            _ = OperationService.Instance;
+            _ = ThreatActionService.Instance;
 
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;

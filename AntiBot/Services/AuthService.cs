@@ -68,7 +68,6 @@ internal sealed class AuthService : Singleton<AuthService>
 
     /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
     public event Action? Changed;
-
     /// <summary>Raised when VRChat pushes a notification over the pipeline.</summary>
     public event Action? Notification;
 
@@ -125,6 +124,22 @@ internal sealed class AuthService : Singleton<AuthService>
 
     public Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token) =>
         IsLoggedIn ? _api.GetFriendRequestsAsync(token) : Task.FromResult<ApiNotification[]?>(null);
+
+    public Task<bool> ModerateUserAsync(string userId, string type, CancellationToken token) =>
+        IsLoggedIn ? _api.ModerateUserAsync(userId, type, token) : Task.FromResult(false);
+
+    public Task<bool> UnmoderateUserAsync(string userId, string type, CancellationToken token) =>
+        IsLoggedIn ? _api.UnmoderateUserAsync(userId, type, token) : Task.FromResult(false);
+
+    public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
+        IsLoggedIn ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
+
+    /// <summary>Invites the account to its own home world, which is how it goes home from here.</summary>
+    public async Task<bool> ReturnHomeAsync(CancellationToken token)
+    {
+        var (user, _) = await _api.GetCurrentUserAsync(token);
+        return user?.HomeLocation is { Length: > 0 } home && await _api.InviteMyselfAsync(home, token);
+    }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {

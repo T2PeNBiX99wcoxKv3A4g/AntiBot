@@ -141,10 +141,10 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     );
 }
 
-/** How a row is tinted: the account itself, a friend, or a risk (a pending request today). */
-export type RowTone = "none" | "self" | "friend" | "risk";
+/** How a row is tinted: the account itself, a friend, the whitelist, or a threat score. */
+export type RowTone = "none" | "self" | "friend" | "white" | "threat";
 
-export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = false, tone}: {
+export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = false, tone, badge, trailing}: {
     user: InstanceUser;
     now: number;
     onSelect: (user: InstanceUser) => void;
@@ -152,13 +152,22 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
     timeLabel?: string;
     dim?: boolean;
     tone?: RowTone;
+    badge?: ReactNode;
+    trailing?: ReactNode;
 }) {
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
-    const resolved: RowTone = tone ?? (user.local ? "self" : user.isFriend ? "friend" : "none");
+    const threat = user.threat ?? 0;
+    const resolved: RowTone = tone ?? (user.local
+        ? "self"
+        : user.whitelisted
+            ? "white"
+            : threat > 0
+                ? "threat"
+                : user.isFriend ? "friend" : "none");
 
     return (
-        <Row $tone={resolved} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
+        <Row $tone={resolved} $threat={threat} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
             <AvatarCell>
                 {icon ? <AvatarLarge $src={icon}/> : <Dash>—</Dash>}
             </AvatarCell>
@@ -169,6 +178,12 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         {user.name}
                     </span>
                     {user.pronouns && <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun>}
+                    {threat > 0 && (
+                        <ThreatBadge $score={threat} title={(user.threatReasons ?? []).join(" · ")}>
+                            {threat}%
+                        </ThreatBadge>
+                    )}
+                    {badge}
                     {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                     {user.isRobot && <Robot>robot</Robot>}
                     {user.local && <You>you</You>}
@@ -180,7 +195,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                     : <Dash>—</Dash>}
             </StatusCell>
             <PlatformCell>{platformLabel(user.platform)}</PlatformCell>
-            {showTime && <Time>{timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
+            {showTime && <Time>{trailing ?? timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
         </Row>
     );
 }
@@ -215,6 +230,7 @@ export function PlayerDialog({user, now, onClose}: {
                     <Badges>
                         {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                         {user.isRobot && <Robot>robot</Robot>}
+                        {user.whitelisted && <Whitelisted>whitelisted</Whitelisted>}
                         {user.local && <You>you</You>}
                     </Badges>
 
@@ -231,6 +247,15 @@ export function PlayerDialog({user, now, onClose}: {
                             </ProfileLink>
                         </FieldRow>
                         <StatusField status={status} text={user.statusDescription}/>
+                        {(user.threat ?? 0) > 0 && (
+                            <FieldRow>
+                                <span>Threat</span>
+                                <ThreatLine>
+                                    <ThreatBadge $score={user.threat!}>{user.threat}%</ThreatBadge>
+                                    <ThreatText>{(user.threatReasons ?? []).join(" · ")}</ThreatText>
+                                </ThreatLine>
+                            </FieldRow>
+                        )}
                         <Field label="Pronouns" value={user.pronouns || "—"}/>
                         <Field label="Platform" value={platformLabel(user.platform)}/>
                         {user.joinedAt && (
@@ -678,11 +703,17 @@ function toneBackground(tone: RowTone, hover = false): string {
             return hover ? "rgba(167, 139, 250, 0.16)" : "rgba(167, 139, 250, 0.09)";
         case "friend":
             return hover ? "rgba(255, 204, 0, 0.16)" : "rgba(255, 204, 0, 0.09)";
-        case "risk":
-            return hover ? "rgba(251, 113, 133, 0.16)" : "rgba(251, 113, 133, 0.08)";
+        case "white":
+            return hover ? "rgba(255, 255, 255, 0.16)" : "rgba(255, 255, 255, 0.10)";
         default:
             return hover ? "rgba(167, 139, 250, 0.06)" : "transparent";
     }
+}
+
+/** The higher the score, the stronger the red wash. */
+function threatBackground(score: number, hover = false): string {
+    const alpha = 0.05 + (Math.min(score, 100) / 100) * 0.2 + (hover ? 0.06 : 0);
+    return `rgba(251, 113, 133, ${alpha.toFixed(3)})`;
 }
 
 function toneBorder(tone: RowTone): string {
@@ -691,14 +722,24 @@ function toneBorder(tone: RowTone): string {
             return "var(--accent-primary)";
         case "friend":
             return "#ffcc00";
-        case "risk":
+        case "white":
+            return "rgba(255, 255, 255, 0.5)";
+        case "threat":
             return "#fb7185";
         default:
             return "transparent";
     }
 }
 
-const Row = styled.div<{ $tone: RowTone; $showTime: boolean; $dim?: boolean }>`
+function threatColor(score: number): string {
+    if (score >= 70)
+        return "#fb7185";
+    if (score >= 40)
+        return "#fb923c";
+    return "#fbbf24";
+}
+
+const Row = styled.div<{ $tone: RowTone; $threat: number; $showTime: boolean; $dim?: boolean }>`
     display: grid;
     grid-template-columns: ${({$showTime}) =>
         $showTime ? "40px minmax(0, 1fr) 200px 78px 96px" : "40px minmax(0, 1fr) 200px 78px"};
@@ -706,7 +747,7 @@ const Row = styled.div<{ $tone: RowTone; $showTime: boolean; $dim?: boolean }>`
     align-items: center;
     padding: 8px 16px;
     opacity: ${({$dim}) => $dim ? 0.55 : 1};
-    background: ${({$tone}) => toneBackground($tone)};
+    background: ${({$tone, $threat}) => $tone === "threat" ? threatBackground($threat) : toneBackground($tone)};
     border-left: 2px solid ${({$tone}) => toneBorder($tone)};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
@@ -716,7 +757,8 @@ const Row = styled.div<{ $tone: RowTone; $showTime: boolean; $dim?: boolean }>`
     }
 
     &:hover {
-        background: ${({$tone}) => toneBackground($tone, true)};
+        background: ${({$tone, $threat}) =>
+            $tone === "threat" ? threatBackground($threat, true) : toneBackground($tone, true)};
     }
 `;
 
@@ -771,6 +813,39 @@ const Pronoun = styled.span`
     font-family: var(--font-mono);
     font-size: 9px;
     white-space: nowrap;
+`;
+
+const ThreatBadge = styled.span<{ $score: number }>`
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(251, 113, 133, 0.14);
+    color: ${({$score}) => threatColor($score)};
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+`;
+
+const ThreatLine = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+`;
+
+const ThreatText = styled.span`
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.5;
+`;
+
+const Whitelisted = styled.span`
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 9px;
 `;
 
 const StatusCell = styled.span`

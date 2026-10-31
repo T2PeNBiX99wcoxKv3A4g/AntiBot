@@ -184,6 +184,41 @@ internal sealed class VrchatApi : IDisposable
             .GetOrNull();
     }
 
+    /// <summary>Hides a friend request notification (VRChat's "reject").</summary>
+    public async Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token)
+    {
+        using var response = await _http.PutAsync(
+            $"auth/user/notifications/{Uri.EscapeDataString(notificationId)}/hide", null, token);
+        return response.IsSuccessStatusCode;
+    }
+
+    /// <summary>Adds a player moderation: <c>block</c>, <c>interactOff</c> or <c>muteChat</c>.</summary>
+    public async Task<bool> ModerateUserAsync(string userId, string type, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
+            VrchatJsonContext.Default.ApiModerationRequest));
+        using var response = await _http.PostAsync("auth/user/playermoderations", content, token);
+        Logger.Debug("Moderation {Type} for {UserId} answered {Status}", type, userId, response.StatusCode);
+        return response.IsSuccessStatusCode;
+    }
+
+    /// <summary>Removes a player moderation: <c>unblock</c>, <c>interactOn</c> or <c>unmuteChat</c>.</summary>
+    public async Task<bool> UnmoderateUserAsync(string userId, string type, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
+            VrchatJsonContext.Default.ApiModerationRequest));
+        using var response = await _http.PutAsync("auth/user/unplayermoderate", content, token);
+        return response.IsSuccessStatusCode;
+    }
+
+    /// <summary>Sends the account an invite to a location; its own home world is how it goes home.</summary>
+    public async Task<bool> InviteMyselfAsync(string location, CancellationToken token)
+    {
+        using var response = await _http.PostAsync($"invite/myself/to/{location}", null, token);
+        Logger.Debug("Self invite to {Location} answered {Status}", location, response.StatusCode);
+        return response.IsSuccessStatusCode;
+    }
+
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
     public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
     {

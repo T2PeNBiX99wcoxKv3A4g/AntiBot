@@ -470,7 +470,11 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         Log.Information("Instance list: {Count} player(s) from {Source}", snapshot.Users.Count, snapshot.Source);
         WindowManager.Instance.NotifyMainWindow("instance.changed", snapshot);
+        Published?.Invoke(snapshot);
     }
+
+    /// <summary>Raised with every pushed snapshot, so the threat rules can look at the players.</summary>
+    public event Action<InstanceSnapshot>? Published;
 
     private static string Signature(InstanceSnapshot snapshot) => string.Join('|',
         snapshot.Source,
@@ -487,7 +491,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
             $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
-            $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}")));
+            $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}:{user.Threat}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -649,6 +653,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         AvatarService.Instance.Request(fileId);
 
+        var avatarName = AvatarService.Instance.NameFor(fileId);
+        var threat = ThreatScoring.Assess(profile, name, avatarName);
+
         return new(
             userId,
             name.Length > 0 ? name : profile?.DisplayName ?? userId,
@@ -664,9 +671,12 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.Bio,
             profile?.DateJoined,
             platform,
-            AvatarService.Instance.NameFor(fileId),
+            avatarName,
             AvatarService.IsRobot(fileId),
-            profile?.IsFriend ?? false);
+            profile?.IsFriend ?? false,
+            threat.Score,
+            threat.Reasons,
+            SettingsService.Instance.Current.Whitelist.Contains(userId, StringComparer.OrdinalIgnoreCase));
     }
 
     /// <summary>VRChat's trust tags, highest first.</summary>

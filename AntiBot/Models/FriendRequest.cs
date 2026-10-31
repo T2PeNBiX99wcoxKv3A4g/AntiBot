@@ -12,6 +12,7 @@ public sealed record FriendRequest(
     string UserId,
     string CreatedAt,
     bool Active,
+    bool Rejected,
     long FirstSeen,
     InstanceUser User);
 
@@ -23,5 +24,6 @@ internal sealed record FriendRequestRow(
     string CreatedAt,
     bool Seen,
     bool Active,
+    bool Rejected,
     long FirstSeen,
     long LastSeen);
