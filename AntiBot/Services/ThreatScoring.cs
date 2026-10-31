@@ -53,11 +53,13 @@ internal static partial class ThreatScoring
             reasons.Add("default Robot avatar");
         }
 
-        // Quest is very unlikely to host a bot; halve whatever the other signals added.
-        if (score > 0 && string.Equals(platform, "android", StringComparison.OrdinalIgnoreCase))
+        // Quest and iOS are very unlikely to host a bot; halve whatever the other signals added.
+        if (score > 0 &&
+            (string.Equals(platform, "android", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(platform, "ios", StringComparison.OrdinalIgnoreCase)))
         {
             score /= 2;
-            reasons.Add("Quest platform (score halved)");
+            reasons.Add("Quest/iOS platform (score halved)");
         }
 
         return (score, [.. reasons]);
