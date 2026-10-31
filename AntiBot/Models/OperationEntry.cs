@@ -11,4 +11,5 @@ public sealed record OperationEntry(
     string UserId,
     string DisplayName,
     string Detail,
-    string? AvatarUrl);
+    string? AvatarUrl,
+    bool Undone);

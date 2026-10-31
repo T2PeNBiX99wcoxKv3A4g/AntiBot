@@ -10,6 +10,8 @@ export interface OperationEntry {
     displayName: string;
     detail: string;
     avatarUrl?: string;
+    /** True once the action was taken back. */
+    undone?: boolean;
 }
 
 export async function getOperations(): Promise<OperationEntry[]> {
@@ -22,6 +24,13 @@ export async function clearOperations(): Promise<void> {
     if (!Native.available) return;
 
     await Native.request("operations.clear");
+}
+
+/** Takes an action back: a block becomes an unblock, and so on. */
+export async function undoOperation(id: number): Promise<void> {
+    if (!Native.available) return;
+
+    await Native.request("operations.undo", {id});
 }
 
 export function onOperationsChanged(handler: (entries: OperationEntry[]) => void): () => void {

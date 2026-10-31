@@ -1,12 +1,15 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {type OperationEntry, clearOperations, getOperations, onOperationsChanged} from "../api/operations";
+import {type OperationEntry, clearOperations, getOperations, onOperationsChanged, undoOperation} from "../api/operations";
+import {type InstanceUser, describeUser} from "../api/instance";
 import {openUrl} from "../api/system";
 import {ExternalIcon} from "../components/Icons";
+import {PlayerDialog} from "./InstancePage";
 
 /** Every automatic action AntiBot took, newest first. */
 export function OperationsPage() {
     const [entries, setEntries] = useState<OperationEntry[]>([]);
+    const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [confirming, setConfirming] = useState(false);
     const received = useRef(false);
 
@@ -44,6 +47,18 @@ export function OperationsPage() {
         });
     };
 
+    const openUser = (entry: OperationEntry) => {
+        if (entry.userId.length === 0) return;
+
+        void describeUser(entry.userId, entry.displayName).then(setSelected, () => {
+            // The host failed to answer; the row still shows the stored name.
+        });
+    };
+
+    const undo = (entry: OperationEntry) => {
+        void undoOperation(entry.id);
+    };
+
     return (
         <Page>
             <Card>
@@ -70,7 +85,7 @@ export function OperationsPage() {
                     {entries.length === 0 ? (
                         <Empty>AntiBot has not taken an automatic action yet.</Empty>
                     ) : entries.map((entry) => (
-                        <Item key={entry.id}>
+                        <Item key={entry.id} onClick={() => openUser(entry)}>
                             <Avatar $src={entry.avatarUrl}>
                                 {!entry.avatarUrl && (entry.displayName || "?").slice(0, 1).toUpperCase()}
                             </Avatar>
@@ -78,19 +93,37 @@ export function OperationsPage() {
                             <Kind>{kindLabel(entry.kind)}</Kind>
                             <Who>{entry.displayName || "Unknown user"}</Who>
                             <Detail title={entry.detail}>{entry.detail}</Detail>
-                            <ProfileButton
-                                disabled={entry.userId.length === 0}
-                                onClick={() => void openUrl(`https://vrchat.com/home/user/${entry.userId}`)}
-                                title="Open the VRChat profile"
-                                type="button"
-                            >
-                                <ExternalIcon size={11}/>
-                                Profile
-                            </ProfileButton>
+                            <Actions>
+                                {canUndo(entry) && (
+                                    <UndoButton
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            undo(entry);
+                                        }}
+                                        type="button"
+                                    >
+                                        Undo
+                                    </UndoButton>
+                                )}
+                                <ProfileButton
+                                    disabled={entry.userId.length === 0}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        void openUrl(`https://vrchat.com/home/user/${entry.userId}`);
+                                    }}
+                                    title="Open the VRChat profile"
+                                    type="button"
+                                >
+                                    <ExternalIcon size={11}/>
+                                    Profile
+                                </ProfileButton>
+                            </Actions>
                         </Item>
                     ))}
                 </List>
             </Card>
+
+            {selected && <PlayerDialog user={selected} now={Date.now()} onClose={() => setSelected(null)}/>}
         </Page>
     );
 }
@@ -120,9 +153,21 @@ function kindLabel(kind: string): string {
             return "Request rejected";
         case "undoReject":
             return "Rejection undone";
+        case "unblock":
+            return "Unblocked";
+        case "avatarInteractionOn":
+            return "Avatar interactions on";
+        case "chatBoxShown":
+            return "Chat box shown";
         default:
             return kind;
     }
+}
+
+function canUndo(entry: OperationEntry): boolean {
+    if (entry.undone) return false;
+
+    return entry.kind === "block" || entry.kind === "avatarInteractionOff" || entry.kind === "chatBoxHidden";
 }
 
 const Page = styled.div`
@@ -206,14 +251,19 @@ const List = styled.div`
 
 const Item = styled.div`
     display: grid;
-    grid-template-columns: 26px 160px 140px minmax(0, 150px) minmax(0, 1fr) 74px;
+    grid-template-columns: 26px 160px 140px minmax(0, 150px) minmax(0, 1fr) 150px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
 
     &:last-child {
         border-bottom: 0;
+    }
+
+    &:hover {
+        background: rgba(167, 139, 250, 0.06);
     }
 `;
 
@@ -259,6 +309,28 @@ const Detail = styled.span`
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
+`;
+
+const Actions = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+`;
+
+const UndoButton = styled.button`
+    padding: 3px 8px;
+    border: 1px solid rgba(251, 113, 133, 0.45);
+    border-radius: var(--radius-sm);
+    background: rgba(251, 113, 133, 0.1);
+    color: #fb7185;
+    font: inherit;
+    font-size: 9.5px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(251, 113, 133, 0.2);
+    }
 `;
 
 const ProfileButton = styled.button`

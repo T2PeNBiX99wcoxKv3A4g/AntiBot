@@ -72,3 +72,9 @@ internal sealed record OpenUrlRequest(string Url);
 
 /// <summary>Payload for <c>friendRequests.undo</c>: the request to take back.</summary>
 internal sealed record FriendRequestActionRequest(string Id);
+
+/// <summary>Payload for <c>operations.undo</c>: the operation to take back.</summary>
+internal sealed record OperationActionRequest(long Id);
+
+/// <summary>Payload for <c>user.describe</c>: the user to open in the details panel.</summary>
+internal sealed record UserDescribeRequest(string UserId, string DisplayName);

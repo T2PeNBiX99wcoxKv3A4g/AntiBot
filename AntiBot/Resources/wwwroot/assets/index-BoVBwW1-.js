@@ -394,13 +394,13 @@ Error generating stack: `+e.message+`
         color: var(--accent-primary);
         word-break: break-all;
     }
-`,oa={running:!1,world:``,instance:``,users:[]};async function sa(){return N.available?await N.request(`instance.snapshot`):oa}function ca(e){return N.on(t=>{t.type===`instance.changed`&&e(t.data)})}function F({signedIn:e,onSignIn:t}){let[n,r]=(0,_.useState)(oa),[i,a]=(0,_.useState)(null),[o,s]=(0,_.useState)(()=>Date.now()),c=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,t=ca(t=>{e||(c.current=!0,r(t))});return sa().then(t=>{!e&&!c.current&&r(t)},()=>{}),()=>{e=!0,t()}},[]),(0,_.useEffect)(()=>{let e=window.setInterval(()=>s(Date.now()),5e3);return()=>window.clearInterval(e)},[]);let{running:l,world:u,users:d,worldName:f,capacity:p,worldId:m=``,worldThumbnail:h,instanceType:g=``,instanceRegion:v=``,instanceNumber:y=``,instanceDisplayName:b=``,instanceRestricted:x=!1,instanceAgeGated:S=!1}=n,C=fa(m,h);return(0,P.jsxs)(ya,{children:[!e&&(0,P.jsxs)(ba,{children:[(0,P.jsxs)(xa,{children:[(0,P.jsx)(`strong`,{children:`Not signed in`}),(0,P.jsx)(`span`,{children:`Only VRChat's local log is read. The player list and instance details can be wrong when more than one client runs, and status, platform and avatar names are unavailable.`})]}),(0,P.jsx)(Sa,{onClick:t,type:`button`,children:`Sign in`})]}),Gr?l?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(Ca,{children:[(0,P.jsx)(wa,{$src:C,children:(0,P.jsxs)(Ta,{children:[(0,P.jsx)(Da,{children:`World`}),(0,P.jsx)(Ea,{$link:m.length>0,onClick:m?()=>void sr(`https://vrchat.com/home/world/${m}`):void 0,title:m?`Open on vrchat.com`:void 0,children:f||u||`—`}),(0,P.jsx)(Oa,{children:(0,P.jsxs)(ka,{children:[v&&(0,P.jsx)(ga,{region:v}),x&&(0,P.jsx)(wr,{size:12}),S&&(0,P.jsx)(Aa,{children:`18+`}),b||_a(g),` ⋅ #`,y||`—`]})})]})}),(0,P.jsxs)(Na,{children:[(0,P.jsx)(`strong`,{children:d.length}),(p??0)>0&&(0,P.jsxs)(`span`,{children:[`/ `,p,` users`]})]})]}),(0,P.jsxs)(Pa,{children:[(0,P.jsxs)(Fa,{children:[(0,P.jsx)(`span`,{}),(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsx)(`span`,{children:`Platform`}),(0,P.jsx)(`span`,{children:`In instance`})]}),(0,P.jsx)(Ia,{children:d.length===0?(0,P.jsx)(bo,{children:`No players in this instance yet.`}):d.map(e=>(0,P.jsx)(I,{user:e,now:o,onSelect:a},e.userId))})]})]}):(0,P.jsx)(va,{hint:`Players appear here as VRChat writes join and leave lines, or once an account is signed in.`,title:`VRChat is not running`}):(0,P.jsx)(va,{hint:`The list is built by the desktop host.`,title:`Desktop host required`}),i&&(0,P.jsx)(la,{user:i,now:o,onClose:()=>a(null)})]})}function I({user:e,now:t,onSelect:n,showTime:r=!0,timeLabel:i,dim:a=!1,tone:o,badge:s,trailing:c}){let l=e.iconUrl??e.avatarUrl,u=pa(e.status),d=e.threat??0,f=o??(e.local?`self`:e.whitelisted?`white`:d>0?`threat`:e.isFriend?`friend`:`none`);return(0,P.jsxs)(Ha,{$tone:f,$threat:d,$showTime:r,$dim:a,onClick:()=>n(e),children:[(0,P.jsx)(Ua,{children:l?(0,P.jsx)(Wa,{$src:l}):(0,P.jsx)(Ga,{children:`—`})}),(0,P.jsx)(Ka,{children:(0,P.jsxs)(qa,{children:[(0,P.jsx)(`span`,{title:[e.platform,e.dateJoined&&`joined VRChat ${e.dateJoined}`].filter(Boolean).join(` · `),children:e.name}),e.pronouns&&(0,P.jsx)(Ja,{title:e.pronouns,children:e.pronouns}),e.trust&&(0,P.jsx)(ro,{$trust:e.trust,children:e.trust}),d>0&&(0,P.jsxs)(Ya,{$score:d,title:(e.threatReasons??[]).join(` · `),children:[(0,P.jsx)(Dr,{size:10}),d,`%`]}),s,e.isRobot&&(0,P.jsx)(ao,{children:`robot`}),e.local&&(0,P.jsx)(io,{children:`you`})]})}),(0,P.jsx)($a,{title:e.statusDescription||void 0,children:u?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsx)(eo,{$color:u.color}),(0,P.jsx)(`span`,{children:e.statusDescription||u.label})]}):(0,P.jsx)(Ga,{children:`—`})}),(0,P.jsx)(no,{children:ma(e.platform)}),r&&(0,P.jsx)(co,{children:c??i??ha(e.joinedAt,t)})]})}function la({user:e,now:t,onClose:n}){(0,_.useEffect)(()=>{let e=e=>{e.key===`Escape`&&n()};return window.addEventListener(`keydown`,e),()=>window.removeEventListener(`keydown`,e)},[n]);let r=e.iconUrl??e.avatarUrl,i=pa(e.status);return(0,P.jsx)(lo,{onClick:n,children:(0,P.jsxs)(uo,{onClick:e=>e.stopPropagation(),children:[(0,P.jsx)(fo,{$src:r,children:!r&&e.name.slice(0,1).toUpperCase()}),(0,P.jsxs)(po,{children:[(0,P.jsx)(`h2`,{children:e.name}),(0,P.jsxs)(mo,{children:[e.trust&&(0,P.jsx)(ro,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(ao,{children:`robot`}),e.whitelisted&&(0,P.jsx)(Qa,{children:`whitelisted`}),e.local&&(0,P.jsx)(io,{children:`you`})]}),(0,P.jsxs)(ho,{children:[(0,P.jsxs)(go,{children:[(0,P.jsx)(`span`,{children:`Profile`}),(0,P.jsxs)(_o,{onClick:()=>void sr(`https://vrchat.com/home/user/${e.userId}`),title:`Open on vrchat.com`,type:`button`,children:[(0,P.jsx)(Tr,{size:12}),`Open on vrchat.com`]})]}),(0,P.jsx)(da,{status:i,text:e.statusDescription}),(e.threat??0)>0&&(0,P.jsxs)(go,{children:[(0,P.jsx)(`span`,{children:`Threat`}),(0,P.jsxs)(Xa,{children:[(0,P.jsxs)(Ya,{$score:e.threat,children:[(0,P.jsx)(Dr,{size:10}),e.threat,`%`]}),(0,P.jsx)(Za,{children:(e.threatReasons??[]).join(` · `)})]})]}),(0,P.jsx)(ua,{label:`Pronouns`,value:e.pronouns||`—`}),(0,P.jsx)(ua,{label:`Platform`,value:ma(e.platform)}),e.joinedAt&&(0,P.jsx)(ua,{label:`In this instance`,value:ha(e.joinedAt,t)}),(0,P.jsx)(ua,{label:`Avatar`,value:e.avatarName??(e.isRobot?`Robot (default)`:`Unknown`)}),(0,P.jsx)(ua,{label:`VRChat account since`,value:e.dateJoined?new Date(e.dateJoined).toLocaleDateString():`—`}),e.bio&&(0,P.jsx)(vo,{children:e.bio})]})]}),(0,P.jsx)(yo,{onClick:n,type:`button`,children:`×`})]})})}function ua({label:e,value:t}){return(0,P.jsxs)(go,{children:[(0,P.jsx)(`span`,{children:e}),(0,P.jsx)(`code`,{title:t,children:t})]})}function da({status:e,text:t}){let n=t||e?.label||`—`;return(0,P.jsxs)(go,{children:[(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsxs)(to,{title:n,children:[e&&(0,P.jsx)(eo,{$color:e.color}),(0,P.jsx)(`code`,{children:n})]})]})}function fa(e,t){let n=(0,_.useRef)({worldId:``,url:``});return t?n.current={worldId:e,url:t}:n.current.worldId!==e&&(n.current={worldId:e,url:``}),n.current.url}function pa(e){switch(e){case`active`:return{label:`Online`,color:`#4ade80`};case`join me`:return{label:`Join Me`,color:`#60a5fa`};case`ask me`:return{label:`Ask Me`,color:`#fbbf24`};case`busy`:return{label:`Busy`,color:`#f87171`};case`offline`:return{label:`Offline`,color:`#94a3b8`};default:return e&&e.length>0?{label:e,color:`#94a3b8`}:null}}function ma(e){switch(e){case`standalonewindows`:return`PC`;case`android`:return`Android`;case`ios`:return`iOS`;default:return e&&e.length>0?e:`—`}}function ha(e,t){if(!e)return`—`;let[n,r,i]=e.split(`:`).map(Number);if([n,r,i].some(Number.isNaN))return e;let a=new Date(t);a.setHours(n,r,i,0),a.getTime()>t&&a.setDate(a.getDate()-1);let o=Math.max(0,Math.floor((t-a.getTime())/1e3)),s=Math.floor(o/3600),c=Math.floor(o%3600/60);return s>0?`${s}h ${c}m`:`${c}m`}function ga({region:e}){switch(e.toLowerCase()){case`jp`:return(0,P.jsx)(ja,{title:`Japan`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#fff`,height:`20`,width:`30`}),(0,P.jsx)(`circle`,{cx:`15`,cy:`10`,fill:`#bc002d`,r:`6`})]})});case`us`:case`use`:return(0,P.jsx)(ja,{title:`United States`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#fff`,height:`20`,width:`30`}),(0,P.jsx)(`path`,{d:`M0 0h30v1.54H0zM0 3.08h30v1.54H0zM0 6.15h30v1.54H0zM0 9.23h30v1.54H0zM0 12.31h30v1.54H0zM0 15.38h30v1.54H0zM0 18.46h30V20H0z`,fill:`#b22234`}),(0,P.jsx)(`rect`,{fill:`#3c3b6e`,height:`10.77`,width:`12.6`})]})});case`eu`:return(0,P.jsx)(ja,{title:`Europe`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#003399`,height:`20`,width:`30`}),Array.from({length:12},(e,t)=>{let n=t/12*Math.PI*2;return(0,P.jsx)(`circle`,{cx:15+Math.cos(n)*4.6,cy:10+Math.sin(n)*4.6,fill:`#ffcc00`,r:`0.9`},t)})]})});default:return(0,P.jsx)(Ma,{children:e.toUpperCase()})}}function _a(e){switch(e){case`public`:return`Public`;case`friends`:return`Friends`;case`friends+`:case`hidden`:return`Friends+`;case`invite`:case`private`:return`Invite`;case`invite+`:return`Invite+`;case`group`:return`Group`;default:if(e?.startsWith(`group:`)){let t=e.slice(6);return t===`public`?`Group Public`:t===`plus`?`Group+`:`Group Members`}return e&&e.length>0?e:`Instance`}}function va({title:e,hint:t,children:n}){return(0,P.jsxs)(xo,{children:[(0,P.jsx)(gr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var ya=M.div`
+`,oa={running:!1,world:``,instance:``,users:[]};async function sa(){return N.available?await N.request(`instance.snapshot`):oa}function ca(e){return N.on(t=>{t.type===`instance.changed`&&e(t.data)})}async function F(e,t){return await N.request(`user.describe`,{userId:e,displayName:t})}function I({signedIn:e,onSignIn:t}){let[n,r]=(0,_.useState)(oa),[i,a]=(0,_.useState)(null),[o,s]=(0,_.useState)(()=>Date.now()),c=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,t=ca(t=>{e||(c.current=!0,r(t))});return sa().then(t=>{!e&&!c.current&&r(t)},()=>{}),()=>{e=!0,t()}},[]),(0,_.useEffect)(()=>{let e=window.setInterval(()=>s(Date.now()),5e3);return()=>window.clearInterval(e)},[]);let{running:l,world:u,users:d,worldName:f,capacity:p,worldId:m=``,worldThumbnail:h,instanceType:g=``,instanceRegion:v=``,instanceNumber:y=``,instanceDisplayName:b=``,instanceRestricted:x=!1,instanceAgeGated:S=!1}=n,C=pa(m,h);return(0,P.jsxs)(ba,{children:[!e&&(0,P.jsxs)(xa,{children:[(0,P.jsxs)(Sa,{children:[(0,P.jsx)(`strong`,{children:`Not signed in`}),(0,P.jsx)(`span`,{children:`Only VRChat's local log is read. The player list and instance details can be wrong when more than one client runs, and status, platform and avatar names are unavailable.`})]}),(0,P.jsx)(Ca,{onClick:t,type:`button`,children:`Sign in`})]}),Gr?l?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsxs)(wa,{children:[(0,P.jsx)(Ta,{$src:C,children:(0,P.jsxs)(Ea,{children:[(0,P.jsx)(Oa,{children:`World`}),(0,P.jsx)(Da,{$link:m.length>0,onClick:m?()=>void sr(`https://vrchat.com/home/world/${m}`):void 0,title:m?`Open on vrchat.com`:void 0,children:f||u||`—`}),(0,P.jsx)(ka,{children:(0,P.jsxs)(Aa,{children:[v&&(0,P.jsx)(_a,{region:v}),x&&(0,P.jsx)(wr,{size:12}),S&&(0,P.jsx)(ja,{children:`18+`}),b||va(g),` ⋅ #`,y||`—`]})})]})}),(0,P.jsxs)(Pa,{children:[(0,P.jsx)(`strong`,{children:d.length}),(p??0)>0&&(0,P.jsxs)(`span`,{children:[`/ `,p,` users`]})]})]}),(0,P.jsxs)(Fa,{children:[(0,P.jsxs)(Ia,{children:[(0,P.jsx)(`span`,{}),(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsx)(`span`,{children:`Platform`}),(0,P.jsx)(`span`,{children:`In instance`})]}),(0,P.jsx)(La,{children:d.length===0?(0,P.jsx)(xo,{children:`No players in this instance yet.`}):d.map(e=>(0,P.jsx)(la,{user:e,now:o,onSelect:a},e.userId))})]})]}):(0,P.jsx)(ya,{hint:`Players appear here as VRChat writes join and leave lines, or once an account is signed in.`,title:`VRChat is not running`}):(0,P.jsx)(ya,{hint:`The list is built by the desktop host.`,title:`Desktop host required`}),i&&(0,P.jsx)(ua,{user:i,now:o,onClose:()=>a(null)})]})}function la({user:e,now:t,onSelect:n,showTime:r=!0,timeLabel:i,dim:a=!1,tone:o,badge:s,trailing:c}){let l=e.iconUrl??e.avatarUrl,u=ma(e.status),d=e.threat??0,f=o??(e.local?`self`:e.whitelisted?`white`:d>0?`threat`:e.isFriend?`friend`:`none`);return(0,P.jsxs)(Ua,{$tone:f,$threat:d,$showTime:r,$dim:a,onClick:()=>n(e),children:[(0,P.jsx)(Wa,{children:l?(0,P.jsx)(Ga,{$src:l}):(0,P.jsx)(Ka,{children:`—`})}),(0,P.jsx)(qa,{children:(0,P.jsxs)(Ja,{children:[(0,P.jsx)(`span`,{title:[e.platform,e.dateJoined&&`joined VRChat ${e.dateJoined}`].filter(Boolean).join(` · `),children:e.name}),e.pronouns&&(0,P.jsx)(Ya,{title:e.pronouns,children:e.pronouns}),e.trust&&(0,P.jsx)(io,{$trust:e.trust,children:e.trust}),d>0&&(0,P.jsxs)(Xa,{$score:d,title:(e.threatReasons??[]).join(` · `),children:[(0,P.jsx)(Dr,{size:10}),d,`%`]}),s,e.isRobot&&(0,P.jsx)(oo,{children:`robot`}),e.local&&(0,P.jsx)(ao,{children:`you`})]})}),(0,P.jsx)(eo,{title:e.statusDescription||void 0,children:u?(0,P.jsxs)(P.Fragment,{children:[(0,P.jsx)(to,{$color:u.color}),(0,P.jsx)(`span`,{children:e.statusDescription||u.label})]}):(0,P.jsx)(Ka,{children:`—`})}),(0,P.jsx)(ro,{children:ha(e.platform)}),r&&(0,P.jsx)(lo,{children:c??i??ga(e.joinedAt,t)})]})}function ua({user:e,now:t,onClose:n}){(0,_.useEffect)(()=>{let e=e=>{e.key===`Escape`&&n()};return window.addEventListener(`keydown`,e),()=>window.removeEventListener(`keydown`,e)},[n]);let r=e.iconUrl??e.avatarUrl,i=ma(e.status);return(0,P.jsx)(uo,{onClick:n,children:(0,P.jsxs)(fo,{onClick:e=>e.stopPropagation(),children:[(0,P.jsx)(po,{$src:r,children:!r&&e.name.slice(0,1).toUpperCase()}),(0,P.jsxs)(mo,{children:[(0,P.jsx)(`h2`,{children:e.name}),(0,P.jsxs)(ho,{children:[e.trust&&(0,P.jsx)(io,{$trust:e.trust,children:e.trust}),e.isRobot&&(0,P.jsx)(oo,{children:`robot`}),e.whitelisted&&(0,P.jsx)($a,{children:`whitelisted`}),e.local&&(0,P.jsx)(ao,{children:`you`})]}),(0,P.jsxs)(go,{children:[(0,P.jsxs)(_o,{children:[(0,P.jsx)(`span`,{children:`Profile`}),(0,P.jsxs)(vo,{onClick:()=>void sr(`https://vrchat.com/home/user/${e.userId}`),title:`Open on vrchat.com`,type:`button`,children:[(0,P.jsx)(Tr,{size:12}),`Open on vrchat.com`]})]}),(0,P.jsx)(fa,{status:i,text:e.statusDescription}),(e.threat??0)>0&&(0,P.jsxs)(_o,{children:[(0,P.jsx)(`span`,{children:`Threat`}),(0,P.jsxs)(Za,{children:[(0,P.jsxs)(Xa,{$score:e.threat,children:[(0,P.jsx)(Dr,{size:10}),e.threat,`%`]}),(0,P.jsx)(Qa,{children:(e.threatReasons??[]).join(` · `)})]})]}),(0,P.jsx)(da,{label:`Pronouns`,value:e.pronouns||`—`}),(0,P.jsx)(da,{label:`Platform`,value:ha(e.platform)}),e.joinedAt&&(0,P.jsx)(da,{label:`In this instance`,value:ga(e.joinedAt,t)}),(0,P.jsx)(da,{label:`Avatar`,value:e.avatarName??(e.isRobot?`Robot (default)`:`Unknown`)}),(0,P.jsx)(da,{label:`VRChat account since`,value:e.dateJoined?new Date(e.dateJoined).toLocaleDateString():`—`}),e.bio&&(0,P.jsx)(yo,{children:e.bio})]})]}),(0,P.jsx)(bo,{onClick:n,type:`button`,children:`×`})]})})}function da({label:e,value:t}){return(0,P.jsxs)(_o,{children:[(0,P.jsx)(`span`,{children:e}),(0,P.jsx)(`code`,{title:t,children:t})]})}function fa({status:e,text:t}){let n=t||e?.label||`—`;return(0,P.jsxs)(_o,{children:[(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsxs)(no,{title:n,children:[e&&(0,P.jsx)(to,{$color:e.color}),(0,P.jsx)(`code`,{children:n})]})]})}function pa(e,t){let n=(0,_.useRef)({worldId:``,url:``});return t?n.current={worldId:e,url:t}:n.current.worldId!==e&&(n.current={worldId:e,url:``}),n.current.url}function ma(e){switch(e){case`active`:return{label:`Online`,color:`#4ade80`};case`join me`:return{label:`Join Me`,color:`#60a5fa`};case`ask me`:return{label:`Ask Me`,color:`#fbbf24`};case`busy`:return{label:`Busy`,color:`#f87171`};case`offline`:return{label:`Offline`,color:`#94a3b8`};default:return e&&e.length>0?{label:e,color:`#94a3b8`}:null}}function ha(e){switch(e){case`standalonewindows`:return`PC`;case`android`:return`Android`;case`ios`:return`iOS`;default:return e&&e.length>0?e:`—`}}function ga(e,t){if(!e)return`—`;let[n,r,i]=e.split(`:`).map(Number);if([n,r,i].some(Number.isNaN))return e;let a=new Date(t);a.setHours(n,r,i,0),a.getTime()>t&&a.setDate(a.getDate()-1);let o=Math.max(0,Math.floor((t-a.getTime())/1e3)),s=Math.floor(o/3600),c=Math.floor(o%3600/60);return s>0?`${s}h ${c}m`:`${c}m`}function _a({region:e}){switch(e.toLowerCase()){case`jp`:return(0,P.jsx)(Ma,{title:`Japan`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#fff`,height:`20`,width:`30`}),(0,P.jsx)(`circle`,{cx:`15`,cy:`10`,fill:`#bc002d`,r:`6`})]})});case`us`:case`use`:return(0,P.jsx)(Ma,{title:`United States`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#fff`,height:`20`,width:`30`}),(0,P.jsx)(`path`,{d:`M0 0h30v1.54H0zM0 3.08h30v1.54H0zM0 6.15h30v1.54H0zM0 9.23h30v1.54H0zM0 12.31h30v1.54H0zM0 15.38h30v1.54H0zM0 18.46h30V20H0z`,fill:`#b22234`}),(0,P.jsx)(`rect`,{fill:`#3c3b6e`,height:`10.77`,width:`12.6`})]})});case`eu`:return(0,P.jsx)(Ma,{title:`Europe`,children:(0,P.jsxs)(`svg`,{viewBox:`0 0 30 20`,xmlns:`http://www.w3.org/2000/svg`,children:[(0,P.jsx)(`rect`,{fill:`#003399`,height:`20`,width:`30`}),Array.from({length:12},(e,t)=>{let n=t/12*Math.PI*2;return(0,P.jsx)(`circle`,{cx:15+Math.cos(n)*4.6,cy:10+Math.sin(n)*4.6,fill:`#ffcc00`,r:`0.9`},t)})]})});default:return(0,P.jsx)(Na,{children:e.toUpperCase()})}}function va(e){switch(e){case`public`:return`Public`;case`friends`:return`Friends`;case`friends+`:case`hidden`:return`Friends+`;case`invite`:case`private`:return`Invite`;case`invite+`:return`Invite+`;case`group`:return`Group`;default:if(e?.startsWith(`group:`)){let t=e.slice(6);return t===`public`?`Group Public`:t===`plus`?`Group+`:`Group Members`}return e&&e.length>0?e:`Instance`}}function ya({title:e,hint:t,children:n}){return(0,P.jsxs)(So,{children:[(0,P.jsx)(gr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var ba=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 14px;
     min-height: 0;
-`,ba=M.div`
+`,xa=M.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -409,7 +409,7 @@ Error generating stack: `+e.message+`
     border: 1px solid rgba(251, 191, 36, 0.35);
     border-radius: var(--radius-md);
     background: rgba(251, 191, 36, 0.08);
-`,xa=M.div`
+`,Sa=M.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -425,7 +425,7 @@ Error generating stack: `+e.message+`
         line-height: 1.5;
         color: var(--text-secondary);
     }
-`,Sa=M.button`
+`,Ca=M.button`
     flex-shrink: 0;
     padding: 7px 12px;
     border: 1px solid rgba(251, 191, 36, 0.45);
@@ -439,7 +439,7 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
-`,Ca=M.section`
+`,wa=M.section`
     display: flex;
     align-items: stretch;
     justify-content: space-between;
@@ -448,7 +448,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,wa=M.div`
+`,Ta=M.div`
     position: relative;
     display: flex;
     align-items: center;
@@ -481,7 +481,7 @@ Error generating stack: `+e.message+`
         rgba(8, 7, 15, 0.3) 55%,
         rgba(8, 7, 15, 0) 100%);
     }
-`,Ta=M.div`
+`,Ea=M.div`
     position: relative;
     z-index: 1;
     display: flex;
@@ -489,7 +489,7 @@ Error generating stack: `+e.message+`
     gap: 3px;
     min-width: 0;
     padding: 14px 16px;
-`,Ea=M.h2`
+`,Da=M.h2`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -501,18 +501,18 @@ Error generating stack: `+e.message+`
     &:hover {
         color: ${({$link:e})=>e?`var(--accent-primary)`:`inherit`};
     }
-`,Da=M.span`
+`,Oa=M.span`
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`,Oa=M.div`
+`,ka=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
-`,ka=M.span`
+`,Aa=M.span`
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -523,13 +523,13 @@ Error generating stack: `+e.message+`
     color: var(--text-secondary);
     font-family: var(--font-mono);
     font-size: 10px;
-`,Aa=M.span`
+`,ja=M.span`
     padding: 0 4px;
     border-radius: 3px;
     background: rgba(248, 113, 113, 0.16);
     color: #fca5a5;
     font-size: 9px;
-`,ja=M.span`
+`,Ma=M.span`
     display: inline-flex;
     width: 15px;
     height: 10px;
@@ -543,11 +543,11 @@ Error generating stack: `+e.message+`
         width: 100%;
         height: 100%;
     }
-`,Ma=M.span`
+`,Na=M.span`
     font-family: var(--font-mono);
     font-size: 9px;
     color: var(--text-muted);
-`,Na=M.div`
+`,Pa=M.div`
     display: flex;
     align-items: baseline;
     justify-content: flex-end;
@@ -569,7 +569,7 @@ Error generating stack: `+e.message+`
         letter-spacing: 0.02em;
         color: var(--text-muted);
     }
-`,Pa=M.section`
+`,Fa=M.section`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -578,7 +578,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,Fa=M.div`
+`,Ia=M.div`
     display: grid;
     grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
     gap: 12px;
@@ -593,19 +593,19 @@ Error generating stack: `+e.message+`
     span:last-child {
         text-align: right;
     }
-`,Ia=M.div`
+`,La=M.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-`;function La(e,t=!1){switch(e){case`self`:return t?`rgba(167, 139, 250, 0.16)`:`rgba(167, 139, 250, 0.09)`;case`friend`:return t?`rgba(255, 204, 0, 0.16)`:`rgba(255, 204, 0, 0.09)`;case`white`:return t?`rgba(255, 255, 255, 0.16)`:`rgba(255, 255, 255, 0.10)`;default:return t?`rgba(167, 139, 250, 0.06)`:`transparent`}}function Ra(e,t=!1){return`rgba(251, 113, 133, ${(.05+Math.min(e,100)/100*.2+(t?.06:0)).toFixed(3)})`}function za(e){switch(e){case`self`:return`var(--accent-primary)`;case`friend`:return`#ffcc00`;case`white`:return`rgba(255, 255, 255, 0.5)`;case`threat`:return`#fb7185`;default:return`transparent`}}function Ba(e){return`hsl(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%)`}function Va(e){return`hsla(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%, 0.14)`}var Ha=M.div`
+`;function Ra(e,t=!1){switch(e){case`self`:return t?`rgba(167, 139, 250, 0.16)`:`rgba(167, 139, 250, 0.09)`;case`friend`:return t?`rgba(255, 204, 0, 0.16)`:`rgba(255, 204, 0, 0.09)`;case`white`:return t?`rgba(255, 255, 255, 0.16)`:`rgba(255, 255, 255, 0.10)`;default:return t?`rgba(167, 139, 250, 0.06)`:`transparent`}}function za(e,t=!1){return`rgba(251, 113, 133, ${(.05+Math.min(e,100)/100*.2+(t?.06:0)).toFixed(3)})`}function Ba(e){switch(e){case`self`:return`var(--accent-primary)`;case`friend`:return`#ffcc00`;case`white`:return`rgba(255, 255, 255, 0.5)`;case`threat`:return`#fb7185`;default:return`transparent`}}function Va(e){return`hsl(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%)`}function Ha(e){return`hsla(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%, 0.14)`}var Ua=M.div`
     display: grid;
     grid-template-columns: ${({$showTime:e})=>e?`40px minmax(0, 1fr) 200px 78px 96px`:`40px minmax(0, 1fr) 200px 78px`};
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
     opacity: ${({$dim:e})=>e?.55:1};
-    background: ${({$tone:e,$threat:t})=>e===`threat`?Ra(t):La(e)};
-    border-left: 2px solid ${({$tone:e})=>za(e)};
+    background: ${({$tone:e,$threat:t})=>e===`threat`?za(t):Ra(e)};
+    border-left: 2px solid ${({$tone:e})=>Ba(e)};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 
@@ -614,31 +614,31 @@ Error generating stack: `+e.message+`
     }
 
     &:hover {
-        background: ${({$tone:e,$threat:t})=>e===`threat`?Ra(t,!0):La(e,!0)};
+        background: ${({$tone:e,$threat:t})=>e===`threat`?za(t,!0):Ra(e,!0)};
     }
-`,Ua=M.span`
+`,Wa=M.span`
     display: flex;
     align-items: center;
     justify-content: flex-start;
-`,Wa=M.span`
+`,Ga=M.span`
     width: 34px;
     height: 34px;
     border-radius: 50%;
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,Ga=M.span`
+`,Ka=M.span`
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10.5px;
-`,Ka=M.span`
+`,qa=M.span`
     display: flex;
     align-items: center;
     gap: 9px;
     min-width: 0;
     font-size: 12.5px;
     font-weight: 500;
-`,qa=M.span`
+`,Ja=M.span`
     display: flex;
     align-items: center;
     gap: 7px;
@@ -649,7 +649,7 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,Ja=M.span`
+`,Ya=M.span`
     padding: 1px 6px;
     border-radius: 999px;
     background: rgba(96, 165, 250, 0.12);
@@ -657,35 +657,35 @@ Error generating stack: `+e.message+`
     font-family: var(--font-mono);
     font-size: 9px;
     white-space: nowrap;
-`,Ya=M.span`
+`,Xa=M.span`
     display: inline-flex;
     align-items: center;
     gap: 3px;
     padding: 1px 6px;
     border-radius: 999px;
-    background: ${({$score:e})=>Va(e)};
-    color: ${({$score:e})=>Ba(e)};
+    background: ${({$score:e})=>Ha(e)};
+    color: ${({$score:e})=>Va(e)};
     font-family: var(--font-mono);
     font-size: 9px;
     font-weight: 600;
     white-space: nowrap;
-`,Xa=M.div`
+`,Za=M.div`
     display: flex;
     align-items: flex-start;
     gap: 8px;
     min-width: 0;
-`,Za=M.span`
+`,Qa=M.span`
     color: var(--text-secondary);
     font-size: 11px;
     line-height: 1.5;
-`,Qa=M.span`
+`,$a=M.span`
     padding: 1px 7px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.12);
     color: #fff;
     font-family: var(--font-mono);
     font-size: 9px;
-`,$a=M.span`
+`,eo=M.span`
     display: flex;
     align-items: center;
     gap: 6px;
@@ -699,14 +699,14 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,eo=M.span`
+`,to=M.span`
     width: 8px;
     height: 8px;
     flex-shrink: 0;
     border-radius: 50%;
     background: ${({$color:e})=>e};
     box-shadow: 0 0 6px ${({$color:e})=>e};
-`,to=M.div`
+`,no=M.div`
     display: flex;
     align-items: center;
     gap: 6px;
@@ -717,28 +717,28 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,no=M.span`
+`,ro=M.span`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);
     font-size: 11px;
-`,ro=M.span`
+`,io=M.span`
     padding: 1px 6px;
     flex-shrink: 0;
     border-radius: 999px;
-    background: ${({$trust:e})=>so(e)};
-    color: ${({$trust:e})=>oo(e)};
+    background: ${({$trust:e})=>co(e)};
+    color: ${({$trust:e})=>so(e)};
     font-family: var(--font-mono);
     font-size: 9px;
-`,io=M.span`
+`,ao=M.span`
     padding: 1px 6px;
     border-radius: 999px;
     background: rgba(167, 139, 250, 0.16);
     color: var(--accent-primary);
     font-family: var(--font-mono);
     font-size: 9px;
-`,ao=M.span`
+`,oo=M.span`
     padding: 1px 6px;
     flex-shrink: 0;
     border-radius: 999px;
@@ -746,12 +746,12 @@ Error generating stack: `+e.message+`
     color: #fca5a5;
     font-family: var(--font-mono);
     font-size: 9px;
-`;function oo(e){switch(e){case`Trusted`:return`#c4b5fd`;case`Known`:return`#93c5fd`;case`User`:return`#86efac`;case`New`:return`#fcd34d`;default:return`#94a3b8`}}function so(e){switch(e){case`Trusted`:return`rgba(167, 139, 250, 0.16)`;case`Known`:return`rgba(96, 165, 250, 0.16)`;case`User`:return`rgba(74, 222, 128, 0.14)`;case`New`:return`rgba(250, 204, 21, 0.14)`;default:return`rgba(148, 163, 184, 0.14)`}}var co=M.span`
+`;function so(e){switch(e){case`Trusted`:return`#c4b5fd`;case`Known`:return`#93c5fd`;case`User`:return`#86efac`;case`New`:return`#fcd34d`;default:return`#94a3b8`}}function co(e){switch(e){case`Trusted`:return`rgba(167, 139, 250, 0.16)`;case`Known`:return`rgba(96, 165, 250, 0.16)`;case`User`:return`rgba(74, 222, 128, 0.14)`;case`New`:return`rgba(250, 204, 21, 0.14)`;default:return`rgba(148, 163, 184, 0.14)`}}var lo=M.span`
     text-align: right;
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 10.5px;
-`,lo=M.div`
+`,uo=M.div`
     position: fixed;
     inset: 0;
     z-index: 20;
@@ -761,7 +761,7 @@ Error generating stack: `+e.message+`
     padding: 24px;
     background: rgba(6, 4, 12, 0.72);
     backdrop-filter: blur(3px);
-`,uo=M.div`
+`,fo=M.div`
     position: relative;
     display: flex;
     gap: 22px;
@@ -774,7 +774,7 @@ Error generating stack: `+e.message+`
     border-radius: var(--radius-md);
     background: var(--bg-card);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-`,fo=M.div`
+`,po=M.div`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -788,7 +788,7 @@ Error generating stack: `+e.message+`
     color: ${({$src:e})=>e?`transparent`:`var(--text-muted)`};
     font-size: 44px;
     font-weight: 600;
-`,po=M.div`
+`,mo=M.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -798,15 +798,15 @@ Error generating stack: `+e.message+`
         font-size: 17px;
         font-weight: 600;
     }
-`,mo=M.div`
+`,ho=M.div`
     display: flex;
     gap: 6px;
-`,ho=M.dl`
+`,go=M.dl`
     display: flex;
     flex-direction: column;
     gap: 8px;
     margin-top: 4px;
-`,go=M.div`
+`,_o=M.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -828,7 +828,7 @@ Error generating stack: `+e.message+`
         font-size: 11px;
         user-select: text;
     }
-`,_o=M.button`
+`,vo=M.button`
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -850,7 +850,7 @@ Error generating stack: `+e.message+`
         border-color: var(--border-color-hover);
         color: var(--accent-primary);
     }
-`,vo=M.p`
+`,yo=M.p`
     margin-top: 2px;
     padding: 8px 10px;
     border: 1px solid var(--border-color);
@@ -862,7 +862,7 @@ Error generating stack: `+e.message+`
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     user-select: text;
-`,yo=M.button`
+`,bo=M.button`
     position: absolute;
     top: 10px;
     right: 10px;
@@ -880,12 +880,12 @@ Error generating stack: `+e.message+`
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`,bo=M.div`
+`,xo=M.div`
     padding: 32px;
     text-align: center;
     color: var(--text-muted);
     font-size: 12px;
-`,xo=M.div`
+`,So=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -910,24 +910,24 @@ Error generating stack: `+e.message+`
         line-height: 1.65;
         color: var(--text-muted);
     }
-`,So=[`debug`,`info`,`warning`,`error`],Co={debug:`Debug`,info:`Info`,warning:`Warning`,error:`Error`},wo={debug:`DBG`,info:`INF`,warning:`WRN`,error:`ERR`},To=e=>e===`error`?`#fb7185`:e===`warning`?`#fbbf24`:e===`info`?`#60a5fa`:e===`debug`?`#6f6885`:`transparent`;function Eo({log:e}){let{status:t,lines:n,clear:r}=e,[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(new Set),[c,l]=(0,_.useState)(!0),[u,d]=(0,_.useState)(!1),[f,p]=(0,_.useState)(null),m=(0,_.useRef)(null),h=(0,_.useMemo)(()=>Do(n,i,o),[n,i,o]);(0,_.useEffect)(()=>{c&&m.current&&(m.current.scrollTop=m.current.scrollHeight)},[h,c]),(0,_.useEffect)(()=>{if(!f)return;let e=window.setTimeout(()=>p(null),5e3);return()=>window.clearTimeout(e)},[f]);let g=e=>s(t=>{let n=new Set(t);return n.delete(e)||n.add(e),n});return(0,P.jsxs)(Ao,{children:[(0,P.jsxs)(jo,{children:[(0,P.jsxs)(Mo,{children:[(0,P.jsxs)(Po,{children:[(0,P.jsx)(dr,{}),(0,P.jsx)(`input`,{"aria-label":`Filter log lines`,onChange:e=>a(e.target.value),placeholder:`Filter lines…`,spellCheck:!1,type:`search`,value:i}),i&&(0,P.jsx)(Fo,{"aria-label":`Clear the filter`,onClick:()=>a(``),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsx)(No,{}),(0,P.jsxs)(Ro,{$active:c,onClick:()=>l(e=>!e),title:c?`Stop scrolling as new lines arrive`:`Scroll to the newest line again`,type:`button`,children:[(0,P.jsx)(zo,{$active:c}),c?`Following`:`Paused`]}),(0,P.jsxs)(Ro,{disabled:n.length===0,onClick:r,title:`Clear the view; the log itself is untouched`,type:`button`,children:[(0,P.jsx)(pr,{}),`Clear`]}),(0,P.jsxs)(Ro,{disabled:n.length===0||u,onClick:async()=>{p(null),d(!0);try{let e=await Xr();e.saved&&p({text:`Exported ${e.lines} lines to ${e.path}.`})}catch(e){p({text:e instanceof Error?e.message:String(e),error:!0})}finally{d(!1)}},title:`Save every line read so far to a file`,type:`button`,children:[(0,P.jsx)(_r,{}),u?`Exporting…`:`Export`]})]}),(0,P.jsx)(Io,{children:So.map(e=>(0,P.jsxs)(Lo,{$level:e,$on:!o.has(e),onClick:()=>g(e),title:`${o.has(e)?`Show`:`Hide`} ${Co[e]} lines`,type:`button`,children:[(0,P.jsx)(`i`,{}),Co[e]]},e))})]}),f&&(0,P.jsxs)(Bo,{$error:f.error,children:[(0,P.jsx)(`span`,{children:f.text}),(0,P.jsx)(`button`,{"aria-label":`Dismiss`,onClick:()=>p(null),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsxs)(Vo,{children:[Gr?n.length===0?t.running?t.exists?(0,P.jsx)(ko,{hint:`VRChat is starting; lines appear here as soon as it writes them.`,title:`Waiting for the log`}):(0,P.jsx)(ko,{hint:`The configured log folder cannot be found. Set VRChat's log folder in Settings.`,title:`Log folder not found`}):(0,P.jsx)(ko,{hint:`Nothing is read while VRChat is closed. Its log appears here once it starts.`,title:`VRChat is not running`}):h.length===0?(0,P.jsx)(ko,{hint:i.trim()?`No line contains “${i.trim()}”.`:`Every line is hidden by the level filter.`,title:`Nothing matches`}):(0,P.jsx)(Ho,{onScroll:()=>{let e=m.current;if(!e)return;let t=e.scrollHeight-e.scrollTop-e.clientHeight<48;t!==c&&l(t)},ref:m,children:h.map(({line:e,level:t})=>e.level===`session`?(0,P.jsx)(Go,{children:`new session`},e.id):(0,P.jsxs)(Uo,{$level:t,children:[(0,P.jsx)(Wo,{children:e.time}),(0,P.jsx)(Ko,{$level:t,children:e.level?wo[t]??e.level:``}),(0,P.jsx)(L,{$level:t,children:Oo(e.message,i)})]},e.id))}):(0,P.jsx)(ko,{hint:`The log is read through the desktop host. Start AntiBot instead of the browser preview.`,title:`Desktop host required`}),!c&&h.length>0&&(0,P.jsxs)(R,{onClick:()=>l(!0),type:`button`,children:[(0,P.jsx)(hr,{}),`Jump to latest`]})]}),(0,P.jsx)(Jo,{children:(0,P.jsx)(`span`,{children:h.length===n.length?`${n.length} lines`:`${h.length} of ${n.length} lines`})})]})}function Do(e,t,n){let r=t.trim().toLowerCase(),i=[],a=``;for(let t of e){t.level&&(a=t.level);let e=t.level||a;n.has(e)||(!r||t.message.toLowerCase().includes(r))&&i.push({line:t,level:e})}return i}function Oo(e,t){let n=t.trim();if(!n)return e;let r=e.split(RegExp(`(${n.replace(/[.*+?^${}()|[\]\\]/g,`\\$&`)})`,`gi`)),i=n.toLowerCase();return r.map((e,t)=>e.toLowerCase()===i?(0,P.jsx)(`mark`,{children:e},t):e)}function ko({title:e,hint:t,children:n}){return(0,P.jsxs)(qo,{children:[(0,P.jsx)(lr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var Ao=M.div`
+`,Co=[`debug`,`info`,`warning`,`error`],wo={debug:`Debug`,info:`Info`,warning:`Warning`,error:`Error`},To={debug:`DBG`,info:`INF`,warning:`WRN`,error:`ERR`},Eo=e=>e===`error`?`#fb7185`:e===`warning`?`#fbbf24`:e===`info`?`#60a5fa`:e===`debug`?`#6f6885`:`transparent`;function Do({log:e}){let{status:t,lines:n,clear:r}=e,[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(new Set),[c,l]=(0,_.useState)(!0),[u,d]=(0,_.useState)(!1),[f,p]=(0,_.useState)(null),m=(0,_.useRef)(null),h=(0,_.useMemo)(()=>Oo(n,i,o),[n,i,o]);(0,_.useEffect)(()=>{c&&m.current&&(m.current.scrollTop=m.current.scrollHeight)},[h,c]),(0,_.useEffect)(()=>{if(!f)return;let e=window.setTimeout(()=>p(null),5e3);return()=>window.clearTimeout(e)},[f]);let g=e=>s(t=>{let n=new Set(t);return n.delete(e)||n.add(e),n});return(0,P.jsxs)(jo,{children:[(0,P.jsxs)(Mo,{children:[(0,P.jsxs)(No,{children:[(0,P.jsxs)(Fo,{children:[(0,P.jsx)(dr,{}),(0,P.jsx)(`input`,{"aria-label":`Filter log lines`,onChange:e=>a(e.target.value),placeholder:`Filter lines…`,spellCheck:!1,type:`search`,value:i}),i&&(0,P.jsx)(Io,{"aria-label":`Clear the filter`,onClick:()=>a(``),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsx)(Po,{}),(0,P.jsxs)(zo,{$active:c,onClick:()=>l(e=>!e),title:c?`Stop scrolling as new lines arrive`:`Scroll to the newest line again`,type:`button`,children:[(0,P.jsx)(Bo,{$active:c}),c?`Following`:`Paused`]}),(0,P.jsxs)(zo,{disabled:n.length===0,onClick:r,title:`Clear the view; the log itself is untouched`,type:`button`,children:[(0,P.jsx)(pr,{}),`Clear`]}),(0,P.jsxs)(zo,{disabled:n.length===0||u,onClick:async()=>{p(null),d(!0);try{let e=await Xr();e.saved&&p({text:`Exported ${e.lines} lines to ${e.path}.`})}catch(e){p({text:e instanceof Error?e.message:String(e),error:!0})}finally{d(!1)}},title:`Save every line read so far to a file`,type:`button`,children:[(0,P.jsx)(_r,{}),u?`Exporting…`:`Export`]})]}),(0,P.jsx)(Lo,{children:Co.map(e=>(0,P.jsxs)(Ro,{$level:e,$on:!o.has(e),onClick:()=>g(e),title:`${o.has(e)?`Show`:`Hide`} ${wo[e]} lines`,type:`button`,children:[(0,P.jsx)(`i`,{}),wo[e]]},e))})]}),f&&(0,P.jsxs)(Vo,{$error:f.error,children:[(0,P.jsx)(`span`,{children:f.text}),(0,P.jsx)(`button`,{"aria-label":`Dismiss`,onClick:()=>p(null),type:`button`,children:(0,P.jsx)(fr,{})})]}),(0,P.jsxs)(Ho,{children:[Gr?n.length===0?t.running?t.exists?(0,P.jsx)(Ao,{hint:`VRChat is starting; lines appear here as soon as it writes them.`,title:`Waiting for the log`}):(0,P.jsx)(Ao,{hint:`The configured log folder cannot be found. Set VRChat's log folder in Settings.`,title:`Log folder not found`}):(0,P.jsx)(Ao,{hint:`Nothing is read while VRChat is closed. Its log appears here once it starts.`,title:`VRChat is not running`}):h.length===0?(0,P.jsx)(Ao,{hint:i.trim()?`No line contains “${i.trim()}”.`:`Every line is hidden by the level filter.`,title:`Nothing matches`}):(0,P.jsx)(Uo,{onScroll:()=>{let e=m.current;if(!e)return;let t=e.scrollHeight-e.scrollTop-e.clientHeight<48;t!==c&&l(t)},ref:m,children:h.map(({line:e,level:t})=>e.level===`session`?(0,P.jsx)(Ko,{children:`new session`},e.id):(0,P.jsxs)(Wo,{$level:t,children:[(0,P.jsx)(Go,{children:e.time}),(0,P.jsx)(L,{$level:t,children:e.level?To[t]??e.level:``}),(0,P.jsx)(R,{$level:t,children:ko(e.message,i)})]},e.id))}):(0,P.jsx)(Ao,{hint:`The log is read through the desktop host. Start AntiBot instead of the browser preview.`,title:`Desktop host required`}),!c&&h.length>0&&(0,P.jsxs)(qo,{onClick:()=>l(!0),type:`button`,children:[(0,P.jsx)(hr,{}),`Jump to latest`]})]}),(0,P.jsx)(Yo,{children:(0,P.jsx)(`span`,{children:h.length===n.length?`${n.length} lines`:`${h.length} of ${n.length} lines`})})]})}function Oo(e,t,n){let r=t.trim().toLowerCase(),i=[],a=``;for(let t of e){t.level&&(a=t.level);let e=t.level||a;n.has(e)||(!r||t.message.toLowerCase().includes(r))&&i.push({line:t,level:e})}return i}function ko(e,t){let n=t.trim();if(!n)return e;let r=e.split(RegExp(`(${n.replace(/[.*+?^${}()|[\]\\]/g,`\\$&`)})`,`gi`)),i=n.toLowerCase();return r.map((e,t)=>e.toLowerCase()===i?(0,P.jsx)(`mark`,{children:e},t):e)}function Ao({title:e,hint:t,children:n}){return(0,P.jsxs)(Jo,{children:[(0,P.jsx)(lr,{size:28}),(0,P.jsx)(`h2`,{children:e}),(0,P.jsx)(`p`,{children:t}),n]})}var jo=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 10px;
     min-height: 0;
-`,jo=M.div`
+`,Mo=M.div`
     display: flex;
     flex-direction: column;
     gap: 8px;
-`,Mo=M.div`
+`,No=M.div`
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-`,No=M.span`
+`,Po=M.span`
     flex: 1;
-`,Po=M.div`
+`,Fo=M.div`
     position: relative;
     display: flex;
     align-items: center;
@@ -965,7 +965,7 @@ Error generating stack: `+e.message+`
             display: none;
         }
     }
-`,Fo=M.button`
+`,Io=M.button`
     position: absolute;
     right: 6px;
     display: grid;
@@ -982,17 +982,17 @@ Error generating stack: `+e.message+`
         color: var(--text-primary);
         background: var(--bg-card-hover);
     }
-`,Io=M.div`
+`,Lo=M.div`
     display: flex;
     gap: 4px;
-`,Lo=M.button`
+`,Ro=M.button`
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 6px 9px;
-    border: 1px solid ${({$on:e,$level:t})=>e?`${To(t)}66`:`var(--border-color)`};
+    border: 1px solid ${({$on:e,$level:t})=>e?`${Eo(t)}66`:`var(--border-color)`};
     border-radius: 999px;
-    background: ${({$on:e,$level:t})=>e?`${To(t)}14`:`transparent`};
+    background: ${({$on:e,$level:t})=>e?`${Eo(t)}14`:`transparent`};
     color: ${({$on:e})=>e?`var(--text-primary)`:`var(--text-muted)`};
     font: inherit;
     font-family: var(--font-mono);
@@ -1005,13 +1005,13 @@ Error generating stack: `+e.message+`
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: ${({$on:e,$level:t})=>e?To(t):`var(--text-muted)`};
+        background: ${({$on:e,$level:t})=>e?Eo(t):`var(--text-muted)`};
     }
 
     &:hover {
         border-color: var(--border-color-hover);
     }
-`,Ro=M.button`
+`,zo=M.button`
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1034,13 +1034,13 @@ Error generating stack: `+e.message+`
         opacity: 0.45;
         cursor: default;
     }
-`,zo=M.span`
+`,Bo=M.span`
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: ${({$active:e})=>e?`var(--accent-primary)`:`var(--text-muted)`};
     box-shadow: ${({$active:e})=>e?`0 0 8px var(--accent-primary)`:`none`};
-`,Bo=M.div`
+`,Vo=M.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1067,7 +1067,7 @@ Error generating stack: `+e.message+`
         color: inherit;
         cursor: pointer;
     }
-`,Vo=M.section`
+`,Ho=M.section`
     position: relative;
     display: flex;
     flex: 1;
@@ -1077,19 +1077,19 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: rgba(9, 7, 16, 0.6);
-`,Ho=M.div`
+`,Uo=M.div`
     flex: 1;
     min-height: 0;
     overflow: auto;
     padding: 6px 0 12px;
     font-family: var(--font-mono);
     font-size: 11.5px;
-`,Uo=M.div`
+`,Wo=M.div`
     display: grid;
     grid-template-columns: 62px 34px minmax(0, 1fr);
     gap: 10px;
     padding: 0 14px;
-    border-left: 2px solid ${({$level:e})=>To(e)};
+    border-left: 2px solid ${({$level:e})=>Eo(e)};
     line-height: 1.7;
     content-visibility: auto;
     contain-intrinsic-size: auto 20px;
@@ -1097,10 +1097,10 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(167, 139, 250, 0.06);
     }
-`,Wo=M.span`
+`,Go=M.span`
     color: var(--text-muted);
     white-space: nowrap;
-`,Go=M.div`
+`,Ko=M.div`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1121,13 +1121,13 @@ Error generating stack: `+e.message+`
     &:hover {
         color: var(--text-secondary);
     }
-`,Ko=M.span`
-    color: ${({$level:e})=>To(e)};
+`,L=M.span`
+    color: ${({$level:e})=>Eo(e)};
     font-size: 9px;
     letter-spacing: 0.04em;
     line-height: 1.95;
     opacity: 0.85;
-`,L=M.span`
+`,R=M.span`
     color: ${({$level:e})=>e===`error`?`#fecaca`:e===`warning`?`#fde68a`:`var(--text-secondary)`};
     white-space: pre-wrap;
     overflow-wrap: anywhere;
@@ -1137,7 +1137,7 @@ Error generating stack: `+e.message+`
         background: rgba(167, 139, 250, 0.28);
         color: var(--text-primary);
     }
-`,R=M.button`
+`,qo=M.button`
     position: absolute;
     right: 18px;
     bottom: 14px;
@@ -1157,7 +1157,7 @@ Error generating stack: `+e.message+`
     &:hover {
         background: var(--bg-card-hover);
     }
-`,qo=M.div`
+`,Jo=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1182,7 +1182,7 @@ Error generating stack: `+e.message+`
         line-height: 1.65;
         color: var(--text-muted);
     }
-`,Jo=M.footer`
+`,Yo=M.footer`
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -1191,12 +1191,12 @@ Error generating stack: `+e.message+`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
-`;async function Yo(){return N.available?await N.request(`operations.snapshot`):[]}async function Xo(){N.available&&await N.request(`operations.clear`)}function Zo(e){return N.on(t=>{t.type===`operations.changed`&&e(t.data)})}function Qo(){let[e,t]=(0,_.useState)([]),[n,r]=(0,_.useState)(!1),i=(0,_.useRef)(!1);return(0,_.useEffect)(()=>{let e=!1,n=Zo(n=>{e||(i.current=!0,t(n))});return Yo().then(n=>{!e&&!i.current&&t(n)},()=>{}),()=>{e=!0,n()}},[]),(0,P.jsx)(z,{children:(0,P.jsxs)(ts,{children:[(0,P.jsxs)(ns,{children:[(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Operation history`}),(0,P.jsx)(`p`,{children:`Every block, chat-box mute and automatic return home, as it happened.`})]}),(0,P.jsxs)(is,{children:[(0,P.jsxs)(rs,{children:[e.length,` action(s)`]}),(0,P.jsx)(as,{$confirming:n,disabled:e.length===0,onBlur:()=>r(!1),onClick:()=>{n?(r(!1),Xo().then(()=>t([]),()=>{})):r(!0)},type:`button`,children:n?`Confirm clear`:`Clear history`})]})]}),(0,P.jsx)(os,{children:e.length===0?(0,P.jsx)(ps,{children:`AntiBot has not taken an automatic action yet.`}):e.map(e=>(0,P.jsxs)(ss,{children:[(0,P.jsx)(cs,{$src:e.avatarUrl,children:!e.avatarUrl&&(e.displayName||`?`).slice(0,1).toUpperCase()}),(0,P.jsx)(ls,{children:$o(e.at)}),(0,P.jsx)(B,{children:es(e.kind)}),(0,P.jsx)(us,{children:e.displayName||`Unknown user`}),(0,P.jsx)(ds,{title:e.detail,children:e.detail}),(0,P.jsxs)(fs,{disabled:e.userId.length===0,onClick:()=>void sr(`https://vrchat.com/home/user/${e.userId}`),title:`Open the VRChat profile`,type:`button`,children:[(0,P.jsx)(Tr,{size:11}),`Profile`]})]},e.id))})]})})}function $o(e){return new Date(e).toLocaleString(`en`,{year:`numeric`,month:`short`,day:`numeric`,hour:`2-digit`,minute:`2-digit`,second:`2-digit`})}function es(e){switch(e){case`block`:return`Blocked`;case`avatarInteractionOff`:return`Avatar interactions off`;case`chatBoxHidden`:return`Chat box hidden`;case`returnHome`:return`Returned home`;case`rejectRequest`:return`Request rejected`;case`undoReject`:return`Rejection undone`;default:return e}}var z=M.div`
+`;async function Xo(){return N.available?await N.request(`operations.snapshot`):[]}async function Zo(){N.available&&await N.request(`operations.clear`)}async function Qo(e){N.available&&await N.request(`operations.undo`,{id:e})}function $o(e){return N.on(t=>{t.type===`operations.changed`&&e(t.data)})}function es(){let[e,t]=(0,_.useState)([]),[n,r]=(0,_.useState)(null),[i,a]=(0,_.useState)(!1),o=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,n=$o(n=>{e||(o.current=!0,t(n))});return Xo().then(n=>{!e&&!o.current&&t(n)},()=>{}),()=>{e=!0,n()}},[]);let s=()=>{i?(a(!1),Zo().then(()=>t([]),()=>{})):a(!0)},c=e=>{e.userId.length!==0&&F(e.userId,e.displayName).then(r,()=>{})},l=e=>{Qo(e.id)};return(0,P.jsxs)(rs,{children:[(0,P.jsxs)(is,{children:[(0,P.jsxs)(as,{children:[(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Operation history`}),(0,P.jsx)(`p`,{children:`Every block, chat-box mute and automatic return home, as it happened.`})]}),(0,P.jsxs)(ss,{children:[(0,P.jsxs)(os,{children:[e.length,` action(s)`]}),(0,P.jsx)(cs,{$confirming:i,disabled:e.length===0,onBlur:()=>a(!1),onClick:s,type:`button`,children:i?`Confirm clear`:`Clear history`})]})]}),(0,P.jsx)(ls,{children:e.length===0?(0,P.jsx)(vs,{children:`AntiBot has not taken an automatic action yet.`}):e.map(e=>(0,P.jsxs)(B,{onClick:()=>c(e),children:[(0,P.jsx)(us,{$src:e.avatarUrl,children:!e.avatarUrl&&(e.displayName||`?`).slice(0,1).toUpperCase()}),(0,P.jsx)(ds,{children:z(e.at)}),(0,P.jsx)(fs,{children:ts(e.kind)}),(0,P.jsx)(ps,{children:e.displayName||`Unknown user`}),(0,P.jsx)(ms,{title:e.detail,children:e.detail}),(0,P.jsxs)(hs,{children:[ns(e)&&(0,P.jsx)(gs,{onClick:t=>{t.stopPropagation(),l(e)},type:`button`,children:`Undo`}),(0,P.jsxs)(_s,{disabled:e.userId.length===0,onClick:t=>{t.stopPropagation(),sr(`https://vrchat.com/home/user/${e.userId}`)},title:`Open the VRChat profile`,type:`button`,children:[(0,P.jsx)(Tr,{size:11}),`Profile`]})]})]},e.id))})]}),n&&(0,P.jsx)(ua,{user:n,now:Date.now(),onClose:()=>r(null)})]})}function z(e){return new Date(e).toLocaleString(`en`,{year:`numeric`,month:`short`,day:`numeric`,hour:`2-digit`,minute:`2-digit`,second:`2-digit`})}function ts(e){switch(e){case`block`:return`Blocked`;case`avatarInteractionOff`:return`Avatar interactions off`;case`chatBoxHidden`:return`Chat box hidden`;case`returnHome`:return`Returned home`;case`rejectRequest`:return`Request rejected`;case`undoReject`:return`Rejection undone`;case`unblock`:return`Unblocked`;case`avatarInteractionOn`:return`Avatar interactions on`;case`chatBoxShown`:return`Chat box shown`;default:return e}}function ns(e){return e.undone?!1:e.kind===`block`||e.kind===`avatarInteractionOff`||e.kind===`chatBoxHidden`}var rs=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
-`,ts=M.div`
+`,is=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1204,7 +1204,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,ns=M.div`
+`,as=M.div`
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1222,17 +1222,17 @@ Error generating stack: `+e.message+`
         font-size: 11px;
         color: var(--text-secondary);
     }
-`,rs=M.span`
+`,os=M.span`
     flex-shrink: 0;
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
-`,is=M.div`
+`,ss=M.div`
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
-`,as=M.button`
+`,cs=M.button`
     padding: 5px 10px;
     border: 1px solid ${({$confirming:e})=>e?`rgba(251, 113, 133, 0.6)`:`var(--border-color)`};
     border-radius: var(--radius-sm);
@@ -1252,22 +1252,27 @@ Error generating stack: `+e.message+`
         opacity: 0.45;
         cursor: default;
     }
-`,os=M.div`
+`,ls=M.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-`,ss=M.div`
+`,B=M.div`
     display: grid;
-    grid-template-columns: 26px 160px 140px minmax(0, 150px) minmax(0, 1fr) 74px;
+    grid-template-columns: 26px 160px 140px minmax(0, 150px) minmax(0, 1fr) 150px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
 
     &:last-child {
         border-bottom: 0;
     }
-`,cs=M.span`
+
+    &:hover {
+        background: rgba(167, 139, 250, 0.06);
+    }
+`,us=M.span`
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1280,28 +1285,46 @@ Error generating stack: `+e.message+`
     color: var(--text-muted);
     font-size: 10px;
     font-weight: 600;
-`,ls=M.span`
+`,ds=M.span`
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
     white-space: nowrap;
-`,B=M.span`
+`,fs=M.span`
     font-size: 10.5px;
     color: #fb7185;
     white-space: nowrap;
-`,us=M.span`
+`,ps=M.span`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 11.5px;
-`,ds=M.span`
+`,ms=M.span`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
-`,fs=M.button`
+`,hs=M.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+`,gs=M.button`
+    padding: 3px 8px;
+    border: 1px solid rgba(251, 113, 133, 0.45);
+    border-radius: var(--radius-sm);
+    background: rgba(251, 113, 133, 0.1);
+    color: #fb7185;
+    font: inherit;
+    font-size: 9.5px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(251, 113, 133, 0.2);
+    }
+`,_s=M.button`
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1325,18 +1348,18 @@ Error generating stack: `+e.message+`
         opacity: 0.4;
         cursor: default;
     }
-`,ps=M.p`
+`,vs=M.p`
     padding: 26px 16px;
     text-align: center;
     font-size: 11.5px;
     color: var(--text-muted);
-`;async function ms(){return N.available?await N.request(`friendRequests.snapshot`):[]}async function hs(){N.available&&await N.request(`friendRequests.clear`)}async function gs(e){N.available&&await N.request(`friendRequests.undo`,{id:e})}function _s(e){return N.on(t=>{t.type===`friendRequests.changed`&&e(t.data)})}function vs({signedIn:e,onSignIn:t}){let[n,r]=(0,_.useState)([]),[i,a]=(0,_.useState)(null),[o,s]=(0,_.useState)(!1),c=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,t=_s(t=>{e||(c.current=!0,r(t))});return ms().then(t=>{!e&&!c.current&&r(t)},()=>{}),()=>{e=!0,t()}},[]);let l=n.filter(e=>e.active).length,u=()=>{o?(s(!1),hs().then(()=>r([]),()=>{})):s(!0)},d=e=>{gs(e.id)};return(0,P.jsxs)(Ss,{children:[!e&&(0,P.jsxs)(Cs,{children:[(0,P.jsxs)(ws,{children:[(0,P.jsx)(`strong`,{children:`Not signed in`}),(0,P.jsx)(`span`,{children:`Sign in to record the friend requests VRChat receives.`})]}),(0,P.jsx)(Ts,{onClick:t,type:`button`,children:`Sign in`})]}),(0,P.jsxs)(Es,{children:[(0,P.jsxs)(Ds,{children:[(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Friend requests`}),(0,P.jsx)(`p`,{children:n.length===0?`Every incoming request is recorded here with the sender's profile.`:`${n.length} recorded · ${l} still pending`})]}),(0,P.jsxs)(Os,{children:[(0,P.jsx)(As,{children:`Faded rows are no longer pending`}),(0,P.jsx)(ks,{$confirming:o,disabled:n.length===0,onBlur:()=>s(!1),onClick:u,type:`button`,children:o?`Confirm clear`:`Clear history`})]})]}),(0,P.jsxs)(js,{children:[(0,P.jsx)(`span`,{}),(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsx)(`span`,{children:`Platform`}),(0,P.jsx)(`span`,{children:`Received`})]}),(0,P.jsx)(Ms,{children:n.length===0?(0,P.jsx)(Ps,{children:`No friend requests recorded yet.`}):ys(n).map(e=>(0,P.jsxs)(`section`,{children:[(0,P.jsx)(Ns,{children:e.day}),e.items.map(e=>(0,P.jsx)(I,{badge:e.rejected?(0,P.jsx)(Fs,{children:`rejected`}):void 0,dim:!e.active,now:e.firstSeen,onSelect:a,timeLabel:xs(e.firstSeen),trailing:e.rejected?(0,P.jsx)(Is,{onClick:t=>{t.stopPropagation(),d(e)},type:`button`,children:`Undo`}):void 0,user:e.user},e.id))]},e.day))})]}),i&&(0,P.jsx)(la,{user:i,now:Date.now(),onClose:()=>a(null)})]})}function ys(e){let t=new Map;for(let n of e){let e=bs(n.firstSeen),r=t.get(e)??[];r.push(n),t.set(e,r)}return[...t].map(([e,t])=>({day:e,items:t}))}function bs(e){let t=new Date(e);return t.toDateString()===new Date().toDateString()?`Today`:t.toLocaleDateString(`en`,{year:`numeric`,month:`short`,day:`numeric`})}function xs(e){return new Date(e).toLocaleTimeString(`en`,{hour:`2-digit`,minute:`2-digit`})}var Ss=M.div`
+`;async function ys(){return N.available?await N.request(`friendRequests.snapshot`):[]}async function bs(){N.available&&await N.request(`friendRequests.clear`)}async function xs(e){N.available&&await N.request(`friendRequests.undo`,{id:e})}function Ss(e){return N.on(t=>{t.type===`friendRequests.changed`&&e(t.data)})}function Cs({signedIn:e,onSignIn:t}){let[n,r]=(0,_.useState)([]),[i,a]=(0,_.useState)(null),[o,s]=(0,_.useState)(!1),c=(0,_.useRef)(!1);(0,_.useEffect)(()=>{let e=!1,t=Ss(t=>{e||(c.current=!0,r(t))});return ys().then(t=>{!e&&!c.current&&r(t)},()=>{}),()=>{e=!0,t()}},[]);let l=n.filter(e=>e.active).length,u=()=>{o?(s(!1),bs().then(()=>r([]),()=>{})):s(!0)},d=e=>{xs(e.id)};return(0,P.jsxs)(Ds,{children:[!e&&(0,P.jsxs)(Os,{children:[(0,P.jsxs)(ks,{children:[(0,P.jsx)(`strong`,{children:`Not signed in`}),(0,P.jsx)(`span`,{children:`Sign in to record the friend requests VRChat receives.`})]}),(0,P.jsx)(As,{onClick:t,type:`button`,children:`Sign in`})]}),(0,P.jsxs)(js,{children:[(0,P.jsxs)(Ms,{children:[(0,P.jsxs)(`div`,{children:[(0,P.jsx)(`h2`,{children:`Friend requests`}),(0,P.jsx)(`p`,{children:n.length===0?`Every incoming request is recorded here with the sender's profile.`:`${n.length} recorded · ${l} still pending`})]}),(0,P.jsxs)(Ns,{children:[(0,P.jsx)(Fs,{children:`Faded rows are no longer pending`}),(0,P.jsx)(Ps,{$confirming:o,disabled:n.length===0,onBlur:()=>s(!1),onClick:u,type:`button`,children:o?`Confirm clear`:`Clear history`})]})]}),(0,P.jsxs)(Is,{children:[(0,P.jsx)(`span`,{}),(0,P.jsx)(`span`,{children:`Name`}),(0,P.jsx)(`span`,{children:`Status`}),(0,P.jsx)(`span`,{children:`Platform`}),(0,P.jsx)(`span`,{children:`Received`})]}),(0,P.jsx)(Ls,{children:n.length===0?(0,P.jsx)(zs,{children:`No friend requests recorded yet.`}):ws(n).map(e=>(0,P.jsxs)(`section`,{children:[(0,P.jsx)(Rs,{children:e.day}),e.items.map(e=>(0,P.jsx)(la,{badge:e.rejected?(0,P.jsx)(Bs,{children:`rejected`}):void 0,dim:!e.active,now:e.firstSeen,onSelect:a,timeLabel:Es(e.firstSeen),trailing:e.rejected?(0,P.jsx)(Vs,{onClick:t=>{t.stopPropagation(),d(e)},type:`button`,children:`Undo`}):void 0,user:e.user},e.id))]},e.day))})]}),i&&(0,P.jsx)(ua,{user:i,now:Date.now(),onClose:()=>a(null)})]})}function ws(e){let t=new Map;for(let n of e){let e=Ts(n.firstSeen),r=t.get(e)??[];r.push(n),t.set(e,r)}return[...t].map(([e,t])=>({day:e,items:t}))}function Ts(e){let t=new Date(e);return t.toDateString()===new Date().toDateString()?`Today`:t.toLocaleDateString(`en`,{year:`numeric`,month:`short`,day:`numeric`})}function Es(e){return new Date(e).toLocaleTimeString(`en`,{hour:`2-digit`,minute:`2-digit`})}var Ds=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 14px;
     min-height: 0;
-`,Cs=M.div`
+`,Os=M.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1345,7 +1368,7 @@ Error generating stack: `+e.message+`
     border: 1px solid rgba(251, 191, 36, 0.35);
     border-radius: var(--radius-md);
     background: rgba(251, 191, 36, 0.08);
-`,ws=M.div`
+`,ks=M.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -1361,7 +1384,7 @@ Error generating stack: `+e.message+`
         line-height: 1.5;
         color: var(--text-secondary);
     }
-`,Ts=M.button`
+`,As=M.button`
     flex-shrink: 0;
     padding: 7px 12px;
     border: 1px solid rgba(251, 191, 36, 0.45);
@@ -1375,7 +1398,7 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
-`,Es=M.div`
+`,js=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1383,7 +1406,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,Ds=M.div`
+`,Ms=M.div`
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -1401,12 +1424,12 @@ Error generating stack: `+e.message+`
         font-size: 11px;
         color: var(--text-secondary);
     }
-`,Os=M.div`
+`,Ns=M.div`
     display: flex;
     align-items: center;
     gap: 10px;
     flex-shrink: 0;
-`,ks=M.button`
+`,Ps=M.button`
     padding: 5px 10px;
     border: 1px solid ${({$confirming:e})=>e?`rgba(251, 113, 133, 0.6)`:`var(--border-color)`};
     border-radius: var(--radius-sm);
@@ -1426,12 +1449,12 @@ Error generating stack: `+e.message+`
         opacity: 0.45;
         cursor: default;
     }
-`,As=M.span`
+`,Fs=M.span`
     flex-shrink: 0;
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
-`,js=M.div`
+`,Is=M.div`
     display: grid;
     grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
     gap: 12px;
@@ -1446,11 +1469,11 @@ Error generating stack: `+e.message+`
     span:last-child {
         text-align: right;
     }
-`,Ms=M.div`
+`,Ls=M.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-`,Ns=M.h3`
+`,Rs=M.h3`
     position: sticky;
     top: 0;
     z-index: 1;
@@ -1463,12 +1486,12 @@ Error generating stack: `+e.message+`
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-`,Ps=M.p`
+`,zs=M.p`
     padding: 26px 16px;
     text-align: center;
     font-size: 11.5px;
     color: var(--text-muted);
-`,Fs=M.span`
+`,Bs=M.span`
     padding: 1px 6px;
     border-radius: 999px;
     background: rgba(251, 113, 133, 0.14);
@@ -1476,7 +1499,7 @@ Error generating stack: `+e.message+`
     font-family: var(--font-mono);
     font-size: 9px;
     white-space: nowrap;
-`,Is=M.button`
+`,Vs=M.button`
     padding: 3px 8px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -1490,18 +1513,18 @@ Error generating stack: `+e.message+`
         border-color: var(--border-color-hover);
         color: var(--text-primary);
     }
-`,Ls={logDirectory:``,defaultLogDirectory:``,avatarApiProviders:[],autoBlock:!0,autoDisableAvatarInteraction:!0,autoHideChatBox:!0,autoReturnHome:!0,autoRejectFriendRequests:!0,threatThreshold:70,whitelist:[]};async function Rs(){return N.available?await N.request(`settings.get`):Ls}async function zs(e){N.available&&await N.request(`settings.save`,e)}async function Bs(){return N.available?await N.request(`whitelist.people`):[]}function Vs({info:e}){let[t,n]=(0,_.useState)(``),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(``),[s,c]=(0,_.useState)([]),[l,u]=(0,_.useState)([]),[d,f]=(0,_.useState)(``),[p,m]=(0,_.useState)(!0),[h,g]=(0,_.useState)(!0),[v,y]=(0,_.useState)(!0),[b,x]=(0,_.useState)(!0),[S,C]=(0,_.useState)(!0),[ee,w]=(0,_.useState)(50),[te,T]=(0,_.useState)([]),[ne,re]=(0,_.useState)(``),[ie,ae]=(0,_.useState)([]),[oe,se]=(0,_.useState)(``),[ce,E]=(0,_.useState)(null),[le,D]=(0,_.useState)(!1);(0,_.useEffect)(()=>{Rs().then(e=>{let t=e.avatarApiProviders??[];n(e.logDirectory??``),i(e.logDirectory??``),o(e.defaultLogDirectory??``),c(t),u(t),m(e.autoBlock),g(e.autoDisableAvatarInteraction),y(e.autoHideChatBox),x(e.autoReturnHome),C(e.autoRejectFriendRequests),w(e.threatThreshold),T(e.whitelist??[]),se(Hs(e.autoBlock,e.autoDisableAvatarInteraction,e.autoHideChatBox,e.autoReturnHome,e.autoRejectFriendRequests,e.threatThreshold,e.whitelist??[])),Bs().then(ae,()=>{})},()=>E(`Could not read the settings.`))},[]);let ue=t.trim(),de=Hs(p,h,v,b,S,ee,te),fe=ue!==r||s.join(`
+`,Hs={logDirectory:``,defaultLogDirectory:``,avatarApiProviders:[],autoBlock:!0,autoDisableAvatarInteraction:!0,autoHideChatBox:!0,autoReturnHome:!0,autoRejectFriendRequests:!0,threatThreshold:70,whitelist:[]};async function Us(){return N.available?await N.request(`settings.get`):Hs}async function Ws(e){N.available&&await N.request(`settings.save`,e)}async function Gs(){return N.available?await N.request(`whitelist.people`):[]}function Ks({info:e}){let[t,n]=(0,_.useState)(``),[r,i]=(0,_.useState)(``),[a,o]=(0,_.useState)(``),[s,c]=(0,_.useState)([]),[l,u]=(0,_.useState)([]),[d,f]=(0,_.useState)(``),[p,m]=(0,_.useState)(!0),[h,g]=(0,_.useState)(!0),[v,y]=(0,_.useState)(!0),[b,x]=(0,_.useState)(!0),[S,C]=(0,_.useState)(!0),[ee,w]=(0,_.useState)(50),[te,T]=(0,_.useState)([]),[ne,re]=(0,_.useState)(``),[ie,ae]=(0,_.useState)([]),[oe,se]=(0,_.useState)(``),[ce,E]=(0,_.useState)(null),[le,D]=(0,_.useState)(!1);(0,_.useEffect)(()=>{Us().then(e=>{let t=e.avatarApiProviders??[];n(e.logDirectory??``),i(e.logDirectory??``),o(e.defaultLogDirectory??``),c(t),u(t),m(e.autoBlock),g(e.autoDisableAvatarInteraction),y(e.autoHideChatBox),x(e.autoReturnHome),C(e.autoRejectFriendRequests),w(e.threatThreshold),T(e.whitelist??[]),se(qs(e.autoBlock,e.autoDisableAvatarInteraction,e.autoHideChatBox,e.autoReturnHome,e.autoRejectFriendRequests,e.threatThreshold,e.whitelist??[])),Gs().then(ae,()=>{})},()=>E(`Could not read the settings.`))},[]);let ue=t.trim(),de=qs(p,h,v,b,S,ee,te),fe=ue!==r||s.join(`
 `)!==l.join(`
-`)||de!==oe,pe=async()=>{E(null),D(!0);try{let e=s.map(e=>e.trim()).filter(e=>e.length>0);await zs({logDirectory:ue,avatarApiProviders:e,autoBlock:p,autoDisableAvatarInteraction:h,autoHideChatBox:v,autoReturnHome:b,autoRejectFriendRequests:S,threatThreshold:ee,whitelist:te}),n(ue),i(ue),c(e),u(e),se(de),Bs().then(ae,()=>{})}catch(e){E(e instanceof Error?e.message:String(e))}finally{D(!1)}},me=async()=>{E(null);try{await Yr()}catch(e){E(e instanceof Error?e.message:String(e))}},he=()=>{let e=d.trim();e.length===0||s.includes(e)||(c([...s,e]),f(``))},ge=()=>{let e=ne.trim();e.length===0||te.includes(e)||(T([...te,e]),re(``))},_e=e=>T(te.filter(t=>t!==e));return(0,P.jsxs)(Ws,{children:[(0,P.jsxs)(Gs,{children:[(0,P.jsxs)(Ks,{children:[(0,P.jsx)(`h2`,{children:`Log source`}),(0,P.jsx)(`span`,{children:`configurable`})]}),(0,P.jsxs)(qs,{children:[(0,P.jsxs)(Js,{children:[(0,P.jsx)($s,{children:`VRChat log folder`}),(0,P.jsx)(Ys,{children:(0,P.jsx)(Qs,{"aria-label":`VRChat log folder`,onChange:e=>n(e.target.value),placeholder:`VRChat's log folder`,spellCheck:!1,value:t})}),(0,P.jsx)(tc,{children:`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`})]}),(0,P.jsxs)(nc,{children:[(0,P.jsxs)(rc,{disabled:!Gr,onClick:me,type:`button`,children:[(0,P.jsx)(mr,{}),`Open folder`]}),(0,P.jsx)(rc,{disabled:!a||ue===a,onClick:()=>n(a),type:`button`,children:`Use VRChat's folder`})]})]})]}),(0,P.jsxs)(Gs,{children:[(0,P.jsxs)(Ks,{children:[(0,P.jsx)(`h2`,{children:`Avatar name lookups`}),(0,P.jsx)(`span`,{children:`same format as VRCX`})]}),(0,P.jsx)(qs,{children:(0,P.jsxs)(Js,{children:[(0,P.jsx)($s,{children:`API endpoints`}),(0,P.jsxs)(tc,{children:[`Tried in order; the first name wins. Each is called as`,(0,P.jsx)(`code`,{children:` ?fileId=file_…`}),` and must answer with JSON containing a`,(0,P.jsx)(`code`,{children:` name`}),`.`]}),(0,P.jsxs)(Xs,{children:[s.length===0&&(0,P.jsx)(Zs,{children:`No endpoint; avatar names stay unknown.`}),s.map((e,t)=>(0,P.jsxs)(Ys,{children:[(0,P.jsx)(Qs,{"aria-label":`Avatar API endpoint`,onChange:e=>{let n=[...s];n[t]=e.target.value,c(n)},spellCheck:!1,value:e}),(0,P.jsx)(rc,{"aria-label":`Remove endpoint`,onClick:()=>c(s.filter((e,n)=>n!==t)),type:`button`,children:(0,P.jsx)(pr,{})})]},`${e}-${t}`))]}),(0,P.jsxs)(Ys,{children:[(0,P.jsx)(Qs,{"aria-label":`New avatar API endpoint`,onChange:e=>f(e.target.value),placeholder:`https://example.com/avatars`,spellCheck:!1,value:d}),(0,P.jsx)(rc,{disabled:d.trim().length===0,onClick:he,type:`button`,children:`Add`})]})]})})]}),(0,P.jsxs)(Gs,{children:[(0,P.jsxs)(Ks,{children:[(0,P.jsx)(`h2`,{children:`Automatic protection`}),(0,P.jsxs)(`span`,{children:[`threat ≥ `,ee,`%`]})]}),(0,P.jsxs)(qs,{children:[(0,P.jsxs)(Js,{children:[(0,P.jsx)($s,{children:`Threat threshold`}),(0,P.jsxs)(Ys,{children:[(0,P.jsx)(ac,{max:100,min:0,onChange:e=>w(Number(e.target.value)),step:5,type:`range`,value:ee}),(0,P.jsxs)(oc,{children:[ee,`%`]})]}),(0,P.jsx)(tc,{children:`At or above this score the actions below run. Friends and whitelisted users are never acted on.`})]}),(0,P.jsxs)(sc,{children:[(0,P.jsx)(Us,{checked:p,hint:`VRChat block: their avatar and interactions are hidden.`,onChange:m,title:`Block the user`}),(0,P.jsx)(Us,{checked:h,hint:`Turn avatar interactions off for the user.`,onChange:g,title:`Disable avatar interactions`}),(0,P.jsx)(Us,{checked:v,hint:`Mute the user's chat box.`,onChange:y,title:`Hide the chat box`}),(0,P.jsx)(Us,{checked:b,hint:`Invite yourself to your home world once per instance.`,onChange:x,title:`Return home`}),(0,P.jsx)(Us,{checked:S,hint:`Hide friend requests from high-threat users; undo from the request list.`,onChange:C,title:`Reject friend requests`})]})]})]}),(0,P.jsxs)(Gs,{children:[(0,P.jsxs)(Ks,{children:[(0,P.jsx)(`h2`,{children:`Whitelist`}),(0,P.jsx)(`span`,{children:`never acted on`})]}),(0,P.jsxs)(qs,{children:[(0,P.jsxs)(Js,{children:[(0,P.jsx)($s,{children:`Add a user`}),(0,P.jsxs)(Ys,{children:[(0,P.jsx)(Qs,{"aria-label":`Whitelisted user id`,onChange:e=>re(e.target.value),placeholder:`usr_…`,spellCheck:!1,value:ne}),(0,P.jsx)(rc,{disabled:ne.trim().length===0,onClick:ge,type:`button`,children:`Add`})]}),(0,P.jsx)(tc,{children:`Paste a VRChat user id. Whitelisted users get a white row and no automatic action.`})]}),(0,P.jsxs)(dc,{children:[te.length===0&&(0,P.jsx)(Zs,{children:`Nobody is whitelisted.`}),te.map(e=>{let t=ie.find(t=>t.userId===e);return(0,P.jsxs)(fc,{children:[(0,P.jsx)(pc,{$src:t?.iconUrl??t?.avatarUrl}),(0,P.jsxs)(mc,{children:[(0,P.jsx)(`strong`,{children:t?.name??e}),(0,P.jsx)(`span`,{children:t?.trust??e})]}),(0,P.jsx)(rc,{"aria-label":`Remove from whitelist`,onClick:()=>_e(e),type:`button`,children:(0,P.jsx)(pr,{})})]},e)})]})]})]}),ce&&(0,P.jsx)(ic,{children:ce}),(0,P.jsx)(nc,{children:(0,P.jsx)(rc,{disabled:!fe||ue.length===0||le,onClick:pe,type:`button`,children:le?`Saving…`:`Save settings`})}),(0,P.jsxs)(Gs,{children:[(0,P.jsxs)(Ks,{children:[(0,P.jsx)(`h2`,{children:`Build`}),(0,P.jsx)(`span`,{children:`app.info`})]}),(0,P.jsx)(qs,{children:(0,P.jsxs)(Js,{children:[(0,P.jsx)($s,{children:`Version`}),(0,P.jsx)(ec,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:`browser preview`}),(0,P.jsx)(tc,{children:`Read from the executable the interface is running in.`})]})})]})]})}function Hs(e,t,n,r,i,a,o){return[e,t,n,r,i,a,...o].join(`|`)}function Us({checked:e,onChange:t,title:n,hint:r}){return(0,P.jsxs)(cc,{children:[(0,P.jsxs)(lc,{children:[(0,P.jsx)(`input`,{checked:e,onChange:e=>t(e.target.checked),type:`checkbox`}),(0,P.jsx)(`span`,{children:n})]}),(0,P.jsx)(uc,{children:r})]})}var Ws=M.div`
+`)||de!==oe,pe=async()=>{E(null),D(!0);try{let e=s.map(e=>e.trim()).filter(e=>e.length>0);await Ws({logDirectory:ue,avatarApiProviders:e,autoBlock:p,autoDisableAvatarInteraction:h,autoHideChatBox:v,autoReturnHome:b,autoRejectFriendRequests:S,threatThreshold:ee,whitelist:te}),n(ue),i(ue),c(e),u(e),se(de),Gs().then(ae,()=>{})}catch(e){E(e instanceof Error?e.message:String(e))}finally{D(!1)}},me=async()=>{E(null);try{await Yr()}catch(e){E(e instanceof Error?e.message:String(e))}},he=()=>{let e=d.trim();e.length===0||s.includes(e)||(c([...s,e]),f(``))},ge=()=>{let e=ne.trim();e.length===0||te.includes(e)||(T([...te,e]),re(``))},_e=e=>T(te.filter(t=>t!==e));return(0,P.jsxs)(Ys,{children:[(0,P.jsxs)(Xs,{children:[(0,P.jsxs)(Zs,{children:[(0,P.jsx)(`h2`,{children:`Log source`}),(0,P.jsx)(`span`,{children:`configurable`})]}),(0,P.jsxs)(Qs,{children:[(0,P.jsxs)($s,{children:[(0,P.jsx)(ic,{children:`VRChat log folder`}),(0,P.jsx)(ec,{children:(0,P.jsx)(rc,{"aria-label":`VRChat log folder`,onChange:e=>n(e.target.value),placeholder:`VRChat's log folder`,spellCheck:!1,value:t})}),(0,P.jsx)(oc,{children:`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`})]}),(0,P.jsxs)(sc,{children:[(0,P.jsxs)(cc,{disabled:!Gr,onClick:me,type:`button`,children:[(0,P.jsx)(mr,{}),`Open folder`]}),(0,P.jsx)(cc,{disabled:!a||ue===a,onClick:()=>n(a),type:`button`,children:`Use VRChat's folder`})]})]})]}),(0,P.jsxs)(Xs,{children:[(0,P.jsxs)(Zs,{children:[(0,P.jsx)(`h2`,{children:`Avatar name lookups`}),(0,P.jsx)(`span`,{children:`same format as VRCX`})]}),(0,P.jsx)(Qs,{children:(0,P.jsxs)($s,{children:[(0,P.jsx)(ic,{children:`API endpoints`}),(0,P.jsxs)(oc,{children:[`Tried in order; the first name wins. Each is called as`,(0,P.jsx)(`code`,{children:` ?fileId=file_…`}),` and must answer with JSON containing a`,(0,P.jsx)(`code`,{children:` name`}),`.`]}),(0,P.jsxs)(tc,{children:[s.length===0&&(0,P.jsx)(nc,{children:`No endpoint; avatar names stay unknown.`}),s.map((e,t)=>(0,P.jsxs)(ec,{children:[(0,P.jsx)(rc,{"aria-label":`Avatar API endpoint`,onChange:e=>{let n=[...s];n[t]=e.target.value,c(n)},spellCheck:!1,value:e}),(0,P.jsx)(cc,{"aria-label":`Remove endpoint`,onClick:()=>c(s.filter((e,n)=>n!==t)),type:`button`,children:(0,P.jsx)(pr,{})})]},`${e}-${t}`))]}),(0,P.jsxs)(ec,{children:[(0,P.jsx)(rc,{"aria-label":`New avatar API endpoint`,onChange:e=>f(e.target.value),placeholder:`https://example.com/avatars`,spellCheck:!1,value:d}),(0,P.jsx)(cc,{disabled:d.trim().length===0,onClick:he,type:`button`,children:`Add`})]})]})})]}),(0,P.jsxs)(Xs,{children:[(0,P.jsxs)(Zs,{children:[(0,P.jsx)(`h2`,{children:`Automatic protection`}),(0,P.jsxs)(`span`,{children:[`threat ≥ `,ee,`%`]})]}),(0,P.jsxs)(Qs,{children:[(0,P.jsxs)($s,{children:[(0,P.jsx)(ic,{children:`Threat threshold`}),(0,P.jsxs)(ec,{children:[(0,P.jsx)(uc,{max:100,min:0,onChange:e=>w(Number(e.target.value)),step:5,type:`range`,value:ee}),(0,P.jsxs)(dc,{children:[ee,`%`]})]}),(0,P.jsx)(oc,{children:`At or above this score the actions below run. Friends and whitelisted users are never acted on.`})]}),(0,P.jsxs)(fc,{children:[(0,P.jsx)(Js,{checked:p,hint:`VRChat block: their avatar and interactions are hidden.`,onChange:m,title:`Block the user`}),(0,P.jsx)(Js,{checked:h,hint:`Turn avatar interactions off for the user.`,onChange:g,title:`Disable avatar interactions`}),(0,P.jsx)(Js,{checked:v,hint:`Mute the user's chat box.`,onChange:y,title:`Hide the chat box`}),(0,P.jsx)(Js,{checked:b,hint:`Invite yourself to your home world once per instance.`,onChange:x,title:`Return home`}),(0,P.jsx)(Js,{checked:S,hint:`Hide friend requests from high-threat users; undo from the request list.`,onChange:C,title:`Reject friend requests`})]})]})]}),(0,P.jsxs)(Xs,{children:[(0,P.jsxs)(Zs,{children:[(0,P.jsx)(`h2`,{children:`Whitelist`}),(0,P.jsx)(`span`,{children:`never acted on`})]}),(0,P.jsxs)(Qs,{children:[(0,P.jsxs)($s,{children:[(0,P.jsx)(ic,{children:`Add a user`}),(0,P.jsxs)(ec,{children:[(0,P.jsx)(rc,{"aria-label":`Whitelisted user id`,onChange:e=>re(e.target.value),placeholder:`usr_…`,spellCheck:!1,value:ne}),(0,P.jsx)(cc,{disabled:ne.trim().length===0,onClick:ge,type:`button`,children:`Add`})]}),(0,P.jsx)(oc,{children:`Paste a VRChat user id. Whitelisted users get a white row and no automatic action.`})]}),(0,P.jsxs)(gc,{children:[te.length===0&&(0,P.jsx)(nc,{children:`Nobody is whitelisted.`}),te.map(e=>{let t=ie.find(t=>t.userId===e);return(0,P.jsxs)(_c,{children:[(0,P.jsx)(vc,{$src:t?.iconUrl??t?.avatarUrl}),(0,P.jsxs)(yc,{children:[(0,P.jsx)(`strong`,{children:t?.name??e}),(0,P.jsx)(`span`,{children:t?.trust??e})]}),(0,P.jsx)(cc,{"aria-label":`Remove from whitelist`,onClick:()=>_e(e),type:`button`,children:(0,P.jsx)(pr,{})})]},e)})]})]})]}),ce&&(0,P.jsx)(lc,{children:ce}),(0,P.jsx)(sc,{children:(0,P.jsx)(cc,{disabled:!fe||ue.length===0||le,onClick:pe,type:`button`,children:le?`Saving…`:`Save settings`})}),(0,P.jsxs)(Xs,{children:[(0,P.jsxs)(Zs,{children:[(0,P.jsx)(`h2`,{children:`Build`}),(0,P.jsx)(`span`,{children:`app.info`})]}),(0,P.jsx)(Qs,{children:(0,P.jsxs)($s,{children:[(0,P.jsx)(ic,{children:`Version`}),(0,P.jsx)(ac,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:`browser preview`}),(0,P.jsx)(oc,{children:`Read from the executable the interface is running in.`})]})})]})]})}function qs(e,t,n,r,i,a,o){return[e,t,n,r,i,a,...o].join(`|`)}function Js({checked:e,onChange:t,title:n,hint:r}){return(0,P.jsxs)(pc,{children:[(0,P.jsxs)(mc,{children:[(0,P.jsx)(`input`,{checked:e,onChange:e=>t(e.target.checked),type:`checkbox`}),(0,P.jsx)(`span`,{children:n})]}),(0,P.jsx)(hc,{children:r})]})}var Ys=M.div`
     display: flex;
     flex-direction: column;
     gap: 18px;
     max-width: 760px;
-`,Gs=M.section`
+`,Xs=M.section`
     display: flex;
     flex-direction: column;
     gap: 10px;
-`,Ks=M.div`
+`,Zs=M.div`
     display: flex;
     align-items: baseline;
     justify-content: space-between;
@@ -1517,7 +1540,7 @@ Error generating stack: `+e.message+`
         font-size: 10px;
         color: var(--text-muted);
     }
-`,qs=M.div`
+`,Qs=M.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1525,22 +1548,22 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,Js=M.div`
+`,$s=M.div`
     display: flex;
     flex-direction: column;
     gap: 5px;
-`,Ys=M.div`
+`,ec=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
-`,Xs=M.div`
+`,tc=M.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
-`,Zs=M.span`
+`,nc=M.span`
     font-size: 11px;
     color: var(--text-muted);
-`,Qs=M.input`
+`,rc=M.input`
     flex: 1;
     min-width: 0;
     padding: 8px 10px;
@@ -1560,18 +1583,18 @@ Error generating stack: `+e.message+`
         outline: none;
         border-color: var(--border-color-hover);
     }
-`,$s=M.span`
+`,ic=M.span`
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`,ec=M.span`
+`,ac=M.span`
     font-family: ${({$mono:e})=>e?`var(--font-mono)`:`var(--font-sans)`};
     font-size: 12px;
     color: var(--text-primary);
     overflow-wrap: anywhere;
-`,tc=M.span`
+`,oc=M.span`
     font-size: 10px;
     line-height: 1.5;
     color: var(--text-muted);
@@ -1579,11 +1602,11 @@ Error generating stack: `+e.message+`
     code {
         font-family: var(--font-mono);
     }
-`,nc=M.div`
+`,sc=M.div`
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-`,rc=M.button`
+`,cc=M.button`
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -1606,28 +1629,28 @@ Error generating stack: `+e.message+`
         opacity: 0.4;
         cursor: default;
     }
-`,ic=M.span`
+`,lc=M.span`
     color: var(--danger);
     font-size: 11px;
-`,ac=M.input`
+`,uc=M.input`
     flex: 1;
     accent-color: var(--accent-primary);
-`,oc=M.strong`
+`,dc=M.strong`
     width: 48px;
     text-align: right;
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--accent-primary);
-`,sc=M.div`
+`,fc=M.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
-`,cc=M.label`
+`,pc=M.label`
     display: flex;
     flex-direction: column;
     gap: 2px;
     cursor: pointer;
-`,lc=M.span`
+`,mc=M.span`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1636,15 +1659,15 @@ Error generating stack: `+e.message+`
     input {
         accent-color: var(--accent-primary);
     }
-`,uc=M.span`
+`,hc=M.span`
     padding-left: 24px;
     font-size: 10.5px;
     color: var(--text-muted);
-`,dc=M.div`
+`,gc=M.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
-`,fc=M.div`
+`,_c=M.div`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1652,7 +1675,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.05);
-`,pc=M.span`
+`,vc=M.span`
     width: 30px;
     height: 30px;
     flex-shrink: 0;
@@ -1660,7 +1683,7 @@ Error generating stack: `+e.message+`
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,mc=M.div`
+`,yc=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1682,7 +1705,7 @@ Error generating stack: `+e.message+`
         font-size: 9.5px;
         color: var(--text-muted);
     }
-`,hc={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},requests:{title:`Friend requests`,subtitle:`Every incoming request AntiBot has recorded, with the sender's profile.`},operations:{title:`Operations`,subtitle:`The automatic actions AntiBot has taken, newest first.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function gc(){let[e,t]=(0,_.useState)(`logs`),[n,r]=(0,_.useState)(null),i=rr(),a=Qr(),o=di().state===`loggedIn`;(0,_.useEffect)(()=>{or().then(r,()=>r(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>N.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:s,subtitle:c}=hc[e];return(0,P.jsxs)(_c,{$rounded:i,children:[(0,P.jsx)(Rr,{}),(0,P.jsxs)(vc,{children:[(0,P.jsx)(kr,{onNavigate:t,page:e,status:a.status}),(0,P.jsxs)(yc,{children:[(0,P.jsxs)(bc,{children:[(0,P.jsxs)(xc,{children:[(0,P.jsx)(`h1`,{children:s}),(0,P.jsx)(`p`,{children:c})]}),(0,P.jsx)(Sc,{children:!o&&(0,P.jsx)(Cc,{onClick:()=>t(`account`),type:`button`,children:`Not signed in · only the log is available`})})]}),(0,P.jsx)(wc,{$flush:e!==`settings`,children:e===`logs`?(0,P.jsx)(Eo,{log:a}):e===`instance`?(0,P.jsx)(F,{signedIn:o,onSignIn:()=>t(`account`)}):e===`requests`?(0,P.jsx)(vs,{signedIn:o,onSignIn:()=>t(`account`)}):e===`operations`?(0,P.jsx)(Qo,{}):e===`account`?(0,P.jsx)(fi,{}):(0,P.jsx)(Vs,{info:n})}),(0,P.jsx)(Tc,{children:(0,P.jsx)(`span`,{children:n?`v${n.version} · ${n.platform}`:`browser preview`})})]})]}),(0,P.jsx)(ar,{})]})}var _c=M.div`
+`,bc={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},requests:{title:`Friend requests`,subtitle:`Every incoming request AntiBot has recorded, with the sender's profile.`},operations:{title:`Operations`,subtitle:`The automatic actions AntiBot has taken, newest first.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function xc(){let[e,t]=(0,_.useState)(`logs`),[n,r]=(0,_.useState)(null),i=rr(),a=Qr(),o=di().state===`loggedIn`;(0,_.useEffect)(()=>{or().then(r,()=>r(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>N.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:s,subtitle:c}=bc[e];return(0,P.jsxs)(Sc,{$rounded:i,children:[(0,P.jsx)(Rr,{}),(0,P.jsxs)(Cc,{children:[(0,P.jsx)(kr,{onNavigate:t,page:e,status:a.status}),(0,P.jsxs)(wc,{children:[(0,P.jsxs)(Tc,{children:[(0,P.jsxs)(Ec,{children:[(0,P.jsx)(`h1`,{children:s}),(0,P.jsx)(`p`,{children:c})]}),(0,P.jsx)(Dc,{children:!o&&(0,P.jsx)(Oc,{onClick:()=>t(`account`),type:`button`,children:`Not signed in · only the log is available`})})]}),(0,P.jsx)(kc,{$flush:e!==`settings`,children:e===`logs`?(0,P.jsx)(Do,{log:a}):e===`instance`?(0,P.jsx)(I,{signedIn:o,onSignIn:()=>t(`account`)}):e===`requests`?(0,P.jsx)(Cs,{signedIn:o,onSignIn:()=>t(`account`)}):e===`operations`?(0,P.jsx)(es,{}):e===`account`?(0,P.jsx)(fi,{}):(0,P.jsx)(Ks,{info:n})}),(0,P.jsx)(Ac,{children:(0,P.jsx)(`span`,{children:n?`v${n.version} · ${n.platform}`:`browser preview`})})]})]}),(0,P.jsx)(ar,{})]})}var Sc=M.div`
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -1692,26 +1715,26 @@ Error generating stack: `+e.message+`
     /* An undecorated window gets no frame from the compositor, so the corners are drawn here. */
     border-radius: ${({$rounded:e})=>e?`10px`:`0`};
     box-shadow: ${({$rounded:e})=>e?`inset 0 0 0 1px var(--border-color)`:`none`};
-`,vc=M.div`
+`,Cc=M.div`
     display: flex;
     flex: 1;
     min-height: 0;
     background: radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
     radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
     var(--bg-primary);
-`,yc=M.main`
+`,wc=M.main`
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
-`,bc=M.header`
+`,Tc=M.header`
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
     padding: 22px 26px 16px;
     border-bottom: 1px solid var(--border-color);
-`,xc=M.div`
+`,Ec=M.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -1726,12 +1749,12 @@ Error generating stack: `+e.message+`
         font-size: 12px;
         color: var(--text-secondary);
     }
-`,Sc=M.div`
+`,Dc=M.div`
     display: flex;
     align-items: center;
     gap: 8px;
     padding-top: 4px;
-`,Cc=M.button`
+`,Oc=M.button`
     display: flex;
     align-items: center;
     gap: 7px;
@@ -1748,14 +1771,14 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
-`,wc=M.div`
+`,kc=M.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
     padding: ${({$flush:e})=>e?`16px 26px 18px`:`22px 30px 30px`};
     overflow: ${({$flush:e})=>e?`hidden`:`auto`};
-`,Tc=M.footer`
+`,Ac=M.footer`
     display: flex;
     justify-content: flex-end;
     gap: 16px;
@@ -1770,4 +1793,4 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,Ec=document.getElementById(`root`);Ec&&(0,v.createRoot)(Ec).render((0,P.jsx)(_.StrictMode,{children:(0,P.jsx)(gc,{})}));
+`,jc=document.getElementById(`root`);jc&&(0,v.createRoot)(jc).render((0,P.jsx)(_.StrictMode,{children:(0,P.jsx)(xc,{})}));

@@ -69,10 +69,10 @@ internal static partial class ThreatScoring
         var hexSuffix = HexSuffixPattern().IsMatch(name);
         var body = hexSuffix ? name[..^5] : name;
 
+        // A plain number in a name ("20年はやる", "Alice 2024") is normal; only the generated
+        // pattern (a hex tag plus digits in the name itself) counts.
         if (hexSuffix && DigitPattern().IsMatch(body))
             score += 50;
-        else if (DigitRunPattern().IsMatch(name))
-            score += 10;
 
         if (MixedPattern().IsMatch(name))
             score += 10;
@@ -85,9 +85,6 @@ internal static partial class ThreatScoring
 
     [GeneratedRegex(@"[A-Za-z]{4,}\d{2,}[A-Za-z]{2,}", RegexOptions.CultureInvariant)]
     private static partial Regex MixedPattern();
-
-    [GeneratedRegex(@"\d{2,}", RegexOptions.CultureInvariant)]
-    private static partial Regex DigitRunPattern();
 
     [GeneratedRegex(@"\d", RegexOptions.CultureInvariant)]
     private static partial Regex DigitPattern();

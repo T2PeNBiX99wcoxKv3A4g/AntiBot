@@ -97,7 +97,8 @@ internal sealed class Database : Singleton<Database>
                                       user_id      TEXT NOT NULL DEFAULT '',
                                       display_name TEXT NOT NULL DEFAULT '',
                                       detail       TEXT NOT NULL DEFAULT '',
-                                      avatar_url   TEXT
+                                      avatar_url   TEXT,
+                                      undone       INTEGER NOT NULL DEFAULT 0
                                   );
 
                                   CREATE TABLE IF NOT EXISTS account (
@@ -168,6 +169,13 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE operations ADD COLUMN avatar_url TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE operations ADD COLUMN undone INTEGER NOT NULL DEFAULT 0";
                 migration.ExecuteNonQuery();
             });
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
@@ -464,7 +472,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
-                                  SELECT id, at, kind, user_id, display_name, detail, avatar_url
+                                  SELECT id, at, kind, user_id, display_name, detail, avatar_url, undone
                                   FROM operations
                                   ORDER BY id DESC
                                   LIMIT $limit
@@ -475,7 +483,7 @@ internal sealed class Database : Singleton<Database>
             using var reader = command.ExecuteReader();
             while (reader.Read())
                 rows.Add(new(reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
-                    reader.GetString(4), reader.GetString(5), reader.GetStringOrNull(6)));
+                    reader.GetString(4), reader.GetString(5), reader.GetStringOrNull(6), reader.GetInt64(7) != 0));
 
             return rows;
         });
@@ -485,8 +493,48 @@ internal sealed class Database : Singleton<Database>
             .GetOrElse(_ => new List<OperationEntry>());
     }
 
-    public async Task ClearOperationsAsync(CancellationToken token = default)
+    /// <summary>One recorded action, for the undo button.</summary>
+    public OperationEntry? LoadOperation(long id)
     {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  SELECT id, at, kind, user_id, display_name, detail, avatar_url, undone
+                                  FROM operations
+                                  WHERE id = $id
+                                  """;
+            command.Parameters.AddWithValue("$id", id);
+
+            using var reader = command.ExecuteReader();
+            return reader.Read()
+                ? new OperationEntry(reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2),
+                    reader.GetString(3), reader.GetString(4), reader.GetString(5), reader.GetStringOrNull(6),
+                    reader.GetInt64(7) != 0)
+                : null;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the operation"))
+            .GetOrNull();
+    }
+
+    public async Task SetOperationUndoneAsync(long id, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE operations SET undone = 1 WHERE id = $id";
+            command.Parameters.AddWithValue("$id", id);
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not update the operation"));
+    }
+
+    public async Task ClearOperationsAsync(CancellationToken token = default)    {
         var attempt = await Try.Run(async () =>
         {
             await using var connection = await OpenAsync(token);

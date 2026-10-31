@@ -73,3 +73,8 @@ export function onInstanceChanged(handler: (snapshot: InstanceSnapshot) => void)
         if (message.type === "instance.changed") handler(message.data as InstanceSnapshot);
     });
 }
+
+/** One user's full description, for the details panel outside the instance page. */
+export async function describeUser(userId: string, displayName: string): Promise<InstanceUser> {
+    return await Native.request<InstanceUser>("user.describe", {userId, displayName});
+}
