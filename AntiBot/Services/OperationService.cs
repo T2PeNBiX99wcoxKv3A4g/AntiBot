@@ -14,10 +14,6 @@ internal sealed class OperationService : Singleton<OperationService>
     public OperationService()
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
-
-        // An old row has no avatar; fill it in as the profiles arrive.
-        PlayerService.Instance.Updated += Publish;
-        AvatarService.Instance.Updated += Publish;
     }
 
     private async Task<NativeResponse?> HandleMessageAsync(NativeContext context)

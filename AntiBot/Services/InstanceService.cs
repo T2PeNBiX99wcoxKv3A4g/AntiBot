@@ -28,6 +28,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     private string _instance = "";
     private string _localName = "";
     private string _pushed = "";
+    private int _publishScheduled;
     private bool _running;
     private string _world = "";
 
@@ -36,8 +37,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         NativeBridge.MessageReceived += HandleMessageAsync;
         VrchatLogService.Instance.LinesRead += OnLinesRead;
         AuthService.Instance.Changed += OnAuthChanged;
-        PlayerService.Instance.Updated += Publish;
-        AvatarService.Instance.Updated += Publish;
+        PlayerService.Instance.Updated += SchedulePublish;
+        AvatarService.Instance.Updated += SchedulePublish;
         PresenceService.Instance.Updated += Publish;
 
         _ = RestoreAsync();
@@ -456,6 +457,24 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         {
             var attempt = await Try.Run(() => Database.Instance.AddEventsAsync(events));
             attempt.OnFailure(ex => Log.Warning(ex, "Failed to store {Count} instance event(s)", events.Count));
+        });
+    }
+
+    /// <summary>
+    ///     A profile arrives one at a time; rebuilding the whole snapshot for each one would slow the
+    ///     queue down, so the redraw is coalesced.
+    /// </summary>
+    private void SchedulePublish()
+    {
+        if (Interlocked.Exchange(ref _publishScheduled, 1) == 1)
+            return;
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(300);
+
+            Interlocked.Exchange(ref _publishScheduled, 0);
+            Publish();
         });
     }
 

@@ -29,8 +29,8 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     /// <summary>The image file VRChat uses for its default Robot avatar.</summary>
     private const string RobotFileId = "file_0e8c4e32-7444-44ea-ade4-313c010d4bae";
 
-    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(300);
-    private const int Workers = 2;
+    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(150);
+    private const int Workers = 3;
 
     private readonly HttpClient _http = new()
     {

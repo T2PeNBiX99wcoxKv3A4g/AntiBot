@@ -17,10 +17,10 @@ namespace AntiBot.Services;
 internal sealed class PlayerService : Singleton<PlayerService>
 {
     /// <summary>The gap between two lookups. VRChat publishes no limit, so this stays conservative.</summary>
-    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(100);
 
     /// <summary>How many lookups run side by side; a full instance should be ready in seconds.</summary>
-    private const int Workers = 3;
+    private const int Workers = 5;
 
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);
