@@ -487,7 +487,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
             $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
-            $"{user.IsFriend}:{user.Pronouns}")));
+            $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}")));
 
     private InstanceSnapshot Snapshot()
     {

@@ -80,6 +80,7 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                     now={request.firstSeen}
                                     onSelect={setSelected}
                                     timeLabel={timeLabel(request.firstSeen)}
+                                    tone={request.active ? "risk" : undefined}
                                     user={request.user}
                                 />
                             ))}

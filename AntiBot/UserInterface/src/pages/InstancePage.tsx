@@ -42,7 +42,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 
     // "In instance" is a duration, so it has to move as time passes.
     useEffect(() => {
-        const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+        const timer = window.setInterval(() => setNow(Date.now()), 5_000);
         return () => window.clearInterval(timer);
     }, []);
 
@@ -141,19 +141,24 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     );
 }
 
-export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = false}: {
+/** How a row is tinted: the account itself, a friend, or a risk (a pending request today). */
+export type RowTone = "none" | "self" | "friend" | "risk";
+
+export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = false, tone}: {
     user: InstanceUser;
     now: number;
     onSelect: (user: InstanceUser) => void;
     showTime?: boolean;
     timeLabel?: string;
     dim?: boolean;
+    tone?: RowTone;
 }) {
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
+    const resolved: RowTone = tone ?? (user.local ? "self" : user.isFriend ? "friend" : "none");
 
     return (
-        <Row $local={user.local} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
+        <Row $tone={resolved} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
             <AvatarCell>
                 {icon ? <AvatarLarge $src={icon}/> : <Dash>—</Dash>}
             </AvatarCell>
@@ -667,7 +672,33 @@ const Rows = styled.div`
     overflow-y: auto;
 `;
 
-const Row = styled.div<{ $local: boolean; $showTime: boolean; $dim?: boolean }>`
+function toneBackground(tone: RowTone, hover = false): string {
+    switch (tone) {
+        case "self":
+            return hover ? "rgba(167, 139, 250, 0.16)" : "rgba(167, 139, 250, 0.09)";
+        case "friend":
+            return hover ? "rgba(255, 204, 0, 0.16)" : "rgba(255, 204, 0, 0.09)";
+        case "risk":
+            return hover ? "rgba(251, 113, 133, 0.16)" : "rgba(251, 113, 133, 0.08)";
+        default:
+            return hover ? "rgba(167, 139, 250, 0.06)" : "transparent";
+    }
+}
+
+function toneBorder(tone: RowTone): string {
+    switch (tone) {
+        case "self":
+            return "var(--accent-primary)";
+        case "friend":
+            return "#ffcc00";
+        case "risk":
+            return "#fb7185";
+        default:
+            return "transparent";
+    }
+}
+
+const Row = styled.div<{ $tone: RowTone; $showTime: boolean; $dim?: boolean }>`
     display: grid;
     grid-template-columns: ${({$showTime}) =>
         $showTime ? "40px minmax(0, 1fr) 200px 78px 96px" : "40px minmax(0, 1fr) 200px 78px"};
@@ -675,7 +706,8 @@ const Row = styled.div<{ $local: boolean; $showTime: boolean; $dim?: boolean }>`
     align-items: center;
     padding: 8px 16px;
     opacity: ${({$dim}) => $dim ? 0.55 : 1};
-    border-left: 2px solid ${({$local}) => $local ? "var(--accent-primary)" : "transparent"};
+    background: ${({$tone}) => toneBackground($tone)};
+    border-left: 2px solid ${({$tone}) => toneBorder($tone)};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 
@@ -684,7 +716,7 @@ const Row = styled.div<{ $local: boolean; $showTime: boolean; $dim?: boolean }>`
     }
 
     &:hover {
-        background: rgba(167, 139, 250, 0.06);
+        background: ${({$tone}) => toneBackground($tone, true)};
     }
 `;
 
