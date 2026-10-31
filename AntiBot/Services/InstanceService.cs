@@ -679,7 +679,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         var avatarName = AvatarService.Instance.NameFor(fileId);
         var isRobot = AvatarService.IsRobot(fileId);
-        var threat = ThreatScoring.Assess(profile, name, avatarName, isRobot);
+        var threat = ThreatScoring.Assess(profile, name, avatarName, isRobot, platform);
 
         return new(
             userId,
