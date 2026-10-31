@@ -461,13 +461,23 @@ function StorageChoice({auth, busy, error, run}: {
             </CardHead>
 
             <Options>
-                <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
+                <Option
+                    $active={mode === "software"}
+                    $disabled={!softwareAvailable}
+                    onClick={() => softwareAvailable && setMode("software")}
+                    type="button"
+                >
                     <OptionHead>
-                        <strong>Do not remember</strong>
-                        <Tag>nothing on disk</Tag>
-                        <Platforms>Windows · Linux</Platforms>
+                        <strong>Software key</strong>
+                        <Tag>{softwareAvailable ? "obfuscation" : "unavailable"}</Tag>
+                        <Safety $tone="weak">weak</Safety>
+                        <Platforms>Linux</Platforms>
                     </OptionHead>
-                    <p>Nothing is written; the next launch signs in again.</p>
+                    <p>
+                        {softwareAvailable
+                            ? "AES-256-GCM with a key file next to the session; obfuscation only, not real protection."
+                            : "Only offered on Linux."}
+                    </p>
                 </Option>
 
                 <Option
@@ -479,6 +489,7 @@ function StorageChoice({auth, busy, error, run}: {
                     <OptionHead>
                         <strong>{systemName}</strong>
                         <Tag>{systemAvailable ? "encrypted" : "unavailable"}</Tag>
+                        <Safety $tone="fair">fair</Safety>
                         <Platforms>
                             {systemName === "Windows DPAPI" ? "Windows" :
                                 systemName === "System keyring" ? "Linux" : "Windows · Linux"}
@@ -502,6 +513,7 @@ function StorageChoice({auth, busy, error, run}: {
                     <OptionHead>
                         <strong>TPM</strong>
                         <Tag>{tpmAvailable ? "no prompt" : "unavailable"}</Tag>
+                        <Safety $tone="good">good</Safety>
                         <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
                     <p>
@@ -520,6 +532,7 @@ function StorageChoice({auth, busy, error, run}: {
                     <OptionHead>
                         <strong>Windows Hello</strong>
                         <Tag>{helloAvailable ? "PIN / biometrics" : "unavailable"}</Tag>
+                        <Safety $tone="strong">strong</Safety>
                         <Platforms>Windows</Platforms>
                     </OptionHead>
                     <p>
@@ -529,31 +542,24 @@ function StorageChoice({auth, busy, error, run}: {
                     </p>
                 </Option>
 
-                <Option
-                    $active={mode === "software"}
-                    $disabled={!softwareAvailable}
-                    onClick={() => softwareAvailable && setMode("software")}
-                    type="button"
-                >
-                    <OptionHead>
-                        <strong>Software key</strong>
-                        <Tag>{softwareAvailable ? "obfuscation" : "unavailable"}</Tag>
-                        <Platforms>Linux</Platforms>
-                    </OptionHead>
-                    <p>
-                        {softwareAvailable
-                            ? "AES-256-GCM with a key file next to the session; obfuscation only, not real protection."
-                            : "Only offered on Linux."}
-                    </p>
-                </Option>
-
                 <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
                     <OptionHead>
                         <strong>Password</strong>
                         <Tag>asks every launch</Tag>
+                        <Safety $tone="strong">strong</Safety>
                         <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
                     <p>AES-256-GCM with a key derived from your password; asked each launch.</p>
+                </Option>
+
+                <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
+                    <OptionHead>
+                        <strong>Do not remember</strong>
+                        <Tag>nothing on disk</Tag>
+                        <Safety $tone="safest">safest</Safety>
+                        <Platforms>Windows · Linux</Platforms>
+                    </OptionHead>
+                    <p>Nothing is written; the next launch signs in again.</p>
                 </Option>
             </Options>
 
@@ -1014,6 +1020,45 @@ const Platforms = styled.span`
     font-family: var(--font-mono);
     font-size: 9px;
 `;
+
+const Safety = styled.span<{ $tone: "weak" | "fair" | "good" | "strong" | "safest" }>`
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: ${({$tone}) => safetyBackground($tone)};
+    color: ${({$tone}) => safetyColor($tone)};
+    font-family: var(--font-mono);
+    font-size: 9px;
+`;
+
+function safetyColor(tone: string) {
+    switch (tone) {
+        case "weak":
+            return "#f87171";
+        case "fair":
+            return "#fb923c";
+        case "good":
+            return "#fbbf24";
+        case "strong":
+            return "#4ade80";
+        default:
+            return "#60a5fa";
+    }
+}
+
+function safetyBackground(tone: string) {
+    switch (tone) {
+        case "weak":
+            return "rgba(248, 113, 113, 0.14)";
+        case "fair":
+            return "rgba(251, 146, 60, 0.14)";
+        case "good":
+            return "rgba(251, 191, 36, 0.14)";
+        case "strong":
+            return "rgba(74, 222, 128, 0.14)";
+        default:
+            return "rgba(96, 165, 250, 0.14)";
+    }
+}
 
 const DeviceBody = styled.div`
     display: flex;
