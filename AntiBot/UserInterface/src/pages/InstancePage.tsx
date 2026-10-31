@@ -97,9 +97,9 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                 <InstanceRow>
                                     <InstanceBadge>
                                         {instanceRegion && <RegionFlag region={instanceRegion}/>}
-                                        {instanceDisplayName || instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
                                         {instanceRestricted && <LockIcon size={12}/>}
                                         {instanceAgeGated && <AgeGate>18+</AgeGate>}
+                                        {instanceDisplayName || instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
                                     </InstanceBadge>
                                 </InstanceRow>
                             </WorldText>
