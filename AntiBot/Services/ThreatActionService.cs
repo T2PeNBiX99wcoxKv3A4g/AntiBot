@@ -7,7 +7,8 @@ namespace AntiBot.Services;
 /// <summary>
 ///     Runs the automatic protection for a high-threat user, in priority order: send the account home,
 ///     block the user, turn their avatar interactions off and hide their chat box. Disabled actions are
-///     skipped, and the whole sequence is serialized because VRChat rate-limits these calls.
+///     skipped, friends are treated like whitelisted users, and the whole sequence is serialized because
+///     VRChat rate-limits these calls.
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
@@ -40,7 +41,8 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
         foreach (var user in snapshot.Users)
         {
-            if (user.Local || user.Threat < settings.ThreatThreshold)
+            // Friends are treated like whitelisted users: never act on someone already on the list.
+            if (user.Local || user.IsFriend || user.Threat < settings.ThreatThreshold)
                 continue;
 
             if (settings.Whitelist.Contains(user.UserId, StringComparer.OrdinalIgnoreCase))
@@ -127,6 +129,8 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var settings = SettingsService.Instance.Current;
 
         if (!settings.AutoRejectFriendRequests || !request.Active || request.Rejected)
+            return;
+        if (request.User.IsFriend)
             return;
         if (request.User.Threat < settings.ThreatThreshold)
             return;
