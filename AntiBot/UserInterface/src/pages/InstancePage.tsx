@@ -106,7 +106,8 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                         </World>
 
                         <Count>
-                            <strong>{capacity ? `${users.length}/${capacity}` : users.length}</strong>
+                            <strong>{users.length}</strong>
+                            {(capacity ?? 0) > 0 && <span>/{capacity} users</span>}
                         </Count>
                     </Summary>
 
@@ -654,9 +655,8 @@ const Count = styled.div`
     }
 
     span {
-        font-size: 9px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.02em;
         color: var(--text-muted);
     }
 `;
