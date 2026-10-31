@@ -605,7 +605,7 @@ Error generating stack: `+e.message+`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-`;function Ga(e,t=!1){switch(e){case`self`:return t?`rgba(167, 139, 250, 0.16)`:`rgba(167, 139, 250, 0.09)`;case`friend`:return t?`rgba(255, 204, 0, 0.16)`:`rgba(255, 204, 0, 0.09)`;case`white`:return t?`rgba(255, 255, 255, 0.16)`:`rgba(255, 255, 255, 0.10)`;default:return t?`rgba(167, 139, 250, 0.06)`:`transparent`}}function Ka(e,t=!1){return`rgba(251, 113, 133, ${(.05+Math.min(e,100)/100*.2+(t?.06:0)).toFixed(3)})`}function qa(e){switch(e){case`self`:return`var(--accent-primary)`;case`friend`:return`#ffcc00`;case`white`:return`rgba(255, 255, 255, 0.5)`;case`threat`:return`#fb7185`;default:return`transparent`}}function Ja(e){return`hsl(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%)`}function Ya(e){return`hsla(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%, 0.14)`}var Xa=M.div`
+`;function Ga(e,t=!1){switch(e){case`self`:return t?`rgba(167, 139, 250, 0.16)`:`rgba(167, 139, 250, 0.09)`;case`friend`:return t?`rgba(255, 204, 0, 0.16)`:`rgba(255, 204, 0, 0.09)`;case`white`:return t?`rgba(255, 255, 255, 0.16)`:`rgba(255, 255, 255, 0.10)`;default:return t?`rgba(167, 139, 250, 0.06)`:`transparent`}}function Ka(e,t=!1){return`rgba(255, 0, 0, ${((Math.min(Math.max(e,0),100)/100)**1.8*.7+(t?.08:0)).toFixed(3)})`}function qa(e,t=0){switch(e){case`self`:return`var(--accent-primary)`;case`friend`:return`#ffcc00`;case`white`:return`rgba(255, 255, 255, 0.5)`;case`threat`:return`rgba(255, 0, 0, ${(.1+Math.min(Math.max(t,0),100)/100*.9).toFixed(3)})`;default:return`transparent`}}function Ja(e){return`hsl(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%)`}function Ya(e){return`hsla(${(48-Math.max(0,Math.min(100,e))/100*48).toFixed(0)}, 92%, 62%, 0.14)`}var Xa=M.div`
     display: grid;
     grid-template-columns: ${({$showTime:e})=>Ha(e)};
     gap: 8px;
@@ -613,7 +613,7 @@ Error generating stack: `+e.message+`
     padding: 8px 16px;
     opacity: ${({$dim:e})=>e?.55:1};
     background: ${({$tone:e,$threat:t})=>e===`threat`?Ka(t):Ga(e)};
-    border-left: 2px solid ${({$tone:e})=>qa(e)};
+    border-left: 2px solid ${({$tone:e,$threat:t})=>qa(e,t)};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 

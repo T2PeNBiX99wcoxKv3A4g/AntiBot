@@ -783,13 +783,14 @@ function toneBackground(tone: RowTone, hover = false): string {
     }
 }
 
-/** The higher the score, the stronger the red wash. */
+/** Low scores stay close to the normal row; only high scores get a strong pure-red wash. */
 function threatBackground(score: number, hover = false): string {
-    const alpha = 0.05 + (Math.min(score, 100) / 100) * 0.2 + (hover ? 0.06 : 0);
-    return `rgba(251, 113, 133, ${alpha.toFixed(3)})`;
+    const t = Math.min(Math.max(score, 0), 100) / 100;
+    const alpha = Math.pow(t, 1.8) * 0.7 + (hover ? 0.08 : 0);
+    return `rgba(255, 0, 0, ${alpha.toFixed(3)})`;
 }
 
-function toneBorder(tone: RowTone): string {
+function toneBorder(tone: RowTone, threat = 0): string {
     switch (tone) {
         case "self":
             return "var(--accent-primary)";
@@ -798,7 +799,7 @@ function toneBorder(tone: RowTone): string {
         case "white":
             return "rgba(255, 255, 255, 0.5)";
         case "threat":
-            return "#fb7185";
+            return `rgba(255, 0, 0, ${(0.1 + (Math.min(Math.max(threat, 0), 100) / 100) * 0.9).toFixed(3)})`;
         default:
             return "transparent";
     }
@@ -824,7 +825,7 @@ const Row = styled.div<{ $tone: RowTone; $threat: number; $showTime: boolean; $d
     padding: 8px 16px;
     opacity: ${({$dim}) => $dim ? 0.55 : 1};
     background: ${({$tone, $threat}) => $tone === "threat" ? threatBackground($threat) : toneBackground($tone)};
-    border-left: 2px solid ${({$tone}) => toneBorder($tone)};
+    border-left: 2px solid ${({$tone, $threat}) => toneBorder($tone, $threat)};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
 
