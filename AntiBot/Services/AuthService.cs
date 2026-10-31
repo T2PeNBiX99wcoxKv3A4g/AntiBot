@@ -163,7 +163,24 @@ internal sealed class AuthService : Singleton<AuthService>
             return false;
 
         var (user, _) = await _api.GetCurrentUserAsync(token);
-        return user?.HomeLocation is { Length: > 0 } home && await _api.InviteMyselfAsync(home, token);
+        var home = user?.HomeLocation ?? user?.HomeLocationLegacy;
+
+        if (home is not { Length: > 0 } || !home.StartsWith("wrld_", StringComparison.Ordinal))
+            return false;
+
+        // homeLocation is the home world id; the self-invite endpoint needs worldId:instanceId.
+        if (!home.Contains(':'))
+        {
+            var location = await _api.CreateInstanceAsync(home, token);
+            if (location is not { Length: > 0 })
+                return false;
+
+            home = location;
+        }
+
+        var invited = await _api.InviteMyselfAsync(home, token);
+        Log.Information("Return home to {Location}: {Invited}", home, invited);
+        return invited;
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch

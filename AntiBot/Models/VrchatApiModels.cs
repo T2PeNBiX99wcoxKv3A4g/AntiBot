@@ -17,9 +17,16 @@ internal sealed record ApiAuthUser(
     string? Status,
     string? StatusDescription,
     string? Location,
-    [property: JsonPropertyName("home_location")]
     string? HomeLocation,
-    string[]? RequiresTwoFactorAuth);
+    string[]? RequiresTwoFactorAuth)
+{
+    /// <summary>
+    ///     The OpenAPI model spells this <c>home_location</c>, while the live API returns
+    ///     <c>homeLocation</c>; keep both so going home never depends on which one arrives.
+    /// </summary>
+    [JsonPropertyName("home_location")]
+    public string? HomeLocationLegacy { get; init; }
+}
 
 internal sealed record ApiWorld(string? Id, string? Name, string? ThumbnailImageUrl, string? ImageUrl);
 
@@ -98,6 +105,12 @@ internal sealed record ApiInstance(
     ApiWorld? World,
     ApiInstanceUser[]? Users);
 
+/// <summary>Body for <c>POST instances</c>, used to open the home world when going home.</summary>
+internal sealed record ApiCreateInstanceRequest(
+    [property: JsonPropertyName("worldId")] string WorldId,
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("region")] string Region);
+
 internal sealed record ApiErrorBody(ApiError? Error);
 
 internal sealed record ApiError(string? Message, int? StatusCode);
@@ -144,6 +157,7 @@ internal sealed record CookieRecord(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(ApiAuthUser))]
 [JsonSerializable(typeof(ApiInstance))]
+[JsonSerializable(typeof(ApiCreateInstanceRequest))]
 [JsonSerializable(typeof(ApiUser))]
 [JsonSerializable(typeof(ApiFile))]
 [JsonSerializable(typeof(ApiPublicProfile))]

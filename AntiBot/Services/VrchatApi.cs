@@ -226,6 +226,30 @@ internal sealed class VrchatApi : IDisposable
         return response.IsSuccessStatusCode;
     }
 
+    /// <summary>
+    ///     Creates a new instance of a world. The home location is only a world id, while a self-invite
+    ///     needs <c>worldId:instanceId</c>, so going home opens an instance of the home world first.
+    /// </summary>
+    public async Task<string?> CreateInstanceAsync(string worldId, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new ApiCreateInstanceRequest(worldId, "private", "us"),
+            VrchatJsonContext.Default.ApiCreateInstanceRequest));
+        using var response = await _http.PostAsync("instances", content, token);
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Logger.Warning("Creating an instance of {WorldId} answered {Status}", worldId, response.StatusCode);
+            return null;
+        }
+
+        var instance = Deserialize(body, VrchatJsonContext.Default.ApiInstance);
+        return instance?.Location ??
+               (instance?.WorldId is { Length: > 0 } id && instance.InstanceId is { Length: > 0 } instanceId
+                   ? $"{id}:{instanceId}"
+                   : null);
+    }
+
     /// <summary>Sends the account an invite to a location; its own home world is how it goes home.</summary>
     public async Task<bool> InviteMyselfAsync(string location, CancellationToken token)
     {
