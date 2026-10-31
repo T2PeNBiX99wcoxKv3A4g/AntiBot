@@ -33,8 +33,8 @@ internal sealed class OperationService : Singleton<OperationService>
                 return context.Reply("operations.clear.result", new OkPayload());
 
             case "operations.undo":
-                await UndoAsync(context.Payload<OperationActionRequest>()?.Id ?? 0);
-                return context.Reply("operations.undo.result", new OkPayload());
+                var result = await UndoAsync(context.Payload<OperationActionRequest>()?.Id ?? 0);
+                return context.Reply("operations.undo.result", new OperationUndoPayload(result.Ok, result.Message));
 
             case "user.describe":
                 var request = context.Payload<UserDescribeRequest>();
@@ -56,29 +56,33 @@ internal sealed class OperationService : Singleton<OperationService>
     }
 
     /// <summary>Takes an action back: a block becomes an unblock, and so on.</summary>
-    private async Task UndoAsync(long id)
+    private async Task<(bool Ok, string Message)> UndoAsync(long id)
     {
         var entry = Database.Instance.LoadOperation(id);
         if (entry is null || entry.Undone)
-            return;
+            return (false, "This action cannot be undone.");
 
+        // The unmoderate endpoint removes the moderation of the given type, so it is the original
+        // type that is sent back, not its opposite.
         var (type, kind) = entry.Kind switch
         {
-            "block" => ("unblock", "unblock"),
-            "avatarInteractionOff" => ("interactOn", "avatarInteractionOn"),
-            "chatBoxHidden" => ("unmuteChat", "chatBoxShown"),
+            "block" => ("block", "unblock"),
+            "avatarInteractionOff" => ("interactOff", "avatarInteractionOn"),
+            "chatBoxHidden" => ("muteChat", "chatBoxShown"),
             _ => ((string?)null, (string?)null)
         };
 
         if (type is null)
-            return;
+            return (false, "This action cannot be undone.");
 
         if (!await AuthService.Instance.UnmoderateUserAsync(entry.UserId, type, CancellationToken.None))
-            return;
+            return (false, "VRChat refused to undo it.");
 
         await Database.Instance.SetOperationUndoneAsync(id);
         await LogAsync(kind!, entry.UserId, entry.DisplayName, $"undid {KindLabel(entry.Kind)}",
             entry.AvatarUrl);
+
+        return (true, $"{KindLabel(kind!)} · {entry.DisplayName}");
     }
 
     /// <summary>Entries with an avatar from the profile cache, so rows recorded earlier get one too.</summary>

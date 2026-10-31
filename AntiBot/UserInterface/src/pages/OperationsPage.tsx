@@ -11,6 +11,8 @@ export function OperationsPage() {
     const [entries, setEntries] = useState<OperationEntry[]>([]);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [confirming, setConfirming] = useState(false);
+    const [undoing, setUndoing] = useState<number | null>(null);
+    const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
     const received = useRef(false);
 
     useEffect(() => {
@@ -56,7 +58,16 @@ export function OperationsPage() {
     };
 
     const undo = (entry: OperationEntry) => {
-        void undoOperation(entry.id);
+        setUndoing(entry.id);
+
+        void undoOperation(entry.id).then((result) => {
+            setNotice({ok: result.ok, text: result.message});
+        }, () => {
+            setNotice({ok: false, text: "The host did not answer."});
+        }).finally(() => {
+            setUndoing(null);
+            window.setTimeout(() => setNotice(null), 6000);
+        });
     };
 
     return (
@@ -81,6 +92,8 @@ export function OperationsPage() {
                     </HeadActions>
                 </Head>
 
+                {notice && <Notice $ok={notice.ok}>{notice.text}</Notice>}
+
                 <List>
                     {entries.length === 0 ? (
                         <Empty>AntiBot has not taken an automatic action yet.</Empty>
@@ -96,13 +109,14 @@ export function OperationsPage() {
                             <Actions>
                                 {canUndo(entry) && (
                                     <UndoButton
+                                        disabled={undoing === entry.id}
                                         onClick={(event) => {
                                             event.stopPropagation();
                                             undo(entry);
                                         }}
                                         type="button"
                                     >
-                                        Undo
+                                        {undoing === entry.id ? "Undoing…" : "Undo"}
                                     </UndoButton>
                                 )}
                                 <ProfileButton
@@ -241,6 +255,16 @@ const ClearButton = styled.button<{ $confirming: boolean }>`
         opacity: 0.45;
         cursor: default;
     }
+`;
+
+const Notice = styled.div<{ $ok: boolean }>`
+    margin: 10px 16px 0;
+    padding: 8px 12px;
+    border: 1px solid ${({$ok}) => $ok ? "rgba(74, 222, 128, 0.45)" : "rgba(251, 113, 133, 0.45)"};
+    border-radius: var(--radius-sm);
+    background: ${({$ok}) => $ok ? "rgba(74, 222, 128, 0.1)" : "rgba(251, 113, 133, 0.1)"};
+    color: ${({$ok}) => $ok ? "#4ade80" : "#fb7185"};
+    font-size: 11px;
 `;
 
 const List = styled.div`

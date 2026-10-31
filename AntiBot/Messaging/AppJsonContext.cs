@@ -38,6 +38,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(OpenUrlRequest))]
 [JsonSerializable(typeof(FriendRequestActionRequest))]
 [JsonSerializable(typeof(OperationActionRequest))]
+[JsonSerializable(typeof(OperationUndoPayload))]
 [JsonSerializable(typeof(UserDescribeRequest))]
 [JsonSerializable(typeof(OperationEntry[]))]
 [JsonSerializable(typeof(InstanceSnapshot))]

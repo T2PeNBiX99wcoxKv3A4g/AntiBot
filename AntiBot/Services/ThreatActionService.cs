@@ -114,9 +114,9 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     /// <summary>Undoes an automatic rejection, e.g. after a false positive.</summary>
     public async Task UndoAsync(FriendRequest request)
     {
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "unblock", _stop.Token);
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "interactOn", _stop.Token);
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "unmuteChat", _stop.Token);
+        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "block", _stop.Token);
+        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "interactOff", _stop.Token);
+        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "muteChat", _stop.Token);
 
         await Database.Instance.SetFriendRequestRejectedAsync(request.Id, false, _stop.Token);
         await OperationService.Instance.LogAsync("undoReject", request.UserId, request.User.Name,

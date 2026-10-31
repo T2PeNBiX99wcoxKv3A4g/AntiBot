@@ -27,10 +27,15 @@ export async function clearOperations(): Promise<void> {
 }
 
 /** Takes an action back: a block becomes an unblock, and so on. */
-export async function undoOperation(id: number): Promise<void> {
-    if (!Native.available) return;
+export interface UndoResult {
+    ok: boolean;
+    message: string;
+}
 
-    await Native.request("operations.undo", {id});
+export async function undoOperation(id: number): Promise<UndoResult> {
+    if (!Native.available) return {ok: false, message: "The desktop host is not available."};
+
+    return await Native.request<UndoResult>("operations.undo", {id});
 }
 
 export function onOperationsChanged(handler: (entries: OperationEntry[]) => void): () => void {
