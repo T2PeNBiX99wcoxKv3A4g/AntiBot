@@ -48,7 +48,11 @@ internal sealed class PlayerService : Singleton<PlayerService>
                     CancellationToken.None)))
             : null;
 
-    /// <summary>The bio only exists on the public profile, so it is fetched when the panel opens.</summary>
+    /// <summary>
+    ///     The bio only exists on the public profile, so it is fetched when the panel opens. A stored
+    ///     bio is returned at once and refreshed in the background: the cache makes the panel instant,
+    ///     it does not stop it from updating.
+    /// </summary>
     public async Task<string?> FetchBioAsync(string userId, CancellationToken token)
     {
         if (userId.Length == 0)
@@ -56,20 +60,49 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
         var profile = Get(userId);
         if (profile?.Bio is { Length: > 0 } cached)
-            return cached;
-
-        var publicProfile = await AuthService.Instance.GetPublicProfileAsync(userId, token);
-        if (publicProfile?.Bio is not { Length: > 0 } bio)
-            return null;
-
-        if (profile is not null)
         {
-            var updated = profile with { Bio = bio };
-            _profiles[userId] = updated;
-            await Database.Instance.SavePlayerAsync(updated, token);
+            _ = RefreshBioAsync(userId, token);
+            return cached;
         }
 
-        return bio;
+        return await RefreshBioAsync(userId, token);
+    }
+
+    /// <summary>Reads the public profile and replaces the stored bio when VRChat has a newer one.</summary>
+    private async Task<string?> RefreshBioAsync(string userId, CancellationToken token)
+    {
+        try
+        {
+            var publicProfile = await AuthService.Instance.GetPublicProfileAsync(userId, token);
+            if (publicProfile?.Bio is not { Length: > 0 } bio)
+                return null;
+
+            // Re-read after the request: a full profile lookup may have landed while it was in flight.
+            var current = Get(userId);
+            if (current?.Bio == bio)
+                return bio;
+
+            // The bio is text worth keeping even when the rest of the profile has not arrived yet;
+            // the next full lookup overwrites this minimal row.
+            var updated = current is null
+                ? new PlayerProfile(userId, "", null, null, null, null, null, null, bio, null, [], null, null, null)
+                : current with { Bio = bio };
+
+            _profiles[userId] = updated;
+            await Database.Instance.SavePlayerAsync(updated, token);
+            Updated?.Invoke();
+
+            return bio;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Log.Debug(ex, "Bio refresh for {UserId} failed", userId);
+            return null;
+        }
     }
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
