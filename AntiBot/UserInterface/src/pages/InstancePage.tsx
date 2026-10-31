@@ -107,7 +107,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 
                         <Count>
                             <strong>{users.length}</strong>
-                            {(capacity ?? 0) > 0 && <span>/{capacity} users</span>}
+                            {(capacity ?? 0) > 0 && <span>/ {capacity} users</span>}
                         </Count>
                     </Summary>
 
