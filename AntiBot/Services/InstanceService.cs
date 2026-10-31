@@ -678,7 +678,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             : profile?.LastPlatform;
 
         var avatarName = AvatarService.Instance.NameFor(fileId);
-        var threat = ThreatScoring.Assess(profile, name, avatarName);
+        var isRobot = AvatarService.IsRobot(fileId);
+        var threat = ThreatScoring.Assess(profile, name, avatarName, isRobot);
 
         return new(
             userId,
@@ -696,7 +697,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.DateJoined,
             platform,
             avatarName,
-            AvatarService.IsRobot(fileId),
+            isRobot,
             profile?.IsFriend ?? false,
             threat.Score,
             threat.Reasons,
@@ -705,12 +706,14 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             fileId is null ? profile is not null : AvatarService.Instance.IsResolved(fileId));
     }
 
-    /// <summary>VRChat's trust tags, highest first.</summary>
+    /// <summary>VRChat's trust tags, highest first; a Nuisance tag outranks the normal ranks.</summary>
     private static string? TrustLevel(string[]? tags)
     {
         if (tags is null)
             return null;
 
+        if (tags.Contains("system_troll") || tags.Contains("system_probable_troll"))
+            return "Nuisance";
         if (tags.Contains("system_trust_veteran"))
             return "Trusted";
         if (tags.Contains("system_trust_trusted"))
@@ -718,7 +721,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         if (tags.Contains("system_trust_known"))
             return "User";
         if (tags.Contains("system_trust_basic"))
-            return "New";
+            return "New User";
 
         return "Visitor";
     }

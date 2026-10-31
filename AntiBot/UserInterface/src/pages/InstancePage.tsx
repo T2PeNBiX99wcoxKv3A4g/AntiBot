@@ -1079,7 +1079,10 @@ function trustColor(trust: string) {
         case "User":
             return "#86efac";
         case "New":
+        case "New User":
             return "#fcd34d";
+        case "Nuisance":
+            return "#fb7185";
         default:
             return "#94a3b8";
     }
@@ -1094,7 +1097,10 @@ function trustBackground(trust: string) {
         case "User":
             return "rgba(74, 222, 128, 0.14)";
         case "New":
+        case "New User":
             return "rgba(250, 204, 21, 0.14)";
+        case "Nuisance":
+            return "rgba(251, 113, 133, 0.16)";
         default:
             return "rgba(148, 163, 184, 0.14)";
     }
