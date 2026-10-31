@@ -141,6 +141,10 @@ internal sealed class PlayerService : Singleton<PlayerService>
         _fetchedAt[id] = DateTimeOffset.UtcNow;
 
         await Database.Instance.SavePlayerAsync(profile, token);
+
+        // The profile is what the list needs first; the avatar name is looked up after it.
+        AvatarService.Instance.Request(AvatarService.FileIdOf(profile.AvatarUrl));
+
         Updated?.Invoke();
     }
 

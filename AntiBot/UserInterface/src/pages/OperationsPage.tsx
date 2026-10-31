@@ -99,9 +99,7 @@ export function OperationsPage() {
                         <Empty>AntiBot has not taken an automatic action yet.</Empty>
                     ) : entries.map((entry) => (
                         <Item key={entry.id} onClick={() => openUser(entry)}>
-                            <Avatar $src={entry.avatarUrl}>
-                                {!entry.avatarUrl && (entry.displayName || "?").slice(0, 1).toUpperCase()}
-                            </Avatar>
+                            <Avatar $src={entry.avatarUrl}/>
                             <Time>{formatTime(entry.at)}</Time>
                             <Kind>{kindLabel(entry.kind)}</Kind>
                             <Who>{entry.displayName || "Unknown user"}</Who>

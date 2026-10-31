@@ -92,11 +92,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 AvatarService.Instance.ResetUnknown();
 
                 foreach (var user in _users)
-                {
                     PlayerService.Instance.Request(user.UserId);
-                    AvatarService.Instance.Request(
-                        AvatarService.FileIdOf(PlayerService.Instance.Get(user.UserId)?.AvatarUrl));
-                }
             }
         }
 
@@ -217,7 +213,13 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         // The roster has no custom status text, so the profiles keep it (and the avatar and name) fresh.
         foreach (var userId in refresh)
+        {
             PlayerService.Instance.Request(userId);
+
+            // Avatar names come last: only ask once the profile (status, trust, platform) is known.
+            if (PlayerService.Instance.Get(userId) is { } profile)
+                AvatarService.Instance.Request(AvatarService.FileIdOf(profile.AvatarUrl));
+        }
 
         // The roster carries everyone's status but not their custom status text: VRChat reports that
         // field empty even when the user has one, so the text is left to the pipeline and the profile.
@@ -674,8 +676,6 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
             ? value
             : profile?.LastPlatform;
-
-        AvatarService.Instance.Request(fileId);
 
         var avatarName = AvatarService.Instance.NameFor(fileId);
         var threat = ThreatScoring.Assess(profile, name, avatarName);

@@ -164,7 +164,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
     return (
         <Row $tone={resolved} $threat={threat} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
             <AvatarCell>
-                {icon ? <AvatarLarge $src={icon}/> : <Dash>—</Dash>}
+                {icon ? <AvatarLarge $src={icon}/> : <AvatarEmpty/>}
             </AvatarCell>
             <Name>
                 <NameText>
@@ -776,6 +776,15 @@ const AvatarLarge = styled.span<{ $src?: string }>`
     border-radius: 50%;
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+`;
+
+/** The placeholder while a profile (and with it the picture) has not arrived yet. */
+const AvatarEmpty = styled.span`
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--bg-primary);
     box-shadow: inset 0 0 0 1px var(--border-color);
 `;
 
