@@ -47,9 +47,16 @@ internal sealed class OperationService : Singleton<OperationService>
     {
         await Database.Instance.AddOperationAsync(kind, userId, displayName, detail, avatarUrl);
         Log.Information("Operation {Kind} for {Name} ({Detail})", kind, displayName, detail);
-        NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
+
+        // Taking an action back is a user-initiated correction, not a new automatic action worth a toast.
+        if (!IsUndo(kind))
+            NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
+
         Publish();
     }
+
+    private static bool IsUndo(string kind) =>
+        kind is "unblock" or "avatarInteractionOn" or "chatBoxShown" or "undoReject";
 
     /// <summary>Takes an action back: a block becomes an unblock, and so on.</summary>
     private async Task<(bool Ok, string Message)> UndoAsync(long id)
