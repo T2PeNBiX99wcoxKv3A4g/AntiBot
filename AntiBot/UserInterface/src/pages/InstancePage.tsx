@@ -96,8 +96,8 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                 </WorldName>
                                 <InstanceRow>
                                     <InstanceBadge>
+                                        {instanceRegion && <RegionFlag region={instanceRegion}/>}
                                         {instanceDisplayName || instanceTypeLabel(instanceType)} ⋅ #{instanceNumber || "—"}
-                                        {instanceRegion && <RegionFlag>{regionFlag(instanceRegion)}</RegionFlag>}
                                         {instanceRestricted && <LockIcon size={12}/>}
                                         {instanceAgeGated && <AgeGate>18+</AgeGate>}
                                     </InstanceBadge>
@@ -333,17 +333,57 @@ function durationLabel(joinedAt: string, now: number): string {
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-function regionFlag(region: string): string {
+/** The region as a small flag. Windows has no flag emoji, so the emoji only ever showed "JP". */
+function RegionFlag({region}: { region: string }) {
     switch (region.toLowerCase()) {
         case "jp":
-            return "🇯🇵";
+            return (
+                <Flag title="Japan">
+                    <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
+                        <rect fill="#fff" height="20" width="30"/>
+                        <circle cx="15" cy="10" fill="#bc002d" r="6"/>
+                    </svg>
+                </Flag>
+            );
+
         case "us":
         case "use":
-            return "🇺🇸";
+            return (
+                <Flag title="United States">
+                    <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
+                        <rect fill="#fff" height="20" width="30"/>
+                        <path
+                            d="M0 0h30v1.54H0zM0 3.08h30v1.54H0zM0 6.15h30v1.54H0zM0 9.23h30v1.54H0zM0 12.31h30v1.54H0zM0 15.38h30v1.54H0zM0 18.46h30V20H0z"
+                            fill="#b22234"
+                        />
+                        <rect fill="#3c3b6e" height="10.77" width="12.6"/>
+                    </svg>
+                </Flag>
+            );
+
         case "eu":
-            return "🇪🇺";
+            return (
+                <Flag title="Europe">
+                    <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
+                        <rect fill="#003399" height="20" width="30"/>
+                        {Array.from({length: 12}, (_, index) => {
+                            const angle = (index / 12) * Math.PI * 2;
+                            return (
+                                <circle
+                                    cx={15 + Math.cos(angle) * 4.6}
+                                    cy={10 + Math.sin(angle) * 4.6}
+                                    fill="#ffcc00"
+                                    key={index}
+                                    r="0.9"
+                                />
+                            );
+                        })}
+                    </svg>
+                </Flag>
+            );
+
         default:
-            return region.toUpperCase();
+            return <RegionText>{region.toUpperCase()}</RegionText>;
     }
 }
 
@@ -521,9 +561,26 @@ const AgeGate = styled.span`
     font-size: 9px;
 `;
 
-const RegionFlag = styled.span`
-    font-size: 12px;
-    line-height: 1;
+const Flag = styled.span`
+    display: inline-flex;
+    width: 15px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+
+    svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+`;
+
+const RegionText = styled.span`
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
 `;
 
 const Count = styled.div`
