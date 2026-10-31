@@ -397,7 +397,7 @@ function platformLabel(platform?: string): string {
     switch (platform) {
         case "standalonewindows":
             // VRChat reports the same value for desktop and PCVR; the API does not expose which one.
-            return "PC / VR";
+            return "PC/VR";
         case "android":
             // Android is the Quest client, which is VR (or mobile).
             return "Quest";
@@ -735,8 +735,8 @@ const ListCard = styled.section`
 /** The shared column grid, so the instance list and the request list line up. */
 export const userGridColumns = (showTime: boolean): string =>
     showTime
-        ? "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.7fr 0.7fr minmax(64px, 0.5fr)"
-        : "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.7fr 0.7fr";
+        ? "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.6fr 0.8fr minmax(64px, 0.5fr)"
+        : "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.6fr 0.8fr";
 
 const ListHeader = styled.div`
     display: grid;
