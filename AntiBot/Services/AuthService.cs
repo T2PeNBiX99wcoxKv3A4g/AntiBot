@@ -42,6 +42,9 @@ internal sealed class AuthService : Singleton<AuthService>
         {
             _ = AuthStore.IsTpmAvailable;
             _ = AuthStore.IsHelloAvailable;
+
+            // The account page may have asked before the probes finished.
+            Notify();
         });
     }
 
@@ -460,7 +463,7 @@ internal sealed class AuthService : Singleton<AuthService>
     ///     The account's profile picture: its own icon when it has one, otherwise the avatar's thumbnail.
     /// </summary>
     private static string? ProfileIcon(ApiAuthUser user) =>
-        new[] { user.UserIcon, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail,
+        new[] { user.IconUrl, user.UserIcon, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail,
                 user.CurrentAvatarThumbnailImageUrl }
             .FirstOrDefault(url => !string.IsNullOrEmpty(url));
 

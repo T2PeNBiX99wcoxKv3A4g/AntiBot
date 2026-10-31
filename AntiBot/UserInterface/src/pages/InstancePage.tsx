@@ -88,7 +88,7 @@ export function InstancePage() {
                     <ListCard>
                         <ListHeader>
                             <span>Name</span>
-                            <span>Avatar</span>
+                            <span>Icon</span>
                             <span>Joined</span>
                         </ListHeader>
 
@@ -123,7 +123,9 @@ function UserRow({user, onSelect}: { user: InstanceUser; onSelect: (user: Instan
                 </NameText>
             </Name>
             <AvatarCell>
-                {user.avatarUrl ? <AvatarLarge $src={user.avatarUrl}/> : <Dash>—</Dash>}
+                {(user.iconUrl ?? user.avatarUrl)
+                    ? <AvatarLarge $src={user.iconUrl ?? user.avatarUrl}/>
+                    : <Dash>—</Dash>}
             </AvatarCell>
             <Time>{user.joinedAt || "—"}</Time>
         </Row>

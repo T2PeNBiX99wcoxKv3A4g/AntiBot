@@ -21,6 +21,7 @@ public sealed record PlayerProfile(
     string Id,
     string DisplayName,
     string? AvatarUrl,
+    string? IconUrl,
     string? AvatarImageUrl,
     string? DateJoined,
     string[] Tags,

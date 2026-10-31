@@ -1,4 +1,4 @@
-import {type FormEvent, useEffect, useState} from "react";
+import {type FormEvent, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {
     type AuthSnapshot,
@@ -370,13 +370,28 @@ function StorageChoice({auth, busy, error, run}: {
     const systemName = auth.systemStorageName || "System protection";
     const tpmAvailable = auth.tpmStorage;
     const helloAvailable = auth.helloStorage;
-    const [mode, setMode] = useState<AuthStorage>(() => {
-        if (auth.storage !== "none") return auth.storage;
-        if (helloAvailable) return "hello";
-        if (tpmAvailable) return "tpm";
-        if (systemAvailable) return "system";
-        return "password";
-    });
+
+    // What the account is actually using, or the best available mode when nothing is stored yet.
+    const preferred: AuthStorage = auth.storage !== "none"
+        ? auth.storage
+        : helloAvailable
+            ? "hello"
+            : tpmAvailable
+                ? "tpm"
+                : systemAvailable
+                    ? "system"
+                    : "password";
+
+    const [mode, setMode] = useState<AuthStorage>(preferred);
+    const lastPreferred = useRef(preferred);
+
+    // The page mounts before the host answers, so the selection is corrected when the state arrives.
+    useEffect(() => {
+        if (preferred === lastPreferred.current) return;
+
+        lastPreferred.current = preferred;
+        setMode(preferred);
+    }, [preferred]);
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [localError, setLocalError] = useState("");

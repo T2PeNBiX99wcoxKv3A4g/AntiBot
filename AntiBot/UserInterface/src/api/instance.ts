@@ -9,6 +9,8 @@ export interface InstanceUser {
     /** From the cached VRChat profile; absent until it was fetched. */
     avatarUrl?: string;
     avatarImageUrl?: string;
+    /** The player's custom profile icon, shown in the list when they have one. */
+    iconUrl?: string;
     trust?: string;
     dateJoined?: string;
     platform?: string;

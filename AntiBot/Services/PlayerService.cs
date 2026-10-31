@@ -105,6 +105,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
         }
 
         var profile = new PlayerProfile(id, user.DisplayName ?? id, user.CurrentAvatarThumbnailImageUrl,
+            FirstNonEmpty(user.IconUrl, user.ProfilePicOverride, user.ProfilePicOverrideThumbnail),
             user.CurrentAvatarImageUrl, user.DateJoined, user.Tags ?? [], user.Platform, user.LastActivity);
 
         _profiles[id] = profile;
@@ -113,4 +114,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
         await Database.Instance.SavePlayerAsync(profile, token);
         Updated?.Invoke();
     }
+
+    private static string? FirstNonEmpty(params string?[] values) =>
+        values.FirstOrDefault(value => !string.IsNullOrEmpty(value));
 }

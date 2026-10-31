@@ -55,6 +55,7 @@ internal sealed class Database : Singleton<Database>
                                       id            TEXT PRIMARY KEY,
                                       display_name  TEXT NOT NULL,
                                       avatar_url    TEXT,
+                                      icon_url      TEXT,
                                       avatar_image_url TEXT,
                                       date_joined   TEXT,
                                       tags          TEXT,
@@ -74,11 +75,18 @@ internal sealed class Database : Singleton<Database>
                                   """;
             command.ExecuteNonQuery();
 
-            // The table predates the full-size avatar, so add it where it is missing.
+            // The table predates the full-size avatar and the profile icon, so add them where missing.
             Try.Run(() =>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE players ADD COLUMN avatar_image_url TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE players ADD COLUMN icon_url TEXT";
                 migration.ExecuteNonQuery();
             });
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
@@ -186,7 +194,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText =
-                "SELECT id, display_name, avatar_url, avatar_image_url, date_joined, tags, platform, last_activity FROM players";
+                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, date_joined, tags, platform, last_activity FROM players";
 
             var players = new Dictionary<string, PlayerProfile>();
             using var reader = command.ExecuteReader();
@@ -194,8 +202,8 @@ internal sealed class Database : Singleton<Database>
             {
                 var id = reader.GetString(0);
                 players[id] = new(id, reader.GetString(1), reader.GetStringOrNull(2), reader.GetStringOrNull(3),
-                    reader.GetStringOrNull(4), ParseTags(reader.GetStringOrNull(5)), reader.GetStringOrNull(6),
-                    reader.GetStringOrNull(7));
+                    reader.GetStringOrNull(4), reader.GetStringOrNull(5), ParseTags(reader.GetStringOrNull(6)),
+                    reader.GetStringOrNull(7), reader.GetStringOrNull(8));
             }
 
             return players;
@@ -213,13 +221,14 @@ internal sealed class Database : Singleton<Database>
             await using var connection = await OpenAsync(token);
             await using var command = connection.CreateCommand();
             command.CommandText = """
-                                  INSERT INTO players (id, display_name, avatar_url, avatar_image_url, date_joined,
-                                                       tags, platform, last_activity, fetched_at)
-                                  VALUES ($id, $displayName, $avatarUrl, $avatarImageUrl, $dateJoined, $tags,
-                                          $platform, $lastActivity, $fetchedAt)
+                                  INSERT INTO players (id, display_name, avatar_url, icon_url, avatar_image_url,
+                                                       date_joined, tags, platform, last_activity, fetched_at)
+                                  VALUES ($id, $displayName, $avatarUrl, $iconUrl, $avatarImageUrl, $dateJoined,
+                                          $tags, $platform, $lastActivity, $fetchedAt)
                                   ON CONFLICT (id) DO UPDATE SET
                                       display_name = excluded.display_name,
                                       avatar_url = excluded.avatar_url,
+                                      icon_url = excluded.icon_url,
                                       avatar_image_url = excluded.avatar_image_url,
                                       date_joined = excluded.date_joined,
                                       tags = excluded.tags,
@@ -231,6 +240,7 @@ internal sealed class Database : Singleton<Database>
             command.Parameters.AddWithValue("$id", player.Id);
             command.Parameters.AddWithValue("$displayName", player.DisplayName);
             command.Parameters.AddWithValue("$avatarUrl", (object?)player.AvatarUrl ?? DBNull.Value);
+            command.Parameters.AddWithValue("$iconUrl", (object?)player.IconUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$avatarImageUrl", (object?)player.AvatarImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
             command.Parameters.AddWithValue("$tags", string.Join(',', player.Tags));

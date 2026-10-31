@@ -8,6 +8,7 @@ public sealed record InstanceUser(
     string JoinedAt,
     string? AvatarUrl = null,
     string? AvatarImageUrl = null,
+    string? IconUrl = null,
     string? Trust = null,
     string? DateJoined = null,
     string? Platform = null,

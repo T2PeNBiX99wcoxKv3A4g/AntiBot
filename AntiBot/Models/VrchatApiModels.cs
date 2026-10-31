@@ -10,6 +10,7 @@ internal sealed record ApiAuthUser(
     string? DisplayName,
     string? CurrentAvatarImageUrl,
     string? CurrentAvatarThumbnailImageUrl,
+    string? IconUrl,
     string? UserIcon,
     string? ProfilePicOverride,
     string? ProfilePicOverrideThumbnail,
@@ -29,6 +30,9 @@ internal sealed record ApiUser(
     string? DisplayName,
     string? CurrentAvatarImageUrl,
     string? CurrentAvatarThumbnailImageUrl,
+    string? IconUrl,
+    string? ProfilePicOverride,
+    string? ProfilePicOverrideThumbnail,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,
     string[]? Tags,
