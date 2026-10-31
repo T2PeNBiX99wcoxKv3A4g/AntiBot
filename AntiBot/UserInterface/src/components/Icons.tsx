@@ -175,3 +175,13 @@ export function BellIcon({size = 18}: IconProps) {
         </svg>
     );
 }
+
+export function AlertIcon({size = 12}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7.5v5.5"/>
+            <path d="M12 16.5h.01"/>
+        </svg>
+    );
+}

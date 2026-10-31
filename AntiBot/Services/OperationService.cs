@@ -34,8 +34,20 @@ internal sealed class OperationService : Singleton<OperationService>
     {
         await Database.Instance.AddOperationAsync(kind, userId, displayName, detail);
         Log.Information("Operation {Kind} for {Name} ({Detail})", kind, displayName, detail);
+        NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
         Publish();
     }
+
+    private static string KindLabel(string kind) => kind switch
+    {
+        "block" => "Blocked",
+        "avatarInteractionOff" => "Avatar interactions off",
+        "chatBoxHidden" => "Chat box hidden",
+        "returnHome" => "Returned home",
+        "rejectRequest" => "Friend request rejected",
+        "undoReject" => "Rejection undone",
+        _ => kind
+    };
 
     private void Publish()
     {

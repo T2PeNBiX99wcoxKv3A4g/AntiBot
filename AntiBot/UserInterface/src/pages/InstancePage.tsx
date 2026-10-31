@@ -9,7 +9,7 @@ import {
 } from "../api/instance";
 import {desktopAvailable} from "../api/logs";
 import {openUrl} from "../api/system";
-import {ExternalIcon, LockIcon, UsersIcon} from "../components/Icons";
+import {AlertIcon, ExternalIcon, LockIcon, UsersIcon} from "../components/Icons";
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
@@ -178,13 +178,14 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         {user.name}
                     </span>
                     {user.pronouns && <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun>}
+                    {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                     {threat > 0 && (
                         <ThreatBadge $score={threat} title={(user.threatReasons ?? []).join(" · ")}>
+                            <AlertIcon size={10}/>
                             {threat}%
                         </ThreatBadge>
                     )}
                     {badge}
-                    {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                     {user.isRobot && <Robot>robot</Robot>}
                     {user.local && <You>you</You>}
                 </NameText>
@@ -251,7 +252,10 @@ export function PlayerDialog({user, now, onClose}: {
                             <FieldRow>
                                 <span>Threat</span>
                                 <ThreatLine>
-                                    <ThreatBadge $score={user.threat!}>{user.threat}%</ThreatBadge>
+                                    <ThreatBadge $score={user.threat!}>
+                                        <AlertIcon size={10}/>
+                                        {user.threat}%
+                                    </ThreatBadge>
                                     <ThreatText>{(user.threatReasons ?? []).join(" · ")}</ThreatText>
                                 </ThreatLine>
                             </FieldRow>
@@ -732,11 +736,15 @@ function toneBorder(tone: RowTone): string {
 }
 
 function threatColor(score: number): string {
-    if (score >= 70)
-        return "#fb7185";
-    if (score >= 40)
-        return "#fb923c";
-    return "#fbbf24";
+    const clamped = Math.max(0, Math.min(100, score));
+    const hue = 48 - (clamped / 100) * 48;
+    return `hsl(${hue.toFixed(0)}, 92%, 62%)`;
+}
+
+function threatTint(score: number): string {
+    const clamped = Math.max(0, Math.min(100, score));
+    const hue = 48 - (clamped / 100) * 48;
+    return `hsla(${hue.toFixed(0)}, 92%, 62%, 0.14)`;
 }
 
 const Row = styled.div<{ $tone: RowTone; $threat: number; $showTime: boolean; $dim?: boolean }>`
@@ -816,9 +824,12 @@ const Pronoun = styled.span`
 `;
 
 const ThreatBadge = styled.span<{ $score: number }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     padding: 1px 6px;
     border-radius: 999px;
-    background: rgba(251, 113, 133, 0.14);
+    background: ${({$score}) => threatTint($score)};
     color: ${({$score}) => threatColor($score)};
     font-family: var(--font-mono);
     font-size: 9px;
