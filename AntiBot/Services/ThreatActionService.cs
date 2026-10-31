@@ -5,8 +5,9 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Runs the automatic protection: a user whose threat reaches the threshold is blocked, has avatar
-///     interactions turned off and their chat box hidden; the account can also be sent home.
+///     Runs the automatic protection for a high-threat user, in priority order: send the account home,
+///     block the user, turn their avatar interactions off and hide their chat box. Disabled actions are
+///     skipped, and the whole sequence is serialized because VRChat rate-limits these calls.
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
@@ -14,12 +15,14 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private const long ModerationGapMilliseconds = 3000;
 
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
+    private readonly SemaphoreSlim _actions = new(1, 1);
     private readonly Lock _gate = new();
     private readonly HashSet<string> _rejecting = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
     private long _lastModerationAt;
     private bool _returnedHome;
+    private bool _returningHome;
 
     public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
 
@@ -56,29 +59,66 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var detail = Describe(user);
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
-        // The lighter moderations first: blocking the user may make the rest pointless.
-        if (settings.AutoDisableAvatarInteraction && await ModerateAsync(user.UserId, "interactOff"))
-            await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail, avatar);
-
-        if (settings.AutoHideChatBox && await ModerateAsync(user.UserId, "muteChat"))
-            await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
-
-        if (settings.AutoBlock && await ModerateAsync(user.UserId, "block"))
-            await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
-
-        if (!settings.AutoReturnHome)
-            return;
-
-        lock (_gate)
+        try
         {
-            if (_returnedHome)
-                return;
-
-            _returnedHome = true;
+            await _actions.WaitAsync(_stop.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
 
-        if (await AuthService.Instance.ReturnHomeAsync(_stop.Token))
-            await OperationService.Instance.LogAsync("returnHome", user.UserId, user.Name, detail);
+        try
+        {
+            // Return home first: getting the account out of the instance is the action that actually
+            // removes the bot's access. Then block, then the two lighter moderations.
+            if (settings.AutoReturnHome && await TryReturnHomeAsync())
+                await OperationService.Instance.LogAsync("returnHome", user.UserId, user.Name, detail);
+
+            if (settings.AutoBlock && await ModerateAsync(user.UserId, "block"))
+                await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
+
+            if (settings.AutoDisableAvatarInteraction && await ModerateAsync(user.UserId, "interactOff"))
+                await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail, avatar);
+
+            if (settings.AutoHideChatBox && await ModerateAsync(user.UserId, "muteChat"))
+                await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutting down.
+        }
+        finally
+        {
+            _actions.Release();
+        }
+    }
+
+    /// <summary>Sends the account home once per instance; a failed attempt may be retried.</summary>
+    private async Task<bool> TryReturnHomeAsync()
+    {
+        lock (_gate)
+        {
+            if (_returnedHome || _returningHome)
+                return false;
+
+            _returningHome = true;
+        }
+
+        try
+        {
+            var returned = await AuthService.Instance.ReturnHomeAsync(_stop.Token);
+            if (returned)
+                lock (_gate)
+                    _returnedHome = true;
+
+            return returned;
+        }
+        finally
+        {
+            lock (_gate)
+                _returningHome = false;
+        }
     }
 
     /// <summary>Rejects a friend request from a high-threat user, once.</summary>
@@ -100,7 +140,24 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         try
         {
             await AuthService.Instance.HideFriendRequestAsync(request.Id, _stop.Token);
-            await ApplyModerationAsync(request.User, settings);
+
+            try
+            {
+                await _actions.WaitAsync(_stop.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            try
+            {
+                await ApplyModerationAsync(request.User, settings);
+            }
+            finally
+            {
+                _actions.Release();
+            }
 
             await Database.Instance.SetFriendRequestRejectedAsync(request.Id, true, _stop.Token);
             await OperationService.Instance.LogAsync("rejectRequest", request.UserId, request.User.Name,
@@ -127,14 +184,14 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)
     {
+        if (settings.AutoBlock)
+            await ModerateAsync(user.UserId, "block");
+
         if (settings.AutoDisableAvatarInteraction)
             await ModerateAsync(user.UserId, "interactOff");
 
         if (settings.AutoHideChatBox)
             await ModerateAsync(user.UserId, "muteChat");
-
-        if (settings.AutoBlock)
-            await ModerateAsync(user.UserId, "block");
     }
 
     /// <summary>
