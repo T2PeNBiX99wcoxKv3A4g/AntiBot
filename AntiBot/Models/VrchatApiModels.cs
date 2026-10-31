@@ -59,6 +59,9 @@ internal sealed record ApiFile(
     string? OwnerId,
     string[]? Tags);
 
+/// <summary>The public profile, which is the only place the bio is exposed for non-friends.</summary>
+internal sealed record ApiPublicProfile(string? Id, string? Bio);
+
 /// <summary>One notification; a friend request carries the sender's id and name.</summary>
 internal sealed record ApiNotification(
     string? Id,
@@ -143,6 +146,7 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiInstance))]
 [JsonSerializable(typeof(ApiUser))]
 [JsonSerializable(typeof(ApiFile))]
+[JsonSerializable(typeof(ApiPublicProfile))]
 [JsonSerializable(typeof(ApiNotification[]))]
 [JsonSerializable(typeof(ApiErrorBody))]
 [JsonSerializable(typeof(ApiVerifyResult))]

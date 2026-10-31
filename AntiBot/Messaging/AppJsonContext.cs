@@ -40,6 +40,8 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(OperationActionRequest))]
 [JsonSerializable(typeof(OperationUndoPayload))]
 [JsonSerializable(typeof(UserDescribeRequest))]
+[JsonSerializable(typeof(UserBioRequest))]
+[JsonSerializable(typeof(UserBioPayload))]
 [JsonSerializable(typeof(OperationEntry[]))]
 [JsonSerializable(typeof(InstanceSnapshot))]
 [JsonSerializable(typeof(InstanceUser))]

@@ -81,3 +81,9 @@ internal sealed record OperationUndoPayload(bool Ok, string Message);
 
 /// <summary>Payload for <c>user.describe</c>: the user to open in the details panel.</summary>
 internal sealed record UserDescribeRequest(string UserId, string DisplayName);
+
+/// <summary>Payload for <c>user.bio</c>: the user whose public profile should be read.</summary>
+internal sealed record UserBioRequest(string UserId);
+
+/// <summary>Body for <c>user.bio</c>.</summary>
+internal sealed record UserBioPayload(string? Bio);

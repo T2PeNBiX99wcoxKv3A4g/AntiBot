@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using AntiBot.Messaging;
 using AntiBot.Models;
+using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -45,8 +47,41 @@ internal sealed class PlayerService : Singleton<PlayerService>
         foreach (var (id, profile) in Database.Instance.LoadPlayers())
             _profiles[id] = profile;
 
+        NativeBridge.MessageReceived += HandleMessageAsync;
+
         for (var i = 0; i < Workers; i++)
             _ = Task.Run(() => RunAsync(_stop.Token));
+    }
+
+    private async Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
+        context.Request.Type == "user.bio"
+            ? context.Reply("user.bio.result",
+                new UserBioPayload(await FetchBioAsync(context.Payload<UserBioRequest>()?.UserId ?? "",
+                    CancellationToken.None)))
+            : null;
+
+    /// <summary>The bio only exists on the public profile, so it is fetched when the panel opens.</summary>
+    public async Task<string?> FetchBioAsync(string userId, CancellationToken token)
+    {
+        if (userId.Length == 0)
+            return null;
+
+        var profile = Get(userId);
+        if (profile?.Bio is { Length: > 0 } cached)
+            return cached;
+
+        var publicProfile = await AuthService.Instance.GetPublicProfileAsync(userId, token);
+        if (publicProfile?.Bio is not { } bio)
+            return null;
+
+        if (profile is not null)
+        {
+            var updated = profile with { Bio = bio };
+            _profiles[userId] = updated;
+            await Database.Instance.SavePlayerAsync(updated, token);
+        }
+
+        return bio;
     }
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
@@ -141,9 +176,6 @@ internal sealed class PlayerService : Singleton<PlayerService>
         _fetchedAt[id] = DateTimeOffset.UtcNow;
 
         await Database.Instance.SavePlayerAsync(profile, token);
-
-        // The profile is what the list needs first; the avatar name is looked up after it.
-        AvatarService.Instance.Request(AvatarService.FileIdOf(profile.AvatarUrl));
 
         Updated?.Invoke();
     }

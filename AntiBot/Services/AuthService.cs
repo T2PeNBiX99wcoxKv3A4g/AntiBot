@@ -141,6 +141,9 @@ internal sealed class AuthService : Singleton<AuthService>
             ? _api.GetFileAsync(fileId, token)
             : Task.FromResult<(ApiFile?, HttpStatusCode)>((null, HttpStatusCode.ServiceUnavailable));
 
+    public Task<ApiPublicProfile?> GetPublicProfileAsync(string userId, CancellationToken token) =>
+        IsReady ? _api.GetPublicProfileAsync(userId, token) : Task.FromResult<ApiPublicProfile?>(null);
+
     public Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token) =>
         IsReady ? _api.GetFriendRequestsAsync(token) : Task.FromResult<ApiNotification[]?>(null);
 

@@ -78,3 +78,11 @@ export function onInstanceChanged(handler: (snapshot: InstanceSnapshot) => void)
 export async function describeUser(userId: string, displayName: string): Promise<InstanceUser> {
     return await Native.request<InstanceUser>("user.describe", {userId, displayName});
 }
+
+/** The bio lives on the public profile, so it is read when the details panel opens. */
+export async function getUserBio(userId: string): Promise<string | null> {
+    if (!Native.available) return null;
+
+    const result = await Native.request<{ bio?: string }>("user.bio", {userId});
+    return result.bio ?? null;
+}

@@ -184,6 +184,18 @@ internal sealed class VrchatApi : IDisposable
             .GetOrNull();
     }
 
+    /// <summary>The public profile of a user; <c>users/{id}</c> does not include the bio for non-friends.</summary>
+    public async Task<ApiPublicProfile?> GetPublicProfileAsync(string userId, CancellationToken token)
+    {
+        using var response = await _http.GetAsync(new Uri(BaseUri, $"profile/{Uri.EscapeDataString(userId)}"),
+            token);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return Deserialize(await response.Content.ReadAsStringAsync(token),
+            VrchatJsonContext.Default.ApiPublicProfile);
+    }
+
     /// <summary>Hides a friend request notification (VRChat's "reject").</summary>
     public async Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token)
     {

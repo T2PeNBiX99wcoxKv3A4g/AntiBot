@@ -194,6 +194,12 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         bool changed;
         string[] refresh;
+        var apiAvatar = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var user in instance.Users ?? [])
+            if (user.Id is { Length: > 0 } id)
+                apiAvatar[id] = user.CurrentAvatarThumbnailImageUrl;
+
         lock (_gate)
         {
             changed = _apiLocation != target || !SameInstance(_apiInstance, instance);
@@ -216,9 +222,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         {
             PlayerService.Instance.Request(userId);
 
-            // Avatar names come last: only ask once the profile (status, trust, platform) is known.
-            if (PlayerService.Instance.Get(userId) is { } profile)
-                AvatarService.Instance.Request(AvatarService.FileIdOf(profile.AvatarUrl));
+            // The avatar name comes from its own endpoint, so it runs alongside the profile.
+            var avatar = PlayerService.Instance.Get(userId)?.AvatarUrl ?? apiAvatar.GetValueOrDefault(userId);
+            AvatarService.Instance.Request(AvatarService.FileIdOf(avatar));
         }
 
         // The roster carries everyone's status but not their custom status text: VRChat reports that

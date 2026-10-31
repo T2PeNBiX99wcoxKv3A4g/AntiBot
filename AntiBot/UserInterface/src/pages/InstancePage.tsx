@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {
     emptyInstance,
     getInstance,
+    getUserBio,
     type InstanceSnapshot,
     type InstanceUser,
     onInstanceChanged,
@@ -14,7 +15,7 @@ import {AlertIcon, ExternalIcon, LockIcon, UsersIcon} from "../components/Icons"
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
-    const [selected, setSelected] = useState<InstanceUser | null>(null);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [now, setNow] = useState(() => Date.now());
     const received = useRef(false);
 
@@ -54,6 +55,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     } = snapshot;
 
     const thumbnail = useWorldThumbnail(worldId, worldThumbnail);
+    const selected = selectedId ? users.find((user) => user.userId === selectedId) ?? null : null;
 
     return (
         <Page>
@@ -124,14 +126,15 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             {users.length === 0 ? (
                                 <EmptyRow>No players in this instance yet.</EmptyRow>
                             ) : users.map((user) => (
-                                <UserRow key={user.userId} user={user} now={now} onSelect={setSelected}/>
+                                <UserRow key={user.userId} user={user} now={now}
+                                     onSelect={(next) => setSelectedId(next.userId)}/>
                             ))}
                         </Rows>
                     </ListCard>
                 </>
             )}
 
-            {selected && <PlayerDialog user={selected} now={now} onClose={() => setSelected(null)}/>}
+            {selected && <PlayerDialog user={selected} now={now} onClose={() => setSelectedId(null)}/>}
         </Page>
     );
 }
@@ -202,6 +205,8 @@ export function PlayerDialog({user, now, onClose}: {
     now: number;
     onClose: () => void;
 }) {
+    const [bio, setBio] = useState(user.bio);
+
     useEffect(() => {
         const onKey = (event: KeyboardEvent) => {
             if (event.key === "Escape") onClose();
@@ -210,6 +215,25 @@ export function PlayerDialog({user, now, onClose}: {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [onClose]);
+
+    useEffect(() => {
+        if (user.bio || user.userId.length === 0) {
+            setBio(user.bio);
+            return;
+        }
+
+        let cancelled = false;
+
+        void getUserBio(user.userId).then((next) => {
+            if (!cancelled && next) setBio(next);
+        }, () => {
+            // The host failed to answer; the panel simply shows no bio.
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [user.userId, user.bio]);
 
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
@@ -268,7 +292,7 @@ export function PlayerDialog({user, now, onClose}: {
                             label="VRChat account since"
                             value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
                         />
-                        {user.bio && <Bio>{user.bio}</Bio>}
+                        {bio && <Bio>{bio}</Bio>}
                     </Fields>
                 </Details>
 
