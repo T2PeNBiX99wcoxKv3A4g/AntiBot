@@ -101,7 +101,7 @@ export function OperationsPage() {
                         <Item key={entry.id} onClick={() => openUser(entry)}>
                             <Avatar $src={entry.avatarUrl}/>
                             <Time>{formatTime(entry.at)}</Time>
-                            <Kind>{kindLabel(entry.kind)}</Kind>
+                            <Kind $kind={entry.kind}>{kindLabel(entry.kind)}</Kind>
                             <Who>{entry.displayName || "Unknown user"}</Who>
                             <Detail title={entry.detail}>{entry.detail}</Detail>
                             <Actions>
@@ -180,6 +180,19 @@ function canUndo(entry: OperationEntry): boolean {
     if (entry.undone) return false;
 
     return entry.kind === "block" || entry.kind === "avatarInteractionOff" || entry.kind === "chatBoxHidden";
+}
+
+/** Undo/restore actions are good news; keep the automatic actions themselves red. */
+function kindColor(kind: string): string {
+    switch (kind) {
+        case "unblock":
+        case "avatarInteractionOn":
+        case "chatBoxShown":
+        case "undoReject":
+            return "#4ade80";
+        default:
+            return "#fb7185";
+    }
 }
 
 const Page = styled.div`
@@ -311,9 +324,9 @@ const Time = styled.span`
     white-space: nowrap;
 `;
 
-const Kind = styled.span`
+const Kind = styled.span<{ $kind: string }>`
     font-size: 10.5px;
-    color: #fb7185;
+    color: ${({$kind}) => kindColor($kind)};
     white-space: nowrap;
 `;
 
