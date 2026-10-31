@@ -121,13 +121,14 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             <span>Pronouns</span>
                             <span>Status</span>
                             <span>Platform</span>
+                            <span>In instance</span>
                         </ListHeader>
 
                         <Rows>
                             {users.length === 0 ? (
                                 <EmptyRow>No players in this instance yet.</EmptyRow>
                             ) : users.map((user) => (
-                                <UserRow key={user.userId} user={user} now={now} showTime={false}
+                                <UserRow key={user.userId} user={user} now={now}
                                      onSelect={(next) => setSelectedId(next.userId)}/>
                             ))}
                         </Rows>
@@ -740,7 +741,7 @@ export const userGridColumns = (showTime: boolean): string =>
 
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: ${userGridColumns(false)};
+    grid-template-columns: ${userGridColumns(true)};
     gap: 8px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
@@ -750,8 +751,12 @@ const ListHeader = styled.div`
     letter-spacing: 0.1em;
     text-transform: uppercase;
 
-    span:last-child {
+    span:nth-last-child(2) {
         text-align: center;
+    }
+
+    span:last-child {
+        text-align: right;
     }
 `;
 
