@@ -22,7 +22,15 @@ internal sealed record SettingsPayload(
     bool AutoReturnHome,
     bool AutoRejectFriendRequests,
     int ThreatThreshold,
-    string[] Whitelist);
+    string[] Whitelist,
+    string Language,
+    bool StartHidden);
+
+/// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
+internal sealed record StartupRequest(bool Enabled);
+
+/// <summary>Body for the <c>app.startup</c> messages; the entry's presence is the state.</summary>
+internal sealed record StartupPayload(bool Supported, bool Enabled);
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);

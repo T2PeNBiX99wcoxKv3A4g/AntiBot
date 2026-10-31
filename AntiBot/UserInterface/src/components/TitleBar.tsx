@@ -1,9 +1,10 @@
 import styled from "styled-components";
-import {useWindowControls, useWindowDrag} from "@photino-net-utils/bridge";
+import {useTranslation, useWindowControls, useWindowDrag} from "@photino-net-utils/bridge";
 import {BrandMark} from "./Brand";
 
 /** The interface draws the window title bar; the host hides the native one but keeps its frame. */
 export function TitleBar() {
+    const t = useTranslation();
     const controls = useWindowControls();
     const drag = useWindowDrag();
 
@@ -11,13 +12,13 @@ export function TitleBar() {
         <Bar>
             <Brand>
                 <BrandMark size={19}/>
-                <strong>AntiBot</strong>
+                <strong>{t("AntiBot")}</strong>
             </Brand>
 
             <DragArea {...drag}/>
 
             <Controls>
-                <ControlButton onClick={controls.minimize} title="Minimize" type="button">
+                <ControlButton onClick={controls.minimize} title={t("Minimize")} type="button">
                     <svg aria-hidden="true" viewBox="0 0 10 10">
                         <path d="M2 5h6"/>
                     </svg>
@@ -25,7 +26,7 @@ export function TitleBar() {
 
                 <ControlButton
                     onClick={controls.toggleMaximize}
-                    title={controls.maximized ? "Restore" : "Maximize"}
+                    title={controls.maximized ? t("Restore") : t("Maximize")}
                     type="button"
                 >
                     {controls.maximized
@@ -38,7 +39,7 @@ export function TitleBar() {
                         </svg>}
                 </ControlButton>
 
-                <CloseButton onClick={controls.close} title="Close" type="button">
+                <CloseButton onClick={controls.close} title={t("Close")} type="button">
                     <svg aria-hidden="true" viewBox="0 0 10 10">
                         <path d="m2 2 6 6M8 2 2 8"/>
                     </svg>

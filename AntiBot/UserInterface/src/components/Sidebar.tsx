@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import {useTranslation} from "@photino-net-utils/bridge";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
 import {BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
@@ -19,22 +20,24 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
 ];
 
 export function Sidebar({page, onNavigate, status}: SidebarProps) {
+    const t = useTranslation();
+
     return (
         <Aside>
             <Nav>
                 {items.map(({id, label, icon: Icon}) => (
                     <Item key={id} $active={page === id} onClick={() => onNavigate(id)} type="button">
                         <Icon/>
-                        <span>{label}</span>
+                        <span>{t(label)}</span>
                     </Item>
                 ))}
             </Nav>
 
             <StatusCard>
-                <StatusLabel>VRChat</StatusLabel>
+                <StatusLabel>{t("VRChat")}</StatusLabel>
                 <StatusValue $active={status.running}>
                     <Dot $active={status.running}/>
-                    {status.running ? "running" : "not running"}
+                    {status.running ? t("running") : t("not running")}
                 </StatusValue>
             </StatusCard>
         </Aside>

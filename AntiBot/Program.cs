@@ -4,6 +4,7 @@ using AntiBot.Messaging;
 using AntiBot.Services;
 using PhotinoNetUtils;
 using PhotinoNetUtils.Interop;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Services;
@@ -28,6 +29,11 @@ internal static class Program
 
         // The bridge serializes through this context; it has to know it before the interface speaks.
         NativeBridge.Initialize(AppJsonContext.Default);
+
+        // The language lives in the settings; load them before anything asks for a string.
+        SettingsService.Instance.Load();
+        Localization.Initialize(typeof(Program).Assembly, "AntiBot.Resources.i18n.",
+            () => SettingsService.Instance.Language);
 
         if (OperatingSystem.IsLinux())
         {
@@ -66,7 +72,7 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
-            SettingsService.Instance.Load();
+            _ = StartupService.Instance;
             _ = VrchatLogService.Instance;
 
             // The instance events and the player cache live in the local database.
@@ -88,6 +94,11 @@ internal static class Program
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;
             manager.IconPath = AppIcon.EnsureExtracted(typeof(Program).Assembly, Constants.Name);
+
+            // Without a tray the window is the only way back in, so it always shows there.
+            var hasTray = OperatingSystem.IsWindows() ||
+                          OperatingSystem.IsLinux() && LinuxDiagnostics.AppIndicatorLibrary is not null;
+            manager.ShowMainWindowOnStartup = !SettingsService.Instance.Current.StartHidden || !hasTray;
 
             using var tray = CreateTray(manager.IconPath);
 

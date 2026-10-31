@@ -12,6 +12,12 @@ public sealed record AppSettings
 
     public string LogDirectory { get; init; } = ResolveDefaultLogDirectory();
 
+    /// <summary>UI and backend language: <c>en</c>, <c>ja</c>, <c>zh-CN</c> or <c>zh-TW</c>.</summary>
+    public string Language { get; init; } = "en";
+
+    /// <summary>Start with the window hidden in the tray.</summary>
+    public bool StartHidden { get; init; }
+
     public string[] AvatarApiProviders { get; init; } = DefaultAvatarApiProviders;
 
     /// <summary>Block a user whose threat reaches <see cref="ThreatThreshold" />.</summary>

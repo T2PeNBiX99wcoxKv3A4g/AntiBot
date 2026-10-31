@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
+import {useLocale, useTranslation} from "@photino-net-utils/bridge";
 import {type OperationEntry, clearOperations, getOperations, onOperationsChanged, undoOperation} from "../api/operations";
 import {type InstanceUser, describeUser} from "../api/instance";
 import {openUrl} from "../api/system";
@@ -8,6 +9,8 @@ import {PlayerDialog} from "./InstancePage";
 
 /** Every automatic action AntiBot took, newest first. */
 export function OperationsPage() {
+    const t = useTranslation();
+    const locale = useLocale();
     const [entries, setEntries] = useState<OperationEntry[]>([]);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [confirming, setConfirming] = useState(false);
@@ -63,7 +66,7 @@ export function OperationsPage() {
         void undoOperation(entry.id).then((result) => {
             setNotice({ok: result.ok, text: result.message});
         }, () => {
-            setNotice({ok: false, text: "The host did not answer."});
+            setNotice({ok: false, text: t("The host did not answer.")});
         }).finally(() => {
             setUndoing(null);
             window.setTimeout(() => setNotice(null), 6000);
@@ -75,11 +78,11 @@ export function OperationsPage() {
             <Card>
                 <Head>
                     <div>
-                        <h2>Operation history</h2>
-                        <p>Every block, chat-box mute and automatic return home, as it happened.</p>
+                        <h2>{t("Operation history")}</h2>
+                        <p>{t("Every block, chat-box mute and automatic return home, as it happened.")}</p>
                     </div>
                     <HeadActions>
-                        <Count>{entries.length} action(s)</Count>
+                        <Count>{t("{count} action(s)", {count: entries.length})}</Count>
                         <ClearButton
                             $confirming={confirming}
                             disabled={entries.length === 0}
@@ -87,7 +90,7 @@ export function OperationsPage() {
                             onClick={clear}
                             type="button"
                         >
-                            {confirming ? "Confirm clear" : "Clear history"}
+                            {confirming ? t("Confirm clear") : t("Clear history")}
                         </ClearButton>
                     </HeadActions>
                 </Head>
@@ -96,13 +99,13 @@ export function OperationsPage() {
 
                 <List>
                     {entries.length === 0 ? (
-                        <Empty>AntiBot has not taken an automatic action yet.</Empty>
+                        <Empty>{t("AntiBot has not taken an automatic action yet.")}</Empty>
                     ) : entries.map((entry) => (
                         <Item key={entry.id} onClick={() => openUser(entry)}>
                             <Avatar $src={entry.avatarUrl}/>
-                            <Time>{formatTime(entry.at)}</Time>
-                            <Kind $kind={entry.kind}>{kindLabel(entry.kind)}</Kind>
-                            <Who>{entry.displayName || "Unknown user"}</Who>
+                            <Time>{formatTime(entry.at, locale)}</Time>
+                            <Kind $kind={entry.kind}>{t(kindKey(entry.kind))}</Kind>
+                            <Who>{entry.displayName || t("Unknown user")}</Who>
                             <Detail title={entry.detail}>{entry.detail}</Detail>
                             <Actions>
                                 {canUndo(entry) && (
@@ -114,7 +117,7 @@ export function OperationsPage() {
                                         }}
                                         type="button"
                                     >
-                                        {undoing === entry.id ? "Undoing…" : "Undo"}
+                                        {undoing === entry.id ? t("Undoing…") : t("Undo")}
                                     </UndoButton>
                                 )}
                                 <ProfileButton
@@ -123,11 +126,11 @@ export function OperationsPage() {
                                         event.stopPropagation();
                                         void openUrl(`https://vrchat.com/home/user/${entry.userId}`);
                                     }}
-                                    title="Open the VRChat profile"
+                                    title={t("Open the VRChat profile")}
                                     type="button"
                                 >
                                     <ExternalIcon size={11}/>
-                                    Profile
+                                    {t("Profile")}
                                 </ProfileButton>
                             </Actions>
                         </Item>
@@ -140,8 +143,8 @@ export function OperationsPage() {
     );
 }
 
-function formatTime(at: number): string {
-    return new Date(at).toLocaleString("en", {
+function formatTime(at: number, locale: string): string {
+    return new Date(at).toLocaleString(locale, {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -151,7 +154,8 @@ function formatTime(at: number): string {
     });
 }
 
-function kindLabel(kind: string): string {
+/** The English label is also the translation key. */
+function kindKey(kind: string): string {
     switch (kind) {
         case "block":
             return "Blocked";

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AntiBot.Models;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 
 namespace AntiBot.Messaging;
@@ -20,9 +21,14 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(NativeRequest))]
 [JsonSerializable(typeof(NativeResponse))]
 [JsonSerializable(typeof(NativeEvent))]
+[JsonSerializable(typeof(LocaleRequest))]
+[JsonSerializable(typeof(LocalePayload))]
+[JsonSerializable(typeof(Dictionary<string, string>))]
 [JsonSerializable(typeof(OkPayload))]
 [JsonSerializable(typeof(AppInfoPayload))]
 [JsonSerializable(typeof(SettingsPayload))]
+[JsonSerializable(typeof(StartupRequest))]
+[JsonSerializable(typeof(StartupPayload))]
 [JsonSerializable(typeof(LogExportPayload))]
 [JsonSerializable(typeof(WindowStatePayload))]
 [JsonSerializable(typeof(WindowResizeRequest))]

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -387,7 +388,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         var directory = SettingsService.Instance.LogDirectory;
 
         if (!Directory.Exists(directory))
-            return context.Fail("log.openFolder.result", "error.logDirectoryMissing");
+            return context.Fail("log.openFolder.result", Localization.Get("error.logDirectoryMissing"));
 
         ProcessStartInfo request = OperatingSystem.IsWindows()
             ? new("explorer.exe", directory)
@@ -396,7 +397,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         return Try.Run(() => Process.Start(request) is not null)
             .OnFailure(ex => Log.Warning(ex, "Failed to open {Directory}", directory))
             ? context.Reply("log.openFolder.result", new OkPayload())
-            : context.Fail("log.openFolder.result", "error.openFolder");
+            : context.Fail("log.openFolder.result", Localization.Get("error.openFolder"));
     }
 
     /// <summary>Writes every line read so far, in its original form, to a new file in Downloads.</summary>
@@ -408,7 +409,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             lines = [.. _buffer.Where(line => line.Raw.Length > 0).Select(line => line.Raw)];
 
         if (lines.Length == 0)
-            return context.Fail("log.export.result", "error.noLog");
+            return context.Fail("log.export.result", Localization.Get("error.noLog"));
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var downloads = Path.Combine(home, "Downloads");
@@ -419,7 +420,8 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         if (!attempt.IsSuccess)
         {
             Log.Warning(attempt.Exception, "Failed to export the log to {Path}", path);
-            return context.Fail("log.export.result", attempt.Exception?.Message ?? "error.export");
+            return context.Fail("log.export.result",
+                attempt.Exception?.Message ?? Localization.Get("error.export"));
         }
 
         Log.Information("Exported {Count} log line(s) to {Path}", lines.Length, path);

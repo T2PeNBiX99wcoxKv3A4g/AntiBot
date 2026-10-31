@@ -1,5 +1,6 @@
 using AntiBot.Messaging;
 using JetBrains.Annotations;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Utils;
@@ -40,7 +41,7 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
         var url = context.Payload<OpenUrlRequest>()?.Url;
 
         if (!IsVrchatLink(url))
-            return context.Fail("system.openUrl.result", "Only VRChat links can be opened.");
+            return context.Fail("system.openUrl.result", Localization.Get("error.onlyVrchatLinks"));
 
         SystemLauncher.Open(url!);
         return context.Reply("system.openUrl.result", new OkPayload());

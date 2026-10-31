@@ -1,16 +1,27 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
+import {loadStrings, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
-import {getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
+import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import type {InstanceUser} from "../api/instance";
-import type {AppInfo} from "../api/system";
+import {type AppInfo, setStartup, startupStatus, type StartupStatus} from "../api/system";
+import {AttributionBrowser} from "../components/AttributionBrowser";
 import {FolderIcon, TrashIcon} from "../components/Icons";
+
+/** Language names are always shown in their own language. */
+const LOCALE_NAMES: Record<string, string> = {
+    en: "English",
+    ja: "日本語",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁體中文",
+};
 
 interface SettingsPageProps {
     info: AppInfo | null;
 }
 
 export function SettingsPage({info}: SettingsPageProps) {
+    const t = useTranslation();
     const [directory, setDirectory] = useState("");
     const [saved, setSaved] = useState("");
     const [defaultDirectory, setDefaultDirectory] = useState("");
@@ -27,6 +38,12 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [newWhitelist, setNewWhitelist] = useState("");
     const [people, setPeople] = useState<InstanceUser[]>([]);
     const [savedProtection, setSavedProtection] = useState("");
+    const [language, setLanguage] = useState("en");
+    const [locales, setLocales] = useState<string[]>([]);
+    const [startHidden, setStartHidden] = useState(false);
+    const [savedStartHidden, setSavedStartHidden] = useState(false);
+    const [startup, setStartupState] = useState<StartupStatus | null>(null);
+    const [startupBusy, setStartupBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -46,6 +63,9 @@ export function SettingsPage({info}: SettingsPageProps) {
             setAutoReject(settings.autoRejectFriendRequests);
             setThreshold(settings.threatThreshold);
             setWhitelist(settings.whitelist ?? []);
+            setLanguage(settings.language ?? "en");
+            setStartHidden(settings.startHidden);
+            setSavedStartHidden(settings.startHidden);
             setSavedProtection(protectionKey(settings.autoBlock, settings.autoDisableAvatarInteraction,
                 settings.autoHideChatBox, settings.autoReturnHome, settings.autoRejectFriendRequests,
                 settings.threatThreshold, settings.whitelist ?? []));
@@ -53,35 +73,51 @@ export function SettingsPage({info}: SettingsPageProps) {
             void getWhitelistPeople().then(setPeople, () => {
                 // The host failed to answer; ids are shown until it does.
             });
-        }, () => setError("Could not read the settings."));
+        }, () => setError(t("Could not read the settings.")));
+    }, []);
+
+    useEffect(() => {
+        void loadStrings().then((payload) => setLocales(payload.available), () => setLocales([]));
+    }, []);
+
+    useEffect(() => {
+        void startupStatus().then(setStartupState, () => setStartupState(null));
     }, []);
 
     const trimmed = directory.trim();
     const protection = protectionKey(autoBlock, autoAvatar, autoChat, autoHome, autoReject, threshold, whitelist);
     const changed = trimmed !== saved || providers.join("\n") !== savedProviders.join("\n") ||
-        protection !== savedProtection;
+        protection !== savedProtection || startHidden !== savedStartHidden;
+
+    /** The form values as the backend expects them, with any field overridden for an immediate save. */
+    const formSettings = (overrides: Partial<AppSettings> = {}): AppSettings => ({
+        logDirectory: trimmed,
+        avatarApiProviders: providers.map((provider) => provider.trim()).filter((provider) => provider.length > 0),
+        autoBlock,
+        autoDisableAvatarInteraction: autoAvatar,
+        autoHideChatBox: autoChat,
+        autoReturnHome: autoHome,
+        autoRejectFriendRequests: autoReject,
+        threatThreshold: threshold,
+        whitelist,
+        language,
+        startHidden,
+        ...overrides,
+    });
 
     const save = async () => {
         setError(null);
         setSaving(true);
 
         try {
-            const cleaned = providers.map((provider) => provider.trim()).filter((provider) => provider.length > 0);
-            await saveSettings({
-                logDirectory: trimmed,
-                avatarApiProviders: cleaned,
-                autoBlock,
-                autoDisableAvatarInteraction: autoAvatar,
-                autoHideChatBox: autoChat,
-                autoReturnHome: autoHome,
-                autoRejectFriendRequests: autoReject,
-                threatThreshold: threshold,
-                whitelist,
-            });
-            setDirectory(trimmed);
-            setSaved(trimmed);
-            setProviders(cleaned);
-            setSavedProviders(cleaned);
+            const stored = await saveSettings(formSettings());
+            setDirectory(stored.logDirectory);
+            setSaved(stored.logDirectory);
+            setProviders(stored.avatarApiProviders);
+            setSavedProviders(stored.avatarApiProviders);
+            setLanguage(stored.language);
+            setStartHidden(stored.startHidden);
+            setSavedStartHidden(stored.startHidden);
             setSavedProtection(protection);
             void getWhitelistPeople().then(setPeople, () => {
                 // Names appear once the profiles are fetched.
@@ -90,6 +126,34 @@ export function SettingsPage({info}: SettingsPageProps) {
             setError(reason instanceof Error ? reason.message : String(reason));
         } finally {
             setSaving(false);
+        }
+    };
+
+    /** Language applies immediately; the provider reloads the strings when settings.changed arrives. */
+    const changeLanguage = async (next: string) => {
+        setLanguage(next);
+        setError(null);
+
+        try {
+            const stored = await saveSettings(formSettings({language: next}));
+            setLanguage(stored.language);
+            setSavedStartHidden(stored.startHidden);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        }
+    };
+
+    /** The startup entry lives outside the settings; its presence is the state. */
+    const changeStartup = async (enabled: boolean) => {
+        setStartupBusy(true);
+        setError(null);
+
+        try {
+            setStartupState(await setStartup(enabled));
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setStartupBusy(false);
         }
     };
 
@@ -125,38 +189,84 @@ export function SettingsPage({info}: SettingsPageProps) {
         <Stack>
             <Section>
                 <SectionHeader>
-                    <h2>Log source</h2>
-                    <span>configurable</span>
+                    <h2>{t("Language")}</h2>
+                    <span>{language}</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
-                        <Label>VRChat log folder</Label>
+                        <Label>{t("Language")}</Label>
+                        <Select onChange={(event) => void changeLanguage(event.target.value)} value={language}>
+                            {locales.map((locale) => (
+                                <option key={locale} value={locale}>{LOCALE_NAMES[locale] ?? locale}</option>
+                            ))}
+                        </Select>
+                        <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
+                    </Field>
+
+                    <ToggleRow>
+                        <Toggle
+                            checked={startHidden}
+                            hint={t("Open in the tray instead of showing the window.")}
+                            onChange={setStartHidden}
+                            title={t("Start hidden")}
+                        />
+                    </ToggleRow>
+                </Card>
+            </Section>
+
+            <Section>
+                <SectionHeader>
+                    <h2>{t("Start with the system")}</h2>
+                    <span>{startup?.enabled ? t("enabled") : t("disabled")}</span>
+                </SectionHeader>
+
+                <Card>
+                    <ToggleRow>
+                        <Toggle
+                            checked={startup?.enabled ?? false}
+                            disabled={startupBusy || !startup?.supported}
+                            hint={t("Create an autostart entry for this user.")}
+                            onChange={(value) => void changeStartup(value)}
+                            title={t("Start with the system")}
+                        />
+                    </ToggleRow>
+                </Card>
+            </Section>
+
+            <Section>
+                <SectionHeader>
+                    <h2>{t("Log source")}</h2>
+                    <span>{t("configurable")}</span>
+                </SectionHeader>
+
+                <Card>
+                    <Field>
+                        <Label>{t("VRChat log folder")}</Label>
                         <Row>
                             <Input
-                                aria-label="VRChat log folder"
+                                aria-label={t("VRChat log folder")}
                                 onChange={(event) => setDirectory(event.target.value)}
-                                placeholder="VRChat's log folder"
+                                placeholder={t("VRChat's log folder")}
                                 spellCheck={false}
                                 value={directory}
                             />
                         </Row>
                         <Hint>
-                            The newest log in this folder is followed while VRChat is running. Nothing is read
-                            while it is closed.
+                            {t("The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.")}
                         </Hint>
                     </Field>
 
                     <Actions>
                         <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
-                            <FolderIcon/>Open folder
+                            <FolderIcon/>{t("Open folder")}
                         </Button>
                         <Button
                             disabled={!defaultDirectory || trimmed === defaultDirectory}
                             onClick={() => setDirectory(defaultDirectory)}
                             type="button"
                         >
-                            Use VRChat's folder
+                            {t("Use VRChat's folder")}
                         </Button>
                     </Actions>
                 </Card>
@@ -164,25 +274,25 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             <Section>
                 <SectionHeader>
-                    <h2>Avatar name lookups</h2>
-                    <span>same format as VRCX</span>
+                    <h2>{t("Avatar name lookups")}</h2>
+                    <span>{t("same format as VRCX")}</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
-                        <Label>API endpoints</Label>
+                        <Label>{t("API endpoints")}</Label>
                         <Hint>
-                            Tried in order; the first name wins. Each is called as
-                            <code> ?fileId=file_…</code> and must answer with JSON containing a
+                            {t("Tried in order; the first name wins. Each is called as")}
+                            <code> ?fileId=file_…</code> {t("and must answer with JSON containing a")}
                             <code> name</code>.
                         </Hint>
 
                         <Providers>
-                            {providers.length === 0 && <EmptyHint>No endpoint; avatar names stay unknown.</EmptyHint>}
+                            {providers.length === 0 && <EmptyHint>{t("No endpoint; avatar names stay unknown.")}</EmptyHint>}
                             {providers.map((provider, index) => (
                                 <Row key={`${provider}-${index}`}>
                                     <Input
-                                        aria-label="Avatar API endpoint"
+                                        aria-label={t("Avatar API endpoint")}
                                         onChange={(event) => {
                                             const next = [...providers];
                                             next[index] = event.target.value;
@@ -192,7 +302,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                         value={provider}
                                     />
                                     <Button
-                                        aria-label="Remove endpoint"
+                                        aria-label={t("Remove endpoint")}
                                         onClick={() => setProviders(providers.filter((_, i) => i !== index))}
                                         type="button"
                                     >
@@ -204,14 +314,14 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                         <Row>
                             <Input
-                                aria-label="New avatar API endpoint"
+                                aria-label={t("New avatar API endpoint")}
                                 onChange={(event) => setNewProvider(event.target.value)}
                                 placeholder="https://example.com/avatars"
                                 spellCheck={false}
                                 value={newProvider}
                             />
                             <Button disabled={newProvider.trim().length === 0} onClick={addProvider} type="button">
-                                Add
+                                {t("Add")}
                             </Button>
                         </Row>
                     </Field>
@@ -220,13 +330,13 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             <Section>
                 <SectionHeader>
-                    <h2>Automatic protection</h2>
-                    <span>threat ≥ {threshold}%</span>
+                    <h2>{t("Automatic protection")}</h2>
+                    <span>{t("threat ≥ {threshold}%", {threshold})}</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
-                        <Label>Threat threshold</Label>
+                        <Label>{t("Threat threshold")}</Label>
                         <Row>
                             <Range
                                 max={100}
@@ -239,41 +349,40 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <ThresholdValue>{threshold}%</ThresholdValue>
                         </Row>
                         <Hint>
-                            At or above this score the actions below run. Friends and whitelisted users are
-                            never acted on.
+                            {t("At or above this score the actions below run. Friends and whitelisted users are never acted on.")}
                         </Hint>
                     </Field>
 
                     <ToggleRow>
                         <Toggle
                             checked={autoBlock}
-                            hint="VRChat block: their avatar and interactions are hidden."
+                            hint={t("VRChat block: their avatar and interactions are hidden.")}
                             onChange={setAutoBlock}
-                            title="Block the user"
+                            title={t("Block the user")}
                         />
                         <Toggle
                             checked={autoAvatar}
-                            hint="Turn avatar interactions off for the user."
+                            hint={t("Turn avatar interactions off for the user.")}
                             onChange={setAutoAvatar}
-                            title="Disable avatar interactions"
+                            title={t("Disable avatar interactions")}
                         />
                         <Toggle
                             checked={autoChat}
-                            hint="Mute the user's chat box."
+                            hint={t("Mute the user's chat box.")}
                             onChange={setAutoChat}
-                            title="Hide the chat box"
+                            title={t("Hide the chat box")}
                         />
                         <Toggle
                             checked={autoHome}
-                            hint="Invite yourself to your home world once per instance."
+                            hint={t("Invite yourself to your home world once per instance.")}
                             onChange={setAutoHome}
-                            title="Return home"
+                            title={t("Return home")}
                         />
                         <Toggle
                             checked={autoReject}
-                            hint="Hide friend requests from high-threat users; undo from the request list."
+                            hint={t("Hide friend requests from high-threat users; undo from the request list.")}
                             onChange={setAutoReject}
-                            title="Reject friend requests"
+                            title={t("Reject friend requests")}
                         />
                     </ToggleRow>
                 </Card>
@@ -281,32 +390,32 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             <Section>
                 <SectionHeader>
-                    <h2>Whitelist</h2>
-                    <span>never acted on</span>
+                    <h2>{t("Whitelist")}</h2>
+                    <span>{t("never acted on")}</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
-                        <Label>Add a user</Label>
+                        <Label>{t("Add a user")}</Label>
                         <Row>
                             <Input
-                                aria-label="Whitelisted user id"
+                                aria-label={t("Whitelisted user id")}
                                 onChange={(event) => setNewWhitelist(event.target.value)}
                                 placeholder="usr_…"
                                 spellCheck={false}
                                 value={newWhitelist}
                             />
                             <Button disabled={newWhitelist.trim().length === 0} onClick={addWhitelist} type="button">
-                                Add
+                                {t("Add")}
                             </Button>
                         </Row>
                         <Hint>
-                            Paste a VRChat user id. Whitelisted users get a white row and no automatic action.
+                            {t("Paste a VRChat user id. Whitelisted users get a white row and no automatic action.")}
                         </Hint>
                     </Field>
 
                     <WhitelistList>
-                        {whitelist.length === 0 && <EmptyHint>Nobody is whitelisted.</EmptyHint>}
+                        {whitelist.length === 0 && <EmptyHint>{t("Nobody is whitelisted.")}</EmptyHint>}
                         {whitelist.map((id) => {
                             const person = people.find((item) => item.userId === id);
                             return (
@@ -317,7 +426,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                         <span>{person?.trust ?? id}</span>
                                     </WhitelistName>
                                     <Button
-                                        aria-label="Remove from whitelist"
+                                        aria-label={t("Remove from whitelist")}
                                         onClick={() => removeWhitelist(id)}
                                         type="button"
                                     >
@@ -334,22 +443,34 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             <Actions>
                 <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
-                    {saving ? "Saving…" : "Save settings"}
+                    {saving ? t("Saving…") : t("Save settings")}
                 </Button>
             </Actions>
 
             <Section>
                 <SectionHeader>
-                    <h2>Build</h2>
-                    <span>app.info</span>
+                    <h2>{t("Build")}</h2>
+                    <span>{t("app.info")}</span>
                 </SectionHeader>
 
                 <Card>
                     <Field>
-                        <Label>Version</Label>
-                        <Value $mono>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</Value>
-                        <Hint>Read from the executable the interface is running in.</Hint>
+                        <Label>{t("Version")}</Label>
+                        <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</Value>
+                        <Hint>{t("Read from the executable the interface is running in.")}</Hint>
                     </Field>
+                </Card>
+            </Section>
+
+            <Section>
+                <SectionHeader>
+                    <h2>{t("Open source attribution")}</h2>
+                    <span>{t("license")}</span>
+                </SectionHeader>
+
+                <Card>
+                    <Hint>{t("Open source licenses for the libraries AntiBot uses.")}</Hint>
+                    <AttributionBrowser/>
                 </Card>
             </Section>
         </Stack>
@@ -361,16 +482,22 @@ function protectionKey(autoBlock: boolean, autoAvatar: boolean, autoChat: boolea
     return [autoBlock, autoAvatar, autoChat, autoHome, autoReject, threshold, ...whitelist].join("|");
 }
 
-function Toggle({checked, onChange, title, hint}: {
+function Toggle({checked, onChange, title, hint, disabled = false}: {
     checked: boolean;
     onChange: (value: boolean) => void;
     title: string;
     hint: string;
+    disabled?: boolean;
 }) {
     return (
         <ToggleItem>
             <ToggleLabel>
-                <input checked={checked} onChange={(event) => onChange(event.target.checked)} type="checkbox"/>
+                <input
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={(event) => onChange(event.target.checked)}
+                    type="checkbox"
+                />
                 <span>{title}</span>
             </ToggleLabel>
             <ToggleHint>{hint}</ToggleHint>
@@ -457,6 +584,21 @@ const Input = styled.input`
     &::placeholder {
         color: var(--text-muted);
     }
+
+    &:focus {
+        outline: none;
+        border-color: var(--border-color-hover);
+    }
+`;
+
+const Select = styled.select`
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 12px;
 
     &:focus {
         outline: none;

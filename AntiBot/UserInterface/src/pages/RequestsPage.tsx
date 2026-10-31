@@ -1,11 +1,14 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
+import {useLocale, useTranslation} from "@photino-net-utils/bridge";
 import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged, undoFriendRequest} from "../api/friendRequests";
 import type {InstanceUser} from "../api/instance";
 import {PlayerDialog, userGridColumns, UserRow} from "./InstancePage";
 
 /** Every friend request AntiBot has recorded, newest first, kept as history. */
 export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
+    const t = useTranslation();
+    const locale = useLocale();
     const [requests, setRequests] = useState<FriendRequest[]>([]);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [confirming, setConfirming] = useState(false);
@@ -56,25 +59,28 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
             {!signedIn && (
                 <Notice>
                     <NoticeText>
-                        <strong>Not signed in</strong>
-                        <span>Sign in to record the friend requests VRChat receives.</span>
+                        <strong>{t("Not signed in")}</strong>
+                        <span>{t("Sign in to record the friend requests VRChat receives.")}</span>
                     </NoticeText>
-                    <NoticeButton onClick={onSignIn} type="button">Sign in</NoticeButton>
+                    <NoticeButton onClick={onSignIn} type="button">{t("Sign in")}</NoticeButton>
                 </Notice>
             )}
 
             <Card>
                 <CardHead>
                     <div>
-                        <h2>Friend requests</h2>
+                        <h2>{t("Friend requests")}</h2>
                         <p>
                             {requests.length === 0
-                                ? "Every incoming request is recorded here with the sender's profile."
-                                : `${requests.length} recorded · ${pending} still pending`}
+                                ? t("Every incoming request is recorded here with the sender's profile.")
+                                : t("{count} recorded · {pending} still pending", {
+                                    count: requests.length,
+                                    pending,
+                                })}
                         </p>
                     </div>
                     <CardActions>
-                        <Legend>Faded rows are no longer pending</Legend>
+                        <Legend>{t("Faded rows are no longer pending")}</Legend>
                         <ClearButton
                             $confirming={confirming}
                             disabled={requests.length === 0}
@@ -82,35 +88,35 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             onClick={clear}
                             type="button"
                         >
-                            {confirming ? "Confirm clear" : "Clear history"}
+                            {confirming ? t("Confirm clear") : t("Clear history")}
                         </ClearButton>
                     </CardActions>
                 </CardHead>
 
                 <ListHeader>
                     <span/>
-                    <span>User</span>
-                    <span>Trust</span>
-                    <span>Pronouns</span>
-                    <span>Status</span>
-                    <span>Platform</span>
-                    <span>Received</span>
+                    <span>{t("User")}</span>
+                    <span>{t("Trust")}</span>
+                    <span>{t("Pronouns")}</span>
+                    <span>{t("Status")}</span>
+                    <span>{t("Platform")}</span>
+                    <span>{t("Received")}</span>
                 </ListHeader>
 
                 <Rows>
                     {requests.length === 0 ? (
-                        <Empty>No friend requests recorded yet.</Empty>
-                    ) : groupByDay(requests).map((group) => (
+                        <Empty>{t("No friend requests recorded yet.")}</Empty>
+                    ) : groupByDay(requests, t, locale).map((group) => (
                         <section key={group.day}>
                             <Day>{group.day}</Day>
                             {group.items.map((request) => (
                                 <UserRow
-                                    badge={request.rejected ? <Rejected>rejected</Rejected> : undefined}
+                                    badge={request.rejected ? <Rejected>{t("rejected")}</Rejected> : undefined}
                                     dim={!request.active}
                                     key={request.id}
                                     now={request.firstSeen}
                                     onSelect={setSelected}
-                                    timeLabel={timeLabel(request.firstSeen)}
+                                    timeLabel={timeLabel(request.firstSeen, locale)}
                                     trailing={request.rejected ? (
                                         <UndoButton
                                             onClick={(event) => {
@@ -119,7 +125,7 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                             }}
                                             type="button"
                                         >
-                                            Undo
+                                            {t("Undo")}
                                         </UndoButton>
                                     ) : undefined}
                                     user={request.user}
@@ -135,11 +141,13 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     );
 }
 
-function groupByDay(requests: FriendRequest[]): { day: string; items: FriendRequest[] }[] {
+function groupByDay(requests: FriendRequest[],
+    t: (key: string, params?: Record<string, string | number>) => string,
+    locale: string): { day: string; items: FriendRequest[] }[] {
     const groups = new Map<string, FriendRequest[]>();
 
     for (const request of requests) {
-        const day = dayLabel(request.firstSeen);
+        const day = dayLabel(request.firstSeen, t, locale);
         const items = groups.get(day) ?? [];
         items.push(request);
         groups.set(day, items);
@@ -148,16 +156,18 @@ function groupByDay(requests: FriendRequest[]): { day: string; items: FriendRequ
     return [...groups].map(([day, items]) => ({day, items}));
 }
 
-function dayLabel(ms: number): string {
+function dayLabel(ms: number,
+    t: (key: string, params?: Record<string, string | number>) => string,
+    locale: string): string {
     const date = new Date(ms);
 
     return date.toDateString() === new Date().toDateString()
-        ? "Today"
-        : date.toLocaleDateString("en", {year: "numeric", month: "short", day: "numeric"});
+        ? t("Today")
+        : date.toLocaleDateString(locale, {year: "numeric", month: "short", day: "numeric"});
 }
 
-function timeLabel(ms: number): string {
-    return new Date(ms).toLocaleTimeString("en", {hour: "2-digit", minute: "2-digit"});
+function timeLabel(ms: number, locale: string): string {
+    return new Date(ms).toLocaleTimeString(locale, {hour: "2-digit", minute: "2-digit"});
 }
 
 const Page = styled.div`

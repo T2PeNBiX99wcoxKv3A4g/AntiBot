@@ -1,5 +1,6 @@
 import {StrictMode} from "react";
 import {createRoot} from "react-dom/client";
+import {LocalizationProvider} from "@photino-net-utils/bridge";
 import "./globals.scss";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
@@ -13,6 +14,8 @@ const rootElement = document.getElementById("root");
 if (rootElement)
     createRoot(rootElement).render(
         <StrictMode>
-            <App/>
+            <LocalizationProvider>
+                <App/>
+            </LocalizationProvider>
         </StrictMode>
     );

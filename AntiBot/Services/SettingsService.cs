@@ -2,6 +2,7 @@ using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -18,6 +19,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     /// <summary>The log folder in use by the follower.</summary>
     public string LogDirectory => Current.LogDirectory;
+
+    /// <summary>The language both the backend and the interface use.</summary>
+    public string Language => Current.Language;
 
     public void Load()
     {
@@ -37,11 +41,21 @@ internal sealed class SettingsService : Singleton<SettingsService>
                 LogDirectory = stored.LogDirectory is { Length: > 0 } directory
                     ? directory
                     : Current.LogDirectory,
+                Language = NormalizeLanguage(stored.Language),
                 AvatarApiProviders = stored.AvatarApiProviders is { Length: > 0 } providers
                     ? providers
                     : AppSettings.DefaultAvatarApiProviders
             };
     }
+
+    private static string NormalizeLanguage(string? language) =>
+        language is "ja" or "zh-CN" or "zh-TW" ? language : "en";
+
+    private SettingsPayload Payload() =>
+        new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
+            Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
+            Current.AutoReturnHome, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
+            Current.Whitelist, Current.Language, Current.StartHidden);
 
     /// <summary>
     ///     Older builds wrote the settings into the data folder, next to the session; move them once so
@@ -59,11 +73,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
-        "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result",
-            new SettingsPayload(Current.LogDirectory, AppSettings.DefaultLogDirectory,
-                Current.AvatarApiProviders, Current.AutoBlock, Current.AutoDisableAvatarInteraction,
-                Current.AutoHideChatBox, Current.AutoReturnHome, Current.AutoRejectFriendRequests,
-                Current.ThreatThreshold, Current.Whitelist))),
+        "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result", Payload())),
         "settings.save" => SaveAsync(context),
         "whitelist.people" => Task.FromResult<NativeResponse?>(context.Reply("whitelist.people.result",
             Current.Whitelist.Select(id => InstanceService.Instance.Describe(id, "")).ToArray())),
@@ -73,10 +83,10 @@ internal sealed class SettingsService : Singleton<SettingsService>
     private async Task<NativeResponse?> SaveAsync(NativeContext context)
     {
         if (context.Payload<AppSettings>() is not { } settings)
-            return context.Fail("settings.save.result", "error.invalidSettings");
+            return context.Fail("settings.save.result", Localization.Get("error.invalidSettings"));
 
         if (settings.LogDirectory.Trim() is not { Length: > 0 } directory)
-            return context.Fail("settings.save.result", "error.invalidLogDirectory");
+            return context.Fail("settings.save.result", Localization.Get("error.invalidLogDirectory"));
 
         // Only absolute http(s) providers are kept; an empty list falls back to the built-in ones.
         var providers = (settings.AvatarApiProviders ?? [])
@@ -88,6 +98,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
         Current = new()
         {
             LogDirectory = directory,
+            Language = NormalizeLanguage(settings.Language),
+            StartHidden = settings.StartHidden,
             AvatarApiProviders = providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders,
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
@@ -115,7 +127,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
         foreach (var id in Current.Whitelist)
             PlayerService.Instance.Request(id);
 
-        return context.Reply("settings.save.result", new OkPayload());
+        var payload = Payload();
+        WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
+        return context.Reply("settings.save.result", payload);
     }
 
     private static bool IsHttpUrl(string value) =>

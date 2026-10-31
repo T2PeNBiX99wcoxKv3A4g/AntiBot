@@ -1,5 +1,6 @@
 import {type ReactNode, useEffect, useRef, useState} from "react";
 import styled, {keyframes} from "styled-components";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {
     emptyInstance,
     getInstance,
@@ -14,6 +15,7 @@ import {AlertIcon, ExternalIcon, LockIcon, UsersIcon} from "../components/Icons"
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
 export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
+    const t = useTranslation();
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [now, setNow] = useState(() => Date.now());
@@ -62,46 +64,44 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
             {!signedIn && (
                 <Notice>
                     <NoticeText>
-                        <strong>Not signed in</strong>
+                        <strong>{t("Not signed in")}</strong>
                         <span>
-                            Only VRChat's local log is read. The player list and instance details can be
-                            wrong when more than one client runs, and status, platform and avatar names are
-                            unavailable.
+                            {t("Only VRChat's local log is read. The player list and instance details can be wrong when more than one client runs, and status, platform and avatar names are unavailable.")}
                         </span>
                     </NoticeText>
-                    <NoticeButton onClick={onSignIn} type="button">Sign in</NoticeButton>
+                    <NoticeButton onClick={onSignIn} type="button">{t("Sign in")}</NoticeButton>
                 </Notice>
             )}
 
             {!desktopAvailable ? (
-                <EmptyState hint="The list is built by the desktop host." title="Desktop host required"/>
+                <EmptyState hint={t("The list is built by the desktop host.")} title={t("Desktop host required")}/>
             ) : !running ? (
                 <EmptyState
-                    hint="Players appear here as VRChat writes join and leave lines, or once an account is signed in."
-                    title="VRChat is not running"
+                    hint={t("Players appear here as VRChat writes join and leave lines, or once an account is signed in.")}
+                    title={t("VRChat is not running")}
                 />
             ) : (
                 <>
                     <Summary>
                         <World $src={thumbnail}>
                             <WorldText>
-                                <Label>World</Label>
+                                <Label>{t("World")}</Label>
                                 <WorldName
                                     $link={worldId.length > 0}
                                     onClick={worldId
                                         ? () => void openUrl(`https://vrchat.com/home/world/${worldId}`)
                                         : undefined}
-                                    title={worldId ? "Open on vrchat.com" : undefined}
+                                    title={worldId ? t("Open on vrchat.com") : undefined}
                                 >
-                                    {worldName || world || "—"}
+                                    {worldName || world || t("—")}
                                 </WorldName>
                                 <InstanceRow>
                                     <InstanceBadge>
-                                        {instanceRegion && <RegionFlag region={instanceRegion}/>}
+                                        {instanceRegion && <RegionFlag region={instanceRegion} t={t}/>}
                                         {instanceRestricted && <LockIcon size={12}/>}
                                         {instanceAgeGated && <AgeGate>18+</AgeGate>}
-                                        {instanceDisplayName || instanceTypeLabel(instanceType)} ⋅
-                                        #{instanceNumber || "—"}
+                                        {instanceDisplayName || instanceTypeLabel(instanceType, t)} ⋅
+                                        #{instanceNumber || t("—")}
                                     </InstanceBadge>
                                 </InstanceRow>
                             </WorldText>
@@ -109,24 +109,24 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 
                         <Count>
                             <strong>{users.length}</strong>
-                            {(capacity ?? 0) > 0 && <span>/ {capacity} users</span>}
+                            {(capacity ?? 0) > 0 && <span>{t("/ {capacity} users", {capacity: capacity ?? 0})}</span>}
                         </Count>
                     </Summary>
 
                     <ListCard>
                         <ListHeader>
                             <span/>
-                            <span>User</span>
-                            <span>Trust</span>
-                            <span>Pronouns</span>
-                            <span>Status</span>
-                            <span>Platform</span>
-                            <span title="Time in this instance">Time</span>
+                            <span>{t("User")}</span>
+                            <span>{t("Trust")}</span>
+                            <span>{t("Pronouns")}</span>
+                            <span>{t("Status")}</span>
+                            <span>{t("Platform")}</span>
+                            <span title={t("Time in this instance")}>{t("Time")}</span>
                         </ListHeader>
 
                         <Rows>
                             {users.length === 0 ? (
-                                <EmptyRow>No players in this instance yet.</EmptyRow>
+                                <EmptyRow>{t("No players in this instance yet.")}</EmptyRow>
                             ) : users.map((user) => (
                                 <UserRow key={user.userId} user={user} now={now}
                                      onSelect={(next) => setSelectedId(next.userId)}/>
@@ -155,6 +155,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
     badge?: ReactNode;
     trailing?: ReactNode;
 }) {
+    const t = useTranslation();
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
     const threat = user.threat ?? 0;
@@ -178,42 +179,43 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
             </AvatarCell>
             <Name>
                 <NameText>
-                    <span title={[user.platform, user.dateJoined && `joined VRChat ${user.dateJoined}`]
+                    <span title={[user.platform, user.dateJoined && t("joined VRChat {date}", {date: user.dateJoined})]
                         .filter(Boolean).join(" · ")}>
                         {user.name}
                     </span>
                     {threat > 0 && (
-                        <ThreatBadge $score={threat} title={(user.threatReasons ?? []).join(" · ")}>
+                        <ThreatBadge $score={threat}
+                                      title={(user.threatReasons ?? []).map((reason) => t(reason)).join(" · ")}>
                             <AlertIcon size={10}/>
                             {threat}%
                         </ThreatBadge>
                     )}
                     {badge}
-                    {user.isRobot && <Robot>robot</Robot>}
-                    {user.local && <You>you</You>}
+                    {user.isRobot && <Robot>{t("robot")}</Robot>}
+                    {user.local && <You>{t("you")}</You>}
                 </NameText>
             </Name>
             <TrustCell>
                 {loaded
-                    ? user.trust ? <Trust $trust={user.trust}>{user.trust}</Trust> : <Dash>—</Dash>
+                    ? user.trust ? <Trust $trust={user.trust}>{t(user.trust)}</Trust> : <Dash>{t("—")}</Dash>
                     : <SkeletonBar/>}
             </TrustCell>
             <PronounCell>
                 {loaded
-                    ? user.pronouns ? <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun> : <Dash>—</Dash>
+                    ? user.pronouns ? <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun> : <Dash>{t("—")}</Dash>
                     : <SkeletonBar/>}
             </PronounCell>
             <StatusCell title={user.statusDescription || undefined}>
                 {loaded
                     ? status
-                        ? <><StatusDot $color={status.color}/><span>{user.statusDescription || status.label}</span></>
-                        : <Dash>—</Dash>
+                        ? <><StatusDot $color={status.color}/><span>{user.statusDescription || t(status.labelKey)}</span></>
+                        : <Dash>{t("—")}</Dash>
                     : <SkeletonBar/>}
             </StatusCell>
-            <PlatformCell title={platformTitle(user.platform)}>
-                {loaded ? platformLabel(user.platform) : <SkeletonBar/>}
+            <PlatformCell title={platformTitle(user.platform, t)}>
+                {loaded ? platformLabel(user.platform, t) : <SkeletonBar/>}
             </PlatformCell>
-            {showTime && <Time>{trailing ?? timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
+            {showTime && <Time>{trailing ?? timeLabel ?? durationLabel(user.joinedAt, now, t)}</Time>}
         </Row>
     );
 }
@@ -224,6 +226,7 @@ export function PlayerDialog({user, now, onClose}: {
     now: number;
     onClose: () => void;
 }) {
+    const t = useTranslation();
     const [bio, setBio] = useState(user.bio);
 
     useEffect(() => {
@@ -267,49 +270,49 @@ export function PlayerDialog({user, now, onClose}: {
                 <Details>
                     <h2>{user.name}</h2>
                     <Badges>
-                        {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
-                        {user.isRobot && <Robot>robot</Robot>}
-                        {user.whitelisted && <Whitelisted>whitelisted</Whitelisted>}
-                        {user.local && <You>you</You>}
+                        {user.trust && <Trust $trust={user.trust}>{t(user.trust)}</Trust>}
+                        {user.isRobot && <Robot>{t("robot")}</Robot>}
+                        {user.whitelisted && <Whitelisted>{t("whitelisted")}</Whitelisted>}
+                        {user.local && <You>{t("you")}</You>}
                     </Badges>
 
                     <Fields>
                         <FieldRow>
-                            <span>Profile</span>
+                            <span>{t("Profile")}</span>
                             <ProfileLink
                                 onClick={() => void openUrl(`https://vrchat.com/home/user/${user.userId}`)}
-                                title="Open on vrchat.com"
+                                title={t("Open on vrchat.com")}
                                 type="button"
                             >
                                 <ExternalIcon size={12}/>
-                                Open on vrchat.com
+                                {t("Open on vrchat.com")}
                             </ProfileLink>
                         </FieldRow>
-                        <StatusField status={status} text={user.statusDescription}/>
+                        <StatusField status={status} text={user.statusDescription} t={t}/>
                         {(user.threat ?? 0) > 0 && (
                             <FieldRow>
-                                <span>Threat</span>
+                                <span>{t("Threat")}</span>
                                 <ThreatLine>
                                     <ThreatBadge $score={user.threat!}>
                                         <AlertIcon size={10}/>
                                         {user.threat}%
                                     </ThreatBadge>
-                                    <ThreatText>{(user.threatReasons ?? []).join(" · ")}</ThreatText>
+                                    <ThreatText>{(user.threatReasons ?? []).map((reason) => t(reason)).join(" · ")}</ThreatText>
                                 </ThreatLine>
                             </FieldRow>
                         )}
-                        <Field label="Pronouns" value={user.pronouns || "—"}/>
-                        <Field label="Platform" value={platformLabel(user.platform)}/>
+                        <Field label={t("Pronouns")} value={user.pronouns || t("—")}/>
+                        <Field label={t("Platform")} value={platformLabel(user.platform, t)}/>
                         {user.joinedAt && (
-                            <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
+                            <Field label={t("In this instance")} value={durationLabel(user.joinedAt, now, t)}/>
                         )}
                         <Field
-                            label="Avatar"
-                            value={avatarName(user)}
+                            label={t("Avatar")}
+                            value={avatarName(user, t)}
                         />
                         <Field
-                            label="VRChat account since"
-                            value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : "—"}
+                            label={t("VRChat account since")}
+                            value={user.dateJoined ? new Date(user.dateJoined).toLocaleDateString() : t("—")}
                         />
                         {bio && <Bio>{bio}</Bio>}
                     </Fields>
@@ -321,13 +324,13 @@ export function PlayerDialog({user, now, onClose}: {
     );
 }
 
-/** The avatar name, or "Loading…" while the lookup is still running. */
-function avatarName(user: InstanceUser): string {
+/** The avatar name, or a translated loading/unknown state. */
+function avatarName(user: InstanceUser, t: (key: string, params?: Record<string, string | number>) => string): string {
     if (user.avatarName) return user.avatarName;
-    if (user.isRobot) return "Robot (default)";
-    if (!(user.avatarLoaded ?? false)) return "Loading…";
+    if (user.isRobot) return t("Robot (default)");
+    if (!(user.avatarLoaded ?? false)) return t("Loading…");
 
-    return "Unknown";
+    return t("Unknown");
 }
 
 function Field({label, value}: { label: string; value: string }) {
@@ -340,15 +343,16 @@ function Field({label, value}: { label: string; value: string }) {
 }
 
 /** The dot and the text together: the custom status when there is one, otherwise the default label. */
-function StatusField({status, text}: {
-    status: { label: string; color: string } | null;
+function StatusField({status, text, t}: {
+    status: { labelKey: string; color: string } | null;
     text?: string;
+    t: (key: string, params?: Record<string, string | number>) => string;
 }) {
-    const label = text || status?.label || "—";
+    const label = text || (status ? t(status.labelKey) : t("—"));
 
     return (
         <FieldRow>
-            <span>Status</span>
+            <span>{t("Status")}</span>
             <StatusValue title={label}>
                 {status && <StatusDot $color={status.color}/>}
                 <code>{label}</code>
@@ -370,48 +374,49 @@ function useWorldThumbnail(worldId: string, thumbnail?: string): string {
     return cache.current.url;
 }
 
-function statusInfo(status?: string): { label: string; color: string } | null {
+function statusInfo(status?: string): { labelKey: string; color: string } | null {
     switch (status) {
         case "active":
-            return {label: "Online", color: "#4ade80"};
+            return {labelKey: "Online", color: "#4ade80"};
         case "join me":
-            return {label: "Join Me", color: "#60a5fa"};
+            return {labelKey: "Join Me", color: "#60a5fa"};
         case "ask me":
-            return {label: "Ask Me", color: "#fbbf24"};
+            return {labelKey: "Ask Me", color: "#fbbf24"};
         case "busy":
-            return {label: "Busy", color: "#f87171"};
+            return {labelKey: "Busy", color: "#f87171"};
         case "offline":
-            return {label: "Offline", color: "#94a3b8"};
+            return {labelKey: "Offline", color: "#94a3b8"};
         default:
-            return status && status.length > 0 ? {label: status, color: "#94a3b8"} : null;
+            return status && status.length > 0 ? {labelKey: status, color: "#94a3b8"} : null;
     }
 }
 
 /** VRChat does not say whether a PC user is in VR; the tooltip explains the limitation. */
-function platformTitle(platform?: string): string | undefined {
+function platformTitle(platform: string | undefined,
+    t: (key: string, params?: Record<string, string | number>) => string): string | undefined {
     return platform === "standalonewindows"
-        ? "PC includes both desktop and PCVR users; VRChat does not report which one."
+        ? t("PC includes both desktop and PCVR users; VRChat does not report which one.")
         : undefined;
 }
 
-function platformLabel(platform?: string): string {
+function platformLabel(platform: string | undefined,
+    t: (key: string, params?: Record<string, string | number>) => string): string {
     switch (platform) {
         case "standalonewindows":
-            // VRChat reports the same value for desktop and PCVR; the API does not expose which one.
-            return "PC/VR";
+            return t("PC/VR");
         case "android":
-            // Android is the Quest client, which is VR (or mobile).
-            return "Quest";
+            return t("Quest");
         case "ios":
-            return "iOS";
+            return t("iOS");
         default:
-            return platform && platform.length > 0 ? platform : "—";
+            return platform && platform.length > 0 ? platform : t("—");
     }
 }
 
 /** How long the player has been in the instance, from the log's join time. */
-function durationLabel(joinedAt: string, now: number): string {
-    if (!joinedAt) return "—";
+function durationLabel(joinedAt: string, now: number,
+    t: (key: string, params?: Record<string, string | number>) => string): string {
+    if (!joinedAt) return t("—");
 
     const [hours, minutes, seconds] = joinedAt.split(":").map(Number);
     if ([hours, minutes, seconds].some(Number.isNaN)) return joinedAt;
@@ -424,15 +429,18 @@ function durationLabel(joinedAt: string, now: number): string {
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
 
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    return h > 0 ? t("{hours}h {minutes}m", {hours: h, minutes: m}) : t("{minutes}m", {minutes: m});
 }
 
 /** The region as a small flag. Windows has no flag emoji, so the emoji only ever showed "JP". */
-function RegionFlag({region}: { region: string }) {
+function RegionFlag({region, t}: {
+    region: string;
+    t: (key: string, params?: Record<string, string | number>) => string;
+}) {
     switch (region.toLowerCase()) {
         case "jp":
             return (
-                <Flag title="Japan">
+                <Flag title={t("Japan")}>
                     <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
                         <rect fill="#fff" height="20" width="30"/>
                         <circle cx="15" cy="10" fill="#bc002d" r="6"/>
@@ -443,7 +451,7 @@ function RegionFlag({region}: { region: string }) {
         case "us":
         case "use":
             return (
-                <Flag title="United States">
+                <Flag title={t("United States")}>
                     <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
                         <rect fill="#fff" height="20" width="30"/>
                         <path
@@ -457,7 +465,7 @@ function RegionFlag({region}: { region: string }) {
 
         case "eu":
             return (
-                <Flag title="Europe">
+                <Flag title={t("Europe")}>
                     <svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg">
                         <rect fill="#003399" height="20" width="30"/>
                         {Array.from({length: 12}, (_, index) => {
@@ -481,28 +489,29 @@ function RegionFlag({region}: { region: string }) {
     }
 }
 
-function instanceTypeLabel(type?: string): string {
+function instanceTypeLabel(type: string | undefined,
+    t: (key: string, params?: Record<string, string | number>) => string): string {
     switch (type) {
         case "public":
-            return "Public";
+            return t("Public");
         case "friends":
-            return "Friends";
+            return t("Friends");
         case "friends+":
         case "hidden":
-            return "Friends+";
+            return t("Friends+");
         case "invite":
         case "private":
-            return "Invite";
+            return t("Invite");
         case "invite+":
-            return "Invite+";
+            return t("Invite+");
         case "group":
-            return "Group";
+            return t("Group");
         default:
             if (type?.startsWith("group:")) {
                 const access = type.slice(6);
-                return access === "public" ? "Group Public" : access === "plus" ? "Group+" : "Group Members";
+                return access === "public" ? t("Group Public") : access === "plus" ? t("Group+") : t("Group Members");
             }
-            return type && type.length > 0 ? type : "Instance";
+            return type && type.length > 0 ? type : t("Instance");
     }
 }
 

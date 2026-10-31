@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Utils;
 using Serilog;
 
@@ -411,10 +412,12 @@ internal sealed class VrchatApi : IDisposable
 
         return status switch
         {
-            HttpStatusCode.Unauthorized => "The username or password is not correct.",
-            HttpStatusCode.Forbidden => "VRChat refused the sign-in. A VPN or a blocked network can cause this.",
-            HttpStatusCode.TooManyRequests => "Too many attempts. Wait a moment, then try again.",
-            _ => message is { Length: > 0 } ? message : $"VRChat answered {(int)status}."
+            HttpStatusCode.Unauthorized => Localization.Get("error.authUnauthorized"),
+            HttpStatusCode.Forbidden => Localization.Get("error.authForbidden"),
+            HttpStatusCode.TooManyRequests => Localization.Get("error.authRateLimited"),
+            _ => message is { Length: > 0 }
+                ? message
+                : Localization.Get("error.vrchatStatus").Replace("{status}", ((int)status).ToString())
         };
     }
 }

@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
+import {Native, ResizeHandles, useTranslation, useWindowCorners} from "@photino-net-utils/bridge";
 import {type AppInfo, getAppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
@@ -30,6 +30,7 @@ const pageMeta: Record<Page, { title: string; subtitle: string }> = {
 };
 
 export default function App() {
+    const t = useTranslation();
     const [page, setPage] = useState<Page>("logs");
     const [info, setInfo] = useState<AppInfo | null>(null);
     const corners = useWindowCorners();
@@ -60,13 +61,13 @@ export default function App() {
                 <Main>
                     <Header>
                         <HeaderText>
-                            <h1>{title}</h1>
-                            <p>{subtitle}</p>
+                            <h1>{t(title)}</h1>
+                            <p>{t(subtitle)}</p>
                         </HeaderText>
                         <HeaderMeta>
                             {!signedIn && (
                                 <SignInPill onClick={() => setPage("account")} type="button">
-                                    Not signed in · only the log is available
+                                    {t("Not signed in · only the log is available")}
                                 </SignInPill>
                             )}
                         </HeaderMeta>
@@ -87,7 +88,7 @@ export default function App() {
                     </Content>
 
                     <Footer>
-                        <span>{info ? `v${info.version} · ${info.platform}` : "browser preview"}</span>
+                        <span>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</span>
                     </Footer>
                 </Main>
             </Shell>

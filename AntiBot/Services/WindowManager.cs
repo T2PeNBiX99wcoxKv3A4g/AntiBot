@@ -23,6 +23,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
     private bool _allowClose;
     private readonly Lock _gate = new();
     private PhotinoWindow? _mainWindow;
+    private bool _hideWhenRendered;
 
     /// <summary>The newest event of each type, held until the page reports in.</summary>
     private readonly Dictionary<string, string> _pending = new();
@@ -40,6 +41,9 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     /// <summary>Address the window loads the interface from, set before the window is created.</summary>
     public string AppUrl { get; set; } = "";
+
+    /// <summary>Whether the window is shown at startup instead of hiding to the tray.</summary>
+    public bool ShowMainWindowOnStartup { get; set; } = true;
 
     /// <summary>Path to the extracted icon for the window, or null to keep the default.</summary>
     public string? IconPath { get; set; }
@@ -66,6 +70,8 @@ internal sealed class WindowManager : Singleton<WindowManager>
             .SetUseOsDefaultSize(false)
             .SetSize(new(1280, 800))
             .SetMinSize(900, 560)
+            // Only here so nothing flashes; the window is hidden once the interface has rendered.
+            .SetMinimized(!ShowMainWindowOnStartup)
             .SetContextMenuEnabled(false)
             .RegisterWebMessageReceivedHandler((sender, message) =>
                 _ = NativeBridge.HandleMessageAsync(sender as PhotinoWindow, message))
@@ -106,6 +112,15 @@ internal sealed class WindowManager : Singleton<WindowManager>
             {
                 LinuxWindow.UseClientSideFrame(window.Title);
                 DrawsWindowCorners = LinuxWindow.EnableTransparency(window.Title);
+            }
+
+            // Hiding a window while its web view is still starting leaves it blank, so it stays
+            // minimised until the interface reports in (or the timeout below hides it anyway).
+            if (!ShowMainWindowOnStartup)
+            {
+                _hideWhenRendered = true;
+                Log.Information("Starting hidden; the window stays minimised until its interface has rendered");
+                _ = Task.Delay(TimeSpan.FromSeconds(10)).ContinueWith(_ => HideWhenRendered());
             }
 
             MainWindowCreated?.Invoke();
@@ -161,6 +176,15 @@ internal sealed class WindowManager : Singleton<WindowManager>
         Try.Run(() => _mainWindow?.SendWebMessage(message))
             .OnFailure(ex => Log.Warning(ex, "Failed to push {Type} to the interface", type));
 
+    private void HideWhenRendered()
+    {
+        if (!_hideWhenRendered || _mainWindow is not { } window)
+            return;
+
+        _hideWhenRendered = false;
+        RunOnMainWindow(() => Hide(window));
+    }
+
     private void FlushPending()
     {
         KeyValuePair<string, string>[] pending;
@@ -182,6 +206,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
             case "app.ready":
                 _mainWindowReady = true;
                 FlushPending();
+                HideWhenRendered();
                 break;
 
             case "window.minimize":

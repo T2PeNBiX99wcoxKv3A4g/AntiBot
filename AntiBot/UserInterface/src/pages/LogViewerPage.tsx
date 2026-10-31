@@ -1,5 +1,6 @@
 import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import styled from "styled-components";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, exportLog, type LogLine} from "../api/logs";
 import {ArrowDownIcon, DownloadIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
 import type {VrchatLog} from "../hooks/useVrchatLog";
@@ -33,6 +34,7 @@ interface VisibleLine {
 }
 
 export function LogViewerPage({log}: { log: VrchatLog }) {
+    const t = useTranslation();
     const {status, lines, clear} = log;
     const [query, setQuery] = useState("");
     const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -77,7 +79,9 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
         try {
             const result = await exportLog();
-            if (result.saved) setNotice({text: `Exported ${result.lines} lines to ${result.path}.`});
+            if (result.saved) setNotice({
+                text: t("Exported {count} lines to {path}.", {count: result.lines, path: result.path ?? ""}),
+            });
         } catch (reason) {
             setNotice({text: reason instanceof Error ? reason.message : String(reason), error: true});
         } finally {
@@ -92,15 +96,15 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     <SearchBox>
                         <SearchIcon/>
                         <input
-                            aria-label="Filter log lines"
+                            aria-label={t("Filter log lines")}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder="Filter lines…"
+                            placeholder={t("Filter lines…")}
                             spellCheck={false}
                             type="search"
                             value={query}
                         />
                         {query && (
-                            <ClearSearch aria-label="Clear the filter" onClick={() => setQuery("")} type="button">
+                            <ClearSearch aria-label={t("Clear the filter")} onClick={() => setQuery("")} type="button">
                                 <XIcon/>
                             </ClearSearch>
                         )}
@@ -111,28 +115,28 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     <ToolbarButton
                         $active={follow}
                         onClick={() => setFollow((value) => !value)}
-                        title={follow ? "Stop scrolling as new lines arrive" : "Scroll to the newest line again"}
+                        title={follow ? t("Stop scrolling as new lines arrive") : t("Scroll to the newest line again")}
                         type="button"
                     >
-                        <FollowDot $active={follow}/>{follow ? "Following" : "Paused"}
+                        <FollowDot $active={follow}/>{follow ? t("Following") : t("Paused")}
                     </ToolbarButton>
 
                     <ToolbarButton
                         disabled={lines.length === 0}
                         onClick={clear}
-                        title="Clear the view; the log itself is untouched"
+                        title={t("Clear the view; the log itself is untouched")}
                         type="button"
                     >
-                        <TrashIcon/>Clear
+                        <TrashIcon/>{t("Clear")}
                     </ToolbarButton>
 
                     <ToolbarButton
                         disabled={lines.length === 0 || exporting}
                         onClick={exportLines}
-                        title="Save every line read so far to a file"
+                        title={t("Save every line read so far to a file")}
                         type="button"
                     >
-                        <DownloadIcon/>{exporting ? "Exporting…" : "Export"}
+                        <DownloadIcon/>{exporting ? t("Exporting…") : t("Export")}
                     </ToolbarButton>
                 </ToolbarRow>
 
@@ -143,10 +147,11 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                             $on={!hidden.has(level)}
                             key={level}
                             onClick={() => toggleLevel(level)}
-                            title={`${hidden.has(level) ? "Show" : "Hide"} ${LEVEL_LABELS[level]} lines`}
+                            title={t(hidden.has(level) ? "Show {level} lines" : "Hide {level} lines",
+                                {level: t(LEVEL_LABELS[level])})}
                             type="button"
                         >
-                            <i/>{LEVEL_LABELS[level]}
+                            <i/>{t(LEVEL_LABELS[level])}
                         </LevelChip>
                     ))}
                 </Levels>
@@ -155,44 +160,44 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             {notice && (
                 <Notice $error={notice.error}>
                     <span>{notice.text}</span>
-                    <button aria-label="Dismiss" onClick={() => setNotice(null)} type="button"><XIcon/></button>
+                    <button aria-label={t("Dismiss")} onClick={() => setNotice(null)} type="button"><XIcon/></button>
                 </Notice>
             )}
 
             <Viewer>
                 {!desktopAvailable ? (
                     <EmptyState
-                        hint="The log is read through the desktop host. Start AntiBot instead of the browser preview."
-                        title="Desktop host required"
+                        hint={t("The log is read through the desktop host. Start AntiBot instead of the browser preview.")}
+                        title={t("Desktop host required")}
                     />
                 ) : lines.length === 0 ? (
                     !status.running ? (
                         <EmptyState
-                            hint="Nothing is read while VRChat is closed. Its log appears here once it starts."
-                            title="VRChat is not running"
+                            hint={t("Nothing is read while VRChat is closed. Its log appears here once it starts.")}
+                            title={t("VRChat is not running")}
                         />
                     ) : !status.exists ? (
                         <EmptyState
-                            hint="The configured log folder cannot be found. Set VRChat's log folder in Settings."
-                            title="Log folder not found"
+                            hint={t("The configured log folder cannot be found. Set VRChat's log folder in Settings.")}
+                            title={t("Log folder not found")}
                         />
                     ) : (
                         <EmptyState
-                            hint="VRChat is starting; lines appear here as soon as it writes them."
-                            title="Waiting for the log"
+                            hint={t("VRChat is starting; lines appear here as soon as it writes them.")}
+                            title={t("Waiting for the log")}
                         />
                     )
                 ) : visible.length === 0 ? (
                     <EmptyState
                         hint={query.trim()
-                            ? `No line contains “${query.trim()}”.`
-                            : "Every line is hidden by the level filter."}
-                        title="Nothing matches"
+                            ? t("No line contains “{query}”.", {query: query.trim()})
+                            : t("Every line is hidden by the level filter.")}
+                        title={t("Nothing matches")}
                     />
                 ) : (
                     <Rows onScroll={handleScroll} ref={rowsRef}>
                         {visible.map(({line, level}) => line.level === "session" ? (
-                            <SessionDivider key={line.id}>new session</SessionDivider>
+                            <SessionDivider key={line.id}>{t("new session")}</SessionDivider>
                         ) : (
                             <Row $level={level} key={line.id}>
                                 <Time>{line.time}</Time>
@@ -205,7 +210,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
                 {!follow && visible.length > 0 && (
                     <JumpButton onClick={() => setFollow(true)} type="button">
-                        <ArrowDownIcon/>Jump to latest
+                        <ArrowDownIcon/>{t("Jump to latest")}
                     </JumpButton>
                 )}
             </Viewer>
@@ -213,8 +218,8 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             <StatusBar>
                 <span>
                     {visible.length === lines.length
-                        ? `${lines.length} lines`
-                        : `${visible.length} of ${lines.length} lines`}
+                        ? t("{count} lines", {count: lines.length})
+                        : t("{visible} of {total} lines", {visible: visible.length, total: lines.length})}
                 </span>
             </StatusBar>
         </Page>

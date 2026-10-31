@@ -4,6 +4,7 @@ using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -208,7 +209,7 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         var request = context.Payload<AuthLoginRequest>();
         if (request?.Username is not { Length: > 0 } username || request.Password is not { Length: > 0 } password)
-            return context.Fail("auth.login.result", "Enter your VRChat username and password.");
+            return context.Fail("auth.login.result", Localization.Get("error.authMissing"));
 
         var (user, error) = await _api.LoginAsync(username, password, CancellationToken.None);
         if (error is not null)
@@ -231,14 +232,14 @@ internal sealed class AuthService : Singleton<AuthService>
 
         return await CompleteAsync(user, true)
             ? context.Reply("auth.login.result", Snapshot())
-            : context.Fail("auth.login.result", "VRChat returned no account. Sign in again.");
+            : context.Fail("auth.login.result", Localization.Get("error.authNoAccount"));
     }
 
     private async Task<NativeResponse?> VerifyAsync(NativeContext context)
     {
         var request = context.Payload<AuthVerifyRequest>();
         if (request?.Code.Trim() is not { Length: > 0 } code)
-            return context.Fail("auth.verify.result", "Enter the code.");
+            return context.Fail("auth.verify.result", Localization.Get("error.authCodeMissing"));
 
         var verified = request.Method switch
         {
@@ -248,12 +249,12 @@ internal sealed class AuthService : Singleton<AuthService>
         };
 
         if (!verified)
-            return context.Fail("auth.verify.result", "That code was not accepted.");
+            return context.Fail("auth.verify.result", Localization.Get("error.authCodeRejected"));
 
         var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
         return await CompleteAsync(user, true)
             ? context.Reply("auth.verify.result", Snapshot())
-            : context.Fail("auth.verify.result", "The session could not be confirmed. Sign in again.");
+            : context.Fail("auth.verify.result", Localization.Get("error.authSessionUnconfirmed"));
     }
 
     private async Task<NativeResponse?> UnlockAsync(NativeContext context)
@@ -262,23 +263,23 @@ internal sealed class AuthService : Singleton<AuthService>
         var hello = _storage == AuthStorage.Hello;
 
         if (!hello && password is not { Length: > 0 })
-            return context.Fail("auth.unlock.result", "Enter your password to unlock the saved session.");
+            return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockPassword"));
 
         var (status, payload) = await AuthStore.LoadAsync(hello ? null : password);
 
         if (status == SessionLoadStatus.Cancelled)
-            return context.Fail("auth.unlock.result", "The Windows Hello prompt was cancelled.");
+            return context.Fail("auth.unlock.result", Localization.Get("error.authHelloCancelled"));
 
         if (status == SessionLoadStatus.None || payload is null)
             return context.Fail("auth.unlock.result",
-                hello ? "The saved session could not be unlocked." : "That password does not unlock the saved session.");
+                Localization.Get(hello ? "error.authHelloUnlockFailed" : "error.authUnlockFailed"));
 
         try
         {
             if (!await UseCookiesAsync(payload))
             {
                 Forget();
-                return context.Fail("auth.unlock.result", "The saved session has expired. Sign in again.");
+                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
             }
         }
         finally
@@ -303,7 +304,7 @@ internal sealed class AuthService : Singleton<AuthService>
         };
 
         if (mode != AuthStorage.None && !IsLoggedIn)
-            return context.Fail("auth.storage.save.result", "Sign in first.");
+            return context.Fail("auth.storage.save.result", Localization.Get("error.authSignInFirst"));
 
         var cookies = mode == AuthStorage.None
             ? []
@@ -312,7 +313,7 @@ internal sealed class AuthService : Singleton<AuthService>
         try
         {
             if (!await AuthStore.SaveAsync(cookies, mode, request?.Password))
-                return context.Fail("auth.storage.save.result", "Enter the password that unlocks the session.");
+                return context.Fail("auth.storage.save.result", Localization.Get("error.authStoragePassword"));
         }
         finally
         {
@@ -345,7 +346,7 @@ internal sealed class AuthService : Singleton<AuthService>
         var device = await _api.StartDeviceAsync(CancellationToken.None);
         if (device?.DeviceCode is not { Length: > 0 } code ||
             device.VerificationUrlComplete is not { Length: > 0 } url)
-            return context.Fail("auth.device.start.result", "VRChat did not start a device sign-in.");
+            return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceStart"));
 
         return context.Reply("auth.device.start.result", new DeviceCodePayload(
             code, url, QrCode.DataUrl(url), device.Interval ?? 5, device.ExpiresIn ?? 300));
@@ -355,7 +356,7 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         var code = context.Payload<DevicePollRequest>()?.DeviceCode;
         if (code is not { Length: > 0 })
-            return context.Fail("auth.device.poll.result", "The device sign-in is missing its code.");
+            return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceMissing"));
 
         var (approved, reason) = await _api.PollDeviceAsync(code, CancellationToken.None);
         if (!approved)
@@ -364,7 +365,7 @@ internal sealed class AuthService : Singleton<AuthService>
         var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
         return await CompleteAsync(user, true)
             ? context.Reply("auth.device.poll.result", new DevicePollPayload(true, null, Snapshot()))
-            : context.Fail("auth.device.poll.result", "The session could not be confirmed. Sign in again.");
+            : context.Fail("auth.device.poll.result", Localization.Get("error.authSessionUnconfirmed"));
     }
 
     /// <summary>Takes the account from an API reply and marks the session as signed in.</summary>

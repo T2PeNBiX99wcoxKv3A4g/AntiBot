@@ -1,5 +1,6 @@
 import {type FormEvent, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {
     type AuthSnapshot,
     type AuthStorage,
@@ -82,6 +83,7 @@ function LoginForm({busy, error, run, onSignedIn}: {
     run: Run;
     onSignedIn: (auth: AuthSnapshot) => void;
 }) {
+    const t = useTranslation();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [device, setDevice] = useState(false);
@@ -97,19 +99,19 @@ function LoginForm({busy, error, run, onSignedIn}: {
                 <CardHead>
                     <UserIcon size={20}/>
                     <div>
-                        <h2>Sign in to VRChat</h2>
-                        <p>The password is used for this one request and is never stored.</p>
+                        <h2>{t("Sign in to VRChat")}</h2>
+                        <p>{t("The password is used for this one request and is never stored.")}</p>
                     </div>
                 </CardHead>
 
                 <Form onSubmit={submit}>
                     <Field>
-                        <Label htmlFor="username">Username or email</Label>
+                        <Label htmlFor="username">{t("Username or email")}</Label>
                         <UsernameInput onChange={setUsername} value={username}/>
                     </Field>
 
                     <Field>
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password">{t("Password")}</Label>
                         <PasswordInput
                             autoComplete="current-password"
                             id="password"
@@ -122,20 +124,17 @@ function LoginForm({busy, error, run, onSignedIn}: {
 
                     <Actions>
                         <Primary disabled={busy} type="submit">
-                            {busy ? "Signing in…" : "Sign in"}
+                            {busy ? t("Signing in…") : t("Sign in")}
                         </Primary>
                         <Secondary onClick={() => setDevice((open) => !open)} type="button">
                             <QrIcon size={15}/>
-                            Use a device code
+                            {t("Use a device code")}
                         </Secondary>
                     </Actions>
                 </Form>
 
                 <Note>
-                    Signing in is optional. Without it AntiBot only reads VRChat's local log, so the
-                    instance list can be inaccurate and player details are unavailable. The password is
-                    used for this one request and is never stored; the session is kept out of the
-                    settings folder.
+                    {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable. The password is used for this one request and is never stored; the session is kept out of the settings folder.")}
                 </Note>
             </Card>
 
@@ -150,6 +149,7 @@ function TwoFactorForm({auth, busy, error, run}: {
     error: string;
     run: Run;
 }) {
+    const t = useTranslation();
     const methods = auth.twoFactorMethods.length > 0 ? auth.twoFactorMethods : ["totp", "otp"];
     const [method, setMethod] = useState(methods[0]);
     const [code, setCode] = useState("");
@@ -172,22 +172,22 @@ function TwoFactorForm({auth, busy, error, run}: {
                 <CardHead>
                     <ShieldIcon size={20}/>
                     <div>
-                        <h2>Two-factor authentication</h2>
-                        <p>VRChat wants a second factor before it hands over the session.</p>
+                        <h2>{t("Two-factor authentication")}</h2>
+                        <p>{t("VRChat wants a second factor before it hands over the session.")}</p>
                     </div>
                 </CardHead>
 
                 <MethodRow>
                     {methods.map((id) => (
                         <Method key={id} $active={method === id} onClick={() => setMethod(id)} type="button">
-                            {methodLabel(id)}
+                            {t(methodLabel(id))}
                         </Method>
                     ))}
                 </MethodRow>
 
                 <Form onSubmit={submit}>
                     <Field>
-                        <Label htmlFor="code">{methodHint(method)}</Label>
+                        <Label htmlFor="code">{t(methodHint(method))}</Label>
                         <Input
                             autoComplete="one-time-code"
                             autoFocus
@@ -203,7 +203,7 @@ function TwoFactorForm({auth, busy, error, run}: {
 
                     <Actions>
                         <Primary disabled={busy} type="submit">
-                            {busy ? "Verifying…" : "Verify"}
+                            {busy ? t("Verifying…") : t("Verify")}
                         </Primary>
                     </Actions>
                 </Form>
@@ -218,6 +218,7 @@ function UnlockForm({auth, busy, error, run}: {
     error: string;
     run: Run;
 }) {
+    const t = useTranslation();
     const [password, setPassword] = useState("");
     const hello = auth.storage === "hello";
 
@@ -232,11 +233,11 @@ function UnlockForm({auth, busy, error, run}: {
                 <CardHead>
                     <KeyIcon size={20}/>
                     <div>
-                        <h2>{hello ? "Unlock with Windows Hello" : "Unlock the saved session"}</h2>
+                        <h2>{hello ? t("Unlock with Windows Hello") : t("Unlock the saved session")}</h2>
                         <p>
                             {hello
-                                ? "The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face."
-                                : "The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again."}
+                                ? t("The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face.")
+                                : t("The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.")}
                         </p>
                     </div>
                 </CardHead>
@@ -244,7 +245,7 @@ function UnlockForm({auth, busy, error, run}: {
                 <Form onSubmit={submit}>
                     {!hello && (
                         <Field>
-                            <Label htmlFor="unlock-password">Password</Label>
+                            <Label htmlFor="unlock-password">{t("Password")}</Label>
                             <PasswordInput
                                 autoComplete="current-password"
                                 autoFocus
@@ -259,12 +260,12 @@ function UnlockForm({auth, busy, error, run}: {
 
                     <Actions>
                         <Primary disabled={busy} type="submit">
-                            {busy ? "Unlocking…" : hello ? "Unlock with Windows Hello" : "Unlock"}
+                            {busy ? t("Unlocking…") : hello ? t("Unlock with Windows Hello") : t("Unlock")}
                         </Primary>
                         <Secondary onClick={() => void run(async () => {
                             return await saveStorage("none");
                         })} type="button">
-                            Forget it
+                            {t("Forget it")}
                         </Secondary>
                     </Actions>
                 </Form>
@@ -279,6 +280,7 @@ function Profile({auth, busy, error, run}: {
     error: string;
     run: Run;
 }) {
+    const t = useTranslation();
     const user = auth.user!;
     const status = statusInfo(user.status);
 
@@ -291,14 +293,16 @@ function Profile({auth, busy, error, run}: {
                         <h2>{user.displayName}</h2>
                         <StatusLine>
                             {status && <StatusDot $color={status.color}/>}
-                            <p>{user.statusDescription || status?.label || "Signed in to VRChat"}</p>
+                            <p>{user.statusDescription || (status ? t(status.labelKey) : t("Signed in to VRChat"))}</p>
                         </StatusLine>
                         {auth.expiresAt && (
-                            <p>Session expires {new Date(auth.expiresAt).toLocaleDateString()}</p>
+                            <p>{t("Session expires {date}", {
+                                date: new Date(auth.expiresAt).toLocaleDateString(),
+                            })}</p>
                         )}
                     </Identity>
                     <Secondary disabled={busy} onClick={() => void run(logout)} type="button">
-                        Sign out
+                        {t("Sign out")}
                     </Secondary>
                 </ProfileRow>
 
@@ -309,25 +313,26 @@ function Profile({auth, busy, error, run}: {
 }
 
 /** The presence label and colour the site uses. */
-function statusInfo(status?: string): { label: string; color: string } | null {
+function statusInfo(status?: string): { labelKey: string; color: string } | null {
     switch (status) {
         case "active":
-            return {label: "Online", color: "#4ade80"};
+            return {labelKey: "Online", color: "#4ade80"};
         case "join me":
-            return {label: "Join Me", color: "#60a5fa"};
+            return {labelKey: "Join Me", color: "#60a5fa"};
         case "ask me":
-            return {label: "Ask Me", color: "#fbbf24"};
+            return {labelKey: "Ask Me", color: "#fbbf24"};
         case "busy":
-            return {label: "Busy", color: "#f87171"};
+            return {labelKey: "Busy", color: "#f87171"};
         case "offline":
-            return {label: "Offline", color: "#94a3b8"};
+            return {labelKey: "Offline", color: "#94a3b8"};
         default:
-            return status && status.length > 0 ? {label: status, color: "#94a3b8"} : null;
+            return status && status.length > 0 ? {labelKey: status, color: "#94a3b8"} : null;
     }
 }
 
 /** The login name, masked like a password until the eye is used. */
 function UsernameInput({value, onChange}: { value: string; onChange: (value: string) => void }) {
+    const t = useTranslation();
     const [visible, setVisible] = useState(false);
 
     return (
@@ -336,12 +341,12 @@ function UsernameInput({value, onChange}: { value: string; onChange: (value: str
                 autoComplete="username"
                 id="username"
                 onChange={(event) => onChange(event.target.value)}
-                placeholder="username"
+                placeholder={t("username")}
                 type={visible ? "text" : "password"}
                 value={value}
             />
             <PasswordReveal
-                aria-label={visible ? "Hide the username" : "Show the username"}
+                aria-label={visible ? t("Hide the username") : t("Show the username")}
                 onClick={() => setVisible((current) => !current)}
                 type="button"
             >
@@ -360,6 +365,7 @@ function PasswordInput({id, value, onChange, placeholder = "••••••�
     autoComplete?: string;
     autoFocus?: boolean;
 }) {
+    const t = useTranslation();
     const [visible, setVisible] = useState(false);
 
     return (
@@ -374,7 +380,7 @@ function PasswordInput({id, value, onChange, placeholder = "••••••�
                 value={value}
             />
             <PasswordReveal
-                aria-label={visible ? "Hide password" : "Show password"}
+                aria-label={visible ? t("Hide password") : t("Show password")}
                 onClick={() => setVisible((current) => !current)}
                 type="button"
             >
@@ -390,6 +396,7 @@ function StorageChoice({auth, busy, error, run}: {
     error: string;
     run: Run;
 }) {
+    const t = useTranslation();
     const systemAvailable = auth.systemStorage;
     const systemName = auth.systemStorageName || "System protection";
     const tpmAvailable = auth.tpmStorage;
@@ -430,18 +437,18 @@ function StorageChoice({auth, busy, error, run}: {
 
     const save = () => {
         if (!signedIn) {
-            setLocalError("Sign in first.");
+            setLocalError(t("Sign in first."));
             return;
         }
 
         if (mode === "password") {
             if (password.length < 1) {
-                setLocalError("Enter the password that unlocks the session.");
+                setLocalError(t("Enter the password that unlocks the session."));
                 return;
             }
 
             if (password !== confirm) {
-                setLocalError("The passwords do not match.");
+                setLocalError(t("The passwords do not match."));
                 return;
             }
         }
@@ -458,10 +465,9 @@ function StorageChoice({auth, busy, error, run}: {
             <CardHead>
                 <ShieldIcon size={20}/>
                 <div>
-                    <h2>Keep the session between launches</h2>
+                    <h2>{t("Keep the session between launches")}</h2>
                     <p>
-                        Only the VRChat session cookie is stored, never your password. Every mode except
-                        "Do not remember" encrypts it at rest; the difference is what unlocks it.
+                        {t("Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.")}
                     </p>
                 </div>
             </CardHead>
@@ -474,12 +480,12 @@ function StorageChoice({auth, busy, error, run}: {
                     type="button"
                 >
                     <OptionHead>
-                        <strong>Software key</strong>
-                        <Tag>obfuscation</Tag>
-                        <Safety $tone="weak">weak</Safety>
-                        <Platforms>Linux</Platforms>
+                        <strong>{t("Software key")}</strong>
+                        <Tag>{t("obfuscation")}</Tag>
+                        <Safety $tone="weak">{t("weak")}</Safety>
+                        <Platforms>{t("Linux")}</Platforms>
                     </OptionHead>
-                    <p>AES-256-GCM with a key file next to the session; obfuscation only, not real protection.</p>
+                    <p>{t("AES-256-GCM with a key file next to the session; obfuscation only, not real protection.")}</p>
                 </Option>
 
                 <Option
@@ -490,17 +496,17 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>{systemName}</strong>
-                        <Tag>encrypted</Tag>
-                        <Safety $tone="fair">fair</Safety>
+                        <Tag>{t("encrypted")}</Tag>
+                        <Safety $tone="fair">{t("fair")}</Safety>
                         <Platforms>
-                            {systemName === "Windows DPAPI" ? "Windows" :
-                                systemName === "System keyring" ? "Linux" : "Windows · Linux"}
+                            {systemName === "Windows DPAPI" ? t("Windows") :
+                                systemName === "System keyring" ? t("Linux") : t("Windows · Linux")}
                         </Platforms>
                     </OptionHead>
                     <p>
                         {systemName === "Windows DPAPI"
-                            ? "Encrypted with Windows DPAPI for your account; unlocks automatically."
-                            : "Held in the desktop keyring; unlocks with your login session."}
+                            ? t("Encrypted with Windows DPAPI for your account; unlocks automatically.")
+                            : t("Held in the desktop keyring; unlocks with your login session.")}
                     </p>
                 </Option>
 
@@ -511,12 +517,12 @@ function StorageChoice({auth, busy, error, run}: {
                     type="button"
                 >
                     <OptionHead>
-                        <strong>TPM</strong>
-                        <Tag>no prompt</Tag>
-                        <Safety $tone="good">good</Safety>
-                        <Platforms>Windows · Linux</Platforms>
+                        <strong>{t("TPM")}</strong>
+                        <Tag>{t("no prompt")}</Tag>
+                        <Safety $tone="good">{t("good")}</Safety>
+                        <Platforms>{t("Windows · Linux")}</Platforms>
                     </OptionHead>
-                    <p>AES key wrapped by this machine's TPM; unlocks automatically.</p>
+                    <p>{t("AES key wrapped by this machine's TPM; unlocks automatically.")}</p>
                 </Option>
 
                 <Option
@@ -526,38 +532,38 @@ function StorageChoice({auth, busy, error, run}: {
                     type="button"
                 >
                     <OptionHead>
-                        <strong>Windows Hello</strong>
-                        <Tag>PIN / biometrics</Tag>
-                        <Safety $tone="strong">strong</Safety>
-                        <Platforms>Windows</Platforms>
+                        <strong>{t("Windows Hello")}</strong>
+                        <Tag>{t("PIN / biometrics")}</Tag>
+                        <Safety $tone="strong">{t("strong")}</Safety>
+                        <Platforms>{t("Windows")}</Platforms>
                     </OptionHead>
-                    <p>Windows Hello confirms it is you before unlocking.</p>
+                    <p>{t("Windows Hello confirms it is you before unlocking.")}</p>
                 </Option>
 
                 <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
                     <OptionHead>
-                        <strong>Password</strong>
-                        <Tag>asks every launch</Tag>
-                        <Safety $tone="strong">strong</Safety>
-                        <Platforms>Windows · Linux</Platforms>
+                        <strong>{t("Password")}</strong>
+                        <Tag>{t("asks every launch")}</Tag>
+                        <Safety $tone="strong">{t("strong")}</Safety>
+                        <Platforms>{t("Windows · Linux")}</Platforms>
                     </OptionHead>
-                    <p>AES-256-GCM with a key derived from your password; asked each launch.</p>
+                    <p>{t("AES-256-GCM with a key derived from your password; asked each launch.")}</p>
                 </Option>
 
                 <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
                     <OptionHead>
-                        <strong>Do not remember</strong>
-                        <Tag>nothing on disk</Tag>
-                        <Safety $tone="safest">safest</Safety>
-                        <Platforms>Windows · Linux</Platforms>
+                        <strong>{t("Do not remember")}</strong>
+                        <Tag>{t("nothing on disk")}</Tag>
+                        <Safety $tone="safest">{t("safest")}</Safety>
+                        <Platforms>{t("Windows · Linux")}</Platforms>
                     </OptionHead>
-                    <p>Nothing is written; the next launch signs in again.</p>
+                    <p>{t("Nothing is written; the next launch signs in again.")}</p>
                 </Option>
             </Options>
 
             {mode === "password" && (
                 <Field>
-                    <Label htmlFor="storage-password">Password for this session</Label>
+                    <Label htmlFor="storage-password">{t("Password for this session")}</Label>
                     <PasswordInput
                         autoComplete="current-password"
                         id="storage-password"
@@ -567,7 +573,7 @@ function StorageChoice({auth, busy, error, run}: {
                     <PasswordInput
                         autoComplete="current-password"
                         onChange={setConfirm}
-                        placeholder="repeat the password"
+                        placeholder={t("repeat the password")}
                         value={confirm}
                     />
                 </Field>
@@ -577,10 +583,12 @@ function StorageChoice({auth, busy, error, run}: {
 
             <Actions>
                 <Primary disabled={busy || !signedIn || !dirty} onClick={save} type="button">
-                    {busy ? "Saving…" : "Save"}
+                    {busy ? t("Saving…") : t("Save")}
                 </Primary>
                 <Muted>
-                    {signedIn ? `Currently: ${storageLabel(auth.storage)}` : "Sign in to change this."}
+                    {signedIn
+                        ? t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})
+                        : t("Sign in to change this.")}
                 </Muted>
             </Actions>
         </Card>
@@ -588,6 +596,7 @@ function StorageChoice({auth, busy, error, run}: {
 }
 
 function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void }) {
+    const t = useTranslation();
     const [device, setDevice] = useState<DeviceCode | null>(null);
     const [error, setError] = useState("");
     const [expired, setExpired] = useState(false);
@@ -651,13 +660,13 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
                 <CardHead>
                     <QrIcon size={20}/>
                     <div>
-                        <h2>Device sign-in</h2>
-                        <p>Approve the sign-in on your phone; the password never reaches AntiBot.</p>
+                        <h2>{t("Device sign-in")}</h2>
+                        <p>{t("Approve the sign-in on your phone; the password never reaches AntiBot.")}</p>
                     </div>
                 </CardHead>
                 {error && <ErrorText>{error}</ErrorText>}
                 <Actions>
-                    <Secondary onClick={() => void start()} type="button">Start</Secondary>
+                    <Secondary onClick={() => void start()} type="button">{t("Start")}</Secondary>
                 </Actions>
             </Card>
         );
@@ -667,26 +676,26 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
             <CardHead>
                 <QrIcon size={20}/>
                 <div>
-                    <h2>Approve this sign-in</h2>
-                    <p>Scan the code, or open the link, and approve it in the VRChat app or site.</p>
+                    <h2>{t("Approve this sign-in")}</h2>
+                    <p>{t("Scan the code, or open the link, and approve it in the VRChat app or site.")}</p>
                 </div>
             </CardHead>
 
             <DeviceBody>
                 {device.qrDataUrl
-                    ? <Qr alt="Device sign-in QR code" src={device.qrDataUrl}/>
+                    ? <Qr alt={t("Device sign-in")} src={device.qrDataUrl}/>
                     : <p>{device.url}</p>}
                 <LinkBox>
                     <a href={device.url} rel="noreferrer" target="_blank">{device.url}</a>
                 </LinkBox>
             </DeviceBody>
 
-            {expired ? <ErrorText>The code expired. Start again.</ErrorText> : <Muted>Waiting for approval…</Muted>}
+            {expired ? <ErrorText>{t("The code expired. Start again.")}</ErrorText> : <Muted>{t("Waiting for approval…")}</Muted>}
             {error && <ErrorText>{error}</ErrorText>}
 
             <Actions>
-                <Secondary onClick={() => setDevice(null)} type="button">Cancel</Secondary>
-                {expired && <Primary onClick={() => void start()} type="button">Try again</Primary>}
+                <Secondary onClick={() => setDevice(null)} type="button">{t("Cancel")}</Secondary>
+                {expired && <Primary onClick={() => void start()} type="button">{t("Try again")}</Primary>}
             </Actions>
         </Card>
     );

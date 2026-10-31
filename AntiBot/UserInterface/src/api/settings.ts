@@ -13,6 +13,8 @@ export interface SettingsView {
     autoRejectFriendRequests: boolean;
     threatThreshold: number;
     whitelist: string[];
+    language: string;
+    startHidden: boolean;
 }
 
 export interface AppSettings {
@@ -25,6 +27,8 @@ export interface AppSettings {
     autoRejectFriendRequests: boolean;
     threatThreshold: number;
     whitelist: string[];
+    language: string;
+    startHidden: boolean;
 }
 
 const empty: SettingsView = {
@@ -36,8 +40,10 @@ const empty: SettingsView = {
     autoHideChatBox: true,
     autoReturnHome: true,
     autoRejectFriendRequests: true,
-    threatThreshold: 70,
+    threatThreshold: 50,
     whitelist: [],
+    language: "en",
+    startHidden: false,
 };
 
 /** Reads the log folder, the avatar databases and the protection settings. */
@@ -47,11 +53,11 @@ export async function getSettings(): Promise<SettingsView> {
     return await Native.request<SettingsView>("settings.get");
 }
 
-/** Persists the settings. */
-export async function saveSettings(settings: AppSettings): Promise<void> {
-    if (!Native.available) return;
+/** Persists the settings and returns the stored snapshot. */
+export async function saveSettings(settings: AppSettings): Promise<SettingsView> {
+    if (!Native.available) return {...empty, ...settings};
 
-    await Native.request("settings.save", settings);
+    return await Native.request<SettingsView>("settings.save", settings);
 }
 
 /** The whitelisted users, described like the instance list describes a player. */
