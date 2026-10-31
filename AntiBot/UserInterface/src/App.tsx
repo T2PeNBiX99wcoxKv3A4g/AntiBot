@@ -5,6 +5,7 @@ import {type AppInfo, getAppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
+import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
@@ -23,6 +24,8 @@ export default function App() {
     const [info, setInfo] = useState<AppInfo | null>(null);
     const corners = useWindowCorners();
     const log = useVrchatLog();
+    const auth = useAuth();
+    const signedIn = auth.state === "loggedIn";
 
     useEffect(() => {
         void getAppInfo().then(setInfo, () => setInfo(null));
@@ -52,6 +55,11 @@ export default function App() {
                             <p>{subtitle}</p>
                         </HeaderText>
                         <HeaderMeta>
+                            {!signedIn && (
+                                <SignInPill onClick={() => setPage("account")} type="button">
+                                    Not signed in · only the log is available
+                                </SignInPill>
+                            )}
                             <StatusPill $active={running}>
                                 <Dot $active={running}/>
                                 {running ? "VRChat running" : "VRChat not running"}
@@ -63,7 +71,7 @@ export default function App() {
                         {page === "logs"
                             ? <LogViewerPage log={log}/>
                             : page === "instance"
-                                ? <InstancePage/>
+                                ? <InstancePage signedIn={signedIn} onSignIn={() => setPage("account")}/>
                                 : page === "account"
                                     ? <AccountPage/>
                                     : <SettingsPage info={info}/>}
@@ -153,6 +161,25 @@ const StatusPill = styled.span<{ $active: boolean }>`
     font-size: 10px;
     color: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-secondary)"};
     white-space: nowrap;
+`;
+
+const SignInPill = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: 999px;
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(251, 191, 36, 0.2);
+    }
 `;
 
 const Dot = styled.span<{ $active: boolean }>`

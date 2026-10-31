@@ -132,8 +132,10 @@ function LoginForm({busy, error, run, onSignedIn}: {
                 </Form>
 
                 <Note>
-                    VRChat's terms do not cover third-party clients. Signing in is your own decision; the
-                    session is what an attacker would want, so it is kept out of the settings folder.
+                    Signing in is optional. Without it AntiBot only reads VRChat's local log, so the
+                    instance list can be inaccurate and player details are unavailable. The password is
+                    used for this one request and is never stored; the session is kept out of the
+                    settings folder.
                 </Note>
             </Card>
 

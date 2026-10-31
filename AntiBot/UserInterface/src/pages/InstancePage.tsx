@@ -12,7 +12,7 @@ import {openUrl} from "../api/system";
 import {EyeIcon, EyeOffIcon, LockIcon, UsersIcon} from "../components/Icons";
 
 /** Players in the current instance, reconstructed from VRChat's own log. */
-export function InstancePage() {
+export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
     const [snapshot, setSnapshot] = useState<InstanceSnapshot>(emptyInstance);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [now, setNow] = useState(() => Date.now());
@@ -55,6 +55,20 @@ export function InstancePage() {
 
     return (
         <Page>
+            {!signedIn && (
+                <Notice>
+                    <NoticeText>
+                        <strong>Not signed in</strong>
+                        <span>
+                            Only VRChat's local log is read. The player list and instance details can be
+                            wrong when more than one client runs, and status, platform and avatar names are
+                            unavailable.
+                        </span>
+                    </NoticeText>
+                    <NoticeButton onClick={onSignIn} type="button">Sign in</NoticeButton>
+                </Notice>
+            )}
+
             {!desktopAvailable ? (
                 <EmptyState hint="The list is built by the desktop host." title="Desktop host required"/>
             ) : !running ? (
@@ -343,6 +357,51 @@ const Page = styled.div`
     flex-direction: column;
     gap: 14px;
     min-height: 0;
+`;
+
+const Notice = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: var(--radius-md);
+    background: rgba(251, 191, 36, 0.08);
+`;
+
+const NoticeText = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+
+    strong {
+        font-size: 12px;
+        color: #fbbf24;
+    }
+
+    span {
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+    }
+`;
+
+const NoticeButton = styled.button`
+    flex-shrink: 0;
+    padding: 7px 12px;
+    border: 1px solid rgba(251, 191, 36, 0.45);
+    border-radius: var(--radius-sm);
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(251, 191, 36, 0.2);
+    }
 `;
 
 const Summary = styled.section`
