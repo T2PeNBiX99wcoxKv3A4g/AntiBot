@@ -223,8 +223,7 @@ function PlayerDialog({user, now, onClose}: {
                                 </RevealButton>
                             </SecretValue>
                         </SecretField>
-                        <Field label="Status" value={status ? status.label : "—"}/>
-                        <Field label="Status text" value={user.statusDescription || "—"}/>
+                        <StatusField status={status} text={user.statusDescription}/>
                         <Field label="Platform" value={platformLabel(user.platform)}/>
                         <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
                         <Field
@@ -249,6 +248,24 @@ function Field({label, value}: { label: string; value: string }) {
         <FieldRow>
             <span>{label}</span>
             <code title={value}>{value}</code>
+        </FieldRow>
+    );
+}
+
+/** The dot and the text together: the custom status when there is one, otherwise the default label. */
+function StatusField({status, text}: {
+    status: { label: string; color: string } | null;
+    text?: string;
+}) {
+    const label = text || status?.label || "—";
+
+    return (
+        <FieldRow>
+            <span>Status</span>
+            <StatusValue title={label}>
+                {status && <StatusDot $color={status.color}/>}
+                <code>{label}</code>
+            </StatusValue>
         </FieldRow>
     );
 }
@@ -624,6 +641,19 @@ const StatusDot = styled.span<{ $color: string }>`
     border-radius: 50%;
     background: ${({$color}) => $color};
     box-shadow: 0 0 6px ${({$color}) => $color};
+`;
+
+const StatusValue = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+
+    code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 `;
 
 const PlatformCell = styled.span`

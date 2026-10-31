@@ -475,15 +475,11 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>Software key</strong>
-                        <Tag>{softwareAvailable ? "obfuscation" : "unavailable"}</Tag>
+                        <Tag>obfuscation</Tag>
                         <Safety $tone="weak">weak</Safety>
                         <Platforms>Linux</Platforms>
                     </OptionHead>
-                    <p>
-                        {softwareAvailable
-                            ? "AES-256-GCM with a key file next to the session; obfuscation only, not real protection."
-                            : "Only offered on Linux."}
-                    </p>
+                    <p>AES-256-GCM with a key file next to the session; obfuscation only, not real protection.</p>
                 </Option>
 
                 <Option
@@ -494,7 +490,7 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>{systemName}</strong>
-                        <Tag>{systemAvailable ? "encrypted" : "unavailable"}</Tag>
+                        <Tag>encrypted</Tag>
                         <Safety $tone="fair">fair</Safety>
                         <Platforms>
                             {systemName === "Windows DPAPI" ? "Windows" :
@@ -502,11 +498,9 @@ function StorageChoice({auth, busy, error, run}: {
                         </Platforms>
                     </OptionHead>
                     <p>
-                        {systemAvailable
-                            ? systemName === "Windows DPAPI"
-                                ? "Encrypted with Windows DPAPI for your account; unlocks automatically."
-                                : "Held in the desktop keyring; unlocks with your login session."
-                            : "No DPAPI or keyring on this system."}
+                        {systemName === "Windows DPAPI"
+                            ? "Encrypted with Windows DPAPI for your account; unlocks automatically."
+                            : "Held in the desktop keyring; unlocks with your login session."}
                     </p>
                 </Option>
 
@@ -518,15 +512,11 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>TPM</strong>
-                        <Tag>{tpmAvailable ? "no prompt" : "unavailable"}</Tag>
+                        <Tag>no prompt</Tag>
                         <Safety $tone="good">good</Safety>
                         <Platforms>Windows · Linux</Platforms>
                     </OptionHead>
-                    <p>
-                        {tpmAvailable
-                            ? "AES key wrapped by this machine's TPM; unlocks automatically."
-                            : "No usable TPM on this machine."}
-                    </p>
+                    <p>AES key wrapped by this machine's TPM; unlocks automatically.</p>
                 </Option>
 
                 <Option
@@ -537,15 +527,11 @@ function StorageChoice({auth, busy, error, run}: {
                 >
                     <OptionHead>
                         <strong>Windows Hello</strong>
-                        <Tag>{helloAvailable ? "PIN / biometrics" : "unavailable"}</Tag>
+                        <Tag>PIN / biometrics</Tag>
                         <Safety $tone="strong">strong</Safety>
                         <Platforms>Windows</Platforms>
                     </OptionHead>
-                    <p>
-                        {helloAvailable
-                            ? "Windows Hello confirms it is you before unlocking."
-                            : "Only available on Windows."}
-                    </p>
+                    <p>Windows Hello confirms it is you before unlocking.</p>
                 </Option>
 
                 <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
@@ -988,7 +974,8 @@ const Option = styled.button<{ $active: boolean; $disabled?: boolean }>`
     font: inherit;
     text-align: left;
     cursor: ${({$disabled}) => $disabled ? "not-allowed" : "pointer"};
-    opacity: ${({$disabled}) => $disabled ? 0.55 : 1};
+    opacity: ${({$disabled}) => $disabled ? 0.5 : 1};
+    filter: ${({$disabled}) => $disabled ? "grayscale(1)" : "none"};
 
     p {
         font-size: 11px;
