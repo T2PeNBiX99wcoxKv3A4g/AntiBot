@@ -111,6 +111,11 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         lock (_gate)
         {
+            // The log replays the whole session when it is read, which is newer than the stored copy;
+            // never let the database overwrite a list the log already rebuilt.
+            if (_users.Count > 0 || _world.Length > 0 || _instance.Length > 0)
+                return;
+
             _users.Clear();
             _world = "";
             _instance = "";
@@ -275,9 +280,6 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         var message = line.Message;
 
-        if (message == "[Behaviour] OnPlayerLeftRoom")
-            return new(line.Time, "clear");
-
         var joined = PlayerJoinedPattern().Match(message);
         if (joined.Success)
             return new(line.Time, "join",
@@ -338,6 +340,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 return Upsert(gameEvent.UserId, gameEvent.DisplayName, gameEvent.At);
 
             case "leave":
+                // The local player leaving ends the roster; everyone else only removes themselves.
+                if (_localName.Length > 0 && gameEvent.DisplayName == _localName)
+                    return ResetSession();
+
                 return Remove(gameEvent.UserId);
 
             case "local":
@@ -462,6 +468,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             _pushed = signature;
         }
 
+        Log.Information("Instance list: {Count} player(s) from {Source}", snapshot.Users.Count, snapshot.Source);
         WindowManager.Instance.NotifyMainWindow("instance.changed", snapshot);
     }
 
@@ -488,22 +495,34 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         {
             if (_apiInstance is { } api && AuthService.Instance.IsLoggedIn && LooksLikeInstance(_apiLocation))
             {
-                // The API lists who is really there; the log still supplies join times and who is local.
-                // For instances the account did not create the API sends an empty roster, so fall back.
-                var apiUsers = api.Users is { Length: > 0 } list ? list : null;
+                // The log knows everyone this client can see. The API roster can be partial (it only
+                // lists some users for instances the account does not own), so it supplies names and
+                // avatars, and stands in only when the log has nothing yet.
+                var apiUsers = api.Users ?? [];
+                var apiById = new Dictionary<string, ApiInstanceUser>();
 
-                var users = Ordered(apiUsers is not null
-                    ? apiUsers.Select(user =>
-                        Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl))
-                    : _users.Select(user => Enrich(user.UserId, user.Name)));
+                foreach (var user in apiUsers)
+                    if (user.Id is { Length: > 0 } id)
+                        apiById[id] = user;
 
-                var count = api.UserCount ?? apiUsers?.Length ?? 0;
+                var users = _users.Count > 0
+                    ? _users.Select(known =>
+                    {
+                        var apiUser = apiById.GetValueOrDefault(known.UserId);
+                        return Enrich(known.UserId, apiUser?.DisplayName ?? known.Name,
+                            apiUser?.CurrentAvatarThumbnailImageUrl);
+                    })
+                    : apiUsers.Select(user =>
+                        Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl));
+
+                var ordered = Ordered(users);
+                var count = Math.Max(api.UserCount ?? 0, ordered.Length);
 
                 return new(
                     _running || count > 0,
                     api.World?.Name ?? _world,
                     api.Location ?? _apiLocation,
-                    users,
+                    ordered,
                     "api",
                     api.World?.Name ?? "",
                     count,

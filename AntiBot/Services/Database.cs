@@ -143,6 +143,16 @@ internal sealed class Database : Singleton<Database>
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
 
         Prune();
+
+        // Older builds cleared the whole list on "OnPlayerLeftRoom", which fires when any player
+        // leaves; those events would rebuild a wrong list, so drop them.
+        Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM game_events WHERE kind = 'clear'";
+            command.ExecuteNonQuery();
+        }).OnFailure(ex => Log.Warning(ex, "Could not drop the old clear events"));
     }
 
     /// <summary>Appends events to the stream; one transaction per batch.</summary>

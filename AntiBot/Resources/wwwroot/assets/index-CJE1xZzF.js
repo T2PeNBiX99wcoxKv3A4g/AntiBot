@@ -596,7 +596,7 @@ Error generating stack: `+e.message+`
 `,Ra=M.span`
     width: 34px;
     height: 34px;
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);

@@ -673,7 +673,7 @@ const AvatarCell = styled.span`
 const AvatarLarge = styled.span<{ $src?: string }>`
     width: 34px;
     height: 34px;
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
     box-shadow: inset 0 0 0 1px var(--border-color);
