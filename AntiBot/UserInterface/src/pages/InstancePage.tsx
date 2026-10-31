@@ -504,7 +504,7 @@ const World = styled.div<{ $src?: string }>`
         content: "";
         position: absolute;
         inset: 0 auto 0 0;
-        width: 24%;
+        width: max(24%, 380px);
         background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
         background-position: center;
         background-size: cover;
@@ -518,7 +518,7 @@ const World = styled.div<{ $src?: string }>`
         content: "";
         position: absolute;
         inset: 0 auto 0 0;
-        width: 40%;
+        width: max(40%, 560px);
         background: linear-gradient(90deg,
         rgba(8, 7, 15, 0.68) 0%,
         rgba(8, 7, 15, 0.3) 55%,
