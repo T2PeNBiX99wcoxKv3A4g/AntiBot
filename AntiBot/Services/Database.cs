@@ -1,3 +1,5 @@
+using System.Text.Json;
+using AntiBot.Messaging;
 using AntiBot.Models;
 using Microsoft.Data.Sqlite;
 using PhotinoNetUtils.Extensions;
@@ -94,7 +96,13 @@ internal sealed class Database : Singleton<Database>
                                       kind         TEXT NOT NULL,
                                       user_id      TEXT NOT NULL DEFAULT '',
                                       display_name TEXT NOT NULL DEFAULT '',
-                                      detail       TEXT NOT NULL DEFAULT ''
+                                      detail       TEXT NOT NULL DEFAULT '',
+                                      avatar_url   TEXT
+                                  );
+
+                                  CREATE TABLE IF NOT EXISTS account (
+                                      id      TEXT PRIMARY KEY,
+                                      payload TEXT NOT NULL
                                   );
 
                                   CREATE INDEX IF NOT EXISTS ix_game_events_kind ON game_events (kind, id);
@@ -154,6 +162,12 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE friend_requests ADD COLUMN rejected INTEGER NOT NULL DEFAULT 0";
+                migration.ExecuteNonQuery();
+            });
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE operations ADD COLUMN avatar_url TEXT";
                 migration.ExecuteNonQuery();
             });
         }).OnFailure(ex => Log.Error(ex, "Could not open the local database"));
@@ -375,23 +389,67 @@ internal sealed class Database : Singleton<Database>
         attempt.OnFailure(ex => Log.Warning(ex, "Could not clear the friend requests"));
     }
 
+    /// <summary>The signed-in account from the last run, so the page has it before the network does.</summary>
+    public VrchatAccount? LoadAccount()
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT payload FROM account WHERE id = 'me'";
+            return command.ExecuteScalar() is string payload
+                ? JsonSerializer.Deserialize(payload, AppJsonContext.Default.VrchatAccount)
+                : null;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the cached account"))
+            .GetOrNull();
+    }
+
+    public void SaveAccount(VrchatAccount account)
+    {
+        Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  INSERT INTO account (id, payload) VALUES ('me', $payload)
+                                  ON CONFLICT (id) DO UPDATE SET payload = excluded.payload
+                                  """;
+            command.Parameters.AddWithValue("$payload",
+                JsonSerializer.Serialize(account, AppJsonContext.Default.VrchatAccount));
+            command.ExecuteNonQuery();
+        }).OnFailure(ex => Log.Warning(ex, "Could not cache the account"));
+    }
+
+    public void ClearAccount() =>
+        Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM account";
+            command.ExecuteNonQuery();
+        }).OnFailure(ex => Log.Warning(ex, "Could not clear the cached account"));
+
     /// <summary>Records one automatic action.</summary>
     public async Task AddOperationAsync(string kind, string userId, string displayName, string detail,
-        CancellationToken token = default)
+        string? avatarUrl = null, CancellationToken token = default)
     {
         var attempt = await Try.Run(async () =>
         {
             await using var connection = await OpenAsync(token);
             await using var command = connection.CreateCommand();
             command.CommandText = """
-                                  INSERT INTO operations (at, kind, user_id, display_name, detail)
-                                  VALUES ($at, $kind, $userId, $displayName, $detail)
+                                  INSERT INTO operations (at, kind, user_id, display_name, detail, avatar_url)
+                                  VALUES ($at, $kind, $userId, $displayName, $detail, $avatarUrl)
                                   """;
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             command.Parameters.AddWithValue("$kind", kind);
             command.Parameters.AddWithValue("$userId", userId);
             command.Parameters.AddWithValue("$displayName", displayName);
             command.Parameters.AddWithValue("$detail", detail);
+            command.Parameters.AddWithValue("$avatarUrl", (object?)avatarUrl ?? DBNull.Value);
             await command.ExecuteNonQueryAsync(token);
         });
 
@@ -406,7 +464,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText = """
-                                  SELECT id, at, kind, user_id, display_name, detail
+                                  SELECT id, at, kind, user_id, display_name, detail, avatar_url
                                   FROM operations
                                   ORDER BY id DESC
                                   LIMIT $limit
@@ -417,7 +475,7 @@ internal sealed class Database : Singleton<Database>
             using var reader = command.ExecuteReader();
             while (reader.Read())
                 rows.Add(new(reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
-                    reader.GetString(4), reader.GetString(5)));
+                    reader.GetString(4), reader.GetString(5), reader.GetStringOrNull(6)));
 
             return rows;
         });

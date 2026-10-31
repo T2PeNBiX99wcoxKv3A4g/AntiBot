@@ -9,6 +9,7 @@ export interface OperationEntry {
     userId: string;
     displayName: string;
     detail: string;
+    avatarUrl?: string;
 }
 
 export async function getOperations(): Promise<OperationEntry[]> {

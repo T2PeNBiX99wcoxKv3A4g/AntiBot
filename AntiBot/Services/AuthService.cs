@@ -72,7 +72,20 @@ internal sealed class AuthService : Singleton<AuthService>
     public event Action? Notification;
 
     /// <summary>Restores a stored session. Called once, after the singletons exist.</summary>
-    public void Initialize() => _ = RestoreAsync();
+    public void Initialize()
+    {
+        // Show the account from the last run at once; the network confirms it a moment later.
+        if (AuthStore.Exists && AuthStore.StoredMode != AuthStorage.Password &&
+            Database.Instance.LoadAccount() is { } cached)
+            lock (_gate)
+            {
+                _account = cached;
+                _state = "loggedIn";
+            }
+
+        Notify();
+        _ = RestoreAsync();
+    }
 
     /// <summary>
     ///     The instance the signed-in account is in, refreshed at most every
@@ -348,6 +361,9 @@ internal sealed class AuthService : Singleton<AuthService>
 
         Log.Information("Signed in as {Name}", user.DisplayName ?? id);
 
+        if (_account is { } account)
+            Database.Instance.SaveAccount(account);
+
         // The pipeline is what makes the account page and the list update within seconds.
         PresenceService.Instance.Set(id, user.Status, user.StatusDescription, PresenceSource.Pipeline);
 
@@ -448,6 +464,7 @@ internal sealed class AuthService : Singleton<AuthService>
         _api.ResetCookies();
         _pipeline.Stop();
         PresenceService.Instance.Clear();
+        Database.Instance.ClearAccount();
 
         lock (_gate)
         {
@@ -467,6 +484,7 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         _pipeline.Stop();
         PresenceService.Instance.Clear();
+        Database.Instance.ClearAccount();
 
         lock (_gate)
         {

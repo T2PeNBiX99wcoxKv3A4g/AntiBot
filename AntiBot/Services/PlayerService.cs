@@ -17,7 +17,10 @@ namespace AntiBot.Services;
 internal sealed class PlayerService : Singleton<PlayerService>
 {
     /// <summary>The gap between two lookups. VRChat publishes no limit, so this stays conservative.</summary>
-    private static readonly TimeSpan RequestInterval = TimeSpan.FromSeconds(1.5);
+    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>How many lookups run side by side; a full instance should be ready in seconds.</summary>
+    private const int Workers = 3;
 
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);
@@ -31,6 +34,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
     private readonly Channel<string> _queue = Channel.CreateUnbounded<string>();
 
     private readonly CancellationTokenSource _stop = new();
+    private long _pausedUntil;
 
     /// <summary>Raised when a profile arrived, so the instance list can redraw with it.</summary>
     public event Action? Updated;
@@ -41,7 +45,8 @@ internal sealed class PlayerService : Singleton<PlayerService>
         foreach (var (id, profile) in Database.Instance.LoadPlayers())
             _profiles[id] = profile;
 
-        _ = Task.Run(() => RunAsync(_stop.Token));
+        for (var i = 0; i < Workers; i++)
+            _ = Task.Run(() => RunAsync(_stop.Token));
     }
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
@@ -70,6 +75,12 @@ internal sealed class PlayerService : Singleton<PlayerService>
             while (_queue.Reader.TryRead(out var userId))
             {
                 _pending.TryRemove(userId, out _);
+
+                // A 429 pauses every worker, not just the one that saw it.
+                var pause = Interlocked.Read(ref _pausedUntil) - Environment.TickCount64;
+                if (pause > 0)
+                    await Task.Delay((int)pause, token);
+
                 await FetchAsync(userId, token);
                 await Task.Delay(RequestInterval, token);
             }
@@ -97,7 +108,11 @@ internal sealed class PlayerService : Singleton<PlayerService>
                 Log.Debug("Profile lookup for {UserId} failed: {Error}", userId, error);
 
                 if (error.Contains("Too many", StringComparison.OrdinalIgnoreCase))
-                    await Task.Delay(RateLimitPause, token);
+                {
+                    Log.Information("Profile lookups paused after a rate limit");
+                    Interlocked.Exchange(ref _pausedUntil,
+                        Environment.TickCount64 + (long)RateLimitPause.TotalMilliseconds);
+                }
             }
 
             return;

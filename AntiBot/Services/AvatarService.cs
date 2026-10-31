@@ -28,7 +28,8 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
     /// <summary>The image file VRChat uses for its default Robot avatar.</summary>
     private const string RobotFileId = "file_0e8c4e32-7444-44ea-ade4-313c010d4bae";
 
-    private static readonly TimeSpan RequestInterval = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(300);
+    private const int Workers = 2;
 
     private readonly HttpClient _http = new()
     {
@@ -50,7 +51,8 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
         foreach (var (fileId, name) in Database.Instance.LoadAvatars())
             _names[fileId] = name;
 
-        _ = Task.Run(() => RunAsync(_stop.Token));
+        for (var i = 0; i < Workers; i++)
+            _ = Task.Run(() => RunAsync(_stop.Token));
     }
 
     /// <summary>The <c>file_…</c> id in an avatar image URL, or null when there is none.</summary>

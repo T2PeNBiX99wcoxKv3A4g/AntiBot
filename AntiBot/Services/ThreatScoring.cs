@@ -25,7 +25,6 @@ internal static partial class ThreatScoring
         }
 
         Add(NameScore(profile?.DisplayName ?? displayName ?? ""), "generated-looking name");
-
         var text = string.Join('\n',
             new[] { profile?.Pronouns, profile?.StatusDescription, profile?.Bio }
                 .Where(value => !string.IsNullOrWhiteSpace(value))).ToLowerInvariant();
@@ -46,42 +45,40 @@ internal static partial class ThreatScoring
             Add(25, "Nuisance");
         else if (tags.Contains("system_probable_troll"))
             Add(15, "likely Nuisance");
-        else if (IsVisitor(tags))
-            Add(5, "Visitor");
 
         var avatar = avatarName ?? "";
         if (SexBotPattern().IsMatch(avatar))
             Add(25, "avatar named \"Sex Bot\"");
-        else if (avatar.Contains("bot", StringComparison.OrdinalIgnoreCase))
-            Add(10, "bot-named avatar");
         else if (avatar == "Robot (default)")
             Add(5, "default avatar");
 
         return (Math.Min(score, 100), [.. reasons]);
     }
 
-    /// <summary>The sample bots all end in a four-digit hex tag and mix digits into the name.</summary>
+    /// <summary>
+    ///     The sample bots end in a four-character hex tag and mix digits into the name. A plain year
+    ///     such as "Alice 2024" also ends in four hex characters, so the part before the tag must carry
+    ///     a digit too.
+    /// </summary>
     private static int NameScore(string name)
     {
         if (name.Length == 0)
             return 0;
 
         var score = 0;
+        var hexSuffix = HexSuffixPattern().IsMatch(name);
+        var body = hexSuffix ? name[..^5] : name;
 
-        if (HexSuffixPattern().IsMatch(name))
-            score += 45;
+        if (hexSuffix && DigitPattern().IsMatch(body))
+            score += 50;
         else if (DigitRunPattern().IsMatch(name))
             score += 10;
 
         if (MixedPattern().IsMatch(name))
             score += 10;
 
-        return Math.Min(score, 55);
+        return Math.Min(score, 60);
     }
-
-    private static bool IsVisitor(string[] tags) =>
-        !tags.Contains("system_trust_basic") && !tags.Contains("system_trust_known") &&
-        !tags.Contains("system_trust_trusted") && !tags.Contains("system_trust_veteran");
 
     [GeneratedRegex(@"\s[0-9a-fA-F]{4}$", RegexOptions.CultureInvariant)]
     private static partial Regex HexSuffixPattern();
@@ -91,6 +88,9 @@ internal static partial class ThreatScoring
 
     [GeneratedRegex(@"\d{2,}", RegexOptions.CultureInvariant)]
     private static partial Regex DigitRunPattern();
+
+    [GeneratedRegex(@"\d", RegexOptions.CultureInvariant)]
+    private static partial Regex DigitPattern();
 
     [GeneratedRegex(@"https?://|www\.|\.(com|cc|net|gg|io)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]

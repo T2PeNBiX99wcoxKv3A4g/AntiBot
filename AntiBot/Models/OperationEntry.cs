@@ -10,4 +10,5 @@ public sealed record OperationEntry(
     string Kind,
     string UserId,
     string DisplayName,
-    string Detail);
+    string Detail,
+    string? AvatarUrl);

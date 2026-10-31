@@ -198,7 +198,10 @@ internal sealed class VrchatApi : IDisposable
         using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
             VrchatJsonContext.Default.ApiModerationRequest));
         using var response = await _http.PostAsync("auth/user/playermoderations", content, token);
-        Logger.Debug("Moderation {Type} for {UserId} answered {Status}", type, userId, response.StatusCode);
+
+        if (!response.IsSuccessStatusCode)
+            Logger.Warning("Moderation {Type} for {UserId} answered {Status}", type, userId, response.StatusCode);
+
         return response.IsSuccessStatusCode;
     }
 

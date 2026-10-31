@@ -50,17 +50,19 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private async Task ActAsync(InstanceUser user, AppSettings settings)
     {
         var detail = Describe(user);
+        var avatar = user.IconUrl ?? user.AvatarUrl;
 
-        if (settings.AutoBlock && await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token))
-            await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail);
-
+        // The lighter moderations first: blocking the user may make the rest pointless.
         if (settings.AutoDisableAvatarInteraction &&
             await AuthService.Instance.ModerateUserAsync(user.UserId, "interactOff", _stop.Token))
-            await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail);
+            await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail, avatar);
 
         if (settings.AutoHideChatBox &&
             await AuthService.Instance.ModerateUserAsync(user.UserId, "muteChat", _stop.Token))
-            await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail);
+            await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
+
+        if (settings.AutoBlock && await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token))
+            await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
 
         if (!settings.AutoReturnHome)
             return;
@@ -100,7 +102,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
             await Database.Instance.SetFriendRequestRejectedAsync(request.Id, true, _stop.Token);
             await OperationService.Instance.LogAsync("rejectRequest", request.UserId, request.User.Name,
-                Describe(request.User));
+                Describe(request.User), request.User.IconUrl ?? request.User.AvatarUrl);
         }
         finally
         {
@@ -118,19 +120,19 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
         await Database.Instance.SetFriendRequestRejectedAsync(request.Id, false, _stop.Token);
         await OperationService.Instance.LogAsync("undoReject", request.UserId, request.User.Name,
-            Describe(request.User));
+            Describe(request.User), request.User.IconUrl ?? request.User.AvatarUrl);
     }
 
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)
     {
-        if (settings.AutoBlock)
-            await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token);
-
         if (settings.AutoDisableAvatarInteraction)
             await AuthService.Instance.ModerateUserAsync(user.UserId, "interactOff", _stop.Token);
 
         if (settings.AutoHideChatBox)
             await AuthService.Instance.ModerateUserAsync(user.UserId, "muteChat", _stop.Token);
+
+        if (settings.AutoBlock)
+            await AuthService.Instance.ModerateUserAsync(user.UserId, "block", _stop.Token);
     }
 
     private static string Describe(InstanceUser user) =>

@@ -71,6 +71,9 @@ export function OperationsPage() {
                         <Empty>AntiBot has not taken an automatic action yet.</Empty>
                     ) : entries.map((entry) => (
                         <Item key={entry.id}>
+                            <Avatar $src={entry.avatarUrl}>
+                                {!entry.avatarUrl && (entry.displayName || "?").slice(0, 1).toUpperCase()}
+                            </Avatar>
                             <Time>{formatTime(entry.at)}</Time>
                             <Kind>{kindLabel(entry.kind)}</Kind>
                             <Who>{entry.displayName || "Unknown user"}</Who>
@@ -203,7 +206,7 @@ const List = styled.div`
 
 const Item = styled.div`
     display: grid;
-    grid-template-columns: 170px 150px minmax(0, 160px) minmax(0, 1fr) 74px;
+    grid-template-columns: 26px 160px 140px minmax(0, 150px) minmax(0, 1fr) 74px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -212,6 +215,21 @@ const Item = styled.div`
     &:last-child {
         border-bottom: 0;
     }
+`;
+
+const Avatar = styled.span<{ $src?: string }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg-primary) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
 `;
 
 const Time = styled.span`

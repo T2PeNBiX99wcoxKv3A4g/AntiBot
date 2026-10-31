@@ -30,9 +30,10 @@ internal sealed class OperationService : Singleton<OperationService>
         }
     }
 
-    public async Task LogAsync(string kind, string userId, string displayName, string detail)
+    public async Task LogAsync(string kind, string userId, string displayName, string detail,
+        string? avatarUrl = null)
     {
-        await Database.Instance.AddOperationAsync(kind, userId, displayName, detail);
+        await Database.Instance.AddOperationAsync(kind, userId, displayName, detail, avatarUrl);
         Log.Information("Operation {Kind} for {Name} ({Detail})", kind, displayName, detail);
         NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
         Publish();
