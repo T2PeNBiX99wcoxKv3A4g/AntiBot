@@ -204,14 +204,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
                     </Field>
 
-                    <ToggleRow>
-                        <Toggle
-                            checked={startHidden}
-                            hint={t("Open in the tray instead of showing the window.")}
-                            onChange={setStartHidden}
-                            title={t("Start hidden")}
-                        />
-                    </ToggleRow>
                 </Card>
             </Section>
 
@@ -229,6 +221,12 @@ export function SettingsPage({info}: SettingsPageProps) {
                             hint={t("Create an autostart entry for this user.")}
                             onChange={(value) => void changeStartup(value)}
                             title={t("Start with the system")}
+                        />
+                        <Toggle
+                            checked={startHidden}
+                            hint={t("Open in the tray instead of showing the window.")}
+                            onChange={setStartHidden}
+                            title={t("Start hidden")}
                         />
                     </ToggleRow>
                 </Card>
