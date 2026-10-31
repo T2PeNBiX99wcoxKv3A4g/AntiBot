@@ -20,6 +20,9 @@ namespace AntiBot.Services;
 /// </remarks>
 internal sealed class AuthService : Singleton<AuthService>
 {
+    /// <summary>VRChat's default home world, used when the account's own home world cannot be opened.</summary>
+    private const string DefaultHomeWorld = "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd";
+
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
     private readonly VrchatApi _api = new();
 
@@ -171,7 +174,12 @@ internal sealed class AuthService : Singleton<AuthService>
         // homeLocation is the home world id; the self-invite endpoint needs worldId:instanceId.
         if (!home.Contains(':'))
         {
-            var location = await _api.CreateInstanceAsync(home, token);
+            if (user?.Id is not { Length: > 0 } ownerId)
+                return false;
+
+            // A group world or a world that refuses new instances must not leave the account stuck.
+            var location = await _api.CreateInstanceAsync(home, ownerId, token)
+                           ?? await _api.CreateInstanceAsync(DefaultHomeWorld, ownerId, token);
             if (location is not { Length: > 0 })
                 return false;
 

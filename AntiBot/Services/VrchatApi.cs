@@ -230,16 +230,29 @@ internal sealed class VrchatApi : IDisposable
     ///     Creates a new instance of a world. The home location is only a world id, while a self-invite
     ///     needs <c>worldId:instanceId</c>, so going home opens an instance of the home world first.
     /// </summary>
-    public async Task<string?> CreateInstanceAsync(string worldId, CancellationToken token)
+    public async Task<string?> CreateInstanceAsync(string worldId, string ownerId, CancellationToken token)
     {
-        using var content = Json(JsonSerializer.Serialize(new ApiCreateInstanceRequest(worldId, "private", "us"),
+        // The home instance type is a client setting, not part of the API; try the common ones.
+        foreach (var type in new[] { "hidden", "private", "friends" })
+            if (await CreateInstanceAsync(worldId, ownerId, type, token) is { Length: > 0 } location)
+                return location;
+
+        return null;
+    }
+
+    private async Task<string?> CreateInstanceAsync(string worldId, string ownerId, string type,
+        CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(
+            new ApiCreateInstanceRequest(worldId, type, "us", ownerId, false),
             VrchatJsonContext.Default.ApiCreateInstanceRequest));
         using var response = await _http.PostAsync("instances", content, token);
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
         {
-            Logger.Warning("Creating an instance of {WorldId} answered {Status}", worldId, response.StatusCode);
+            Logger.Warning("Creating a {Type} instance of {WorldId} answered {Status}: {Body}", type, worldId,
+                response.StatusCode, body);
             return null;
         }
 

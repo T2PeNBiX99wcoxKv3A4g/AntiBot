@@ -109,7 +109,9 @@ internal sealed record ApiInstance(
 internal sealed record ApiCreateInstanceRequest(
     [property: JsonPropertyName("worldId")] string WorldId,
     [property: JsonPropertyName("type")] string Type,
-    [property: JsonPropertyName("region")] string Region);
+    [property: JsonPropertyName("region")] string Region,
+    [property: JsonPropertyName("ownerId")] string OwnerId,
+    [property: JsonPropertyName("canRequestInvite")] bool CanRequestInvite);
 
 internal sealed record ApiErrorBody(ApiError? Error);
 
