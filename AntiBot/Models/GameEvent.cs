@@ -25,6 +25,7 @@ public sealed record PlayerProfile(
     string? AvatarImageUrl,
     string? Status,
     string? StatusDescription,
+    string? Pronouns,
     string? Bio,
     string? DateJoined,
     string[] Tags,

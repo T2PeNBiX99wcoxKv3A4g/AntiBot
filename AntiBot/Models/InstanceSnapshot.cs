@@ -12,6 +12,7 @@ public sealed record InstanceUser(
     string? Trust = null,
     string? Status = null,
     string? StatusDescription = null,
+    string? Pronouns = null,
     string? Bio = null,
     string? DateJoined = null,
     string? Platform = null,

@@ -142,16 +142,19 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
     );
 }
 
-function UserRow({user, now, onSelect}: {
+export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = false}: {
     user: InstanceUser;
     now: number;
     onSelect: (user: InstanceUser) => void;
+    showTime?: boolean;
+    timeLabel?: string;
+    dim?: boolean;
 }) {
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
 
     return (
-        <Row $local={user.local} onClick={() => onSelect(user)}>
+        <Row $local={user.local} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
             <AvatarCell>
                 {icon ? <AvatarLarge $src={icon}/> : <Dash>—</Dash>}
             </AvatarCell>
@@ -161,6 +164,7 @@ function UserRow({user, now, onSelect}: {
                         .filter(Boolean).join(" · ")}>
                         {user.name}
                     </span>
+                    {user.pronouns && <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun>}
                     {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                     {user.isRobot && <Robot>robot</Robot>}
                     {user.local && <You>you</You>}
@@ -172,13 +176,13 @@ function UserRow({user, now, onSelect}: {
                     : <Dash>—</Dash>}
             </StatusCell>
             <PlatformCell>{platformLabel(user.platform)}</PlatformCell>
-            <Time>{durationLabel(user.joinedAt, now)}</Time>
+            {showTime && <Time>{timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
         </Row>
     );
 }
 
 /** The player's profile: the same icon as the list, and the avatar name when it was resolved. */
-function PlayerDialog({user, now, onClose}: {
+export function PlayerDialog({user, now, onClose}: {
     user: InstanceUser;
     now: number;
     onClose: () => void;
@@ -223,8 +227,11 @@ function PlayerDialog({user, now, onClose}: {
                             </ProfileLink>
                         </FieldRow>
                         <StatusField status={status} text={user.statusDescription}/>
+                        <Field label="Pronouns" value={user.pronouns || "—"}/>
                         <Field label="Platform" value={platformLabel(user.platform)}/>
-                        <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
+                        {user.joinedAt && (
+                            <Field label="In this instance" value={durationLabel(user.joinedAt, now)}/>
+                        )}
                         <Field
                             label="Avatar"
                             value={user.avatarName ?? (user.isRobot ? "Robot (default)" : "Unknown")}
@@ -636,12 +643,14 @@ const Rows = styled.div`
     overflow-y: auto;
 `;
 
-const Row = styled.div<{ $local: boolean }>`
+const Row = styled.div<{ $local: boolean; $showTime: boolean; $dim?: boolean }>`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
+    grid-template-columns: ${({$showTime}) =>
+        $showTime ? "40px minmax(0, 1fr) 200px 78px 96px" : "40px minmax(0, 1fr) 200px 78px"};
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
+    opacity: ${({$dim}) => $dim ? 0.55 : 1};
     border-left: 2px solid ${({$local}) => $local ? "var(--accent-primary)" : "transparent"};
     border-bottom: 1px solid var(--border-color);
     cursor: pointer;
@@ -696,6 +705,16 @@ const NameText = styled.span`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+`;
+
+const Pronoun = styled.span`
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.12);
+    color: #93c5fd;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    white-space: nowrap;
 `;
 
 const StatusCell = styled.span`

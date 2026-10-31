@@ -118,6 +118,35 @@ internal sealed class VrchatApi : IDisposable
         return Deserialize(body, VrchatJsonContext.Default.ApiFile);
     }
 
+    /// <summary>
+    ///     The pending friend requests, as notifications. VRChat also keeps a hidden list (requests the
+    ///     user dismissed), and both matter for the history, so both are fetched.
+    /// </summary>
+    public async Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token)
+    {
+        var pending = await FetchAsync("auth/user/notifications?type=friendRequest&n=100&offset=0", token);
+        if (pending is null)
+            return null;
+
+        var hidden = await FetchAsync("auth/user/notifications?type=friendRequest&hidden=true&n=100&offset=0",
+            token);
+
+        return hidden is null ? pending : [.. pending, .. hidden];
+    }
+
+    private async Task<ApiNotification[]?> FetchAsync(string path, CancellationToken token)
+    {
+        using var response = await _http.GetAsync(path, token);
+        if (!response.IsSuccessStatusCode)
+        {
+            Logger.Debug("Friend request lookup answered {Status}", response.StatusCode);
+            return null;
+        }
+
+        var body = await response.Content.ReadAsStringAsync(token);
+        return Deserialize(body, VrchatJsonContext.Default.ApiNotificationArray);
+    }
+
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
     public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
     {

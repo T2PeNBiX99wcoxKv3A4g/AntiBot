@@ -117,6 +117,9 @@ internal sealed class AuthService : Singleton<AuthService>
     public Task<ApiFile?> GetFileAsync(string fileId, CancellationToken token) =>
         IsLoggedIn ? _api.GetFileAsync(fileId, token) : Task.FromResult<ApiFile?>(null);
 
+    public Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token) =>
+        IsLoggedIn ? _api.GetFriendRequestsAsync(token) : Task.FromResult<ApiNotification[]?>(null);
+
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "auth.state" => Task.FromResult<NativeResponse?>(context.Reply("auth.state.result", Snapshot())),

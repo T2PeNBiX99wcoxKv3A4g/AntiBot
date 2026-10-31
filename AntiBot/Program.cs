@@ -81,6 +81,7 @@ internal static class Program
             AuthService.Instance.Initialize();
 
             _ = InstanceService.Instance;
+            _ = FriendRequestService.Instance;
 
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;

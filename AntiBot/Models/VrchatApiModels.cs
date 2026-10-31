@@ -38,6 +38,7 @@ internal sealed record ApiUser(
     string? ProfilePicOverrideThumbnail,
     string? Status,
     string? StatusDescription,
+    string? Pronouns,
     string? Bio,
     [property: JsonPropertyName("date_joined")]
     string? DateJoined,
@@ -55,6 +56,16 @@ internal sealed record ApiFile(
     string? Name,
     string? OwnerId,
     string[]? Tags);
+
+/// <summary>One notification; a friend request carries the sender's id and name.</summary>
+internal sealed record ApiNotification(
+    string? Id,
+    string? Type,
+    string? SenderUserId,
+    string? SenderUsername,
+    [property: JsonPropertyName("created_at")]
+    string? CreatedAt,
+    bool? Seen);
 
 internal sealed record ApiInstance(
     string? Id,
@@ -117,6 +128,7 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiInstance))]
 [JsonSerializable(typeof(ApiUser))]
 [JsonSerializable(typeof(ApiFile))]
+[JsonSerializable(typeof(ApiNotification[]))]
 [JsonSerializable(typeof(ApiErrorBody))]
 [JsonSerializable(typeof(ApiVerifyResult))]
 [JsonSerializable(typeof(ApiCodeRequest))]

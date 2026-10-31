@@ -480,7 +480,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
             $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
-            $"{user.IsFriend}")));
+            $"{user.IsFriend}:{user.Pronouns}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -532,6 +532,13 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     /// <summary>You first, then friends, then everyone else, the way VRChat orders the instance list.</summary>
     private static InstanceUser[] Ordered(IEnumerable<InstanceUser> users) =>
         [.. users.OrderBy(user => user.Local ? 0 : user.IsFriend ? 1 : 2)];
+
+    /// <summary>One user outside the instance (a friend request sender), described the same way.</summary>
+    public InstanceUser Describe(string userId, string displayName)
+    {
+        lock (_gate)
+            return Enrich(userId, displayName);
+    }
 
     /// <summary>Reads the instance type, region and owner out of a location string.</summary>
     private static (string Type, string Region, string OwnerId, string Number, bool AgeGated) ParseLocation(
@@ -634,6 +641,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             TrustLevel(profile?.Tags),
             presence?.Status ?? profile?.Status,
             presence?.StatusDescription ?? profile?.StatusDescription,
+            profile?.Pronouns,
             profile?.Bio,
             profile?.DateJoined,
             platform,

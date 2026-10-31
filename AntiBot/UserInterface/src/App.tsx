@@ -9,12 +9,17 @@ import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
+import {RequestsPage} from "./pages/RequestsPage";
 import {SettingsPage} from "./pages/SettingsPage";
 import type {Page} from "./pages";
 
 const pageMeta: Record<Page, { title: string; subtitle: string }> = {
     logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
+    requests: {
+        title: "Friend requests",
+        subtitle: "Every incoming request AntiBot has recorded, with the sender's profile.",
+    },
     account: {title: "Account", subtitle: "Sign in to VRChat so the instance comes from the API, not the log."},
     settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
 };
@@ -72,9 +77,11 @@ export default function App() {
                             ? <LogViewerPage log={log}/>
                             : page === "instance"
                                 ? <InstancePage signedIn={signedIn} onSignIn={() => setPage("account")}/>
-                                : page === "account"
-                                    ? <AccountPage/>
-                                    : <SettingsPage info={info}/>}
+                                : page === "requests"
+                                    ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
+                                    : page === "account"
+                                        ? <AccountPage/>
+                                        : <SettingsPage info={info}/>}
                     </Content>
 
                     <Footer>

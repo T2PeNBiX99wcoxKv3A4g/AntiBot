@@ -59,6 +59,7 @@ internal sealed class Database : Singleton<Database>
                                       avatar_image_url TEXT,
                                       status        TEXT,
                                       status_description TEXT,
+                                      pronouns      TEXT,
                                       bio           TEXT,
                                       date_joined   TEXT,
                                       tags          TEXT,
@@ -73,6 +74,17 @@ internal sealed class Database : Singleton<Database>
                                       avatar_id  TEXT,
                                       name       TEXT NOT NULL,
                                       fetched_at INTEGER NOT NULL
+                                  );
+
+                                  CREATE TABLE IF NOT EXISTS friend_requests (
+                                      id           TEXT PRIMARY KEY,
+                                      user_id      TEXT NOT NULL,
+                                      display_name TEXT NOT NULL DEFAULT '',
+                                      created_at   TEXT NOT NULL DEFAULT '',
+                                      seen         INTEGER NOT NULL DEFAULT 0,
+                                      active       INTEGER NOT NULL DEFAULT 1,
+                                      first_seen   INTEGER NOT NULL,
+                                      last_seen    INTEGER NOT NULL
                                   );
 
                                   CREATE INDEX IF NOT EXISTS ix_game_events_kind ON game_events (kind, id);
@@ -112,6 +124,13 @@ internal sealed class Database : Singleton<Database>
             {
                 using var migration = connection.CreateCommand();
                 migration.CommandText = "ALTER TABLE players ADD COLUMN bio TEXT";
+                migration.ExecuteNonQuery();
+            });
+
+            Try.Run(() =>
+            {
+                using var migration = connection.CreateCommand();
+                migration.CommandText = "ALTER TABLE players ADD COLUMN pronouns TEXT";
                 migration.ExecuteNonQuery();
             });
 
@@ -226,7 +245,7 @@ internal sealed class Database : Singleton<Database>
             using var connection = Open();
             using var command = connection.CreateCommand();
             command.CommandText =
-                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, status_description, bio, date_joined, tags, platform, last_platform, last_activity FROM players";
+                "SELECT id, display_name, avatar_url, icon_url, avatar_image_url, status, status_description, pronouns, bio, date_joined, tags, platform, last_platform, last_activity FROM players";
 
             var players = new Dictionary<string, PlayerProfile>();
             using var reader = command.ExecuteReader();
@@ -235,8 +254,9 @@ internal sealed class Database : Singleton<Database>
                 var id = reader.GetString(0);
                 players[id] = new(id, reader.GetString(1), reader.GetStringOrNull(2), reader.GetStringOrNull(3),
                     reader.GetStringOrNull(4), reader.GetStringOrNull(5), reader.GetStringOrNull(6),
-                    reader.GetStringOrNull(7), reader.GetStringOrNull(8), ParseTags(reader.GetStringOrNull(9)),
-                    reader.GetStringOrNull(10), reader.GetStringOrNull(11), reader.GetStringOrNull(12));
+                    reader.GetStringOrNull(7), reader.GetStringOrNull(8), reader.GetStringOrNull(9),
+                    ParseTags(reader.GetStringOrNull(10)), reader.GetStringOrNull(11), reader.GetStringOrNull(12),
+                    reader.GetStringOrNull(13));
             }
 
             return players;
@@ -255,11 +275,11 @@ internal sealed class Database : Singleton<Database>
             await using var command = connection.CreateCommand();
             command.CommandText = """
                                   INSERT INTO players (id, display_name, avatar_url, icon_url, avatar_image_url,
-                                                       status, status_description, bio, date_joined, tags, platform,
-                                                       last_platform, last_activity, fetched_at)
+                                                       status, status_description, pronouns, bio, date_joined, tags,
+                                                       platform, last_platform, last_activity, fetched_at)
                                   VALUES ($id, $displayName, $avatarUrl, $iconUrl, $avatarImageUrl, $status,
-                                          $statusDescription, $bio, $dateJoined, $tags, $platform, $lastPlatform,
-                                          $lastActivity, $fetchedAt)
+                                          $statusDescription, $pronouns, $bio, $dateJoined, $tags, $platform,
+                                          $lastPlatform, $lastActivity, $fetchedAt)
                                   ON CONFLICT (id) DO UPDATE SET
                                       display_name = excluded.display_name,
                                       avatar_url = excluded.avatar_url,
@@ -267,6 +287,7 @@ internal sealed class Database : Singleton<Database>
                                       avatar_image_url = excluded.avatar_image_url,
                                       status = excluded.status,
                                       status_description = excluded.status_description,
+                                      pronouns = excluded.pronouns,
                                       bio = excluded.bio,
                                       date_joined = excluded.date_joined,
                                       tags = excluded.tags,
@@ -283,6 +304,7 @@ internal sealed class Database : Singleton<Database>
             command.Parameters.AddWithValue("$avatarImageUrl", (object?)player.AvatarImageUrl ?? DBNull.Value);
             command.Parameters.AddWithValue("$status", (object?)player.Status ?? DBNull.Value);
             command.Parameters.AddWithValue("$statusDescription", (object?)player.StatusDescription ?? DBNull.Value);
+            command.Parameters.AddWithValue("$pronouns", (object?)player.Pronouns ?? DBNull.Value);
             command.Parameters.AddWithValue("$bio", (object?)player.Bio ?? DBNull.Value);
             command.Parameters.AddWithValue("$dateJoined", (object?)player.DateJoined ?? DBNull.Value);
             command.Parameters.AddWithValue("$tags", string.Join(',', player.Tags));
@@ -295,6 +317,86 @@ internal sealed class Database : Singleton<Database>
         });
 
         attempt.OnFailure(ex => Log.Warning(ex, "Could not store the profile of {UserId}", player.Id));
+    }
+
+    /// <summary>Every friend request ever recorded, newest first.</summary>
+    public IReadOnlyList<FriendRequestRow> LoadFriendRequests()
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  SELECT id, user_id, display_name, created_at, seen, active, first_seen, last_seen
+                                  FROM friend_requests
+                                  ORDER BY first_seen DESC
+                                  """;
+
+            var rows = new List<FriendRequestRow>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                rows.Add(new(reader.GetString(0), reader.GetString(1), reader.GetString(2), reader.GetString(3),
+                    reader.GetInt64(4) != 0, reader.GetInt64(5) != 0, reader.GetInt64(6), reader.GetInt64(7)));
+
+            return rows;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the stored friend requests"))
+            .GetOrElse(_ => new List<FriendRequestRow>());
+    }
+
+    /// <summary>
+    ///     Records the requests the API just returned. They are history, so nothing is deleted: a request
+    ///     that is no longer pending is only marked inactive.
+    /// </summary>
+    public async Task SaveFriendRequestsAsync(IReadOnlyList<FriendRequestRow> requests, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(token);
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            foreach (var request in requests)
+            {
+                await using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = """
+                                      INSERT INTO friend_requests
+                                          (id, user_id, display_name, created_at, seen, active, first_seen, last_seen)
+                                      VALUES ($id, $userId, $displayName, $createdAt, $seen, 1, $now, $now)
+                                      ON CONFLICT (id) DO UPDATE SET
+                                          user_id = excluded.user_id,
+                                          display_name = excluded.display_name,
+                                          created_at = excluded.created_at,
+                                          seen = excluded.seen,
+                                          active = 1,
+                                          last_seen = excluded.last_seen
+                                      """;
+
+                command.Parameters.AddWithValue("$id", request.Id);
+                command.Parameters.AddWithValue("$userId", request.UserId);
+                command.Parameters.AddWithValue("$displayName", request.DisplayName);
+                command.Parameters.AddWithValue("$createdAt", request.CreatedAt);
+                command.Parameters.AddWithValue("$seen", request.Seen ? 1 : 0);
+                command.Parameters.AddWithValue("$now", now);
+
+                await command.ExecuteNonQueryAsync(token);
+            }
+
+            // Anything the API did not return this time is no longer pending.
+            await using var expire = connection.CreateCommand();
+            expire.Transaction = transaction;
+            expire.CommandText = "UPDATE friend_requests SET active = 0 WHERE last_seen < $now";
+            expire.Parameters.AddWithValue("$now", now);
+            await expire.ExecuteNonQueryAsync(token);
+
+            await transaction.CommitAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not store the friend requests"));
     }
 
     /// <summary>Every avatar name resolved so far, keyed by the image file id it was found from.</summary>

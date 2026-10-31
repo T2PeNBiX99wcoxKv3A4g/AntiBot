@@ -16,6 +16,8 @@ export interface InstanceUser {
     status?: string;
     /** The user's custom status text, if they set one. */
     statusDescription?: string;
+    /** The user's pronouns; VRChat lets them enter any text. */
+    pronouns?: string;
     /** The user's profile bio. */
     bio?: string;
     dateJoined?: string;
