@@ -21,7 +21,11 @@ internal sealed class WindowManager : Singleton<WindowManager>
     private static readonly string WebViewDataPath = Path.Combine(Constants.DataDirectory, "webview");
 
     private bool _allowClose;
+    private readonly Lock _gate = new();
     private PhotinoWindow? _mainWindow;
+
+    /// <summary>The newest event of each type, held until the page reports in.</summary>
+    private readonly Dictionary<string, string> _pending = new();
 
     /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
     private bool _mainWindowReady;
@@ -132,15 +136,43 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     /// <summary>
     ///     Pushes an event to the interface. Anything sent while the web view is still loading would
-    ///     abort the process, and the page requests its own state when it mounts, so it waits.
+    ///     abort the process, so the newest event of each type waits and is sent once the page is ready.
     /// </summary>
     public void NotifyMainWindow(string type, object? data)
     {
-        if (!_mainWindowReady)
+        var message = Try.Run(() => NativeBridge.SerializeEvent(type, data)).GetOrNull();
+        if (message is null)
             return;
 
-        Try.Run(() => _mainWindow?.SendWebMessage(NativeBridge.SerializeEvent(type, data)))
+        if (!_mainWindowReady)
+        {
+            // A restore can finish before the page reports in; dropping the event would leave the
+            // header showing the state from before it.
+            lock (_gate)
+                _pending[type] = message;
+
+            return;
+        }
+
+        Send(message, type);
+    }
+
+    private void Send(string message, string type) =>
+        Try.Run(() => _mainWindow?.SendWebMessage(message))
             .OnFailure(ex => Log.Warning(ex, "Failed to push {Type} to the interface", type));
+
+    private void FlushPending()
+    {
+        KeyValuePair<string, string>[] pending;
+
+        lock (_gate)
+        {
+            pending = _pending.ToArray();
+            _pending.Clear();
+        }
+
+        foreach (var (type, message) in pending)
+            Send(message, type);
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context)
@@ -149,6 +181,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
         {
             case "app.ready":
                 _mainWindowReady = true;
+                FlushPending();
                 break;
 
             case "window.minimize":
