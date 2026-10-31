@@ -589,6 +589,10 @@ Error generating stack: `+e.message+`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+
+    span:last-child {
+        text-align: center;
+    }
 `,Wa=M.div`
     flex: 1;
     min-height: 0;
@@ -761,6 +765,7 @@ Error generating stack: `+e.message+`
     }
 `,_o=M.span`
     overflow: hidden;
+    text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);
@@ -1520,6 +1525,10 @@ Error generating stack: `+e.message+`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+
+    span:nth-last-child(2) {
+        text-align: center;
+    }
 
     span:last-child {
         text-align: right;

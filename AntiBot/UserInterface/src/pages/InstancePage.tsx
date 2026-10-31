@@ -749,6 +749,10 @@ const ListHeader = styled.div`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+
+    span:last-child {
+        text-align: center;
+    }
 `;
 
 const Rows = styled.div`
@@ -1015,6 +1019,7 @@ const StatusValue = styled.div`
 
 const PlatformCell = styled.span`
     overflow: hidden;
+    text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--text-secondary);

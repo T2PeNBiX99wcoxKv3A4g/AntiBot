@@ -291,6 +291,10 @@ const ListHeader = styled.div`
     letter-spacing: 0.1em;
     text-transform: uppercase;
 
+    span:nth-last-child(2) {
+        text-align: center;
+    }
+
     span:last-child {
         text-align: right;
     }
