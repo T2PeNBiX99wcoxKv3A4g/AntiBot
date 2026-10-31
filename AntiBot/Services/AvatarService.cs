@@ -101,7 +101,20 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
             while (_queue.Reader.TryRead(out var fileId))
             {
                 _pending.TryRemove(fileId, out _);
-                await LookupAsync(fileId, token);
+
+                try
+                {
+                    await LookupAsync(fileId, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Avatar lookup for {FileId} failed", fileId);
+                }
+
                 await Task.Delay(RequestInterval, token);
             }
         }

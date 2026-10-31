@@ -27,6 +27,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private readonly VrchatPipeline _pipeline = new();
 
     private VrchatAccount? _account;
+    private volatile bool _ready;
     private string _location = "";
     private string _state = "loggedOut";
     private AuthStorage _storage = AuthStorage.None;
@@ -56,6 +57,9 @@ internal sealed class AuthService : Singleton<AuthService>
     }
 
     public bool IsLoggedIn => State == "loggedIn";
+
+    /// <summary>Signed in and the session cookie is in the client, so requests can go out.</summary>
+    public bool IsReady => _ready && IsLoggedIn;
 
     public string State
     {
@@ -93,7 +97,7 @@ internal sealed class AuthService : Singleton<AuthService>
     /// </summary>
     public async Task<string?> GetLocationAsync(CancellationToken token)
     {
-        if (!IsLoggedIn)
+        if (!IsReady)
             return null;
 
         if (DateTimeOffset.UtcNow - _userRefreshedAt < LocationRefreshInterval)
@@ -123,33 +127,36 @@ internal sealed class AuthService : Singleton<AuthService>
 
     public Task<(ApiInstance? Instance, string? Error)> GetInstanceAsync(string location,
         CancellationToken token) =>
-        IsLoggedIn
+        IsReady
             ? _api.GetInstanceAsync(location, token)
             : Task.FromResult<(ApiInstance?, string?)>((null, null));
 
     public Task<(ApiUser? User, string? Error)> GetUserAsync(string userId, CancellationToken token) =>
-        IsLoggedIn
+        IsReady
             ? _api.GetUserAsync(userId, token)
             : Task.FromResult<(ApiUser?, string?)>((null, null));
 
     public Task<ApiFile?> GetFileAsync(string fileId, CancellationToken token) =>
-        IsLoggedIn ? _api.GetFileAsync(fileId, token) : Task.FromResult<ApiFile?>(null);
+        IsReady ? _api.GetFileAsync(fileId, token) : Task.FromResult<ApiFile?>(null);
 
     public Task<ApiNotification[]?> GetFriendRequestsAsync(CancellationToken token) =>
-        IsLoggedIn ? _api.GetFriendRequestsAsync(token) : Task.FromResult<ApiNotification[]?>(null);
+        IsReady ? _api.GetFriendRequestsAsync(token) : Task.FromResult<ApiNotification[]?>(null);
 
     public Task<bool> ModerateUserAsync(string userId, string type, CancellationToken token) =>
-        IsLoggedIn ? _api.ModerateUserAsync(userId, type, token) : Task.FromResult(false);
+        IsReady ? _api.ModerateUserAsync(userId, type, token) : Task.FromResult(false);
 
     public Task<bool> UnmoderateUserAsync(string userId, string type, CancellationToken token) =>
-        IsLoggedIn ? _api.UnmoderateUserAsync(userId, type, token) : Task.FromResult(false);
+        IsReady ? _api.UnmoderateUserAsync(userId, type, token) : Task.FromResult(false);
 
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
-        IsLoggedIn ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
+        IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
 
     /// <summary>Invites the account to its own home world, which is how it goes home from here.</summary>
     public async Task<bool> ReturnHomeAsync(CancellationToken token)
     {
+        if (!IsReady)
+            return false;
+
         var (user, _) = await _api.GetCurrentUserAsync(token);
         return user?.HomeLocation is { Length: > 0 } home && await _api.InviteMyselfAsync(home, token);
     }
@@ -346,6 +353,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _state = "loggedIn";
             _twoFactorMethods = [];
             storage = _storage;
+            _ready = true;
         }
 
         // A fresh sign-in issues a new cookie. System storage can be updated silently; a password-
@@ -474,6 +482,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _storage = AuthStorage.None;
             _twoFactorMethods = [];
             _userRefreshedAt = DateTimeOffset.MinValue;
+            _ready = false;
         }
 
         Notify();
@@ -493,6 +502,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _state = "loggedOut";
             _twoFactorMethods = [];
             _userRefreshedAt = DateTimeOffset.MinValue;
+            _ready = false;
         }
 
         Log.Warning("The VRChat session expired");

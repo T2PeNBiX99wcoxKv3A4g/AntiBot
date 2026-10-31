@@ -153,7 +153,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
     private async Task RefreshFromApiAsync(CancellationToken token)
     {
-        if (!AuthService.Instance.IsLoggedIn)
+        if (!AuthService.Instance.IsReady)
         {
             if (ClearApi())
                 Publish();
@@ -203,10 +203,15 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             _apiInstance = instance;
             _apiLocation = target;
 
-            // Whoever is in the instance: the roster when VRChat sends one, otherwise the log.
-            refresh = instance.Users is { Length: > 0 } list
-                ? [.. list.Select(user => user.Id ?? "")]
-                : [.. _users.Select(user => user.UserId)];
+            // The API roster can be partial for instances the account does not own, so the log roster
+            // is included too; otherwise those players never get a profile.
+            refresh =
+            [
+                .. _users.Select(user => user.UserId)
+                    .Concat(instance.Users?.Select(user => user.Id ?? "") ?? [])
+                    .Where(id => id.Length > 0)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+            ];
         }
 
         // The roster has no custom status text, so the profiles keep it (and the avatar and name) fresh.

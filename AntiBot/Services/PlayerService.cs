@@ -81,7 +81,20 @@ internal sealed class PlayerService : Singleton<PlayerService>
                 if (pause > 0)
                     await Task.Delay((int)pause, token);
 
-                await FetchAsync(userId, token);
+                try
+                {
+                    await FetchAsync(userId, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // A disposed client or a dropped connection must not kill the worker.
+                    Log.Debug(ex, "Profile lookup for {UserId} failed", userId);
+                }
+
                 await Task.Delay(RequestInterval, token);
             }
         }
@@ -97,7 +110,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
     private async Task FetchAsync(string userId, CancellationToken token)
     {
-        if (!AuthService.Instance.IsLoggedIn)
+        if (!AuthService.Instance.IsReady)
             return;
 
         var (user, error) = await AuthService.Instance.GetUserAsync(userId, token);
