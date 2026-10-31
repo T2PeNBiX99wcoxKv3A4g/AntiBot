@@ -16,7 +16,8 @@ public sealed record InstanceUser(
     string? DateJoined = null,
     string? Platform = null,
     string? AvatarName = null,
-    bool IsRobot = false);
+    bool IsRobot = false,
+    bool IsFriend = false);
 
 /// <summary>
 ///     Who is in the instance, and which instance that is. <see cref="Source" /> says whether the list

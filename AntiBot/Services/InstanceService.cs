@@ -478,7 +478,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         snapshot.InstanceRestricted,
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
-            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}")));
+            $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
+            $"{user.IsFriend}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -490,10 +491,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 // For instances the account did not create the API sends an empty roster, so fall back.
                 var apiUsers = api.Users is { Length: > 0 } list ? list : null;
 
-                var users = apiUsers is not null
+                var users = Ordered(apiUsers is not null
                     ? apiUsers.Select(user =>
-                        Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl)).ToArray()
-                    : _users.Select(user => Enrich(user.UserId, user.Name)).ToArray();
+                        Enrich(user.Id ?? "", user.DisplayName ?? "", user.CurrentAvatarThumbnailImageUrl))
+                    : _users.Select(user => Enrich(user.UserId, user.Name)));
 
                 var count = api.UserCount ?? apiUsers?.Length ?? 0;
 
@@ -521,11 +522,15 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             var parsed = ParseLocation(_instance);
 
             return new InstanceSnapshot(_running, _world, _instance,
-                _users.Select(user => Enrich(user.UserId, user.Name)).ToArray(),
+                Ordered(_users.Select(user => Enrich(user.UserId, user.Name))),
                 "log", "", 0, 0, WorldIdOf(_instance), "", parsed.Type, parsed.Region, parsed.OwnerId, "",
                 parsed.Number, "", false, parsed.AgeGated);
         }
     }
+
+    /// <summary>You first, then friends, then everyone else, the way VRChat orders the instance list.</summary>
+    private static InstanceUser[] Ordered(IEnumerable<InstanceUser> users) =>
+        users.OrderBy(user => user.Local ? 0 : user.IsFriend ? 1 : 2).ToArray();
 
     /// <summary>Reads the instance type, region and owner out of a location string.</summary>
     private static (string Type, string Region, string OwnerId, string Number, bool AgeGated) ParseLocation(
@@ -632,7 +637,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.DateJoined,
             platform,
             AvatarService.Instance.NameFor(fileId),
-            AvatarService.IsRobot(fileId));
+            AvatarService.IsRobot(fileId),
+            profile?.IsFriend ?? false);
     }
 
     /// <summary>VRChat's trust tags, highest first.</summary>

@@ -30,4 +30,5 @@ public sealed record PlayerProfile(
     string[] Tags,
     string? Platform,
     string? LastPlatform,
-    string? LastActivity);
+    string? LastActivity,
+    bool IsFriend = false);

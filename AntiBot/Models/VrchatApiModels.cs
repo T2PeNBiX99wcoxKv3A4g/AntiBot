@@ -46,7 +46,8 @@ internal sealed record ApiUser(
     [property: JsonPropertyName("last_platform")]
     string? LastPlatform,
     [property: JsonPropertyName("last_activity")]
-    string? LastActivity);
+    string? LastActivity,
+    bool? IsFriend);
 
 /// <summary>One uploaded file; an avatar image's name carries the avatar name.</summary>
 internal sealed record ApiFile(

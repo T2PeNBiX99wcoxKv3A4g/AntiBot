@@ -24,6 +24,8 @@ export interface InstanceUser {
     avatarName?: string;
     /** True when the avatar is VRChat's default Robot avatar. */
     isRobot?: boolean;
+    /** True when this player is on the signed-in account's friend list. */
+    isFriend?: boolean;
 }
 
 export interface InstanceSnapshot {

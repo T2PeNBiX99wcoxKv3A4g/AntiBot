@@ -16,9 +16,6 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 {
-    /// <summary>How much of the current session log is read on attach, so the view is not empty.</summary>
-    private const int PrefillBytes = 256 * 1024;
-
     /// <summary>How many lines stay available for a page that mounts later.</summary>
     private const int BufferLimit = 5000;
 
@@ -38,9 +35,6 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
     private CancellationTokenSource? _cancellation;
     private string? _directory;
-
-    /// <summary>Set while the first, partial line of a pre-filled log still has to be dropped.</summary>
-    private bool _dropPartialLine;
 
     private string? _file;
 
@@ -104,7 +98,13 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
                     .OnFailure(ex => Log.Warning(ex, "A log line handler failed"));
 
                 Log.Debug("Read {Count} new VRChat log line(s)", batch.Lines.Count);
-                WindowManager.Instance.NotifyMainWindow("log.lines", batch);
+
+                // The parsers need every line, but a page that just mounted only needs the tail.
+                var visible = batch.Lines.Count > BufferLimit
+                    ? batch with { Lines = batch.Lines.Skip(batch.Lines.Count - BufferLimit).ToArray() }
+                    : batch;
+
+                WindowManager.Instance.NotifyMainWindow("log.lines", visible);
             }
 
             try
@@ -206,7 +206,11 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             .OnFailure(ex => Log.Debug(ex, "Failed to list {Directory}", directory))
             .GetOrNull();
 
-    /// <summary>Opens a log for reading without claiming it exclusively. The tail is loaded on attach.</summary>
+    /// <summary>
+    ///     Opens a log for reading without claiming it exclusively. The whole session is read from the
+    ///     start, because the player list needs the join lines of people who were already in the instance,
+    ///     which can be hours back in the file.
+    /// </summary>
     private bool Attach(string path, long? resumeAt = null)
     {
         CloseFile();
@@ -217,14 +221,7 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
                 FileShare.ReadWrite | FileShare.Delete, 16 * 1024, FileOptions.SequentialScan);
             _stream = stream;
 
-            if (resumeAt is { } position && position <= stream.Length)
-                stream.Seek(position, SeekOrigin.Begin);
-            else
-            {
-                // Start near the end, so attaching to a long session does not send megabytes to the page.
-                _dropPartialLine = stream.Length > PrefillBytes;
-                stream.Seek(Math.Max(0, stream.Length - PrefillBytes), SeekOrigin.Begin);
-            }
+            stream.Seek(resumeAt is { } position && position <= stream.Length ? position : 0, SeekOrigin.Begin);
 
             _file = path;
             Log.Information("Attached to VRChat log {File}", path);
@@ -252,7 +249,6 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
             Try.Run(() => stream.Seek(0, SeekOrigin.Begin));
             _decoder.Reset();
             _pending.Clear();
-            _dropPartialLine = false;
             Log.Information("VRChat log was truncated; reading it again from the start");
         }
 
@@ -284,19 +280,6 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
 
         while (start < count)
         {
-            if (_dropPartialLine)
-            {
-                // The pre-fill started in the middle of a line; everything up to the first newline is
-                // the remainder of a line that belongs to a part of the log the viewer never saw.
-                var newline = Array.IndexOf(_charBuffer, '\n', start, count - start);
-                if (newline < 0)
-                    return;
-
-                _dropPartialLine = false;
-                start = newline + 1;
-                continue;
-            }
-
             var end = Array.IndexOf(_charBuffer, '\n', start, count - start);
             if (end < 0)
             {
@@ -347,7 +330,6 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         _file = null;
         _pending.Clear();
         _decoder.Reset();
-        _dropPartialLine = false;
     }
 
     /// <summary>Closes the log and forgets everything read from it, e.g. when the folder changes.</summary>

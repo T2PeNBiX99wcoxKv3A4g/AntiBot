@@ -554,7 +554,7 @@ Error generating stack: `+e.message+`
     background: var(--bg-card);
 `,Pa=M.div`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 160px 78px 96px;
+    grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
     gap: 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
@@ -563,13 +563,17 @@ Error generating stack: `+e.message+`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+
+    span:last-child {
+        text-align: right;
+    }
 `,Fa=M.div`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
 `,Ia=M.div`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 160px 78px 96px;
+    grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
     gap: 12px;
     align-items: center;
     padding: 8px 16px;
@@ -625,6 +629,12 @@ Error generating stack: `+e.message+`
     font-size: 11px;
     color: var(--text-secondary);
     white-space: nowrap;
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 `,Ua=M.span`
     width: 8px;
     height: 8px;
