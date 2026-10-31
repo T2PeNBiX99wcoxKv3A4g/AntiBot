@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged, undoFriendRequest} from "../api/friendRequests";
 import type {InstanceUser} from "../api/instance";
-import {PlayerDialog, UserRow} from "./InstancePage";
+import {PlayerDialog, userGridColumns, UserRow} from "./InstancePage";
 
 /** Every friend request AntiBot has recorded, newest first, kept as history. */
 export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {
@@ -89,7 +89,9 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 
                 <ListHeader>
                     <span/>
-                    <span>Name</span>
+                    <span>User</span>
+                    <span>Trust</span>
+                    <span>Pronouns</span>
                     <span>Status</span>
                     <span>Platform</span>
                     <span>Received</span>
@@ -279,8 +281,8 @@ const Legend = styled.span`
 
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
-    gap: 12px;
+    grid-template-columns: ${userGridColumns(true)};
+    gap: 8px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-muted);

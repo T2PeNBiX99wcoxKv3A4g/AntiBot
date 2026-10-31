@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Threading.Channels;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
@@ -8,49 +7,38 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Keeps a profile for every player seen in an instance: the API is asked once per user, the answer is
-///     cached in memory and in the database, and a single worker paces the requests.
+///     Loads everything the instance list shows about a player in one go: the profile (name, trust,
+///     pronouns, status, platform and avatar) and the avatar's name. Lookups start immediately and in
+///     parallel, and the six list fields are published together.
 /// </summary>
 /// <remarks>
-///     <c>GET users/{id}</c> is one of the most tightly rate-limited endpoints, so lookups go through one
-///     queue with a fixed gap, a fresh cache is never asked again, and a 429 pauses the queue instead of
-///     retrying into it.
+///     There is deliberately no request queue or pacing here. A queue made new players appear one by
+///     one and left the rest of the row as placeholders; if VRChat does answer 429, that is logged and
+///     the next refresh retries.
 /// </remarks>
 internal sealed class PlayerService : Singleton<PlayerService>
 {
-    /// <summary>The gap between two lookups. VRChat publishes no limit, so this stays conservative.</summary>
-    private static readonly TimeSpan RequestInterval = TimeSpan.FromMilliseconds(100);
-
-    /// <summary>How many lookups run side by side; a full instance should be ready in seconds.</summary>
-    private const int Workers = 5;
-
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);
 
-    /// <summary>How long the queue pauses after VRChat answered 429.</summary>
-    private static readonly TimeSpan RateLimitPause = TimeSpan.FromSeconds(60);
-
     private readonly ConcurrentDictionary<string, DateTimeOffset> _fetchedAt = new();
-    private readonly ConcurrentDictionary<string, byte> _pending = new();
+    private readonly ConcurrentDictionary<string, byte> _inFlight = new();
+    private readonly ConcurrentDictionary<string, byte> _loaded = new();
     private readonly ConcurrentDictionary<string, PlayerProfile> _profiles = new();
-    private readonly Channel<string> _queue = Channel.CreateUnbounded<string>();
-
     private readonly CancellationTokenSource _stop = new();
-    private long _pausedUntil;
 
-    /// <summary>Raised when a profile arrived, so the instance list can redraw with it.</summary>
+    /// <summary>Raised when a player's whole profile (and avatar name) arrived.</summary>
     public event Action? Updated;
 
-    /// <summary>Loads the cache and starts the worker. Called once, after the database exists.</summary>
+    /// <summary>Loads the cache and registers the message handler. Called once, after the database exists.</summary>
     public void Start()
     {
+        // An empty row is a failed lookup from an older build; never let it stand in for a real profile.
         foreach (var (id, profile) in Database.Instance.LoadPlayers())
-            _profiles[id] = profile;
+            if (!IsEmpty(profile))
+                _profiles[id] = profile;
 
         NativeBridge.MessageReceived += HandleMessageAsync;
-
-        for (var i = 0; i < Workers; i++)
-            _ = Task.Run(() => RunAsync(_stop.Token));
     }
 
     private async Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
@@ -71,7 +59,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
             return cached;
 
         var publicProfile = await AuthService.Instance.GetPublicProfileAsync(userId, token);
-        if (publicProfile?.Bio is not { } bio)
+        if (publicProfile?.Bio is not { Length: > 0 } bio)
             return null;
 
         if (profile is not null)
@@ -86,52 +74,66 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
 
-    /// <summary>Asks for a profile unless it is cached and still fresh. Safe to call for every join.</summary>
-    public void Request(string userId)
+    /// <summary>Whether a lookup for this user has finished, successfully or not.</summary>
+    public bool IsLoaded(string userId) => _loaded.ContainsKey(userId);
+
+    /// <summary>
+    ///     Starts loading a player unless a fresh profile is cached. <paramref name="avatarUrl" /> is the
+    ///     instance roster's avatar image, which lets the avatar name lookup run beside the profile
+    ///     instead of waiting for it. Safe to call for every join and every refresh.
+    /// </summary>
+    public void Request(string userId, string? avatarUrl = null)
     {
         if (userId.Length == 0)
             return;
 
-        if (_profiles.ContainsKey(userId) &&
-            DateTimeOffset.UtcNow - _fetchedAt.GetValueOrDefault(userId) < CacheLifetime)
+        var profile = Get(userId);
+        var fresh = profile is not null &&
+                    DateTimeOffset.UtcNow - _fetchedAt.GetValueOrDefault(userId) < CacheLifetime;
+        // A custom icon hides the thumbnail, so the full-size avatar image is the next candidate
+        // before falling back to the icon itself (which carries no avatar name).
+        var fileId = AvatarService.FileIdOf(avatarUrl ?? profile?.AvatarUrl ?? profile?.AvatarImageUrl ??
+            profile?.IconUrl);
+        var avatarKnown = fileId is null || AvatarService.Instance.NameFor(fileId) is not null;
+
+        if (fresh && avatarKnown)
             return;
 
-        if (!_pending.TryAdd(userId, 0))
-            return;
-
-        _queue.Writer.TryWrite(userId);
+        if (_inFlight.TryAdd(userId, 0))
+            _ = LoadAsync(userId, avatarUrl, fresh);
     }
 
-    private async Task RunAsync(CancellationToken token)
+    private async Task LoadAsync(string userId, string? avatarUrl, bool skipProfile)
     {
+        var token = _stop.Token;
+
         try
         {
-            while (await _queue.Reader.WaitToReadAsync(token))
-            while (_queue.Reader.TryRead(out var userId))
+            PlayerProfile? profile = skipProfile ? Get(userId) : null;
+
+            // The roster already carries the avatar image, so that lookup starts now; the profile
+            // supplies the other five fields (and the avatar too when the roster has no image).
+            var hintId = AvatarService.FileIdOf(avatarUrl);
+            var hintTask = hintId is null ? null : AvatarService.Instance.ResolveAsync(hintId, token);
+
+            if (!skipProfile)
             {
-                _pending.TryRemove(userId, out _);
+                profile = await FetchProfileAsync(userId, token);
+                _loaded[userId] = 0;
 
-                // A 429 pauses every worker, not just the one that saw it.
-                var pause = Interlocked.Read(ref _pausedUntil) - Environment.TickCount64;
-                if (pause > 0)
-                    await Task.Delay((int)pause, token);
-
-                try
-                {
-                    await FetchAsync(userId, token);
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    // A disposed client or a dropped connection must not kill the worker.
-                    Log.Debug(ex, "Profile lookup for {UserId} failed", userId);
-                }
-
-                await Task.Delay(RequestInterval, token);
+                // All six fields the list shows come from the profile, so they are published together;
+                // the avatar's name is extra and arrives separately.
+                Updated?.Invoke();
             }
+
+            var fileId = hintId ?? AvatarService.FileIdOf(profile?.AvatarUrl) ??
+                AvatarService.FileIdOf(profile?.AvatarImageUrl) ?? AvatarService.FileIdOf(profile?.IconUrl);
+
+            if (fileId is not null && fileId != hintId)
+                await AvatarService.Instance.ResolveAsync(fileId, token);
+
+            if (hintTask is not null)
+                await hintTask;
         }
         catch (OperationCanceledException)
         {
@@ -139,31 +141,25 @@ internal sealed class PlayerService : Singleton<PlayerService>
         }
         catch (Exception ex)
         {
-            Log.Warning(ex, "Player lookups stopped");
+            Log.Debug(ex, "Profile lookup for {UserId} failed", userId);
+        }
+        finally
+        {
+            _loaded[userId] = 0;
+            _inFlight.TryRemove(userId, out _);
+            Updated?.Invoke();
         }
     }
 
-    private async Task FetchAsync(string userId, CancellationToken token)
+    private async Task<PlayerProfile?> FetchProfileAsync(string userId, CancellationToken token)
     {
-        if (!AuthService.Instance.IsReady)
-            return;
-
         var (user, error) = await AuthService.Instance.GetUserAsync(userId, token);
         if (user?.Id is not { Length: > 0 } id)
         {
             if (error is not null)
-            {
                 Log.Debug("Profile lookup for {UserId} failed: {Error}", userId, error);
 
-                if (error.Contains("Too many", StringComparison.OrdinalIgnoreCase))
-                {
-                    Log.Information("Profile lookups paused after a rate limit");
-                    Interlocked.Exchange(ref _pausedUntil,
-                        Environment.TickCount64 + (long)RateLimitPause.TotalMilliseconds);
-                }
-            }
-
-            return;
+            return null;
         }
 
         var profile = new PlayerProfile(id, user.DisplayName ?? id, user.CurrentAvatarThumbnailImageUrl,
@@ -172,13 +168,30 @@ internal sealed class PlayerService : Singleton<PlayerService>
             user.DateJoined, user.Tags ?? [], user.Platform, user.LastPlatform, user.LastActivity,
             user.IsFriend ?? false);
 
+        // A reply that carries nothing worth showing must not become the cached answer.
+        if (IsEmpty(profile))
+            return null;
+
         _profiles[id] = profile;
         _fetchedAt[id] = DateTimeOffset.UtcNow;
 
         await Database.Instance.SavePlayerAsync(profile, token);
 
-        Updated?.Invoke();
+        return profile;
     }
+
+    /// <summary>Whether the profile has any of the fields the list and the details panel show.</summary>
+    private static bool IsEmpty(PlayerProfile profile) =>
+        profile.DisplayName.Length == 0 &&
+        string.IsNullOrEmpty(profile.AvatarUrl) &&
+        string.IsNullOrEmpty(profile.IconUrl) &&
+        string.IsNullOrEmpty(profile.AvatarImageUrl) &&
+        string.IsNullOrEmpty(profile.Status) &&
+        string.IsNullOrEmpty(profile.StatusDescription) &&
+        string.IsNullOrEmpty(profile.Pronouns) &&
+        string.IsNullOrEmpty(profile.Bio) &&
+        string.IsNullOrEmpty(profile.Platform) &&
+        profile.Tags.Length == 0;
 
     private static string? FirstNonEmpty(params string?[] values) =>
         values.FirstOrDefault(value => !string.IsNullOrEmpty(value));

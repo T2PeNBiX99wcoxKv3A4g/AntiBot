@@ -34,6 +34,10 @@ export interface InstanceUser {
     threatReasons?: string[];
     /** True when the user is on the whitelist and never acted on. */
     whitelisted?: boolean;
+    /** Whether the profile lookup finished; false means the row is still loading. */
+    profileLoaded?: boolean;
+    /** Whether the avatar-name lookup finished; false means it is still in flight. */
+    avatarLoaded?: boolean;
 }
 
 export interface InstanceSnapshot {

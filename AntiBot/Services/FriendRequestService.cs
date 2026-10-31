@@ -28,7 +28,6 @@ internal sealed class FriendRequestService : Singleton<FriendRequestService>
         AuthService.Instance.Notification += OnNotification;
         PlayerService.Instance.Updated += Publish;
         PresenceService.Instance.Updated += Publish;
-        AvatarService.Instance.Updated += Publish;
 
         // The history is on disk, so the page has something to show before the API answers.
         _rows = [.. Database.Instance.LoadFriendRequests()];

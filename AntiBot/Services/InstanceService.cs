@@ -38,7 +38,6 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         VrchatLogService.Instance.LinesRead += OnLinesRead;
         AuthService.Instance.Changed += OnAuthChanged;
         PlayerService.Instance.Updated += SchedulePublish;
-        AvatarService.Instance.Updated += SchedulePublish;
         PresenceService.Instance.Updated += Publish;
 
         _ = RestoreAsync();
@@ -218,14 +217,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         }
 
         // The roster has no custom status text, so the profiles keep it (and the avatar and name) fresh.
+        // The roster's avatar image lets the name lookup run beside the profile instead of after it.
         foreach (var userId in refresh)
-        {
-            PlayerService.Instance.Request(userId);
-
-            // The avatar name comes from its own endpoint, so it runs alongside the profile.
-            var avatar = PlayerService.Instance.Get(userId)?.AvatarUrl ?? apiAvatar.GetValueOrDefault(userId);
-            AvatarService.Instance.Request(AvatarService.FileIdOf(avatar));
-        }
+            PlayerService.Instance.Request(userId, apiAvatar.GetValueOrDefault(userId));
 
         // The roster carries everyone's status but not their custom status text: VRChat reports that
         // field empty even when the user has one, so the text is left to the pipeline and the profile.
@@ -523,7 +517,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         string.Join(',', snapshot.Users.Select(user =>
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
             $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
-            $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}:{user.Threat}")));
+            $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}:{user.Threat}:{user.ProfileLoaded}:{user.AvatarLoaded}")));
 
     private InstanceSnapshot Snapshot()
     {
@@ -675,9 +669,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var presence = PresenceService.Instance.Get(userId);
 
         // The roster is newer than the cached profile, so it wins where it has a value. VRChat hides
-        // the avatar URL when the user set a custom icon, so the icon URL is the last candidate: an
-        // avatar image when there is no icon, and a file tagged "icon" (no avatar) when there is one.
-        var avatar = avatarUrl ?? profile?.AvatarUrl ?? profile?.IconUrl;
+        // the thumbnail when the user set a custom icon, so the full-size avatar image comes next and
+        // the icon is the last candidate (its file is tagged "icon" and carries no avatar name).
+        var avatar = avatarUrl ?? profile?.AvatarUrl ?? profile?.AvatarImageUrl ?? profile?.IconUrl;
         var fileId = AvatarService.FileIdOf(avatar);
         var platform = profile?.Platform is { Length: > 0 } value && value != "offline"
             ? value
@@ -706,7 +700,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             profile?.IsFriend ?? false,
             threat.Score,
             threat.Reasons,
-            SettingsService.Instance.Current.Whitelist.Contains(userId, StringComparer.OrdinalIgnoreCase));
+            SettingsService.Instance.Current.Whitelist.Contains(userId, StringComparer.OrdinalIgnoreCase),
+            profile is not null || PlayerService.Instance.IsLoaded(userId),
+            fileId is null ? profile is not null : AvatarService.Instance.IsResolved(fileId));
     }
 
     /// <summary>VRChat's trust tags, highest first.</summary>

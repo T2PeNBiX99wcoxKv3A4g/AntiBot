@@ -21,7 +21,9 @@ public sealed record InstanceUser(
     bool IsFriend = false,
     int Threat = 0,
     string[]? ThreatReasons = null,
-    bool Whitelisted = false);
+    bool Whitelisted = false,
+    bool ProfileLoaded = false,
+    bool AvatarLoaded = false);
 
 /// <summary>
 ///     Who is in the instance, and which instance that is. <see cref="Source" /> says whether the list

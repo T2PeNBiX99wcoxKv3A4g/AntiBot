@@ -1,5 +1,5 @@
 import {type ReactNode, useEffect, useRef, useState} from "react";
-import styled from "styled-components";
+import styled, {keyframes} from "styled-components";
 import {
     emptyInstance,
     getInstance,
@@ -116,17 +116,18 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                     <ListCard>
                         <ListHeader>
                             <span/>
-                            <span>Name</span>
+                            <span>User</span>
+                            <span>Trust</span>
+                            <span>Pronouns</span>
                             <span>Status</span>
                             <span>Platform</span>
-                            <span>In instance</span>
                         </ListHeader>
 
                         <Rows>
                             {users.length === 0 ? (
                                 <EmptyRow>No players in this instance yet.</EmptyRow>
                             ) : users.map((user) => (
-                                <UserRow key={user.userId} user={user} now={now}
+                                <UserRow key={user.userId} user={user} now={now} showTime={false}
                                      onSelect={(next) => setSelectedId(next.userId)}/>
                             ))}
                         </Rows>
@@ -156,6 +157,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
     const icon = user.iconUrl ?? user.avatarUrl;
     const status = statusInfo(user.status);
     const threat = user.threat ?? 0;
+    const loaded = user.profileLoaded ?? true;
     const resolved: RowTone = tone ?? (user.local
         ? "self"
         : user.whitelisted
@@ -167,7 +169,11 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
     return (
         <Row $tone={resolved} $threat={threat} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
             <AvatarCell>
-                {icon ? <AvatarLarge $src={icon}/> : <AvatarEmpty/>}
+                {icon
+                    ? <AvatarLarge $src={icon}/>
+                    : loaded
+                        ? <AvatarInitial>{user.name.slice(0, 1)}</AvatarInitial>
+                        : <SkeletonCircle/>}
             </AvatarCell>
             <Name>
                 <NameText>
@@ -175,8 +181,6 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         .filter(Boolean).join(" · ")}>
                         {user.name}
                     </span>
-                    {user.pronouns && <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun>}
-                    {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                     {threat > 0 && (
                         <ThreatBadge $score={threat} title={(user.threatReasons ?? []).join(" · ")}>
                             <AlertIcon size={10}/>
@@ -188,12 +192,24 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                     {user.local && <You>you</You>}
                 </NameText>
             </Name>
+            <TrustCell>
+                {loaded
+                    ? user.trust ? <Trust $trust={user.trust}>{user.trust}</Trust> : <Dash>—</Dash>
+                    : <SkeletonBar/>}
+            </TrustCell>
+            <PronounCell>
+                {loaded
+                    ? user.pronouns ? <Pronoun title={user.pronouns}>{user.pronouns}</Pronoun> : <Dash>—</Dash>
+                    : <SkeletonBar/>}
+            </PronounCell>
             <StatusCell title={user.statusDescription || undefined}>
-                {status
-                    ? <><StatusDot $color={status.color}/><span>{user.statusDescription || status.label}</span></>
-                    : <Dash>—</Dash>}
+                {loaded
+                    ? status
+                        ? <><StatusDot $color={status.color}/><span>{user.statusDescription || status.label}</span></>
+                        : <Dash>—</Dash>
+                    : <SkeletonBar/>}
             </StatusCell>
-            <PlatformCell>{platformLabel(user.platform)}</PlatformCell>
+            <PlatformCell>{loaded ? platformLabel(user.platform) : <SkeletonBar/>}</PlatformCell>
             {showTime && <Time>{trailing ?? timeLabel ?? durationLabel(user.joinedAt, now)}</Time>}
         </Row>
     );
@@ -286,7 +302,7 @@ export function PlayerDialog({user, now, onClose}: {
                         )}
                         <Field
                             label="Avatar"
-                            value={user.avatarName ?? (user.isRobot ? "Robot (default)" : "Unknown")}
+                            value={avatarName(user)}
                         />
                         <Field
                             label="VRChat account since"
@@ -300,6 +316,16 @@ export function PlayerDialog({user, now, onClose}: {
             </Dialog>
         </Overlay>
     );
+}
+
+/** The avatar name, with a distinct state for "still loading" and "a custom icon hid it". */
+function avatarName(user: InstanceUser): string {
+    if (user.avatarName) return user.avatarName;
+    if (user.isRobot) return "Robot (default)";
+    if (!(user.avatarLoaded ?? false)) return "Loading…";
+
+    // VRChat hides the avatar image behind a custom profile icon; the name cannot be resolved then.
+    return user.iconUrl ? "Custom icon" : "Unknown";
 }
 
 function Field({label, value}: { label: string; value: string }) {
@@ -696,10 +722,16 @@ const ListCard = styled.section`
     background: var(--bg-card);
 `;
 
+/** The shared column grid, so the instance list and the request list line up. */
+export const userGridColumns = (showTime: boolean): string =>
+    showTime
+        ? "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.7fr 0.7fr minmax(64px, 0.5fr)"
+        : "34px minmax(110px, 1.1fr) 0.7fr 0.9fr 1.7fr 0.7fr";
+
 const ListHeader = styled.div`
     display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 200px 78px 96px;
-    gap: 12px;
+    grid-template-columns: ${userGridColumns(false)};
+    gap: 8px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-muted);
@@ -707,10 +739,6 @@ const ListHeader = styled.div`
     font-size: 9px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-
-    span:last-child {
-        text-align: right;
-    }
 `;
 
 const Rows = styled.div`
@@ -767,9 +795,8 @@ function threatTint(score: number): string {
 
 const Row = styled.div<{ $tone: RowTone; $threat: number; $showTime: boolean; $dim?: boolean }>`
     display: grid;
-    grid-template-columns: ${({$showTime}) =>
-        $showTime ? "40px minmax(0, 1fr) 200px 78px 96px" : "40px minmax(0, 1fr) 200px 78px"};
-    gap: 12px;
+    grid-template-columns: ${({$showTime}) => userGridColumns($showTime)};
+    gap: 8px;
     align-items: center;
     padding: 8px 16px;
     opacity: ${({$dim}) => $dim ? 0.55 : 1};
@@ -803,13 +830,61 @@ const AvatarLarge = styled.span<{ $src?: string }>`
     box-shadow: inset 0 0 0 1px var(--border-color);
 `;
 
+/** The row is still loading; a quiet pulse reads better than a row full of dashes. */
+const pulse = keyframes`
+    0%, 100% {
+        opacity: 0.25;
+    }
+    50% {
+        opacity: 0.65;
+    }
+`;
+
 /** The placeholder while a profile (and with it the picture) has not arrived yet. */
-const AvatarEmpty = styled.span`
+const SkeletonCircle = styled.span`
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: ${pulse} 1.4s ease-in-out infinite;
+`;
+
+/** A loaded profile without a picture still gets a stable, readable avatar. */
+const AvatarInitial = styled.span`
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 34px;
     height: 34px;
     border-radius: 50%;
     background: var(--bg-primary);
     box-shadow: inset 0 0 0 1px var(--border-color);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+`;
+
+const SkeletonBar = styled.span`
+    display: block;
+    width: 62%;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--text-muted);
+    animation: ${pulse} 1.4s ease-in-out infinite;
+`;
+
+const TrustCell = styled.span`
+    display: flex;
+    align-items: center;
+    min-width: 0;
+`;
+
+const PronounCell = styled.span`
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
 `;
 
 const Dash = styled.span`
@@ -841,12 +916,16 @@ const NameText = styled.span`
 `;
 
 const Pronoun = styled.span`
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
     padding: 1px 6px;
     border-radius: 999px;
     background: rgba(96, 165, 250, 0.12);
     color: #93c5fd;
     font-family: var(--font-mono);
     font-size: 9px;
+    text-overflow: ellipsis;
     white-space: nowrap;
 `;
 
@@ -933,6 +1012,9 @@ const PlatformCell = styled.span`
 `;
 
 const Trust = styled.span<{ $trust: string }>`
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
     padding: 1px 6px;
     flex-shrink: 0;
     border-radius: 999px;
@@ -940,6 +1022,8 @@ const Trust = styled.span<{ $trust: string }>`
     color: ${({$trust}) => trustColor($trust)};
     font-family: var(--font-mono);
     font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 `;
 
 const You = styled.span`
