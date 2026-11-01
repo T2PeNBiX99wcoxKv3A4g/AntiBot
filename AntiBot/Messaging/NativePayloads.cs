@@ -75,6 +75,9 @@ internal sealed record DevicePollRequest(string DeviceCode);
 /// <summary>Body for <c>auth.device.poll</c>: pending with a reason, or the signed-in session.</summary>
 internal sealed record DevicePollPayload(bool Approved, string? Reason, AuthPayload? Auth);
 
+/// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
+internal sealed record AppNavigatePayload(string Page);
+
 /// <summary>Payload for <c>system.openUrl</c>: a VRChat link to hand to the default browser.</summary>
 internal sealed record OpenUrlRequest(string Url);
 

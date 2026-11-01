@@ -49,6 +49,17 @@ export default function App() {
         return () => window.clearTimeout(timer);
     }, []);
 
+    // The tray can ask for a page (for example "Settings") while the window is hidden.
+    useEffect(() => {
+        return Native.on((message) => {
+            if (message.type !== "app.navigate")
+                return;
+
+            const page = (message.data as { page?: Page } | undefined)?.page;
+            if (page) setPage(page);
+        });
+    }, []);
+
     const {title, subtitle} = pageMeta[page];
 
     return (

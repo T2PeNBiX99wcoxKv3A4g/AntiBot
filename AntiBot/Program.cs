@@ -159,10 +159,11 @@ internal static class Program
             Constants.Name,
             Constants.WindowTitle,
             iconPath,
-            manager.ShowMainWindow,
+            () => manager.ShowMainWindow(),
             [
-                new("Open", manager.ShowMainWindow),
-                new("Exit", manager.Exit, true)
+                new(Localization.Get("tray.open"), () => manager.ShowMainWindow()),
+                new(Localization.Get("tray.settings"), () => manager.ShowMainWindow("settings")),
+                new(Localization.Get("tray.exit"), manager.Exit, true)
             ]);
     }
 }

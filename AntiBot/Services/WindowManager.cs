@@ -134,10 +134,13 @@ internal sealed class WindowManager : Singleton<WindowManager>
     public void Run() => _mainWindow?.WaitForClose();
 
     /// <summary>Shows the main window, restoring it first when it is hidden or minimised.</summary>
-    public void ShowMainWindow()
+    public void ShowMainWindow(string? page = null)
     {
         Log.Information("Showing the main window");
         RunOnMainWindow(() => Show(_mainWindow!));
+
+        if (page is { Length: > 0 })
+            NotifyMainWindow("app.navigate", new AppNavigatePayload(page));
     }
 
     public void HideMainWindow()

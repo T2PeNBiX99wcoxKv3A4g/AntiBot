@@ -4,6 +4,9 @@
   "Maximize": "最大化",
   "Restore": "還原",
   "Close": "關閉",
+  "tray.open": "開啟",
+  "tray.settings": "設定",
+  "tray.exit": "結束",
 
   "Log viewer": "日誌檢視器",
   "Instance": "實例",

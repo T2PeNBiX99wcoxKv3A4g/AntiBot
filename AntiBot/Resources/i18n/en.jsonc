@@ -5,6 +5,9 @@
   "Maximize": "Maximize",
   "Restore": "Restore",
   "Close": "Close",
+  "tray.open": "Open",
+  "tray.settings": "Settings",
+  "tray.exit": "Exit",
 
   "Log viewer": "Log viewer",
   "Instance": "Instance",

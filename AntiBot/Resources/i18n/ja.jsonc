@@ -4,6 +4,9 @@
   "Maximize": "最大化",
   "Restore": "元に戻す",
   "Close": "閉じる",
+  "tray.open": "開く",
+  "tray.settings": "設定",
+  "tray.exit": "終了",
 
   "Log viewer": "ログビューア",
   "Instance": "インスタンス",

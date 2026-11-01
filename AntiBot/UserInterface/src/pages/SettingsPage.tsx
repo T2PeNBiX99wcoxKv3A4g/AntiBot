@@ -558,6 +558,10 @@ const SettingsBody = styled.div`
 
 /** The jump list sits to the right of the cards, like URLCheck's settings page. */
 const SettingsNav = styled.nav`
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    align-self: flex-start;
     display: flex;
     flex-direction: column;
     gap: 2px;
