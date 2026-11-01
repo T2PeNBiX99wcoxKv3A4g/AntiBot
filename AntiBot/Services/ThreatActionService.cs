@@ -58,10 +58,17 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
         // Closing the client is the only action that can beat an avatar download, and it needs no API
-        // call, so it runs first and outside the rate-limited queue.
-        if (settings.AutoCloseVrchat && !(settings.SkipCloseInVr && VrchatClient.IsVrActive()) &&
-            VrchatClient.Close())
+        // call, so it runs first and outside the rate-limited queue. Safe Mode comes next: it replaces
+        // every non-friend avatar at once, which blocking does not do because the client only re-reads
+        // its moderation list later.
+        var closed = settings.AutoCloseVrchat &&
+                     !(settings.SkipCloseInVr && VrchatClient.IsVrActive()) &&
+                     VrchatClient.Close();
+
+        if (closed)
             await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
+        else if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
+            await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
 
         try
         {

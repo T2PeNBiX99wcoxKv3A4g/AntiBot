@@ -20,6 +20,7 @@ internal sealed record SettingsPayload(
     bool AutoDisableAvatarInteraction,
     bool AutoHideChatBox,
     bool AutoCloseVrchat,
+    bool AutoSafeMode,
     bool SkipCloseInVr,
     bool AutoRejectFriendRequests,
     int ThreatThreshold,
@@ -113,6 +114,9 @@ internal sealed record DebugUserPayload(
     bool IsRobot,
     int Threat,
     ThreatReason[] Reasons);
+
+/// <summary>Body for <c>debug.safeMode</c>: whether it was sent, and what the OSC state looked like.</summary>
+internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMode);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

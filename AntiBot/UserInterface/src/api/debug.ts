@@ -24,3 +24,15 @@ export async function closeVrchat(): Promise<boolean> {
     const result = await Native.request<{ ok: boolean }>("debug.closeVrchat", undefined, 60_000);
     return result.ok;
 }
+
+/** What the host saw when it tried to press VRChat's OSC panic button. */
+export interface DebugSafeModeResult {
+    ok: boolean;
+    listening: boolean;
+    safeMode: boolean;
+}
+
+/** Debug builds only: turns VRChat's Safe Mode on over OSC. */
+export async function enableSafeMode(): Promise<DebugSafeModeResult> {
+    return await Native.request<DebugSafeModeResult>("debug.safeMode", undefined, 30_000);
+}

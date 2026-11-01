@@ -32,6 +32,9 @@ public sealed record AppSettings
     /// <summary>Close VRChat when a high-threat user appears, so the instance is left at once.</summary>
     public bool AutoCloseVrchat { get; init; }
 
+    /// <summary>Turn VRChat's Safe Mode on over OSC, which replaces every non-friend avatar at once.</summary>
+    public bool AutoSafeMode { get; init; }
+
     /// <summary>Leave VRChat alone while a VR headset is in use; closing it there is disruptive.</summary>
     public bool SkipCloseInVr { get; init; } = true;
 

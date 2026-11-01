@@ -165,6 +165,8 @@ function kindKey(kind: string): string {
             return "Chat box hidden";
         case "closeVrchat":
             return "Closed VRChat";
+        case "safeMode":
+            return "Safe Mode on";
         case "returnHome":
             return "Returned home";
         case "rejectRequest":

@@ -10,6 +10,7 @@ export interface SettingsView {
     autoDisableAvatarInteraction: boolean;
     autoHideChatBox: boolean;
     autoCloseVrchat: boolean;
+    autoSafeMode: boolean;
     skipCloseInVr: boolean;
     autoRejectFriendRequests: boolean;
     threatThreshold: number;
@@ -25,6 +26,7 @@ export interface AppSettings {
     autoDisableAvatarInteraction: boolean;
     autoHideChatBox: boolean;
     autoCloseVrchat: boolean;
+    autoSafeMode: boolean;
     skipCloseInVr: boolean;
     autoRejectFriendRequests: boolean;
     threatThreshold: number;
@@ -41,6 +43,7 @@ const empty: SettingsView = {
     autoDisableAvatarInteraction: true,
     autoHideChatBox: true,
     autoCloseVrchat: false,
+    autoSafeMode: false,
     skipCloseInVr: true,
     autoRejectFriendRequests: true,
     threatThreshold: 50,

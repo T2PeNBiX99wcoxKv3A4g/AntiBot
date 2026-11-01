@@ -75,6 +75,9 @@ internal static class Program
             _ = StartupService.Instance;
             _ = VrchatLogService.Instance;
 
+            // Reads the log for the OSC port and the shield level, so Safe Mode can be requested.
+            _ = VrchatOscService.Instance;
+
             // The instance events and the player cache live in the local database.
             Database.Instance.Initialize();
             _ = PlayerService.Instance;

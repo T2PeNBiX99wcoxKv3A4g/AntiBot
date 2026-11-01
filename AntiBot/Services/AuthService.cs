@@ -197,6 +197,19 @@ internal sealed class AuthService : Singleton<AuthService>
         return Task.FromResult<NativeResponse?>(context.Reply("debug.closeVrchat.result", new OkPayload(closed)));
     }
 
+    /// <summary>Debug build only: presses the OSC panic button the same way the automatic action does.</summary>
+    private Task<NativeResponse?> DebugSafeModeAsync(NativeContext context)
+    {
+        var osc = VrchatOscService.Instance;
+        var sent = osc.EnableSafeMode();
+
+        Log.Information("Debug Safe Mode: {Sent} (listening: {Listening}, on: {On})",
+            sent, osc.IsListening, osc.IsSafeMode);
+
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.safeMode.result",
+            new DebugSafeModePayload(sent, osc.IsListening, osc.IsSafeMode)));
+    }
+
     /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
     private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
     {
@@ -261,6 +274,7 @@ internal sealed class AuthService : Singleton<AuthService>
 #if DEBUG
         "debug.user" => DebugUserAsync(context),
         "debug.closeVrchat" => DebugCloseVrchatAsync(context),
+        "debug.safeMode" => DebugSafeModeAsync(context),
 #endif
         _ => Task.FromResult<NativeResponse?>(null)
     };

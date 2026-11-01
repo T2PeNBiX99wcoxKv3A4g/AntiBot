@@ -1,13 +1,14 @@
 import {useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {type DebugUserResult, closeVrchat, scoreUser} from "../api/debug";
+import {type DebugUserResult, closeVrchat, enableSafeMode, scoreUser} from "../api/debug";
 
 /** Debug builds only: the actions that are hard to trigger for real. */
 export function DebugPage() {
     return (
         <Page>
             <CloseClient/>
+            <SafeMode/>
             <UserCheck/>
         </Page>
     );
@@ -59,6 +60,50 @@ function Row({label, value}: { label: string; value: string }) {
             <dt>{label}</dt>
             <dd>{value}</dd>
         </>
+    );
+}
+
+/** Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once. */
+function SafeMode() {
+    const t = useTranslation();
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState("");
+    const [failed, setFailed] = useState(false);
+
+    const run = async () => {
+        setBusy(true);
+        setResult("");
+        setFailed(false);
+
+        try {
+            const state = await enableSafeMode();
+            setFailed(!state.ok);
+            setResult(state.ok
+                ? t("Safe Mode on.")
+                : state.safeMode
+                    ? t("Safe Mode is already on.")
+                    : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+        } catch (err) {
+            setFailed(true);
+            setResult(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <Card>
+            <h2>{t("Safe Mode (OSC)")}</h2>
+            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once.")}</p>
+
+            <Actions>
+                <Primary disabled={busy} onClick={() => void run()} type="button">
+                    {busy ? t("Working…") : t("Safe Mode (OSC)")}
+                </Primary>
+            </Actions>
+
+            {result && <Status $failed={failed}>{result}</Status>}
+        </Card>
     );
 }
 

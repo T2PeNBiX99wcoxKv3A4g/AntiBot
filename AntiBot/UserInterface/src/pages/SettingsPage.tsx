@@ -46,6 +46,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [autoAvatar, setAutoAvatar] = useState(true);
     const [autoChat, setAutoChat] = useState(true);
     const [autoClose, setAutoClose] = useState(false);
+    const [autoSafeMode, setAutoSafeMode] = useState(false);
     const [skipCloseVr, setSkipCloseVr] = useState(true);
     const [autoReject, setAutoReject] = useState(true);
     const [threshold, setThreshold] = useState(50);
@@ -85,6 +86,7 @@ export function SettingsPage({info}: SettingsPageProps) {
             setAutoAvatar(settings.autoDisableAvatarInteraction);
             setAutoChat(settings.autoHideChatBox);
             setAutoClose(settings.autoCloseVrchat);
+            setAutoSafeMode(settings.autoSafeMode);
             setSkipCloseVr(settings.skipCloseInVr);
             setAutoReject(settings.autoRejectFriendRequests);
             setThreshold(settings.threatThreshold);
@@ -135,6 +137,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         autoDisableAvatarInteraction: autoAvatar,
         autoHideChatBox: autoChat,
         autoCloseVrchat: autoClose,
+        autoSafeMode,
         skipCloseInVr: skipCloseVr,
         autoRejectFriendRequests: autoReject,
         threatThreshold: threshold,
@@ -428,6 +431,15 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 void persist({autoHideChatBox: value});
                             }}
                             title={t("Hide the chat box")}
+                        />
+                        <Toggle
+                            checked={autoSafeMode}
+                            hint={t("Turn on VRChat's Safe Mode over OSC when a user reaches the threshold, so every non-friend avatar is replaced at once. It needs OSC enabled in VRChat and stays on until you turn it off.")}
+                            onChange={(value) => {
+                                setAutoSafeMode(value);
+                                void persist({autoSafeMode: value});
+                            }}
+                            title={t("Safe Mode (OSC)")}
                         />
                         <Toggle
                             checked={autoClose}
