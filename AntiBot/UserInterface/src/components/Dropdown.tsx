@@ -39,7 +39,7 @@ const Menu = styled.div<{ $up?: boolean }>`
     padding: 5px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    background: rgba(22, 19, 38, 0.94);
+    background: var(--bg-card);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
@@ -84,7 +84,7 @@ const Trigger = styled.button`
     padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(12, 10, 22, 0.88);
+    background: var(--bg-input);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: var(--text-primary);
