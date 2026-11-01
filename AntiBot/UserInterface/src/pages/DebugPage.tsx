@@ -1,7 +1,7 @@
 import {useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {type DebugUserResult, closeVrchat, enableSafeMode, scoreUser} from "../api/debug";
+import {type DebugUserResult, closeVrchat, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
 
 /** Debug builds only: the actions that are hard to trigger for real. */
 export function DebugPage() {
@@ -9,6 +9,7 @@ export function DebugPage() {
         <Page>
             <CloseClient/>
             <SafeMode/>
+            <SafeAvatar/>
             <UserCheck/>
         </Page>
     );
@@ -107,6 +108,52 @@ function SafeMode() {
     );
 }
 
+/** Switches to the avatar id saved in the settings, over OSC. */
+function SafeAvatar() {
+    const t = useTranslation();
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState("");
+    const [failed, setFailed] = useState(false);
+
+    const run = async () => {
+        setBusy(true);
+        setResult("");
+        setFailed(false);
+
+        try {
+            const state = await switchAvatar();
+            setFailed(!state.ok);
+            setResult(state.ok
+                ? t("Avatar changed.")
+                : state.already
+                    ? t("Already wearing that avatar.")
+                    : !state.configured
+                        ? t("Set the avatar id in the settings first.")
+                        : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+        } catch (err) {
+            setFailed(true);
+            setResult(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <Card>
+            <h2>{t("Switch avatar (OSC)")}</h2>
+            <p>{t("Asks VRChat to wear the avatar id from the settings.")}</p>
+
+            <Actions>
+                <Primary disabled={busy} onClick={() => void run()} type="button">
+                    {busy ? t("Working…") : t("Switch avatar (OSC)")}
+                </Primary>
+            </Actions>
+
+            {result && <Status $failed={failed}>{result}</Status>}
+        </Card>
+    );
+}
+
 /** Scores any user id or profile link, so the rules can be tried without waiting for a bot. */
 function UserCheck() {
     const t = useTranslation();
@@ -152,7 +199,7 @@ function UserCheck() {
 
             {result && (
                 <Report>
-                    <Threat $score={result.threat}>{result.threat}%</Threat>
+                    <Threat $score={result.threat}>{result.threat}</Threat>
                     <Rows>
                         <Row label={t("Name")} value={result.displayName}/>
                         <Row label={t("User ID")} value={result.id}/>

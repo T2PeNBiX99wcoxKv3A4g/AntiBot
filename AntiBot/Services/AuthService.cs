@@ -210,6 +210,22 @@ internal sealed class AuthService : Singleton<AuthService>
             new DebugSafeModePayload(sent, osc.IsListening, osc.IsSafeMode)));
     }
 
+    /// <summary>Debug build only: switches to the avatar configured in the settings.</summary>
+    private Task<NativeResponse?> DebugAvatarAsync(NativeContext context)
+    {
+        var osc = VrchatOscService.Instance;
+        var avatarId = SettingsService.Instance.Current.SafeAvatarId;
+        var configured = avatarId.Length > 0;
+        var already = configured && string.Equals(osc.CurrentAvatar, avatarId, StringComparison.OrdinalIgnoreCase);
+        var sent = osc.ChangeAvatar(avatarId);
+
+        Log.Information("Debug avatar switch: {Sent} (configured: {Configured}, already: {Already})",
+            sent, configured, already);
+
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.avatar.result",
+            new DebugAvatarPayload(sent, osc.IsListening, already, configured)));
+    }
+
     /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
     private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
     {
@@ -275,6 +291,7 @@ internal sealed class AuthService : Singleton<AuthService>
         "debug.user" => DebugUserAsync(context),
         "debug.closeVrchat" => DebugCloseVrchatAsync(context),
         "debug.safeMode" => DebugSafeModeAsync(context),
+        "debug.avatar" => DebugAvatarAsync(context),
 #endif
         _ => Task.FromResult<NativeResponse?>(null)
     };

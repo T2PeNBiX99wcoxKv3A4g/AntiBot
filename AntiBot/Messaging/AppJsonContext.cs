@@ -52,6 +52,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(DebugUserRequest))]
 [JsonSerializable(typeof(DebugUserPayload))]
 [JsonSerializable(typeof(DebugSafeModePayload))]
+[JsonSerializable(typeof(DebugAvatarPayload))]
 [JsonSerializable(typeof(OpenUrlRequest))]
 [JsonSerializable(typeof(FriendRequestActionRequest))]
 [JsonSerializable(typeof(OperationActionRequest))]

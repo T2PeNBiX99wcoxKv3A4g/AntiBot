@@ -66,9 +66,18 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
                      VrchatClient.Close();
 
         if (closed)
+        {
             await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
-        else if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
-            await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
+        }
+        else
+        {
+            if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
+                await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
+
+            // A different avatar is only useful if it is not the one already worn, which VRChat reports.
+            if (settings.AutoSafeAvatar && VrchatOscService.Instance.ChangeAvatar(settings.SafeAvatarId))
+                await OperationService.Instance.LogAsync("switchedAvatar", user.UserId, user.Name, detail);
+        }
 
         try
         {
@@ -201,7 +210,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     }
 
     private static string Describe(InstanceUser user) =>
-        $"{user.Threat}%" +
+        $"{user.Threat}" +
         (user.ThreatReasons is { Length: > 0 } reasons
             ? " · " + string.Join(", ", reasons.Select(reason => reason.Text))
             : "");

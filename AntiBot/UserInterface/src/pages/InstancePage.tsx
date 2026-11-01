@@ -190,7 +190,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                                               `${t(reason.text, reason.detail ? {days: reason.detail} : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
                                           .join(" · ")}>
                             <AlertIcon size={10}/>
-                            {threat}%
+                            {threat}
                         </ThreatBadge>
                     )}
                     {badge}
@@ -298,7 +298,7 @@ export function PlayerDialog({user, now, onClose}: {
                                 <ThreatLine>
                                     <ThreatBadge $score={user.threat ?? 0}>
                                         <AlertIcon size={10}/>
-                                        {user.threat ?? 0}%
+                                        {user.threat ?? 0}
                                     </ThreatBadge>
                                     <ThreatReasons>
                                         {(user.threatReasons ?? []).map((reason) => (

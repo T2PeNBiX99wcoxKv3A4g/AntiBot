@@ -36,3 +36,16 @@ export interface DebugSafeModeResult {
 export async function enableSafeMode(): Promise<DebugSafeModeResult> {
     return await Native.request<DebugSafeModeResult>("debug.safeMode", undefined, 30_000);
 }
+
+/** What the host saw when it tried to switch to the configured avatar. */
+export interface DebugAvatarResult {
+    ok: boolean;
+    listening: boolean;
+    already: boolean;
+    configured: boolean;
+}
+
+/** Debug builds only: switches to the avatar id saved in the settings. */
+export async function switchAvatar(): Promise<DebugAvatarResult> {
+    return await Native.request<DebugAvatarResult>("debug.avatar", undefined, 30_000);
+}

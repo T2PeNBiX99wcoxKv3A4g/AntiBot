@@ -21,6 +21,8 @@ internal sealed record SettingsPayload(
     bool AutoHideChatBox,
     bool AutoCloseVrchat,
     bool AutoSafeMode,
+    bool AutoSafeAvatar,
+    string SafeAvatarId,
     bool SkipCloseInVr,
     bool AutoRejectFriendRequests,
     int ThreatThreshold,
@@ -117,6 +119,9 @@ internal sealed record DebugUserPayload(
 
 /// <summary>Body for <c>debug.safeMode</c>: whether it was sent, and what the OSC state looked like.</summary>
 internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMode);
+
+/// <summary>Body for <c>debug.avatar</c>: whether the switch was sent, and why it may not have been.</summary>
+internal sealed record DebugAvatarPayload(bool Ok, bool Listening, bool Already, bool Configured);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

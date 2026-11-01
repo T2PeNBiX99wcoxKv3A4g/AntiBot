@@ -35,6 +35,12 @@ public sealed record AppSettings
     /// <summary>Turn VRChat's Safe Mode on over OSC, which replaces every non-friend avatar at once.</summary>
     public bool AutoSafeMode { get; init; }
 
+    /// <summary>Switch to <see cref="SafeAvatarId" /> over OSC when a high-threat user appears.</summary>
+    public bool AutoSafeAvatar { get; init; }
+
+    /// <summary>The avatar to switch to; it has to be a favourite, a recent or one of the user's own.</summary>
+    public string SafeAvatarId { get; init; } = "";
+
     /// <summary>Leave VRChat alone while a VR headset is in use; closing it there is disruptive.</summary>
     public bool SkipCloseInVr { get; init; } = true;
 

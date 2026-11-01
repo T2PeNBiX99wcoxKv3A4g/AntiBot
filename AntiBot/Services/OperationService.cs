@@ -134,6 +134,7 @@ internal sealed class OperationService : Singleton<OperationService>
         "chatBoxHidden" => "Chat box hidden",
         "closeVrchat" => "Closed VRChat",
         "safeMode" => "Safe Mode on",
+        "switchedAvatar" => "Switched avatar",
         "returnHome" => "Returned home",
         "rejectRequest" => "Friend request rejected",
         "undoReject" => "Rejection undone",

@@ -6,7 +6,7 @@ import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from ".
 import type {InstanceUser} from "../api/instance";
 import {type AppInfo, setStartup, startupStatus, type StartupStatus} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
-import {FolderIcon, TrashIcon} from "../components/Icons";
+import {FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
 
 /* The licence texts are large, so the notices page is loaded only when it is opened. */
 const AttributionPage = lazy(() =>
@@ -47,6 +47,8 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [autoChat, setAutoChat] = useState(true);
     const [autoClose, setAutoClose] = useState(false);
     const [autoSafeMode, setAutoSafeMode] = useState(false);
+    const [autoSafeAvatar, setAutoSafeAvatar] = useState(false);
+    const [safeAvatarId, setSafeAvatarId] = useState("");
     const [skipCloseVr, setSkipCloseVr] = useState(true);
     const [autoReject, setAutoReject] = useState(true);
     const [threshold, setThreshold] = useState(50);
@@ -87,6 +89,8 @@ export function SettingsPage({info}: SettingsPageProps) {
             setAutoChat(settings.autoHideChatBox);
             setAutoClose(settings.autoCloseVrchat);
             setAutoSafeMode(settings.autoSafeMode);
+            setAutoSafeAvatar(settings.autoSafeAvatar);
+            setSafeAvatarId(settings.safeAvatarId ?? "");
             setSkipCloseVr(settings.skipCloseInVr);
             setAutoReject(settings.autoRejectFriendRequests);
             setThreshold(settings.threatThreshold);
@@ -138,6 +142,8 @@ export function SettingsPage({info}: SettingsPageProps) {
         autoHideChatBox: autoChat,
         autoCloseVrchat: autoClose,
         autoSafeMode,
+        autoSafeAvatar,
+        safeAvatarId: safeAvatarId.trim(),
         skipCloseInVr: skipCloseVr,
         autoRejectFriendRequests: autoReject,
         threatThreshold: threshold,
@@ -397,7 +403,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 type="range"
                                 value={threshold}
                             />
-                            <ThresholdValue>{threshold}%</ThresholdValue>
+                            <ThresholdValue>{threshold}</ThresholdValue>
                         </Row>
                         <Hint>
                             {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
@@ -442,6 +448,15 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Safe Mode (OSC)")}
                         />
                         <Toggle
+                            checked={autoSafeAvatar}
+                            hint={t("Switch to another avatar over OSC when a user reaches the threshold. It must be one of your favourites, recents or uploads, and it is not switched back.")}
+                            onChange={(value) => {
+                                setAutoSafeAvatar(value);
+                                void persist({autoSafeAvatar: value});
+                            }}
+                            title={t("Switch avatar (OSC)")}
+                        />
+                        <Toggle
                             checked={autoClose}
                             hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.")}
                             onChange={(value) => {
@@ -470,6 +485,20 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Reject friend requests")}
                         />
                     </ToggleRow>
+
+                    <Field>
+                        <Label>{t("Safe avatar id")}</Label>
+                        <SecretInput
+                            disabled={!autoSafeAvatar}
+                            onBlur={() => void persist()}
+                            onChange={setSafeAvatarId}
+                            placeholder="avtr_…"
+                            value={safeAvatarId}
+                        />
+                        <Hint>
+                            {t("Paste the avatar id. VRChat ignores ids it cannot use, and the switch is not undone.")}
+                        </Hint>
+                    </Field>
                 </Card>
             </Section>
 
@@ -561,6 +590,39 @@ export function SettingsPage({info}: SettingsPageProps) {
                 ))}
             </SettingsNav>
         </SettingsBody>
+    );
+}
+
+/** A text field whose value is hidden until the eye is used, for ids that should not be on screen. */
+function SecretInput({value, onChange, onBlur, placeholder, disabled}: {
+    value: string;
+    onChange: (value: string) => void;
+    onBlur: () => void;
+    placeholder: string;
+    disabled: boolean;
+}) {
+    const t = useTranslation();
+    const [visible, setVisible] = useState(false);
+
+    return (
+        <SecretWrap>
+            <Input
+                disabled={disabled}
+                onBlur={onBlur}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={placeholder}
+                spellCheck={false}
+                type={visible ? "text" : "password"}
+                value={value}
+            />
+            <Reveal
+                aria-label={visible ? t("Hide the avatar id") : t("Show the avatar id")}
+                onClick={() => setVisible((current) => !current)}
+                type="button"
+            >
+                {visible ? <EyeOffIcon size={14}/> : <EyeIcon size={14}/>}
+            </Reveal>
+        </SecretWrap>
     );
 }
 
@@ -719,6 +781,39 @@ const Label = styled.span`
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
+`;
+
+/** Keeps the reveal button over the field, so the id is hidden until it is asked for. */
+const SecretWrap = styled.div`
+    position: relative;
+    display: flex;
+
+    input {
+        width: 100%;
+        padding-right: 34px;
+    }
+`;
+
+const Reveal = styled.button`
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
 `;
 
 const Value = styled.span<{ $mono?: boolean }>`
