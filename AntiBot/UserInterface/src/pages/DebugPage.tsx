@@ -102,14 +102,13 @@ function SafeMode() {
     return (
         <Card>
             <h2>{t("Safe Mode (OSC)")}</h2>
-            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once. It is a toggle, so pressing it again turns Safe Mode off.")}</p>
+            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once.")}</p>
 
             <Rows>
                 <Row label={t("OSC")}
                      value={osc?.listening
                          ? t("Listening on port {port}", {port: osc.port})
                          : t("Not listening")}/>
-                <Row label={t("Safe Mode")} value={osc?.safeMode ? t("On") : t("Off")}/>
             </Rows>
 
             <Actions>

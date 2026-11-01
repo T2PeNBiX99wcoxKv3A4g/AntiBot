@@ -118,14 +118,14 @@ internal sealed record DebugUserPayload(
     int Threat,
     ThreatReason[] Reasons);
 
-/// <summary>Body for <c>debug.safeMode</c>: whether it was sent, and what the OSC state looked like.</summary>
-internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMode);
+/// <summary>Body for <c>debug.safeMode</c>: whether it was sent, and whether OSC looked available.</summary>
+internal sealed record DebugSafeModePayload(bool Ok, bool Listening);
 
 /// <summary>Body for <c>debug.avatar</c>: whether the switch was sent, and why it may not have been.</summary>
 internal sealed record DebugAvatarPayload(bool Ok, bool Listening, bool Already, bool Configured);
 
 /// <summary>Body for <c>osc.status</c>: what the host knows about VRChat's OSC.</summary>
-internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving, int Detected, bool SafeMode);
+internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving, int Detected);
 
 /// <summary>Payload for <c>osc.test</c>: the port to try, so an unsaved field still works.</summary>
 internal sealed record OscTestRequest(int Port);

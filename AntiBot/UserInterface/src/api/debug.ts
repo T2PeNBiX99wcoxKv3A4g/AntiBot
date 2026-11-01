@@ -29,7 +29,6 @@ export async function closeVrchat(): Promise<boolean> {
 export interface DebugSafeModeResult {
     ok: boolean;
     listening: boolean;
-    safeMode: boolean;
 }
 
 /** Debug builds only: turns VRChat's Safe Mode on over OSC. */

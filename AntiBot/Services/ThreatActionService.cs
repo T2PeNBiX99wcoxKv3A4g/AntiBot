@@ -106,6 +106,10 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     }
 
     /// <summary>Rejects a friend request from a high-threat user, once.</summary>
+    /// <remarks>
+    ///     Only the API actions apply here: a request arrives before the user is in an instance, so
+    ///     there is no avatar to replace and nothing to close.
+    /// </remarks>
     public async Task RejectIfNeededAsync(FriendRequest request)
     {
         var settings = SettingsService.Instance.Current;

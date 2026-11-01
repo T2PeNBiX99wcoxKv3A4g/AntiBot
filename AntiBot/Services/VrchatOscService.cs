@@ -10,9 +10,9 @@ using Serilog;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Sends VRChat the OSC input it accepts, and reads the log to know whether OSC is listening and
-///     which shield level is in use. Safe Mode is the only way to replace a user's avatar without
-///     leaving the instance: blocking is server-side and the client does not re-evaluate at once.
+///     Sends VRChat the OSC input it accepts, and reads the log to know whether OSC is listening. Safe
+///     Mode is the only way to replace a user's avatar without leaving the instance: blocking is
+///     server-side and the client does not re-evaluate at once.
 /// </summary>
 internal sealed class VrchatOscService : Singleton<VrchatOscService>
 {
@@ -20,23 +20,25 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private const int DefaultOutPort = 9001;
 
     private const string OscLine = "of type OSC on ";
-    private const string SafetyLine = "Safety level set to:";
     private const string AvatarChange = "/avatar/change";
 
-    /// <summary>How long a press is trusted before the log has to confirm it.</summary>
-    private const long UnconfirmedMs = 5000;
+    /// <summary>
+    ///     VRChat's panic button only turns Safe Mode on, so pressing it again is harmless. It is still
+    ///     limited to once every few seconds, which is enough to re-arm Safe Mode after it was turned
+    ///     off without sending a message for every user who joins.
+    /// </summary>
+    private const long SafeModeGapMilliseconds = 5000;
 
     private readonly UdpClient _udp = new();
     private readonly UdpClient? _receive;
     private string? _currentAvatar;
     private int _detectedPort;
     private bool _oscListening;
-    private bool _safeMode;
-    private long _safeModePressed;
+    private long _safeModeAt;
 
     public VrchatOscService()
     {
-        // The log says whether OSC is enabled and what the shield level is; nothing else reports it.
+        // The log says which port VRChat listens on; nothing else reports it.
         VrchatLogService.Instance.LinesRead += OnLinesRead;
         NativeBridge.MessageReceived += HandleMessageAsync;
 
@@ -48,15 +50,6 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
     public bool IsListening => _oscListening;
-
-    /// <summary>
-    ///     Whether the shield level is the one Safe Mode sets. A press counts until the log confirms
-    ///     it, but only for a moment: if the log never says so the press did not arrive, and another
-    ///     one is allowed.
-    /// </summary>
-    public bool IsSafeMode => _safeMode
-                              && (_safeModePressed == 0
-                                  || Environment.TickCount64 - _safeModePressed < UnconfirmedMs);
 
     /// <summary>The avatar VRChat last reported wearing, or null while it has not said.</summary>
     public string? CurrentAvatar => _currentAvatar;
@@ -73,7 +66,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "osc.status" => Task.FromResult<NativeResponse?>(context.Reply("osc.status.result",
-            new OscStatusPayload(IsListening, Port, IsReceiving, DetectedPort, IsSafeMode))),
+            new OscStatusPayload(IsListening, Port, IsReceiving, DetectedPort))),
         "osc.test" => Task.FromResult<NativeResponse?>(TestConnection(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
@@ -105,21 +98,19 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
     /// <summary>
     ///     Presses VRChat's panic button, which turns Safe Mode on and replaces every non-friend avatar
-    ///     at once. Does nothing when OSC is off or Safe Mode already looks on, because the button is a
-    ///     toggle and a second press would turn it back off. <paramref name="force" /> skips that check,
-    ///     which is how the debug button recovers when the button and the log disagree.
+    ///     at once. The button only turns it on, so pressing it again is safe; it is still limited to
+    ///     once every few seconds so a busy instance does not send one message per user.
     /// </summary>
-    public bool EnableSafeMode(bool force = false)
+    public bool EnableSafeMode()
     {
-        if (!_oscListening || (IsSafeMode && !force))
+        if (!_oscListening || Environment.TickCount64 - _safeModeAt < SafeModeGapMilliseconds)
             return false;
 
         try
         {
             Send("/input/PanicButton", ",T");
             Send("/input/PanicButton", ",F");
-            _safeMode = true;
-            _safeModePressed = Environment.TickCount64;
+            _safeModeAt = Environment.TickCount64;
             Log.Information("Safe Mode requested over OSC on port {Port}", Port);
             return true;
         }
@@ -248,14 +239,6 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
                     _detectedPort = value;
                     _oscListening = true;
                 }
-            }
-            else if (message.Contains(SafetyLine, StringComparison.Ordinal))
-            {
-                // The panic button sets PanicMode; older clients called the same level Maximum.
-                var level = message.TrimEnd();
-                _safeMode = level.EndsWith("PanicMode", StringComparison.Ordinal)
-                            || level.EndsWith("Maximum", StringComparison.Ordinal);
-                _safeModePressed = 0;
             }
         }
     }

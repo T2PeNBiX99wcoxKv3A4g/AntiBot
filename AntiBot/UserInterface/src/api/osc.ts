@@ -10,8 +10,6 @@ export interface OscStatus {
     receiving: boolean;
     /** The port VRChat itself advertised, or 0 when it has not said. */
     detected: number;
-    /** Whether the log last reported Safe Mode on. */
-    safeMode: boolean;
 }
 
 export interface OscTestResult {
