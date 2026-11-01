@@ -23,12 +23,16 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private const string SafetyLine = "Safety level set to:";
     private const string AvatarChange = "/avatar/change";
 
+    /// <summary>How long a press is trusted before the log has to confirm it.</summary>
+    private const long UnconfirmedMs = 5000;
+
     private readonly UdpClient _udp = new();
     private readonly UdpClient? _receive;
     private string? _currentAvatar;
     private int _detectedPort;
     private bool _oscListening;
     private bool _safeMode;
+    private long _safeModePressed;
 
     public VrchatOscService()
     {
@@ -45,8 +49,14 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
     public bool IsListening => _oscListening;
 
-    /// <summary>Whether the shield level is the one Safe Mode sets.</summary>
-    public bool IsSafeMode => _safeMode;
+    /// <summary>
+    ///     Whether the shield level is the one Safe Mode sets. A press counts until the log confirms
+    ///     it, but only for a moment: if the log never says so the press did not arrive, and another
+    ///     one is allowed.
+    /// </summary>
+    public bool IsSafeMode => _safeMode
+                              && (_safeModePressed == 0
+                                  || Environment.TickCount64 - _safeModePressed < UnconfirmedMs);
 
     /// <summary>The avatar VRChat last reported wearing, or null while it has not said.</summary>
     public string? CurrentAvatar => _currentAvatar;
@@ -101,7 +111,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// </summary>
     public bool EnableSafeMode(bool force = false)
     {
-        if (!_oscListening || (_safeMode && !force))
+        if (!_oscListening || (IsSafeMode && !force))
             return false;
 
         try
@@ -109,6 +119,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             Send("/input/PanicButton", ",T");
             Send("/input/PanicButton", ",F");
             _safeMode = true;
+            _safeModePressed = Environment.TickCount64;
             Log.Information("Safe Mode requested over OSC on port {Port}", Port);
             return true;
         }
@@ -244,6 +255,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
                 var level = message.TrimEnd();
                 _safeMode = level.EndsWith("PanicMode", StringComparison.Ordinal)
                             || level.EndsWith("Maximum", StringComparison.Ordinal);
+                _safeModePressed = 0;
             }
         }
     }
