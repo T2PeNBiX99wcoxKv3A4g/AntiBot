@@ -125,7 +125,7 @@ internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMo
 internal sealed record DebugAvatarPayload(bool Ok, bool Listening, bool Already, bool Configured);
 
 /// <summary>Body for <c>osc.status</c>: what the host knows about VRChat's OSC.</summary>
-internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving, int Detected);
+internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving, int Detected, bool SafeMode);
 
 /// <summary>Payload for <c>osc.test</c>: the port to try, so an unsaved field still works.</summary>
 internal sealed record OscTestRequest(int Port);

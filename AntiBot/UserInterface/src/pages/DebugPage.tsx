@@ -1,7 +1,8 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
 import {type DebugUserResult, closeVrchat, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
+import {type OscStatus, oscStatus} from "../api/osc";
 
 /** Debug builds only: the actions that are hard to trigger for real. */
 export function DebugPage() {
@@ -70,6 +71,13 @@ function SafeMode() {
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState("");
     const [failed, setFailed] = useState(false);
+    const [osc, setOsc] = useState<OscStatus | null>(null);
+
+    const refresh = () => void oscStatus().then(setOsc, () => setOsc(null));
+
+    useEffect(() => {
+        refresh();
+    }, []);
 
     const run = async () => {
         setBusy(true);
@@ -80,10 +88,9 @@ function SafeMode() {
             const state = await enableSafeMode();
             setFailed(!state.ok);
             setResult(state.ok
-                ? t("Safe Mode on.")
-                : state.safeMode
-                    ? t("Safe Mode is already on.")
-                    : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+                ? t("Safe Mode request sent.")
+                : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+            refresh();
         } catch (err) {
             setFailed(true);
             setResult(err instanceof Error ? err.message : String(err));
@@ -95,7 +102,15 @@ function SafeMode() {
     return (
         <Card>
             <h2>{t("Safe Mode (OSC)")}</h2>
-            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once.")}</p>
+            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once. It is a toggle, so pressing it again turns Safe Mode off.")}</p>
+
+            <Rows>
+                <Row label={t("OSC")}
+                     value={osc?.listening
+                         ? t("Listening on port {port}", {port: osc.port})
+                         : t("Not listening")}/>
+                <Row label={t("Safe Mode")} value={osc?.safeMode ? t("On") : t("Off")}/>
+            </Rows>
 
             <Actions>
                 <Primary disabled={busy} onClick={() => void run()} type="button">

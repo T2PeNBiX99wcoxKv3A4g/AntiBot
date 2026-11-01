@@ -63,7 +63,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "osc.status" => Task.FromResult<NativeResponse?>(context.Reply("osc.status.result",
-            new OscStatusPayload(IsListening, Port, IsReceiving, DetectedPort))),
+            new OscStatusPayload(IsListening, Port, IsReceiving, DetectedPort, IsSafeMode))),
         "osc.test" => Task.FromResult<NativeResponse?>(TestConnection(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
@@ -96,11 +96,12 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// <summary>
     ///     Presses VRChat's panic button, which turns Safe Mode on and replaces every non-friend avatar
     ///     at once. Does nothing when OSC is off or Safe Mode already looks on, because the button is a
-    ///     toggle and a second press would turn it back off.
+    ///     toggle and a second press would turn it back off. <paramref name="force" /> skips that check,
+    ///     which is how the debug button recovers when the button and the log disagree.
     /// </summary>
-    public bool EnableSafeMode()
+    public bool EnableSafeMode(bool force = false)
     {
-        if (!_oscListening || _safeMode)
+        if (!_oscListening || (_safeMode && !force))
             return false;
 
         try
@@ -239,8 +240,10 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             }
             else if (message.Contains(SafetyLine, StringComparison.Ordinal))
             {
-                // Safe Mode is the Maximum shield level; anything else means it was turned off.
-                _safeMode = message.TrimEnd().EndsWith("Maximum", StringComparison.Ordinal);
+                // The panic button sets PanicMode; older clients called the same level Maximum.
+                var level = message.TrimEnd();
+                _safeMode = level.EndsWith("PanicMode", StringComparison.Ordinal)
+                            || level.EndsWith("Maximum", StringComparison.Ordinal);
             }
         }
     }

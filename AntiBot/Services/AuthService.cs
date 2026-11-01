@@ -197,17 +197,21 @@ internal sealed class AuthService : Singleton<AuthService>
         return Task.FromResult<NativeResponse?>(context.Reply("debug.closeVrchat.result", new OkPayload(closed)));
     }
 
-    /// <summary>Debug build only: presses the OSC panic button the same way the automatic action does.</summary>
+    /// <summary>
+    ///     Debug build only: presses the OSC panic button the same way the automatic action does. It is
+    ///     forced so a state the log never confirmed can still be corrected from here.
+    /// </summary>
     private Task<NativeResponse?> DebugSafeModeAsync(NativeContext context)
     {
         var osc = VrchatOscService.Instance;
-        var sent = osc.EnableSafeMode();
+        var wasSafe = osc.IsSafeMode;
+        var sent = osc.EnableSafeMode(true);
 
         Log.Information("Debug Safe Mode: {Sent} (listening: {Listening}, on: {On})",
-            sent, osc.IsListening, osc.IsSafeMode);
+            sent, osc.IsListening, wasSafe);
 
         return Task.FromResult<NativeResponse?>(context.Reply("debug.safeMode.result",
-            new DebugSafeModePayload(sent, osc.IsListening, osc.IsSafeMode)));
+            new DebugSafeModePayload(sent, osc.IsListening, wasSafe)));
     }
 
     /// <summary>Debug build only: switches to the avatar configured in the settings.</summary>

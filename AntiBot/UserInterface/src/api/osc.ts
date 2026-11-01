@@ -10,11 +10,15 @@ export interface OscStatus {
     receiving: boolean;
     /** The port VRChat itself advertised, or 0 when it has not said. */
     detected: number;
+    /** Whether the log last reported Safe Mode on. */
+    safeMode: boolean;
 }
 
-export interface OscTestResult extends OscStatus {
+export interface OscTestResult {
     /** Whether the test message could be sent. */
     sent: boolean;
+    /** The port it was sent to. */
+    port: number;
 }
 
 export async function oscStatus(): Promise<OscStatus> {

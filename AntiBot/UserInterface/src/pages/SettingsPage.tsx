@@ -96,15 +96,10 @@ export function SettingsPage({info}: SettingsPageProps) {
 
         try {
             const result = await testOsc(oscPort);
-            setOscState({
-                listening: result.listening,
-                port: result.port,
-                receiving: result.receiving,
-                detected: result.detected,
-            });
             setOscResult(result.sent
                 ? t("Sent to port {port}. If the Quick Menu opened, OSC is working.", {port: result.port})
                 : t("Could not send the test message."));
+            refreshOsc();
         } catch (reason) {
             setOscResult(reason instanceof Error ? reason.message : String(reason));
         } finally {
