@@ -56,7 +56,6 @@
     "installBefore": "自己完結ビルドです。.NET ランタイムを同梱しているので、他に何もインストールする必要はありません。Windows では WebView2 ランタイムも必要ですが、Windows 10 と 11 には最初から入っています。Linux では WebKitGTK 4.1 と AppIndicator ライブラリが必要です（",
     "readme": "README",
     "installAfter": " を参照）。Windows 版はコード署名されていないため、初回に Windows の警告が出ることがあります。",
-    "oscNote": "セーフモードとアバターの切り替えには、VRChat のアクションメニューで OSC を有効にする必要があります。それ以外の操作は OSC なしで動きます。",
     "platforms": [
       {
         "name": "Windows",

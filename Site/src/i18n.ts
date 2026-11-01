@@ -37,7 +37,6 @@ export interface Copy {
         installBefore: string;
         readme: string;
         installAfter: string;
-        oscNote: string;
         platforms: { name: string; note: string }[];
     };
     docs: { setup: string; reference: string };

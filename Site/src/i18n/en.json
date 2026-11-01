@@ -56,7 +56,6 @@
     "installBefore": "Self-contained builds: the .NET runtime is bundled, so nothing else needs installing. Windows also needs the WebView2 runtime, which Windows 10 and 11 already have; Linux needs WebKitGTK 4.1 and the AppIndicator library (see the ",
     "readme": "README",
     "installAfter": "). The Windows build is not code-signed, so Windows may warn the first time.",
-    "oscNote": "Safe Mode and the avatar switch need OSC enabled in VRChat's Action Menu. Every other action works without it.",
     "platforms": [
       {
         "name": "Windows",

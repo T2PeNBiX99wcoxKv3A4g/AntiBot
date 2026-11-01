@@ -56,7 +56,6 @@
     "installBefore": "自包含版本：已内置 .NET 运行时，不需要另外安装。Windows 还需要 WebView2 运行时，Windows 10 和 11 已经自带；Linux 需要 WebKitGTK 4.1 和 AppIndicator 库（见 ",
     "readme": "README",
     "installAfter": "）。Windows 版没有代码签名，第一次运行时 Windows 可能会警告。",
-    "oscNote": "安全模式和切换头像需要在 VRChat 的快捷菜单中启用 OSC。其他操作不需要 OSC。",
     "platforms": [
       {
         "name": "Windows",

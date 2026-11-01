@@ -249,12 +249,6 @@ const PlatformNote = styled.span`
     font-size: 0.8rem;
 `;
 
-const Note = styled.p`
-    margin: 16px 0 0;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-`;
-
 const featureIcons: LucideIcon[] = [Users, ShieldAlert, ShieldCheck, Zap, UserCog, UserPlus, FileText, Lock];
 
 /** simple-icons dropped the Windows mark, so the four squares are drawn here. */
@@ -344,7 +338,6 @@ export const HomePage: React.FC = () => {
                         );
                     })}
                 </PlatformGrid>
-                <Note>{home.oscNote}</Note>
             </Section>
         </>
     );
