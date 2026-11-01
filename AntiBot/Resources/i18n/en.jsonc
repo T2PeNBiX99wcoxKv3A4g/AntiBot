@@ -313,7 +313,7 @@
   "VRChat did not close. Is it running?": "VRChat did not close. Is it running?",
   "Working…": "Working…",
   "Reject friend requests": "Reject friend requests",
-  "Hide friend requests from any user at or above the threshold; undo from the request list.": "Hide friend requests from any user at or above the threshold; undo from the request list.",
+  "Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and the actions above are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.": "Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and the actions above are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.",
   "Whitelist": "Whitelist",
   "never acted on": "never acted on",
   "Add a user": "Add a user",

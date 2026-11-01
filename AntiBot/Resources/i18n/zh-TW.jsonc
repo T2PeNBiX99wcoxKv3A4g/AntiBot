@@ -311,7 +311,7 @@
   "VRChat did not close. Is it running?": "VRChat 沒有關閉。它是否在執行？",
   "Working…": "執行中…",
   "Reject friend requests": "拒絕好友邀請",
-  "Hide friend requests from any user at or above the threshold; undo from the request list.": "隱藏達到閾值的使用者送來的好友邀請；可在邀請列表中復原。",
+  "Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and the actions above are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.": "拒絕達到閾值的使用者送來的好友邀請。VRChat 的通知會被隱藏，上面的操作會套用到寄件者；邀請仍會以「已拒絕」保留在 AntiBot 的清單中，可以在那裡復原。",
   "Whitelist": "白名單",
   "never acted on": "不會被處理",
   "Add a user": "新增使用者",

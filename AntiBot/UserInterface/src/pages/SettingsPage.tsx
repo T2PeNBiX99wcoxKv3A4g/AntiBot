@@ -450,7 +450,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoReject}
-                            hint={t("Hide friend requests from any user at or above the threshold; undo from the request list.")}
+                            hint={t("Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and the actions above are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.")}
                             onChange={(value) => {
                                 setAutoReject(value);
                                 void persist({autoRejectFriendRequests: value});

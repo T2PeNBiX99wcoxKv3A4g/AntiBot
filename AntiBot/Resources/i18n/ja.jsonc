@@ -311,7 +311,7 @@
   "VRChat did not close. Is it running?": "VRChat が終了しませんでした。実行されていますか？",
   "Working…": "実行中…",
   "Reject friend requests": "フレンドリクエストを拒否",
-  "Hide friend requests from any user at or above the threshold; undo from the request list.": "しきい値以上のユーザーからのフレンドリクエストを非表示にします。リクエスト一覧から元に戻せます。",
+  "Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and the actions above are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.": "しきい値以上のユーザーからのフレンドリクエストを拒否します。VRChat の通知は非表示になり、上の操作が送信者に適用されます。リクエストは AntiBot の一覧に「拒否済み」として残り、そこから元に戻せます。",
   "Whitelist": "ホワイトリスト",
   "never acted on": "自動操作の対象外",
   "Add a user": "ユーザーを追加",
