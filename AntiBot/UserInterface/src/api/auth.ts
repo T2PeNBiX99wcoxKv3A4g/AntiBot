@@ -13,6 +13,19 @@ export interface Account {
     statusDescription?: string;
 }
 
+/** One row of the account list, as the host keeps it. */
+export interface AccountSummary {
+    /** The hashed folder name; the account id itself is never sent to the interface. */
+    dir: string;
+    name: string;
+    /** A data URL of the cached picture, so the list renders while the session is locked. */
+    avatar?: string;
+    storage: AuthStorage;
+    active: boolean;
+    /** False for a "do not remember" account, which only lives until AntiBot exits. */
+    stored: boolean;
+}
+
 export interface AuthSnapshot {
     state: AuthState;
     user?: Account;
@@ -31,6 +44,8 @@ export interface AuthSnapshot {
     expiresAt?: string;
     /** Whether the user has already picked a storage mode, including "do not remember". */
     storageChosen: boolean;
+    /** Every account AntiBot can switch to, newest first. */
+    accounts: AccountSummary[];
 }
 
 export const signedOut: AuthSnapshot = {
@@ -43,6 +58,7 @@ export const signedOut: AuthSnapshot = {
     helloStorage: false,
     softwareStorage: false,
     storageChosen: false,
+    accounts: [],
 };
 
 export interface DeviceCode {
@@ -76,9 +92,32 @@ export async function verify(method: string, code: string): Promise<AuthSnapshot
     return await Native.request<AuthSnapshot>("auth.verify", {method, code}, 30_000);
 }
 
-/** Opens a session that was stored with a password. */
-export async function unlock(password: string): Promise<AuthSnapshot> {
-    return await Native.request<AuthSnapshot>("auth.unlock", {password}, 30_000);
+/** Opens a session that was stored with a password, or one the account list asked for. */
+export async function unlock(password: string, dir?: string): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.unlock", {password, dir}, 120_000);
+}
+
+/** Body for a switch: a password-protected account is asked for before anything is changed. */
+export interface SwitchResult {
+    ok: boolean;
+    needsPassword: boolean;
+    error?: string;
+    auth?: AuthSnapshot;
+}
+
+/** Makes another stored account the signed-in one. */
+export async function switchAccount(dir: string): Promise<SwitchResult> {
+    return await Native.request<SwitchResult>("auth.switch", {dir}, 120_000);
+}
+
+/** Forgets an account and its stored session. */
+export async function removeAccount(dir: string): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.remove", {dir}, 30_000);
+}
+
+/** Drops a sign-in that was started and then abandoned. */
+export async function cancelSignIn(): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.signin.cancel", undefined, 15_000);
 }
 
 export async function saveStorage(mode: AuthStorage, password?: string): Promise<AuthSnapshot> {

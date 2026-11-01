@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Utils;
@@ -21,12 +22,17 @@ internal enum SessionLoadStatus
 }
 
 /// <summary>
-///     Keeps the VRChat session cookies between launches, in the way the account page offers.
+///     Keeps one VRChat session per account folder, in the way the account page offers.
 /// </summary>
 /// <remarks>
 ///     <para>
+///         Every account has its own folder, so its storage mode, salt and wrapped key are independent
+///         of the other accounts. The folder name is a hash of the account id, which is the scope handed
+///         to the TPM, Windows Hello and the keyring so their entries cannot be swapped between accounts.
+///     </para>
+///     <para>
 ///         The password itself is never written. Password mode derives a key with PBKDF2 over a random
-///         per-install salt and encrypts with AES-GCM, so unlocking has to ask for the password again.
+///         per-account salt and encrypts with AES-GCM, so unlocking has to ask for the password again.
 ///     </para>
 ///     <para>
 ///         System mode hands the payload to DPAPI on Windows, which binds it to the Windows account and
@@ -57,14 +63,8 @@ internal static class AuthStore
     private const int KeySize = 32;
     private static readonly byte[] Magic = [.. "ABAT"u8];
 
-    /// <summary>Extra DPAPI entropy, so another app's blob cannot be swapped in.</summary>
-    private static readonly byte[] Entropy = [.. "AntiBot/auth/v1"u8];
-
-    private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
-    private static readonly string KeyPath = Path.Combine(Constants.DataDirectory, "auth.key");
-
-    /// <summary>Marker for "the user has picked a storage mode", including "do not remember".</summary>
-    private static readonly string ChoicePath = Path.Combine(Constants.DataDirectory, "auth.chosen");
+    /// <summary>The entropy used before accounts had their own folders.</summary>
+    private static readonly byte[] LegacyEntropy = [.. "AntiBot/auth/v1"u8];
 
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
@@ -85,73 +85,104 @@ internal static class AuthStore
     /// <summary>The key-file mode is offered on Linux, where the other options depend on extra packages.</summary>
     public static bool IsSoftwareAvailable => OperatingSystem.IsLinux();
 
-    public static bool Exists =>
-        File.Exists(FilePath) || OperatingSystem.IsLinux() && Keyring.HasEntry();
+    /// <summary>The scope the platform stores use for an account, so their entries cannot collide.</summary>
+    public static string Scope(string directory) => Path.GetFileName(directory);
 
-    /// <summary>Whether the user has already chosen how the session is kept.</summary>
-    public static bool ChoiceMade => File.Exists(ChoicePath);
+    public static string SessionPath(string directory) => Path.Combine(directory, "session.bin");
 
-    public static void MarkChoiceMade() => Try.Run(() => File.WriteAllText(ChoicePath, "1"));
+    private static string KeyPath(string directory) => Path.Combine(directory, "session.key");
+    private static string ChoicePath(string directory) => Path.Combine(directory, "chosen");
+
+    /// <summary>The single session file written before accounts had their own folders.</summary>
+    private static string LegacySessionPath => Path.Combine(Constants.DataDirectory, "auth.bin");
+    private static string LegacyKeyPath => Path.Combine(Constants.DataDirectory, "auth.key");
+    private static string LegacyChoicePath => Path.Combine(Constants.DataDirectory, "auth.chosen");
+
+    /// <summary>Whether a session from an older version is still waiting to be moved into an account.</summary>
+    public static bool LegacyExists =>
+        File.Exists(LegacySessionPath) || OperatingSystem.IsLinux() && Keyring.LegacyHasEntry();
+
+    public static bool LegacyChoiceMade => File.Exists(LegacyChoicePath);
+
+    public static bool Exists(string directory) =>
+        File.Exists(SessionPath(directory)) ||
+        OperatingSystem.IsLinux() && Keyring.HasEntry(Scope(directory));
+
+    /// <summary>Whether the user has already chosen how this account's session is kept.</summary>
+    public static bool ChoiceMade(string directory) => File.Exists(ChoicePath(directory));
+
+    public static void MarkChoiceMade(string directory) =>
+        Try.Run(() =>
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(ChoicePath(directory), "1");
+        });
 
     /// <summary>How the session on disk is protected, or <see cref="AuthStorage.None" /> when there is none.</summary>
-    public static AuthStorage StoredMode
+    public static AuthStorage StoredMode(string directory)
     {
-        get
-        {
-            if (File.Exists(FilePath))
-                return FileMode();
+        if (File.Exists(SessionPath(directory)))
+            return ModeOf(SlotOf(directory));
 
-            if (OperatingSystem.IsLinux() && Keyring.HasEntry())
-                return AuthStorage.System;
+        if (OperatingSystem.IsLinux() && Keyring.HasEntry(Scope(directory)))
+            return AuthStorage.System;
 
-            return AuthStorage.None;
-        }
+        return AuthStorage.None;
     }
+
+    /// <summary>The mode of the pre-account session, if there is one.</summary>
+    public static AuthStorage LegacyMode =>
+        File.Exists(LegacySessionPath) ? ModeOf(LegacySlot) :
+        OperatingSystem.IsLinux() && Keyring.LegacyHasEntry() ? AuthStorage.System :
+        AuthStorage.None;
 
     /// <summary>
     ///     Writes the payload in <paramref name="mode" />. Returns false when that mode needs a password
     ///     that was not supplied, or is not supported on this platform.
     /// </summary>
-    public static async Task<bool> SaveAsync(byte[] payload, AuthStorage mode, string? password,
+    public static async Task<bool> SaveAsync(string directory, byte[] payload, AuthStorage mode, string? password,
         CancellationToken token = default)
     {
+        var scope = Scope(directory);
+
         switch (mode)
         {
             case AuthStorage.None:
-                Delete();
-                MarkChoiceMade();
+                // "Do not remember" must leave nothing behind, not even a marker file.
+                Delete(directory);
                 return true;
 
             case AuthStorage.Password when password is { Length: > 0 }:
-                await WriteAsync(PasswordMode, ProtectWithPassword(payload, password), token);
+                await WriteAsync(SlotOf(directory), PasswordMode, ProtectWithPassword(payload, password), token);
                 return true;
 
             case AuthStorage.Password:
                 return false;
 
             case AuthStorage.System when OperatingSystem.IsWindows():
-                await WriteAsync(DpapiMode, ProtectedData.Protect(payload, Entropy, DataProtectionScope.CurrentUser),
-                    token);
+                await WriteAsync(SlotOf(directory), DpapiMode,
+                    ProtectedData.Protect(payload, Entropy(scope), DataProtectionScope.CurrentUser), token);
                 return true;
 
             case AuthStorage.System when OperatingSystem.IsLinux() && Keyring.Available:
-                if (!Keyring.Store(payload))
+                if (!Keyring.Store(scope, payload))
                     return false;
 
                 // The session no longer lives in a file, so an older one must not linger beside it.
-                Try.Run(() => File.Delete(FilePath));
+                Try.Run(() => File.Delete(SessionPath(directory)));
                 return true;
 
             case AuthStorage.Tpm when TpmStore.IsAvailable:
-                await WriteAsync(TpmMode, TpmStore.Protect(payload), token);
+                await WriteAsync(SlotOf(directory), TpmMode, TpmStore.Protect(scope, payload), token);
                 return true;
 
             case AuthStorage.Hello when OperatingSystem.IsWindows() && HelloStore.IsAvailable:
-                await WriteAsync(HelloMode, HelloStore.Protect(payload), token);
+                await WriteAsync(SlotOf(directory), HelloMode, HelloStore.Protect(scope, payload), token);
                 return true;
 
             case AuthStorage.Software when IsSoftwareAvailable:
-                await WriteAsync(SoftwareMode, ProtectWithSoftwareKey(payload), token);
+                await WriteAsync(SlotOf(directory), SoftwareMode,
+                    ProtectWithSoftwareKey(SlotOf(directory), payload), token);
                 return true;
 
             default:
@@ -163,41 +194,72 @@ internal static class AuthStore
     ///     Reads the payload back. <see cref="SessionLoadStatus.Cancelled" /> means the session exists but
     ///     the user dismissed the Windows Hello prompt.
     /// </summary>
-    public static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadAsync(string? password,
+    public static Task<(SessionLoadStatus Status, byte[]? Payload)> LoadAsync(string directory, string? password,
         CancellationToken token = default)
     {
-        if (File.Exists(FilePath))
-            return await LoadFileAsync(password, token);
+        if (File.Exists(SessionPath(directory)))
+            return LoadFileAsync(SlotOf(directory), password, token);
 
-        if (OperatingSystem.IsLinux() && Keyring.HasEntry())
-        {
-            var payload = Keyring.Load();
-            return payload is null ? (SessionLoadStatus.None, null) : (SessionLoadStatus.Loaded, payload);
-        }
-
-        return (SessionLoadStatus.None, null);
+        return LoadKeyringAsync(Scope(directory), token);
     }
 
-    public static void Delete()
+    /// <summary>Reads the pre-account session file, so it can be moved into an account folder.</summary>
+    public static Task<(SessionLoadStatus Status, byte[]? Payload)> LoadLegacyAsync(string? password,
+        CancellationToken token = default)
     {
-        Try.Run(() => File.Delete(FilePath)).OnFailure(ex => Log.Warning(ex, "Could not delete the stored session"));
-        Try.Run(() => File.Delete(KeyPath));
-        Try.Run(() => File.Delete(ChoicePath));
+        if (File.Exists(LegacySessionPath))
+            return LoadFileAsync(LegacySlot, password, token);
+
+        return LoadKeyringAsync(null, token);
+    }
+
+    public static void Delete(string directory)
+    {
+        var scope = Scope(directory);
+
+        Try.Run(() => File.Delete(SessionPath(directory)))
+            .OnFailure(ex => Log.Warning(ex, "Could not delete the stored session"));
+        Try.Run(() => File.Delete(KeyPath(directory)));
+        Try.Run(() => File.Delete(ChoicePath(directory)));
 
         if (OperatingSystem.IsLinux() && Keyring.Available)
-            Keyring.Clear();
+            Keyring.Clear(scope);
 
-        TpmStore.Delete();
+        TpmStore.Delete(scope);
 
         if (OperatingSystem.IsWindows())
             HelloStore.Delete();
     }
 
-    private static AuthStorage FileMode()
+    /// <summary>Removes the pre-account session file once it has been moved into an account folder.</summary>
+    public static void DeleteLegacy()
+    {
+        Try.Run(() => File.Delete(LegacySessionPath));
+        Try.Run(() => File.Delete(LegacyKeyPath));
+        Try.Run(() => File.Delete(LegacyChoicePath));
+
+        if (OperatingSystem.IsLinux() && Keyring.Available)
+            Keyring.LegacyClear();
+
+        TpmStore.Delete(null);
+
+        if (OperatingSystem.IsWindows())
+            HelloStore.Delete();
+    }
+
+    private static Slot SlotOf(string directory) =>
+        new(SessionPath(directory), KeyPath(directory), Scope(directory));
+
+    private static Slot LegacySlot => new(LegacySessionPath, LegacyKeyPath, null);
+
+    /// <summary>Extra DPAPI entropy, so another app's blob cannot be swapped in.</summary>
+    private static byte[] Entropy(string scope) => [.. "AntiBot/auth/v1/"u8, .. Encoding.UTF8.GetBytes(scope)];
+
+    private static AuthStorage ModeOf(Slot slot)
     {
         try
         {
-            using var stream = File.OpenRead(FilePath);
+            using var stream = File.OpenRead(slot.Session);
             var header = new byte[Magic.Length + 2];
             if (stream.ReadAtLeast(header, header.Length, false) < header.Length)
                 return AuthStorage.None;
@@ -219,37 +281,51 @@ internal static class AuthStore
         }
     }
 
-    private static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadFileAsync(string? password,
+    private static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadKeyringAsync(string? scope,
         CancellationToken token)
+    {
+        await Task.CompletedTask;
+
+        if (!OperatingSystem.IsLinux())
+            return (SessionLoadStatus.None, null);
+
+        var entry = scope is null ? Keyring.LegacyLoad() : Keyring.Load(scope);
+        return entry is null ? (SessionLoadStatus.None, null) : (SessionLoadStatus.Loaded, entry);
+    }
+
+    private static async Task<(SessionLoadStatus Status, byte[]? Payload)> LoadFileAsync(Slot slot,
+        string? password, CancellationToken token)
     {
         try
         {
-            var file = await File.ReadAllBytesAsync(FilePath, token);
+            var file = await File.ReadAllBytesAsync(slot.Session, token);
             if (file.Length < Magic.Length + 2 ||
                 !file.AsSpan(0, Magic.Length).SequenceEqual(Magic) ||
                 file[Magic.Length] != Version)
                 return (SessionLoadStatus.None, null);
 
             var body = file.AsSpan(Magic.Length + 2);
+            var scope = slot.Scope;
 
             switch (file[Magic.Length + 1])
             {
                 case DpapiMode when OperatingSystem.IsWindows():
                     return (SessionLoadStatus.Loaded,
-                        ProtectedData.Unprotect([.. body], Entropy, DataProtectionScope.CurrentUser));
+                        ProtectedData.Unprotect([.. body], scope is null ? LegacyEntropy : Entropy(scope),
+                            DataProtectionScope.CurrentUser));
 
                 case TpmMode when TpmStore.IsAvailable:
-                    var tpmPayload = TpmStore.Unprotect(body);
+                    var tpmPayload = TpmStore.Unprotect(scope, body);
                     return tpmPayload is null ? (SessionLoadStatus.None, null) : (SessionLoadStatus.Loaded, tpmPayload);
 
                 case HelloMode when OperatingSystem.IsWindows() && HelloStore.IsAvailable:
-                    var (cancelled, helloPayload) = HelloStore.Unprotect(body);
+                    var (cancelled, helloPayload) = HelloStore.Unprotect(scope, body);
                     return cancelled ? (SessionLoadStatus.Cancelled, null) :
                         helloPayload is null ? (SessionLoadStatus.None, null) :
                         (SessionLoadStatus.Loaded, helloPayload);
 
                 case SoftwareMode when IsSoftwareAvailable:
-                    var softwarePayload = UnprotectWithSoftwareKey(body);
+                    var softwarePayload = UnprotectWithSoftwareKey(slot, body);
                     return softwarePayload is null
                         ? (SessionLoadStatus.None, null)
                         : (SessionLoadStatus.Loaded, softwarePayload);
@@ -276,15 +352,17 @@ internal static class AuthStore
         }
     }
 
-    private static async Task WriteAsync(byte marker, byte[] body, CancellationToken token)
+    private static async Task WriteAsync(Slot slot, byte marker, byte[] body, CancellationToken token)
     {
+        Directory.CreateDirectory(Path.GetDirectoryName(slot.Session)!);
+
         var file = new byte[Magic.Length + 2 + body.Length];
         Magic.CopyTo(file, 0);
         file[Magic.Length] = Version;
         file[Magic.Length + 1] = marker;
         body.CopyTo(file, Magic.Length + 2);
 
-        var temporary = FilePath + ".tmp";
+        var temporary = slot.Session + ".tmp";
         await File.WriteAllBytesAsync(temporary, file, token);
 
         // A file in the data folder is owner-only from the moment it exists, so there is no window
@@ -292,7 +370,7 @@ internal static class AuthStore
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 
-        File.Move(temporary, FilePath, true);
+        File.Move(temporary, slot.Session, true);
     }
 
     private static byte[] ProtectWithPassword(byte[] payload, string password)
@@ -351,9 +429,9 @@ internal static class AuthStore
         }
     }
 
-    private static byte[] ProtectWithSoftwareKey(byte[] payload)
+    private static byte[] ProtectWithSoftwareKey(Slot slot, byte[] payload)
     {
-        var key = LoadOrCreateSoftwareKey();
+        var key = LoadOrCreateSoftwareKey(slot);
         try
         {
             var nonce = RandomNumberGenerator.GetBytes(NonceSize);
@@ -375,12 +453,12 @@ internal static class AuthStore
         }
     }
 
-    private static byte[]? UnprotectWithSoftwareKey(ReadOnlySpan<byte> body)
+    private static byte[]? UnprotectWithSoftwareKey(Slot slot, ReadOnlySpan<byte> body)
     {
         if (body.Length < NonceSize + TagSize)
             return null;
 
-        var key = TryLoadSoftwareKey();
+        var key = TryLoadSoftwareKey(slot);
         if (key is null)
             return null;
 
@@ -406,27 +484,29 @@ internal static class AuthStore
     }
 
     /// <summary>The key file is written owner-only; anyone who can read it can decrypt the session.</summary>
-    private static byte[] LoadOrCreateSoftwareKey()
+    private static byte[] LoadOrCreateSoftwareKey(Slot slot)
     {
-        if (TryLoadSoftwareKey() is { } existing)
+        if (TryLoadSoftwareKey(slot) is { } existing)
             return existing;
 
+        Directory.CreateDirectory(Path.GetDirectoryName(slot.Key)!);
+
         var key = RandomNumberGenerator.GetBytes(KeySize);
-        var temporary = KeyPath + ".tmp";
+        var temporary = slot.Key + ".tmp";
         File.WriteAllBytes(temporary, key);
 
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(temporary, UnixFileMode.UserRead | UnixFileMode.UserWrite);
 
-        File.Move(temporary, KeyPath, true);
+        File.Move(temporary, slot.Key, true);
         return key;
     }
 
-    private static byte[]? TryLoadSoftwareKey()
+    private static byte[]? TryLoadSoftwareKey(Slot slot)
     {
         try
         {
-            return File.Exists(KeyPath) ? File.ReadAllBytes(KeyPath) : null;
+            return File.Exists(slot.Key) ? File.ReadAllBytes(slot.Key) : null;
         }
         catch (Exception ex)
         {
@@ -435,24 +515,26 @@ internal static class AuthStore
         }
     }
 
+    /// <summary>The paths of one stored session: an account folder, or the pre-account file.</summary>
+    private readonly record struct Slot(string Session, string Key, string? Scope);
+
     /// <summary>
     ///     The freedesktop Secret Service, reached through <c>secret-tool</c>. It is only used when the
     ///     command is installed and a keyring answers, because a silent failure would leave the session
-    ///     stored nowhere.
+    ///     stored nowhere. Each account gets its own entry, keyed by the folder hash.
     /// </summary>
     private static class Keyring
     {
         private const string Command = "secret-tool";
-        private const string Label = "AntiBot VRChat session";
         private static readonly string[] Attributes = ["application", "antibot"];
 
         private static bool? _available;
 
         public static bool Available => _available ??= Probe();
 
-        public static bool HasEntry() => Run(["lookup", .. Attributes]).Output is { Length: > 0 };
+        public static bool LegacyHasEntry() => Run(["lookup", .. Attributes]).Output is { Length: > 0 };
 
-        public static byte[]? Load()
+        public static byte[]? LegacyLoad()
         {
             var output = Run(["lookup", .. Attributes]).Output;
             return output is { Length: > 0 }
@@ -460,10 +542,25 @@ internal static class AuthStore
                 : null;
         }
 
-        public static bool Store(byte[] payload) =>
-            Run(["store", $"--label={Label}", .. Attributes], Convert.ToBase64String(payload)).Ran;
+        public static void LegacyClear() => Run(["clear", .. Attributes]);
 
-        public static void Clear() => Run(["clear", .. Attributes]);
+        public static bool HasEntry(string scope) => Run(["lookup", .. AttributesOf(scope)]).Output is { Length: > 0 };
+
+        public static byte[]? Load(string scope)
+        {
+            var output = Run(["lookup", .. AttributesOf(scope)]).Output;
+            return output is { Length: > 0 }
+                ? Try.Run(() => Convert.FromBase64String(output)).GetOrNull()
+                : null;
+        }
+
+        public static bool Store(string scope, byte[] payload) =>
+            Run(["store", $"--label=AntiBot VRChat session {scope[..8]}", .. AttributesOf(scope)],
+                Convert.ToBase64String(payload)).Ran;
+
+        public static void Clear(string scope) => Run(["clear", .. AttributesOf(scope)]);
+
+        private static string[] AttributesOf(string scope) => [.. Attributes, "account", scope];
 
         private static bool Probe() =>
             OperatingSystem.IsLinux() && Run(["lookup", .. Attributes]).Ran;

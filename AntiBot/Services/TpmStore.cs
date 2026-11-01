@@ -33,18 +33,21 @@ internal static class TpmStore
         ? ProbeWindows()
         : OperatingSystem.IsLinux() && Tpm2Tools.IsAvailable;
 
-    public static byte[] Protect(byte[] payload) => OperatingSystem.IsWindows()
-        ? ProtectWindows(payload)
+    /// <summary>The CNG key of one account, or the shared key written before accounts had folders.</summary>
+    private static string KeyName(string? scope) => scope is null ? WindowsKeyName : $"{WindowsKeyName}-{scope}";
+
+    public static byte[] Protect(string? scope, byte[] payload) => OperatingSystem.IsWindows()
+        ? ProtectWindows(scope, payload)
         : ProtectLinux(payload);
 
-    public static byte[]? Unprotect(ReadOnlySpan<byte> body) => OperatingSystem.IsWindows()
-        ? UnprotectWindows(body)
+    public static byte[]? Unprotect(string? scope, ReadOnlySpan<byte> body) => OperatingSystem.IsWindows()
+        ? UnprotectWindows(scope, body)
         : UnprotectLinux(body);
 
-    public static void Delete()
+    public static void Delete(string? scope)
     {
         if (OperatingSystem.IsWindows())
-            DeleteWindowsKey();
+            DeleteWindowsKey(scope);
     }
 
     [SupportedOSPlatform("windows")]
@@ -64,9 +67,9 @@ internal static class TpmStore
     }
 
     [SupportedOSPlatform("windows")]
-    private static byte[] ProtectWindows(byte[] payload)
+    private static byte[] ProtectWindows(string? scope, byte[] payload)
     {
-        using var key = OpenOrCreateWindowsKey();
+        using var key = OpenOrCreateWindowsKey(scope);
         using var rsa = new RSACng(key);
 
         var sessionKey = RandomNumberGenerator.GetBytes(KeySize);
@@ -88,14 +91,14 @@ internal static class TpmStore
     }
 
     [SupportedOSPlatform("windows")]
-    private static byte[]? UnprotectWindows(ReadOnlySpan<byte> body)
+    private static byte[]? UnprotectWindows(string? scope, ReadOnlySpan<byte> body)
     {
         if (!TryUnwrap(body, out var wrapped, out var nonce, out var tag, out var cipher))
             return null;
 
         try
         {
-            using var key = CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
+            using var key = CngKey.Open(KeyName(scope), new("Microsoft Platform Crypto Provider"));
             using var rsa = new RSACng(key);
 
             var sessionKey = rsa.Decrypt(wrapped, RSAEncryptionPadding.OaepSHA256);
@@ -116,15 +119,17 @@ internal static class TpmStore
     }
 
     [SupportedOSPlatform("windows")]
-    private static CngKey OpenOrCreateWindowsKey()
+    private static CngKey OpenOrCreateWindowsKey(string? scope)
     {
+        var name = KeyName(scope);
+
         try
         {
-            return CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
+            return CngKey.Open(name, new("Microsoft Platform Crypto Provider"));
         }
         catch (CryptographicException)
         {
-            return CngKey.Create(CngAlgorithm.Rsa, WindowsKeyName, WindowsKeyCreation());
+            return CngKey.Create(CngAlgorithm.Rsa, name, WindowsKeyCreation());
         }
     }
 
@@ -141,10 +146,10 @@ internal static class TpmStore
     };
 
     [SupportedOSPlatform("windows")]
-    private static void DeleteWindowsKey() =>
+    private static void DeleteWindowsKey(string? scope) =>
         Try.Run(() =>
         {
-            using var key = CngKey.Open(WindowsKeyName, new("Microsoft Platform Crypto Provider"));
+            using var key = CngKey.Open(KeyName(scope), new("Microsoft Platform Crypto Provider"));
             key.Delete();
         });
 

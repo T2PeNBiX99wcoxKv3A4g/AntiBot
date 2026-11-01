@@ -41,6 +41,15 @@ internal sealed record WindowStatePayload(bool Maximized);
 /// <summary>Payload for <c>window.resize</c>: the edge being dragged.</summary>
 internal sealed record WindowResizeRequest(string Direction);
 
+/// <summary>One row of the account list; the avatar is a data URL so it shows while locked.</summary>
+internal sealed record AccountSummaryPayload(
+    string Dir,
+    string Name,
+    string? Avatar,
+    string Storage,
+    bool Active,
+    bool Stored);
+
 /// <summary>Body for <c>auth.state</c> and for the <c>auth.changed</c> event.</summary>
 internal sealed record AuthPayload(
     string State,
@@ -53,7 +62,8 @@ internal sealed record AuthPayload(
     bool HelloStorage,
     bool SoftwareStorage,
     string? ExpiresAt,
-    bool StorageChosen);
+    bool StorageChosen,
+    AccountSummaryPayload[] Accounts);
 
 /// <summary>Payload for <c>auth.login</c>.</summary>
 internal sealed record AuthLoginRequest(string Username, string Password);
@@ -62,7 +72,19 @@ internal sealed record AuthLoginRequest(string Username, string Password);
 internal sealed record AuthVerifyRequest(string Method, string Code);
 
 /// <summary>Payload for <c>auth.unlock</c>, which opens a session stored with a password.</summary>
-internal sealed record AuthUnlockRequest(string Password);
+internal sealed record AuthUnlockRequest(string Password, string? Dir);
+
+/// <summary>Payload for <c>auth.switch</c>: the account folder to become active.</summary>
+internal sealed record AuthSwitchRequest(string Dir);
+
+/// <summary>Payload for <c>auth.remove</c>: the account folder to forget.</summary>
+internal sealed record AuthAccountRequest(string Dir);
+
+/// <summary>
+///     Body for <c>auth.switch</c>. A password-protected session is not opened here; the interface asks
+///     for the password first, so a cancelled switch leaves the current account untouched.
+/// </summary>
+internal sealed record SwitchPayload(bool Ok, bool NeedsPassword, string? Error, AuthPayload? Auth);
 
 /// <summary>Payload for <c>auth.storage.save</c>; <c>mode</c> is <c>none</c>, <c>password</c> or <c>system</c>.</summary>
 internal sealed record AuthStorageRequest(string Mode, string? Password);

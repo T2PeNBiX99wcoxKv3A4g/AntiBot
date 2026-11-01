@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AntiBot.Models;
+using AntiBot.Services;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 
@@ -33,10 +34,16 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(WindowStatePayload))]
 [JsonSerializable(typeof(WindowResizeRequest))]
 [JsonSerializable(typeof(AuthPayload))]
+[JsonSerializable(typeof(AccountSummaryPayload))]
+[JsonSerializable(typeof(AccountIndex))]
+[JsonSerializable(typeof(StoredAccount[]))]
 [JsonSerializable(typeof(VrchatAccount))]
 [JsonSerializable(typeof(AuthLoginRequest))]
 [JsonSerializable(typeof(AuthVerifyRequest))]
 [JsonSerializable(typeof(AuthUnlockRequest))]
+[JsonSerializable(typeof(AuthSwitchRequest))]
+[JsonSerializable(typeof(AuthAccountRequest))]
+[JsonSerializable(typeof(SwitchPayload))]
 [JsonSerializable(typeof(AuthStorageRequest))]
 [JsonSerializable(typeof(DeviceCodePayload))]
 [JsonSerializable(typeof(DevicePollRequest))]

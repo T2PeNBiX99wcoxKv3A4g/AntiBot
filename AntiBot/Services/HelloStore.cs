@@ -4,6 +4,7 @@
 #pragma warning disable CA1416
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 using Windows.Security.Credentials.UI;
 using Serilog;
 
@@ -26,18 +27,22 @@ internal static class HelloStore
 
     public static bool IsAvailable => _available ??= Probe();
 
-    public static byte[] Protect(byte[] payload) =>
-        ProtectedData.Protect(payload, Entropy, DataProtectionScope.CurrentUser);
+    /// <summary>The entropy of one account, or the shared one written before accounts had folders.</summary>
+    private static byte[] EntropyOf(string? scope) =>
+        scope is null ? Entropy : [.. Entropy, .. Encoding.UTF8.GetBytes(scope)];
+
+    public static byte[] Protect(string? scope, byte[] payload) =>
+        ProtectedData.Protect(payload, EntropyOf(scope), DataProtectionScope.CurrentUser);
 
     /// <summary>Asks Windows Hello, then decrypts; a declined prompt is reported separately.</summary>
-    public static (bool Cancelled, byte[]? Payload) Unprotect(ReadOnlySpan<byte> body)
+    public static (bool Cancelled, byte[]? Payload) Unprotect(string? scope, ReadOnlySpan<byte> body)
     {
         if (!Verify())
             return (true, null);
 
         try
         {
-            return (false, ProtectedData.Unprotect([.. body], Entropy, DataProtectionScope.CurrentUser));
+            return (false, ProtectedData.Unprotect([.. body], EntropyOf(scope), DataProtectionScope.CurrentUser));
         }
         catch (CryptographicException ex)
         {
@@ -94,9 +99,9 @@ internal static class HelloStore
 {
     public static bool IsAvailable => false;
 
-    public static byte[] Protect(byte[] payload) => throw new PlatformNotSupportedException();
+    public static byte[] Protect(string? scope, byte[] payload) => throw new PlatformNotSupportedException();
 
-    public static (bool Cancelled, byte[]? Payload) Unprotect(ReadOnlySpan<byte> body) => (false, null);
+    public static (bool Cancelled, byte[]? Payload) Unprotect(string? scope, ReadOnlySpan<byte> body) => (false, null);
 
     public static void Delete()
     {

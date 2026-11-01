@@ -11,13 +11,20 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Owns the VRChat session: sign-in, the second factor, the device (QR) flow, keeping the cookie
-///     between launches, and telling the interface when any of that changes.
+///     Owns the VRChat sessions: sign-in, the second factor, the device (QR) flow, keeping each account
+///     in its own folder, switching between them, and telling the interface when any of that changes.
 /// </summary>
 /// <remarks>
-///     The password is only ever used to answer one sign-in request, or to derive the key that unlocks
-///     a stored cookie; it is never written anywhere. A .NET string cannot be wiped, so the only thing
-///     this class can do is not keep it: it lives in the message payload and is released with it.
+///     <para>
+///         Only one account is signed in at a time, so there is one API client and one pipeline. A switch
+///         decrypts the target first and only then replaces the cookies, which means cancelling an unlock
+///         leaves the current account exactly as it was.
+///     </para>
+///     <para>
+///         The password is only ever used to answer one sign-in request, or to derive the key that unlocks
+///         a stored cookie; it is never written anywhere. A .NET string cannot be wiped, so the only thing
+///         this class can do is not keep it: it lives in the message payload and is released with it.
+///     </para>
 /// </remarks>
 internal sealed class AuthService : Singleton<AuthService>
 {
@@ -25,16 +32,22 @@ internal sealed class AuthService : Singleton<AuthService>
     private const string DefaultHomeWorld = "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd";
 
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
+
     private readonly VrchatApi _api = new();
+    private readonly List<Account> _accounts = [];
 
     private readonly Lock _gate = new();
     private readonly VrchatPipeline _pipeline = new();
 
     private VrchatAccount? _account;
-    private volatile bool _ready;
+    private Account? _active;
+    private VrchatApi? _device;
+    private int _generation;
     private string _location = "";
+    private AuthStorage _legacyStorage = AuthStorage.None;
+    private volatile bool _ready;
+    private VrchatApi? _signIn;
     private string _state = "loggedOut";
-    private AuthStorage _storage = AuthStorage.None;
     private string[] _twoFactorMethods = [];
     private DateTimeOffset _userRefreshedAt = DateTimeOffset.MinValue;
 
@@ -79,12 +92,15 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>Raised when VRChat pushes a notification over the pipeline.</summary>
     public event Action? Notification;
 
-    /// <summary>Restores a stored session. Called once, after the singletons exist.</summary>
+    /// <summary>Restores the last used account. Called once, after the singletons exist.</summary>
     public void Initialize()
     {
+        LoadAccounts();
+
         // Show the account from the last run at once; the network confirms it a moment later.
-        if (AuthStore.Exists && AuthStore.StoredMode != AuthStorage.Password &&
-            Database.Instance.LoadAccount() is { } cached)
+        if (_active is { Stored: true } active && active.Storage != AuthStorage.Password &&
+            Database.Instance.LoadAccount() is { } cached &&
+            AccountStore.Hash(cached.Id) == active.Dir)
             lock (_gate)
             {
                 _account = cached;
@@ -107,6 +123,7 @@ internal sealed class AuthService : Singleton<AuthService>
         if (DateTimeOffset.UtcNow - _userRefreshedAt < LocationRefreshInterval)
             return _location;
 
+        var generation = Volatile.Read(ref _generation);
         var (user, status) = await _api.GetCurrentUserAsync(token);
 
         if (user is null)
@@ -116,6 +133,10 @@ internal sealed class AuthService : Singleton<AuthService>
 
             return null;
         }
+
+        // The account may have been switched while the request was out.
+        if (generation != Volatile.Read(ref _generation))
+            return null;
 
         lock (_gate)
         {
@@ -198,6 +219,9 @@ internal sealed class AuthService : Singleton<AuthService>
         "auth.login" => LoginAsync(context),
         "auth.verify" => VerifyAsync(context),
         "auth.unlock" => UnlockAsync(context),
+        "auth.switch" => SwitchAsync(context),
+        "auth.remove" => RemoveAsync(context),
+        "auth.signin.cancel" => CancelSignInAsync(context),
         "auth.storage.save" => SaveStorageAsync(context),
         "auth.logout" => LogoutAsync(context),
         "auth.device.start" => StartDeviceAsync(context),
@@ -211,7 +235,18 @@ internal sealed class AuthService : Singleton<AuthService>
         if (request?.Username is not { Length: > 0 } username || request.Password is not { Length: > 0 } password)
             return context.Fail("auth.login.result", Localization.Get("error.authMissing"));
 
-        var (user, error) = await _api.LoginAsync(username, password, CancellationToken.None);
+        // A new attempt must not inherit the cookies of an abandoned one. The QR client is separate,
+        // because both forms are on screen at the same time.
+        if (State != "twoFactor")
+            lock (_gate)
+            {
+                _signIn?.Dispose();
+                _signIn = null;
+            }
+
+        var api = SignInApi();
+
+        var (user, error) = await api.LoginAsync(username, password, CancellationToken.None);
         if (error is not null)
         {
             Log.Warning("VRChat sign-in failed: {Error}", error);
@@ -230,7 +265,7 @@ internal sealed class AuthService : Singleton<AuthService>
             return context.Reply("auth.login.result", Snapshot());
         }
 
-        return await CompleteAsync(user, true)
+        return await CompleteSignInAsync(api, user)
             ? context.Reply("auth.login.result", Snapshot())
             : context.Fail("auth.login.result", Localization.Get("error.authNoAccount"));
     }
@@ -241,31 +276,46 @@ internal sealed class AuthService : Singleton<AuthService>
         if (request?.Code.Trim() is not { Length: > 0 } code)
             return context.Fail("auth.verify.result", Localization.Get("error.authCodeMissing"));
 
+        var api = SignInApi();
+
         var verified = request.Method switch
         {
-            "totp" => await _api.VerifyTotpAsync(code, CancellationToken.None),
-            "emailOtp" => await _api.VerifyEmailOtpAsync(code, CancellationToken.None),
-            _ => await _api.VerifyRecoveryAsync(code, CancellationToken.None)
+            "totp" => await api.VerifyTotpAsync(code, CancellationToken.None),
+            "emailOtp" => await api.VerifyEmailOtpAsync(code, CancellationToken.None),
+            _ => await api.VerifyRecoveryAsync(code, CancellationToken.None)
         };
 
         if (!verified)
             return context.Fail("auth.verify.result", Localization.Get("error.authCodeRejected"));
 
-        var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
-        return await CompleteAsync(user, true)
+        var (user, _) = await api.GetCurrentUserAsync(CancellationToken.None);
+        return await CompleteSignInAsync(api, user)
             ? context.Reply("auth.verify.result", Snapshot())
             : context.Fail("auth.verify.result", Localization.Get("error.authSessionUnconfirmed"));
     }
 
+    /// <summary>Opens a stored session, either for a switch or for the account left locked at startup.</summary>
     private async Task<NativeResponse?> UnlockAsync(NativeContext context)
     {
-        var password = context.Payload<AuthUnlockRequest>()?.Password;
-        var hello = _storage == AuthStorage.Hello;
+        var request = context.Payload<AuthUnlockRequest>();
+        var account = request?.Dir is { Length: > 0 } dir
+            ? _accounts.FirstOrDefault(entry => entry.Dir == dir)
+            : _active;
+
+        var password = request?.Password;
+        var hello = account?.Storage == AuthStorage.Hello;
 
         if (!hello && password is not { Length: > 0 })
             return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockPassword"));
 
-        var (status, payload) = await AuthStore.LoadAsync(hello ? null : password);
+        // The session written before accounts had folders has no account yet.
+        if (account is null)
+            return AuthStore.LegacyExists
+                ? await UnlockLegacyAsync(context, password)
+                : context.Fail("auth.unlock.result", Localization.Get("error.authAccountMissing"));
+
+        var (status, payload) = await AuthStore.LoadAsync(AccountStore.PathOf(account.Dir),
+            hello ? null : password);
 
         if (status == SessionLoadStatus.Cancelled)
             return context.Fail("auth.unlock.result", Localization.Get("error.authHelloCancelled"));
@@ -276,18 +326,105 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            if (!await UseCookiesAsync(payload))
-            {
-                Forget();
-                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
-            }
+            var error = await ActivateAsync(account, payload, null, false);
+            return error is null
+                ? context.Reply("auth.unlock.result", Snapshot())
+                : context.Fail("auth.unlock.result", error);
         }
         finally
         {
             CryptographicOperations.ZeroMemory(payload);
         }
+    }
 
-        return context.Reply("auth.unlock.result", Snapshot());
+    private async Task<NativeResponse?> SwitchAsync(NativeContext context)
+    {
+        var dir = context.Payload<AuthSwitchRequest>()?.Dir;
+        var account = dir is null ? null : _accounts.FirstOrDefault(entry => entry.Dir == dir);
+
+        if (account is null)
+            return context.Fail("auth.switch.result", Localization.Get("error.authAccountMissing"));
+
+        if (ReferenceEquals(account, _active) && IsLoggedIn)
+            return context.Reply("auth.switch.result", new SwitchPayload(true, false, null, Snapshot()));
+
+        byte[]? payload;
+
+        if (account.Stored)
+        {
+            // A password-protected session is asked for by the interface first; nothing is touched yet.
+            if (account.Storage == AuthStorage.Password)
+                return context.Reply("auth.switch.result", new SwitchPayload(false, true, null, null));
+
+            var (status, loaded) = await AuthStore.LoadAsync(AccountStore.PathOf(account.Dir), null);
+
+            if (status == SessionLoadStatus.Cancelled)
+                return context.Reply("auth.switch.result",
+                    new SwitchPayload(false, false, Localization.Get("error.authHelloCancelled"), null));
+
+            if (status != SessionLoadStatus.Loaded || loaded is null)
+            {
+                DropSession(account);
+                return context.Reply("auth.switch.result",
+                    new SwitchPayload(false, false, Localization.Get("error.authSessionExpired"), null));
+            }
+
+            payload = loaded;
+        }
+        else
+        {
+            if (account.Cookies is not { Length: > 0 } cookies)
+                return context.Reply("auth.switch.result",
+                    new SwitchPayload(false, false, Localization.Get("error.authAccountSignedOut"), null));
+
+            payload = JsonSerializer.SerializeToUtf8Bytes(cookies, VrchatJsonContext.Default.CookieRecordArray);
+        }
+
+        try
+        {
+            var error = await ActivateAsync(account, payload, null, false);
+            return error is null
+                ? context.Reply("auth.switch.result", new SwitchPayload(true, false, null, Snapshot()))
+                : context.Reply("auth.switch.result", new SwitchPayload(false, false, error, null));
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(payload);
+        }
+    }
+
+    private async Task<NativeResponse?> RemoveAsync(NativeContext context)
+    {
+        var dir = context.Payload<AuthAccountRequest>()?.Dir;
+        var account = dir is null ? null : _accounts.FirstOrDefault(entry => entry.Dir == dir);
+
+        if (account is null)
+            return context.Fail("auth.remove.result", Localization.Get("error.authAccountMissing"));
+
+        // Signing out already forgets the account, so it must not be removed twice.
+        if (ReferenceEquals(account, _active))
+        {
+            await SignOutAsync();
+            return context.Reply("auth.remove.result", Snapshot());
+        }
+
+        RemoveAccount(account);
+        return context.Reply("auth.remove.result", Snapshot());
+    }
+
+    private Task<NativeResponse?> CancelSignInAsync(NativeContext context)
+    {
+        DiscardSignIn();
+
+        lock (_gate)
+            if (_state == "twoFactor")
+            {
+                _state = _active is null ? "loggedOut" : _ready ? "loggedIn" : "locked";
+                _twoFactorMethods = [];
+            }
+
+        Notify();
+        return Task.FromResult<NativeResponse?>(context.Reply("auth.signin.cancel.result", Snapshot()));
     }
 
     private async Task<NativeResponse?> SaveStorageAsync(NativeContext context)
@@ -303,49 +440,95 @@ internal sealed class AuthService : Singleton<AuthService>
             _ => AuthStorage.None
         };
 
+        var account = _active;
+        if (account is null)
+        {
+            // The session written before accounts had folders can still be forgotten from the unlock page.
+            if (mode == AuthStorage.None && AuthStore.LegacyExists)
+            {
+                AuthStore.DeleteLegacy();
+
+                lock (_gate)
+                {
+                    _state = "loggedOut";
+                    _legacyStorage = AuthStorage.None;
+                }
+
+                Notify();
+                return context.Reply("auth.storage.save.result", Snapshot());
+            }
+
+            return context.Fail("auth.storage.save.result", Localization.Get("error.authSignInFirst"));
+        }
+
         if (mode != AuthStorage.None && !IsLoggedIn)
             return context.Fail("auth.storage.save.result", Localization.Get("error.authSignInFirst"));
 
+        var directory = AccountStore.PathOf(account.Dir);
         var cookies = mode == AuthStorage.None
             ? []
             : JsonSerializer.SerializeToUtf8Bytes(_api.ExportCookies(), VrchatJsonContext.Default.CookieRecordArray);
 
         try
         {
-            if (!await AuthStore.SaveAsync(cookies, mode, request?.Password))
+            if (!await AuthStore.SaveAsync(directory, cookies, mode, request?.Password))
                 return context.Fail("auth.storage.save.result", Localization.Get("error.authStoragePassword"));
 
-            AuthStore.MarkChoiceMade();
+            if (mode == AuthStorage.None)
+                AccountStore.Delete(account.Dir);
+            else
+                AuthStore.MarkChoiceMade(directory);
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(cookies);
+            if (mode != AuthStorage.None)
+                CryptographicOperations.ZeroMemory(cookies);
         }
 
-        lock (_gate)
-        {
-            _storage = mode;
+        account.Storage = mode;
+        account.Stored = mode != AuthStorage.None;
+        account.ChoiceMade = true;
 
-            // Forgetting a stored session from the unlock screen leaves nothing to unlock.
-            if (mode == AuthStorage.None && _state == "locked")
+        // "Do not remember" keeps the session only for this run, so switching back still works.
+        account.Cookies = mode == AuthStorage.None ? _api.ExportCookies() : null;
+
+        // Forgetting a stored session from the unlock screen leaves nothing to unlock.
+        if (mode == AuthStorage.None && State == "locked")
+            lock (_gate)
+            {
+                _active = null;
                 _state = "loggedOut";
-        }
+                _legacyStorage = AuthStorage.None;
+            }
 
-        Log.Information("Session storage set to {Mode}", mode);
+        PersistIndex();
+        Log.Information("Session storage of {Name} set to {Mode}", account.Name, mode);
         Notify();
         return context.Reply("auth.storage.save.result", Snapshot());
     }
 
     private async Task<NativeResponse?> LogoutAsync(NativeContext context)
     {
-        await _api.LogoutAsync(CancellationToken.None);
-        Forget();
+        await SignOutAsync();
         return context.Reply("auth.logout.result", Snapshot());
+    }
+
+    /// <summary>Signs out of VRChat and forgets the active account, including its folder.</summary>
+    private async Task SignOutAsync()
+    {
+        await _api.LogoutAsync(CancellationToken.None);
+
+        var active = _active;
+        ClearSession();
+
+        if (active is not null)
+            RemoveAccount(active);
     }
 
     private async Task<NativeResponse?> StartDeviceAsync(NativeContext context)
     {
-        var device = await _api.StartDeviceAsync(CancellationToken.None);
+        var api = NewDeviceApi();
+        var device = await api.StartDeviceAsync(CancellationToken.None);
         if (device?.DeviceCode is not { Length: > 0 } code ||
             device.VerificationUrlComplete is not { Length: > 0 } url)
             return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceStart"));
@@ -360,50 +543,135 @@ internal sealed class AuthService : Singleton<AuthService>
         if (code is not { Length: > 0 })
             return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceMissing"));
 
-        var (approved, reason) = await _api.PollDeviceAsync(code, CancellationToken.None);
+        var api = DeviceApi();
+        var (approved, reason) = await api.PollDeviceAsync(code, CancellationToken.None);
+
         if (!approved)
             return context.Reply("auth.device.poll.result", new DevicePollPayload(false, reason ?? "pending", null));
 
-        var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
-        return await CompleteAsync(user, true)
+        var (user, _) = await api.GetCurrentUserAsync(CancellationToken.None);
+        return await CompleteSignInAsync(api, user)
             ? context.Reply("auth.device.poll.result", new DevicePollPayload(true, null, Snapshot()))
             : context.Fail("auth.device.poll.result", Localization.Get("error.authSessionUnconfirmed"));
     }
 
-    /// <summary>Takes the account from an API reply and marks the session as signed in.</summary>
-    private async Task<bool> CompleteAsync(ApiAuthUser? user, bool fresh = false)
+    /// <summary>Takes the cookies from a sign-in client and makes that account the active one.</summary>
+    private async Task<bool> CompleteSignInAsync(VrchatApi api, ApiAuthUser? user)
     {
         if (user?.Id is not { Length: > 0 } id)
             return false;
 
-        AuthStorage storage;
+        var payload = JsonSerializer.SerializeToUtf8Bytes(api.ExportCookies(),
+            VrchatJsonContext.Default.CookieRecordArray);
+
+        try
+        {
+            return await ActivateAsync(FindOrAdd(id, user.DisplayName), payload, user, true) is null;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(payload);
+            DiscardSignIn();
+        }
+    }
+
+    /// <summary>
+    ///     Replaces the client's cookies with <paramref name="payload" /> and marks the account active.
+    ///     Returns an error message, or null. The previous account is restored when the new one is dead.
+    /// </summary>
+    private async Task<string?> ActivateAsync(Account account, byte[] payload, ApiAuthUser? known, bool fresh)
+    {
+        var previous = _active;
+        var previousCookies = _api.AuthToken is { Length: > 0 } ? _api.ExportCookies() : null;
+
+        // Anything already in flight belongs to the account that is being left behind.
+        Interlocked.Increment(ref _generation);
+
+        // A stored session is refreshed before it is left behind; a memory-only one is kept as it is.
+        if (previous is not null && previousCookies is not null)
+        {
+            if (previous.Stored && previous.Storage is AuthStorage.System or AuthStorage.Tpm
+                    or AuthStorage.Hello or AuthStorage.Software)
+                await PersistAsync(previous);
+            else if (!previous.Stored)
+                previous.Cookies = previousCookies;
+        }
+
+        _pipeline.Stop();
+        PresenceService.Instance.Clear();
+
+        lock (_gate)
+            _ready = false;
+
+        var cookies = Try.Run(() => JsonSerializer.Deserialize(payload, VrchatJsonContext.Default.CookieRecordArray))
+            .GetOrNull();
+
+        if (cookies is not { Length: > 0 })
+            return Localization.Get("error.authSessionExpired");
+
+        _api.ImportCookies(cookies);
+
+        var user = known;
+        if (user is null)
+        {
+            var (fetched, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
+            user = fetched;
+        }
+
+        if (user?.Id is not { Length: > 0 })
+        {
+            Restore(previous, previousCookies);
+            return Localization.Get("error.authSessionExpired");
+        }
+
+        await CompleteAsync(account, user, fresh);
+        return null;
+    }
+
+    /// <summary>Takes the account from an API reply and marks the session as signed in.</summary>
+    private async Task CompleteAsync(Account account, ApiAuthUser user, bool fresh)
+    {
+        var id = user.Id!;
+
+        account.Name = user.DisplayName ?? id;
+        account.AvatarUrl = ProfileIcon(user);
+        account.LastUsed = DateTimeOffset.UtcNow;
+
+        if (fresh)
+        {
+            // A new cookie cannot be written into a password-protected file, because the password is not
+            // kept; the session is dropped and the account page asks for a storage mode again.
+            if (account.Storage == AuthStorage.Password)
+            {
+                AuthStore.Delete(AccountStore.PathOf(account.Dir));
+                account.Storage = AuthStorage.None;
+                account.Stored = false;
+                account.ChoiceMade = false;
+            }
+            else if (account.Storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello
+                     or AuthStorage.Software)
+            {
+                await PersistAsync(account);
+            }
+        }
+
         lock (_gate)
         {
-            _account = new(id, user.DisplayName ?? id, ProfileIcon(user), user.Status,
+            _active = account;
+            _account = new(id, account.Name, account.Avatar ?? ProfileIcon(user), user.Status,
                 user.StatusDescription);
             _location = user.Location ?? "";
             _userRefreshedAt = DateTimeOffset.UtcNow;
             _state = "loggedIn";
             _twoFactorMethods = [];
-            storage = _storage;
+            _legacyStorage = AuthStorage.None;
             _ready = true;
         }
 
-        // A fresh sign-in issues a new cookie. System storage can be updated silently; a password-
-        // protected file cannot, because the password is not kept, so it is dropped and asked for again.
-        if (fresh && storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello or AuthStorage.Software)
-            await PersistAsync(storage);
-        else if (fresh && storage == AuthStorage.Password)
-        {
-            AuthStore.Delete();
-            lock (_gate)
-                _storage = AuthStorage.None;
-        }
+        Log.Information("Signed in as {Name}", account.Name);
 
-        Log.Information("Signed in as {Name}", user.DisplayName ?? id);
-
-        if (_account is { } account)
-            Database.Instance.SaveAccount(account);
+        if (_account is { } current)
+            Database.Instance.SaveAccount(current);
 
         // The pipeline is what makes the account page and the list update within seconds.
         PresenceService.Instance.Set(id, user.Status, user.StatusDescription, PresenceSource.Pipeline);
@@ -413,20 +681,26 @@ internal sealed class AuthService : Singleton<AuthService>
         else
             Log.Warning("No auth cookie, so the pipeline cannot be started");
 
+        PersistIndex();
         Notify();
-        return true;
+
+        _ = RefreshAvatarAsync(account);
     }
 
-    /// <summary>Re-writes the system- or TPM-protected cookie after a fresh sign-in.</summary>
-    private async Task PersistAsync(AuthStorage storage)
+    /// <summary>Re-writes the system-, TPM- or Hello-protected cookie from the current client.</summary>
+    private async Task PersistAsync(Account account)
     {
         var cookies = JsonSerializer.SerializeToUtf8Bytes(_api.ExportCookies(),
             VrchatJsonContext.Default.CookieRecordArray);
 
         try
         {
-            if (await AuthStore.SaveAsync(cookies, storage, null))
-                AuthStore.MarkChoiceMade();
+            var directory = AccountStore.PathOf(account.Dir);
+            if (await AuthStore.SaveAsync(directory, cookies, account.Storage, null))
+            {
+                AuthStore.MarkChoiceMade(directory);
+                account.Stored = true;
+            }
         }
         finally
         {
@@ -434,33 +708,39 @@ internal sealed class AuthService : Singleton<AuthService>
         }
     }
 
-    private async Task<bool> UseCookiesAsync(byte[] payload)
+    private async Task RefreshAvatarAsync(Account account)
     {
-        var cookies = Try.Run(() =>
-                JsonSerializer.Deserialize(payload, VrchatJsonContext.Default.CookieRecordArray))
-            .GetOrNull();
+        var avatar = account.Stored
+            ? await AccountStore.DownloadAvatarAsync(account.Dir, account.AvatarUrl)
+            : await AccountStore.RemoteAvatarAsync(account.AvatarUrl);
 
-        if (cookies is not { Length: > 0 })
-            return false;
+        if (avatar is null || avatar == account.Avatar)
+            return;
 
-        _api.ImportCookies(cookies);
+        account.Avatar = avatar;
 
-        var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
-        return await CompleteAsync(user);
+        lock (_gate)
+            if (ReferenceEquals(account, _active) && _account is { } current)
+                _account = current with { AvatarUrl = avatar };
+
+        Notify();
     }
 
     private async Task RestoreAsync()
     {
-        if (!AuthStore.Exists)
+        // A session from before accounts had folders becomes the first account.
+        if (_accounts.Count == 0 && AuthStore.LegacyExists)
+        {
+            await MigrateLegacyAsync();
+            return;
+        }
+
+        var active = _active;
+        if (active is not { Stored: true })
             return;
 
-        var mode = AuthStore.StoredMode;
-        lock (_gate)
-            _storage = mode;
-
-        if (mode == AuthStorage.Password)
+        if (active.Storage == AuthStorage.Password)
         {
-            // Unlocking needs the password, which only the account page can ask for.
             lock (_gate)
                 _state = "locked";
 
@@ -468,7 +748,7 @@ internal sealed class AuthService : Singleton<AuthService>
             return;
         }
 
-        var (status, payload) = await AuthStore.LoadAsync(null);
+        var (status, payload) = await AuthStore.LoadAsync(AccountStore.PathOf(active.Dir), null);
 
         if (status == SessionLoadStatus.Cancelled)
         {
@@ -482,16 +762,17 @@ internal sealed class AuthService : Singleton<AuthService>
 
         if (status == SessionLoadStatus.None || payload is null)
         {
-            Forget();
+            DropSession(active);
             return;
         }
 
         try
         {
-            if (await UseCookiesAsync(payload))
+            var error = await ActivateAsync(active, payload, null, false);
+            if (error is null)
                 Log.Information("Restored the stored VRChat session");
             else
-                Forget();
+                DropSession(active);
         }
         finally
         {
@@ -499,10 +780,236 @@ internal sealed class AuthService : Singleton<AuthService>
         }
     }
 
-    /// <summary>Drops the session, the stored cookie and the account, and tells the interface.</summary>
-    private void Forget()
+    /// <summary>Moves the session written before accounts had folders into the first account folder.</summary>
+    private async Task MigrateLegacyAsync()
     {
-        AuthStore.Delete();
+        var mode = AuthStore.LegacyMode;
+
+        if (mode == AuthStorage.Password)
+        {
+            lock (_gate)
+            {
+                _state = "locked";
+                _legacyStorage = mode;
+            }
+
+            Notify();
+            return;
+        }
+
+        var (status, payload) = await AuthStore.LoadLegacyAsync(null);
+
+        if (status == SessionLoadStatus.Cancelled)
+        {
+            lock (_gate)
+                _state = "locked";
+
+            Notify();
+            return;
+        }
+
+        if (status != SessionLoadStatus.Loaded || payload is null)
+        {
+            AuthStore.DeleteLegacy();
+            Notify();
+            return;
+        }
+
+        try
+        {
+            var cookies = Try.Run(() =>
+                    JsonSerializer.Deserialize(payload, VrchatJsonContext.Default.CookieRecordArray))
+                .GetOrNull();
+
+            if (cookies is not { Length: > 0 })
+            {
+                AuthStore.DeleteLegacy();
+                return;
+            }
+
+            _api.ImportCookies(cookies);
+            var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
+
+            if (user?.Id is not { Length: > 0 } id)
+            {
+                // The network may simply be down; the old file is kept for the next launch.
+                _api.ResetCookies();
+                Notify();
+                return;
+            }
+
+            var account = FindOrAdd(id, user.DisplayName);
+            account.Storage = mode;
+            account.ChoiceMade = AuthStore.LegacyChoiceMade;
+
+            var directory = AccountStore.PathOf(account.Dir);
+            if (await AuthStore.SaveAsync(directory, payload, mode, null))
+            {
+                if (account.ChoiceMade)
+                    AuthStore.MarkChoiceMade(directory);
+
+                AuthStore.DeleteLegacy();
+                account.Stored = true;
+                await CompleteAsync(account, user, false);
+                return;
+            }
+
+            _api.ResetCookies();
+            Notify();
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(payload);
+        }
+    }
+
+    private async Task<NativeResponse?> UnlockLegacyAsync(NativeContext context, string? password)
+    {
+        var (status, payload) = await AuthStore.LoadLegacyAsync(password);
+
+        if (status == SessionLoadStatus.Cancelled)
+            return context.Fail("auth.unlock.result", Localization.Get("error.authHelloCancelled"));
+
+        if (status != SessionLoadStatus.Loaded || payload is null)
+            return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockFailed"));
+
+        try
+        {
+            var cookies = Try.Run(() =>
+                    JsonSerializer.Deserialize(payload, VrchatJsonContext.Default.CookieRecordArray))
+                .GetOrNull();
+
+            if (cookies is not { Length: > 0 })
+                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
+
+            _api.ImportCookies(cookies);
+            var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
+
+            if (user?.Id is not { Length: > 0 } id)
+            {
+                _api.ResetCookies();
+                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
+            }
+
+            var account = FindOrAdd(id, user.DisplayName);
+            account.Storage = AuthStore.LegacyMode;
+            account.ChoiceMade = AuthStore.LegacyChoiceMade;
+
+            var directory = AccountStore.PathOf(account.Dir);
+            if (!await AuthStore.SaveAsync(directory, payload, account.Storage, password))
+                return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockFailed"));
+
+            if (account.ChoiceMade)
+                AuthStore.MarkChoiceMade(directory);
+
+            AuthStore.DeleteLegacy();
+            account.Stored = true;
+
+            await CompleteAsync(account, user, false);
+            return context.Reply("auth.unlock.result", Snapshot());
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(payload);
+        }
+    }
+
+    private void LoadAccounts()
+    {
+        var index = AccountStore.Load();
+
+        foreach (var stored in index.Accounts)
+        {
+            var directory = AccountStore.PathOf(stored.Dir);
+            var storage = AuthStore.StoredMode(directory);
+
+            _accounts.Add(new Account
+            {
+                Dir = stored.Dir,
+                Name = stored.Name,
+                Avatar = AccountStore.Avatar(stored.Dir),
+                Storage = storage,
+                Stored = storage != AuthStorage.None,
+                ChoiceMade = AuthStore.ChoiceMade(directory),
+                LastUsed = stored.LastUsed
+            });
+        }
+
+        _active = index.Active is { Length: > 0 } active
+            ? _accounts.FirstOrDefault(account => account.Dir == active)
+            : null;
+    }
+
+    private void PersistIndex() =>
+        AccountStore.Save(new AccountIndex(
+            _active is { Stored: true } ? _active.Dir : null,
+            [.. _accounts
+                .Where(account => account.Stored)
+                .OrderByDescending(account => account.LastUsed)
+                .Select(account => new StoredAccount(account.Dir, account.Name, account.LastUsed))]));
+
+    private Account FindOrAdd(string userId, string? displayName)
+    {
+        var dir = AccountStore.Hash(userId);
+        var account = _accounts.FirstOrDefault(entry => entry.Dir == dir);
+
+        if (account is null)
+        {
+            account = new Account { Dir = dir, Name = displayName ?? userId };
+            _accounts.Add(account);
+        }
+
+        return account;
+    }
+
+    /// <summary>Deletes one account's folder and drops it from the list.</summary>
+    private void RemoveAccount(Account account)
+    {
+        AuthStore.Delete(AccountStore.PathOf(account.Dir));
+        AccountStore.Delete(account.Dir);
+        _accounts.Remove(account);
+
+        if (ReferenceEquals(account, _active))
+            _active = null;
+
+        PersistIndex();
+        Notify();
+    }
+
+    /// <summary>Forgets a session that can no longer be opened, but keeps the account in the list.</summary>
+    private void DropSession(Account account)
+    {
+        AuthStore.Delete(AccountStore.PathOf(account.Dir));
+        account.Storage = AuthStorage.None;
+        account.Stored = false;
+        account.ChoiceMade = false;
+        account.Cookies = null;
+
+        if (ReferenceEquals(account, _active))
+            ClearSession();
+
+        PersistIndex();
+        Notify();
+    }
+
+    private void Restore(Account? previous, CookieRecord[]? cookies)
+    {
+        if (previous is null || cookies is null)
+            return;
+
+        _api.ImportCookies(cookies);
+
+        if (_api.AuthToken is { Length: > 0 } token)
+            _pipeline.Start(token);
+
+        lock (_gate)
+            _ready = true;
+    }
+
+    /// <summary>Drops the session, the account and the pipeline, and tells the interface.</summary>
+    private void ClearSession()
+    {
+        Interlocked.Increment(ref _generation);
         _api.ResetCookies();
         _pipeline.Stop();
         PresenceService.Instance.Clear();
@@ -510,10 +1017,11 @@ internal sealed class AuthService : Singleton<AuthService>
 
         lock (_gate)
         {
+            _active = null;
             _account = null;
             _location = "";
             _state = "loggedOut";
-            _storage = AuthStorage.None;
+            _legacyStorage = AuthStorage.None;
             _twoFactorMethods = [];
             _userRefreshedAt = DateTimeOffset.MinValue;
             _ready = false;
@@ -531,6 +1039,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
         lock (_gate)
         {
+            _active = null;
             _account = null;
             _location = "";
             _state = "loggedOut";
@@ -540,7 +1049,43 @@ internal sealed class AuthService : Singleton<AuthService>
         }
 
         Log.Warning("The VRChat session expired");
+        PersistIndex();
         Notify();
+    }
+
+    private VrchatApi SignInApi()
+    {
+        lock (_gate)
+            return _signIn ??= new VrchatApi();
+    }
+
+    /// <summary>The client of the QR flow, which runs beside the password form.</summary>
+    private VrchatApi DeviceApi()
+    {
+        lock (_gate)
+            return _device ??= new VrchatApi();
+    }
+
+    /// <summary>Each new code gets a fresh client, so an older one cannot hold a stale session.</summary>
+    private VrchatApi NewDeviceApi()
+    {
+        lock (_gate)
+        {
+            _device?.Dispose();
+            return _device = new VrchatApi();
+        }
+    }
+
+    private void DiscardSignIn()
+    {
+        lock (_gate)
+        {
+            _signIn?.Dispose();
+            _signIn = null;
+
+            _device?.Dispose();
+            _device = null;
+        }
     }
 
     /// <summary>Takes the account's own presence from the shared store, so the page follows the pipeline.</summary>
@@ -579,10 +1124,25 @@ internal sealed class AuthService : Singleton<AuthService>
         var expiresAt = SessionExpiry();
 
         lock (_gate)
-            return new(_state, _account, StorageName(_storage), _twoFactorMethods,
+        {
+            var storage = _active?.Storage ?? _legacyStorage;
+
+            var accounts = _accounts
+                .OrderByDescending(account => account.LastUsed)
+                .Select(account => new AccountSummaryPayload(
+                    account.Dir,
+                    account.Name,
+                    account.Avatar,
+                    StorageName(account.Storage),
+                    ReferenceEquals(account, _active),
+                    account.Stored))
+                .ToArray();
+
+            return new(_state, _account, StorageName(storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
                 AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt,
-                AuthStore.ChoiceMade);
+                _active?.ChoiceMade ?? false, accounts);
+        }
     }
 
     /// <summary>When the stored <c>auth</c> cookie expires, or null for a session cookie.</summary>
@@ -617,4 +1177,20 @@ internal sealed class AuthService : Singleton<AuthService>
         AuthStorage.Software => "software",
         _ => "none"
     };
+
+    /// <summary>One account AntiBot can switch to; only its name and picture are ever shown.</summary>
+    private sealed class Account
+    {
+        public required string Dir { get; init; }
+        public string Name { get; set; } = "";
+        public string? Avatar { get; set; }
+        public string? AvatarUrl { get; set; }
+        public AuthStorage Storage { get; set; }
+        public bool Stored { get; set; }
+        public bool ChoiceMade { get; set; }
+        public DateTimeOffset LastUsed { get; set; }
+
+        /// <summary>Cookies of a "do not remember" account, kept for this run only.</summary>
+        public CookieRecord[]? Cookies { get; set; }
+    }
 }

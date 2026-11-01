@@ -2,29 +2,37 @@ import {type FormEvent, useCallback, useEffect, useState} from "react";
 import styled from "styled-components";
 import {Native, useTranslation} from "@photino-net-utils/bridge";
 import {
+    type AccountSummary,
     type AuthSnapshot,
     type AuthStorage,
     type DeviceCode,
+    cancelSignIn,
     getAuth,
     login,
     logout,
     onAuthChanged,
     pollDevice,
+    removeAccount,
     saveStorage,
     signedOut,
     startDevice,
+    switchAccount,
     unlock,
     verify,
 } from "../api/auth";
-import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, UserIcon} from "../components/Icons";
+import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon} from "../components/Icons";
 
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
-/** The VRChat account: sign-in, the second factor, and how the session is kept. */
+/** The VRChat account: the account list, sign-in, the second factor, and how each session is kept. */
 export function AccountPage() {
     const [auth, setAuth] = useState<AuthSnapshot>(signedOut);
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const [browsing, setBrowsing] = useState(false);
+    const [unlocking, setUnlocking] = useState<AccountSummary | null>(null);
+    const [unlockError, setUnlockError] = useState("");
 
     useEffect(() => {
         let cancelled = false;
@@ -45,6 +53,13 @@ export function AccountPage() {
         };
     }, []);
 
+    const signedIn = auth.state === "loggedIn";
+
+    // Once an account is signed in, the add form has done its job.
+    useEffect(() => {
+        if (signedIn) setAdding(false);
+    }, [signedIn]);
+
     const run: Run = async (action) => {
         setBusy(true);
         setError("");
@@ -60,31 +75,239 @@ export function AccountPage() {
         }
     };
 
+    const hasAccounts = auth.accounts.length > 0;
+    const showAdd = !signedIn && (adding || auth.state === "loggedOut" && !hasAccounts);
+
+    const switchTo = async (account: AccountSummary) => {
+        setError("");
+
+        // A password-protected session is asked for here, so a cancelled switch changes nothing.
+        if (account.storage === "password") {
+            setUnlockError("");
+            setUnlocking(account);
+            return;
+        }
+
+        setBusy(true);
+
+        try {
+            const result = await switchAccount(account.dir);
+
+            if (result.needsPassword) {
+                setUnlockError("");
+                setUnlocking(account);
+                return;
+            }
+
+            if (!result.ok || !result.auth) {
+                setError(result.error ?? "");
+                return;
+            }
+
+            setAuth(result.auth);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const unlockAccount = async (account: AccountSummary, password: string) => {
+        setUnlockError("");
+        setBusy(true);
+
+        try {
+            setAuth(await unlock(password, account.dir));
+            setUnlocking(null);
+        } catch (err) {
+            setUnlockError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const remove = async (account: AccountSummary) => {
+        setError("");
+        setBusy(true);
+
+        try {
+            setAuth(await removeAccount(account.dir));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const cancelAdd = () => {
+        setAdding(false);
+        setError("");
+        void cancelSignIn().then(setAuth, () => {});
+    };
+
     let content;
 
-    if (auth.state === "loggedIn" && auth.user)
-        content = <Profile auth={auth} busy={busy} error={error} run={run}/>;
-    else if (auth.state === "locked")
-        content = <UnlockForm auth={auth} busy={busy} error={error} run={run}/>;
+    if (auth.state === "locked" && !browsing)
+        content = <UnlockForm auth={auth} busy={busy} error={error} run={run}
+                              onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}/>;
     else if (auth.state === "twoFactor")
-        content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}/>;
+        content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}
+                                onCancel={hasAccounts ? cancelAdd : undefined}/>;
+    else if (showAdd)
+        content = <LoginForm busy={busy} error={error} onCancel={hasAccounts ? cancelAdd : undefined}
+                             onSignedIn={setAuth} run={run}/>;
     else
-        content = <LoginForm busy={busy} error={error} run={run} onSignedIn={setAuth}/>;
+        content = (
+            <>
+                {signedIn && <Profile auth={auth} busy={busy} error={error} run={run}/>}
+                <AccountList accounts={auth.accounts} busy={busy} onAdd={() => {
+                    setError("");
+                    setAdding(true);
+                }} onRemove={(account) => void remove(account)} onSwitch={(account) => void switchTo(account)}
+                             signedIn={signedIn}/>
+                {error && <ErrorText>{error}</ErrorText>}
+            </>
+        );
 
-    // Before sign-in the page is a full-width stage so the form can sit in the middle of it.
     return (
-        <Page $wide={auth.state !== "loggedIn"}>
+        <Page $wide={showAdd}>
             {content}
-            {auth.state === "loggedIn" && <StorageChoice auth={auth} busy={busy} error={error} run={run}/>}
+            {signedIn && <StorageChoice key={auth.user?.id} auth={auth} busy={busy} error={error} run={run}/>}
+            {unlocking && (
+                <UnlockPanel account={unlocking} busy={busy} error={unlockError}
+                             onCancel={() => {
+                                 setUnlocking(null);
+                                 setUnlockError("");
+                             }}
+                             onUnlock={(password) => void unlockAccount(unlocking, password)}/>
+            )}
         </Page>
     );
 }
 
-function LoginForm({busy, error, run, onSignedIn}: {
+/** The accounts AntiBot can switch to, with the one that is signed in marked. */
+function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
+    accounts: AccountSummary[];
+    busy: boolean;
+    signedIn: boolean;
+    onAdd: () => void;
+    onSwitch: (account: AccountSummary) => void;
+    onRemove: (account: AccountSummary) => void;
+}) {
+    const t = useTranslation();
+
+    return (
+        <Card>
+            <CardHead>
+                <UsersIcon size={20}/>
+                <div>
+                    <h2>{t("Accounts")}</h2>
+                    <p>
+                        {signedIn
+                            ? t("Switch to another account; only one is signed in at a time.")
+                            : t("Pick an account to sign in with.")}
+                    </p>
+                </div>
+            </CardHead>
+
+            {accounts.length > 0 && (
+                <List>
+                    {accounts.map((account) => (
+                        <AccountRow key={account.dir} $active={account.active}>
+                            <AvatarSmall $src={account.avatar}>
+                                {account.avatar ? null : account.name.slice(0, 1).toUpperCase()}
+                            </AvatarSmall>
+                            <RowText>
+                                <strong>{account.name}</strong>
+                                <span>{t(storageLabel(account.storage))}</span>
+                            </RowText>
+                            {account.active && signedIn
+                                ? <ActiveTag>{t("Signed in")}</ActiveTag>
+                                : (
+                                    <RowActions>
+                                        <SmallButton disabled={busy} onClick={() => onSwitch(account)}
+                                                     type="button">
+                                            {signedIn ? t("Switch") : t("Sign in")}
+                                        </SmallButton>
+                                        <IconButton aria-label={t("Remove account")} disabled={busy}
+                                                    onClick={() => onRemove(account)} type="button">
+                                            <TrashIcon size={14}/>
+                                        </IconButton>
+                                    </RowActions>
+                                )}
+                        </AccountRow>
+                    ))}
+                </List>
+            )}
+
+            <Actions>
+                <Secondary disabled={busy} onClick={onAdd} type="button">{t("Add account")}</Secondary>
+            </Actions>
+        </Card>
+    );
+}
+
+/** Asks for the password of an account that was stored in password mode. */
+function UnlockPanel({account, busy, error, onUnlock, onCancel}: {
+    account: AccountSummary;
+    busy: boolean;
+    error: string;
+    onUnlock: (password: string) => void;
+    onCancel: () => void;
+}) {
+    const t = useTranslation();
+    const [password, setPassword] = useState("");
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        onUnlock(password);
+    };
+
+    return (
+        <StorageOverlay>
+            <StoragePanel aria-modal="true" role="dialog">
+                <CardHead>
+                    <KeyIcon size={20}/>
+                    <div>
+                        <h2>{t("Unlock {name}", {name: account.name})}</h2>
+                        <p>
+                            {t("The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.")}
+                        </p>
+                    </div>
+                </CardHead>
+
+                <Form onSubmit={submit}>
+                    <Field>
+                        <Label htmlFor="switch-password">{t("Password")}</Label>
+                        <PasswordInput
+                            autoComplete="current-password"
+                            autoFocus
+                            id="switch-password"
+                            onChange={setPassword}
+                            value={password}
+                        />
+                    </Field>
+
+                    {error && <ErrorText>{error}</ErrorText>}
+
+                    <Actions>
+                        <Primary disabled={busy} type="submit">
+                            {busy ? t("Unlocking…") : t("Unlock")}
+                        </Primary>
+                        <Secondary disabled={busy} onClick={onCancel} type="button">{t("Cancel")}</Secondary>
+                    </Actions>
+                </Form>
+            </StoragePanel>
+        </StorageOverlay>
+    );
+}
+
+function LoginForm({busy, error, run, onSignedIn, onCancel}: {
     busy: boolean;
     error: string;
     run: Run;
     onSignedIn: (auth: AuthSnapshot) => void;
+    onCancel?: () => void;
 }) {
     const t = useTranslation();
     const [username, setUsername] = useState("");
@@ -128,6 +351,11 @@ function LoginForm({busy, error, run, onSignedIn}: {
                         <Submit disabled={busy} type="submit">
                             {busy ? t("Signing in…") : t("Sign in")}
                         </Submit>
+                        {onCancel && (
+                            <SecondaryInline disabled={busy} onClick={onCancel} type="button">
+                                {t("Cancel")}
+                            </SecondaryInline>
+                        )}
                     </Form>
 
                     <Note>
@@ -147,11 +375,12 @@ function LoginForm({busy, error, run, onSignedIn}: {
     );
 }
 
-function TwoFactorForm({auth, busy, error, run}: {
+function TwoFactorForm({auth, busy, error, run, onCancel}: {
     auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
+    onCancel?: () => void;
 }) {
     const t = useTranslation();
     const methods = auth.twoFactorMethods.length > 0 ? auth.twoFactorMethods : ["totp", "otp"];
@@ -208,17 +437,23 @@ function TwoFactorForm({auth, busy, error, run}: {
                     <Submit disabled={busy} type="submit">
                         {busy ? t("Verifying…") : t("Verify")}
                     </Submit>
+                    {onCancel && (
+                        <SecondaryInline disabled={busy} onClick={onCancel} type="button">
+                            {t("Cancel")}
+                        </SecondaryInline>
+                    )}
                 </Form>
             </NarrowCard>
         </AuthStage>
     );
 }
 
-function UnlockForm({auth, busy, error, run}: {
+function UnlockForm({auth, busy, error, run, onBrowse}: {
     auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
+    onBrowse?: () => void;
 }) {
     const t = useTranslation();
     const [password, setPassword] = useState("");
@@ -268,6 +503,11 @@ function UnlockForm({auth, busy, error, run}: {
                     })} type="button">
                         {t("Forget it")}
                     </SecondaryInline>
+                    {onBrowse && (
+                        <SecondaryInline disabled={busy} onClick={onBrowse} type="button">
+                            {t("Accounts")}
+                        </SecondaryInline>
+                    )}
                 </Form>
             </NarrowCard>
         </AuthStage>
@@ -1107,6 +1347,96 @@ const Avatar = styled.div<{ $src?: string }>`
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
     box-shadow: inset 0 0 0 1px var(--border-color);
+`;
+
+const List = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const AccountRow = styled.div<{ $active: boolean }>`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border: 1px solid ${({$active}) => $active ? "var(--accent-primary)" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.08)" : "var(--bg-primary)"};
+`;
+
+const AvatarSmall = styled.div<{ $src?: string }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--bg-card) center / cover no-repeat;
+    background-image: ${({$src}) => $src ? `url("${$src}")` : "none"};
+    box-shadow: inset 0 0 0 1px var(--border-color);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+`;
+
+const RowText = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+
+    strong {
+        overflow: hidden;
+        font-size: 13px;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    span {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-muted);
+    }
+`;
+
+const RowActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+`;
+
+const SmallButton = styled.button`
+    padding: 5px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+        background: var(--bg-card-hover);
+    }
+`;
+
+const ActiveTag = styled.span`
+    margin-left: auto;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(167, 139, 250, 0.14);
+    color: var(--accent-primary);
+    font-family: var(--font-mono);
+    font-size: 9px;
 `;
 
 const Identity = styled.div`
