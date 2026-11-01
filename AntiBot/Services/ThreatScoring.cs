@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using AntiBot.Models;
@@ -5,12 +6,20 @@ using AntiBot.Models;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Scores how likely a user is a bot. Each signal adds to the total; the name is capped at 40 and
-///     the total is deliberately not capped, so a profile matching several strong signals can exceed
-///     100. The threshold in the settings decides when the automatic actions run.
+///     Scores how likely a user is a bot. Each signal adds to the total, except the ranks above
+///     <c>User</c>, which subtract. The name is capped at 40 and the account age at 40, and the total is
+///     clamped at 0 but deliberately not capped at 100, so a profile matching several strong signals can
+///     exceed it. The threshold in the settings decides when the automatic actions run.
 /// </summary>
 internal static partial class ThreatScoring
 {
+    /// <summary>Age weights: bots are usually a few days old, so an old account is not a signal at all.</summary>
+    private const int AgeMaxDays = 7;
+    private const int AgeMonthDays = 30;
+    private const int AgeQuarterDays = 90;
+    private const int AgeHalfYearDays = 180;
+    private const int AgeYearDays = 365;
+    private const int AgeTwoYearsDays = 730;
     /// <summary>Wording that only adds the small "something is off" weight.</summary>
     private static readonly string[] FuzzyTerms =
     [
@@ -32,10 +41,17 @@ internal static partial class ThreatScoring
         if (profile is not null)
         {
             var (trustScore, trustReason) = TrustScore(profile.Tags);
-            if (trustScore > 0)
+            if (trustScore != 0)
             {
                 score += trustScore;
                 reasons.Add(trustReason);
+            }
+
+            var (ageScore, ageReason) = AgeScore(profile.DateJoined);
+            if (ageScore > 0)
+            {
+                score += ageScore;
+                reasons.Add(ageReason);
             }
         }
 
@@ -62,12 +78,12 @@ internal static partial class ThreatScoring
             reasons.Add("Quest/iOS platform (score halved)");
         }
 
-        return (score, [.. reasons]);
+        return (Math.Max(score, 0), [.. reasons]);
     }
 
     /// <summary>
-    ///     VRChat's account rank. A Nuisance tag is the strongest signal; a Visitor with no rank is
-    ///     the weakest account still worth looking at.
+    ///     VRChat's account rank, with <c>User</c> as the neutral middle. A Nuisance tag is the strongest
+    ///     signal; the ranks above <c>User</c> count against the suspicion instead of for it.
     /// </summary>
     private static (int Score, string Reason) TrustScore(string[] tags)
     {
@@ -78,18 +94,56 @@ internal static partial class ThreatScoring
             return (30, "probably Nuisance");
 
         if (tags.Contains("system_trust_veteran"))
-            return (0, "");
+            return (-10, "Trusted User account");
 
         if (tags.Contains("system_trust_trusted"))
-            return (5, "Known account");
+            return (-5, "Known User account");
 
         if (tags.Contains("system_trust_known"))
-            return (10, "User account");
+            return (0, "");
 
         if (tags.Contains("system_trust_basic"))
-            return (20, "New User account");
+            return (10, "New User account");
 
         return (30, "Visitor account");
+    }
+
+    /// <summary>
+    ///     How new the account is. Bots are usually created days before they are used, so a fresh account
+    ///     is a strong signal and an old one is not a signal at all. Capped at 40, the same as the name.
+    /// </summary>
+    private static (int Score, string Reason) AgeScore(string? dateJoined)
+    {
+        if (!DateTimeOffset.TryParse(dateJoined, CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var joined))
+            return (0, "");
+
+        var days = (DateTimeOffset.UtcNow - joined).TotalDays;
+        if (days < 0)
+            days = 0;
+
+        var score = days switch
+        {
+            <= AgeMaxDays => 40,
+            <= AgeMonthDays => 35,
+            <= AgeQuarterDays => 25,
+            <= AgeHalfYearDays => 15,
+            <= AgeYearDays => 8,
+            <= AgeTwoYearsDays => 3,
+            _ => 0
+        };
+
+        if (score == 0)
+            return (0, "");
+
+        var age = (int)days switch
+        {
+            <= 0 => "account created today",
+            1 => "account created yesterday",
+            var value => $"account created {value} days ago"
+        };
+
+        return (score, age);
     }
 
     /// <summary>
