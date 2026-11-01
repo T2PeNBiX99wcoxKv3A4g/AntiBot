@@ -5,18 +5,14 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Runs the automatic protection for a high-threat user, in priority order: send the account home,
-///     block the user, turn their avatar interactions off and hide their chat box. Disabled actions are
-///     skipped, friends are treated like whitelisted users, and the whole sequence is serialized because
-///     VRChat rate-limits these calls.
+///     Runs the automatic protection for a high-threat user: block the user, turn their avatar
+///     interactions off and hide their chat box. Disabled actions are skipped, friends are treated like
+///     whitelisted users, and the whole sequence is serialized because VRChat rate-limits these calls.
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
     /// <summary>VRChat accepts about one moderation request every few seconds.</summary>
     private const long ModerationGapMilliseconds = 3000;
-
-    /// <summary>After going home the account needs time to travel; do not try again for a while.</summary>
-    private static readonly TimeSpan ReturnHomeCooldown = TimeSpan.FromMinutes(10);
 
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _actions = new(1, 1);
@@ -25,8 +21,6 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
     private long _lastModerationAt;
-    private DateTimeOffset _returnedHomeAt = DateTimeOffset.MinValue;
-    private bool _returningHome;
 
     public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
 
@@ -39,9 +33,6 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
             {
                 _instance = snapshot.Instance;
                 _acted.Clear();
-
-                // The cooldown is deliberately not reset here: travelling home changes the instance,
-                // and resetting it made the action fire again on every refresh.
             }
 
         foreach (var user in snapshot.Users)
@@ -77,11 +68,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
         try
         {
-            // Return home first: getting the account out of the instance is the action that actually
-            // removes the bot's access. Then block, then the two lighter moderations.
-            if (settings.AutoReturnHome && await TryReturnHomeAsync())
-                await OperationService.Instance.LogAsync("returnHome", user.UserId, user.Name, detail);
-
+            // Block first: it is the action that actually removes the bot's avatar and interactions.
             if (settings.AutoBlock && await ModerateAsync(user.UserId, "block"))
                 await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
 
@@ -98,33 +85,6 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         finally
         {
             _actions.Release();
-        }
-    }
-
-    /// <summary>Sends the account home at most once per cooldown; a failed attempt may be retried.</summary>
-    private async Task<bool> TryReturnHomeAsync()
-    {
-        lock (_gate)
-        {
-            if (_returningHome || DateTimeOffset.UtcNow - _returnedHomeAt < ReturnHomeCooldown)
-                return false;
-
-            _returningHome = true;
-        }
-
-        try
-        {
-            var returned = await AuthService.Instance.ReturnHomeAsync(_stop.Token);
-            if (returned)
-                lock (_gate)
-                    _returnedHomeAt = DateTimeOffset.UtcNow;
-
-            return returned;
-        }
-        finally
-        {
-            lock (_gate)
-                _returningHome = false;
         }
     }
 

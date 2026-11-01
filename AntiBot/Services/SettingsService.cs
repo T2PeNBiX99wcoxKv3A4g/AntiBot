@@ -54,7 +54,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
     private SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
-            Current.AutoReturnHome, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
+            Current.AutoRejectFriendRequests, Current.ThreatThreshold,
             Current.Whitelist, Current.Language, Current.StartHidden);
 
     /// <summary>
@@ -104,7 +104,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
             AutoHideChatBox = settings.AutoHideChatBox,
-            AutoReturnHome = settings.AutoReturnHome,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])

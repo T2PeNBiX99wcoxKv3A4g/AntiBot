@@ -19,7 +19,6 @@ internal sealed record SettingsPayload(
     bool AutoBlock,
     bool AutoDisableAvatarInteraction,
     bool AutoHideChatBox,
-    bool AutoReturnHome,
     bool AutoRejectFriendRequests,
     int ThreatThreshold,
     string[] Whitelist,

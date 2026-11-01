@@ -1,56 +1,10 @@
 import {useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {type DebugUserResult, returnHome, scoreUser} from "../api/debug";
+import {type DebugUserResult, scoreUser} from "../api/debug";
 
-/** Debug builds only: actions that are hard to trigger for real, such as going home. */
+/** Debug builds only: scores any user id or profile link, so the rules can be tried without a bot. */
 export function DebugPage() {
-    const t = useTranslation();
-    const [busy, setBusy] = useState(false);
-    const [result, setResult] = useState("");
-    const [failed, setFailed] = useState(false);
-
-    const run = async () => {
-        setBusy(true);
-        setResult("");
-        setFailed(false);
-
-        try {
-            const returned = await returnHome();
-            setFailed(!returned);
-            setResult(returned
-                ? t("The home invite was sent.")
-                : t("The home invite could not be sent. Check the connection and the sign-in."));
-        } catch (err) {
-            setFailed(true);
-            setResult(err instanceof Error ? err.message : String(err));
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    return (
-        <Page>
-            <Card>
-                <h2>{t("Debug tools")}</h2>
-                <p>{t("Only a debug build shows this page.")}</p>
-
-                <Actions>
-                    <Primary disabled={busy} onClick={() => void run()} type="button">
-                        {busy ? t("Working…") : t("Return home (test)")}
-                    </Primary>
-                </Actions>
-
-                {result && <Result $failed={failed}>{result}</Result>}
-            </Card>
-
-            <UserCheck/>
-        </Page>
-    );
-}
-
-/** Scores any user id or profile link, so the rules can be tried without waiting for a bot. */
-function UserCheck() {
     const t = useTranslation();
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -72,45 +26,48 @@ function UserCheck() {
     };
 
     return (
-        <Card>
-            <h2>{t("User check")}</h2>
-            <p>{t("Paste a VRChat user id or a profile link to see how it would be scored.")}</p>
+        <Page>
+            <Card>
+                <h2>{t("User check")}</h2>
+                <p>{t("Paste a VRChat user id or a profile link to see how it would be scored.")}</p>
 
-            <Form onSubmit={(event) => {
-                event.preventDefault();
-                void run();
-            }}>
-                <Input
-                    onChange={(event) => setInput(event.target.value)}
-                    placeholder="usr_… or https://vrchat.com/home/user/usr_…"
-                    value={input}
-                />
-                <Primary disabled={busy || input.trim().length === 0} type="submit">
-                    {busy ? t("Checking…") : t("Check")}
-                </Primary>
-            </Form>
+                <Form onSubmit={(event) => {
+                    event.preventDefault();
+                    void run();
+                }}>
+                    <Input
+                        onChange={(event) => setInput(event.target.value)}
+                        placeholder="usr_… or https://vrchat.com/home/user/usr_…"
+                        value={input}
+                    />
+                    <Primary disabled={busy || input.trim().length === 0} type="submit">
+                        {busy ? t("Checking…") : t("Check")}
+                    </Primary>
+                </Form>
 
-            {error && <Result $failed>{error}</Result>}
+                {error && <ErrorText>{error}</ErrorText>}
 
-            {result && (
-                <Report>
-                    <Threat $score={result.threat}>{result.threat}%</Threat>
-                    <Rows>
-                        <Row label={t("Name")} value={result.displayName}/>
-                        <Row label={t("User ID")} value={result.id}/>
-                        <Row label={t("Rank")} value={result.trust ?? t("Unknown")}/>
-                        <Row label={t("Joined")} value={result.dateJoined ?? t("Unknown")}/>
-                        <Row label={t("Platform")} value={result.platform ?? t("Unknown")}/>
-                        <Row label={t("Avatar")} value={result.avatarName ?? (result.isRobot ? t("Robot (default)") : t("Unknown"))}/>
-                    </Rows>
-                    <Reasons>
-                        {result.reasons.length > 0
-                            ? result.reasons.map((reason) => <li key={reason}>{reason}</li>)
-                            : <li>{t("No signal matched.")}</li>}
-                    </Reasons>
-                </Report>
-            )}
-        </Card>
+                {result && (
+                    <Report>
+                        <Threat $score={result.threat}>{result.threat}%</Threat>
+                        <Rows>
+                            <Row label={t("Name")} value={result.displayName}/>
+                            <Row label={t("User ID")} value={result.id}/>
+                            <Row label={t("Rank")} value={result.trust ?? t("Unknown")}/>
+                            <Row label={t("Joined")} value={result.dateJoined ?? t("Unknown")}/>
+                            <Row label={t("Platform")} value={result.platform ?? t("Unknown")}/>
+                            <Row label={t("Avatar")}
+                                 value={result.avatarName ?? (result.isRobot ? t("Robot (default)") : t("Unknown"))}/>
+                        </Rows>
+                        <Reasons>
+                            {result.reasons.length > 0
+                                ? result.reasons.map((reason) => <li key={reason}>{reason}</li>)
+                                : <li>{t("No signal matched.")}</li>}
+                        </Reasons>
+                    </Report>
+                )}
+            </Card>
+        </Page>
     );
 }
 
@@ -154,12 +111,6 @@ const Card = styled.section`
     }
 `;
 
-const Actions = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-`;
-
 const Form = styled.form`
     display: flex;
     align-items: center;
@@ -201,10 +152,10 @@ const Primary = styled.button`
     }
 `;
 
-const Result = styled.p<{ $failed?: boolean }>`
+const ErrorText = styled.p`
     font-family: var(--font-mono);
     font-size: 11px;
-    color: ${({$failed}) => $failed ? "#f87171" : "#4ade80"};
+    color: #f87171;
 `;
 
 const Report = styled.div`

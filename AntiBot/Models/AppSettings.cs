@@ -29,9 +29,6 @@ public sealed record AppSettings
     /// <summary>Hide a high-threat user's chat box.</summary>
     public bool AutoHideChatBox { get; init; } = true;
 
-    /// <summary>Send the account home when a high-threat user appears.</summary>
-    public bool AutoReturnHome { get; init; } = true;
-
     /// <summary>Hide friend requests from high-threat users.</summary>
     public bool AutoRejectFriendRequests { get; init; } = true;
 

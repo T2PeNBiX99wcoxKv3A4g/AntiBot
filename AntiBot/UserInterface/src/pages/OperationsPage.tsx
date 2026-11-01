@@ -79,7 +79,7 @@ export function OperationsPage() {
                 <Head>
                     <div>
                         <h2>{t("Operation history")}</h2>
-                        <p>{t("Every block, chat-box mute and automatic return home, as it happened.")}</p>
+                        <p>{t("Every block, chat-box mute and avatar-interaction change, as it happened.")}</p>
                     </div>
                     <HeadActions>
                         <Count>{t("{count} action(s)", {count: entries.length})}</Count>

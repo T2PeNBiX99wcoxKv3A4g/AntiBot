@@ -28,9 +28,6 @@ namespace AntiBot.Services;
 /// </remarks>
 internal sealed class AuthService : Singleton<AuthService>
 {
-    /// <summary>VRChat's default home world, used when the account's own home world cannot be opened.</summary>
-    private const string DefaultHomeWorld = "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd";
-
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
 
     private readonly VrchatApi _api = new();
@@ -191,57 +188,7 @@ internal sealed class AuthService : Singleton<AuthService>
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
 
-    /// <summary>
-    ///     Sends the account an invite to its own home world. VRChat has no "join" call, and handing the
-    ///     client a launch link makes the shell start a second VRChat when one is already running, which
-    ///     the account then flaps between; an invite is the only way to move it without that.
-    /// </summary>
-    public async Task<bool> ReturnHomeAsync(CancellationToken token)
-    {
-        if (!IsReady)
-            return false;
-
-        var (user, _) = await _api.GetCurrentUserAsync(token);
-        if (user is null)
-            return false;
-
-        // Only an account that is actually sitting in a world needs to go home.
-        if (user.Location is not { Length: > 0 } location || !location.StartsWith("wrld_", StringComparison.Ordinal))
-            return false;
-
-        var home = user.HomeLocation ?? user.HomeLocationLegacy;
-        if (home is not { Length: > 0 } || !home.StartsWith("wrld_", StringComparison.Ordinal))
-            return false;
-
-        // homeLocation is often just the world id; an invite needs worldId:instanceId.
-        if (!home.Contains(':'))
-        {
-            if (user.Id is not { Length: > 0 } ownerId)
-                return false;
-
-            // A group world or a world that refuses new instances must not leave the account stuck.
-            var created = await _api.CreateInstanceAsync(home, ownerId, token)
-                          ?? await _api.CreateInstanceAsync(DefaultHomeWorld, ownerId, token);
-            if (created is not { Length: > 0 })
-                return false;
-
-            home = created;
-        }
-
-        var invited = await _api.InviteMyselfAsync(home, token);
-        Log.Information("Return home to {Location}: {Invited}", home, invited);
-        return invited;
-    }
-
 #if DEBUG
-    /// <summary>Debug build only: runs the return-home action on demand instead of waiting for a bot.</summary>
-    private async Task<NativeResponse?> DebugReturnHomeAsync(NativeContext context)
-    {
-        var returned = await ReturnHomeAsync(CancellationToken.None);
-        Log.Information("Debug return home: {Returned}", returned);
-        return context.Reply("debug.returnHome.result", new OkPayload(returned));
-    }
-
     /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
     private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
     {
@@ -304,7 +251,6 @@ internal sealed class AuthService : Singleton<AuthService>
         "auth.device.start" => StartDeviceAsync(context),
         "auth.device.poll" => PollDeviceAsync(context),
 #if DEBUG
-        "debug.returnHome" => DebugReturnHomeAsync(context),
         "debug.user" => DebugUserAsync(context),
 #endif
         _ => Task.FromResult<NativeResponse?>(null)
