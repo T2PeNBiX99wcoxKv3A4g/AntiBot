@@ -548,8 +548,10 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
                 var ordered = Ordered(users);
                 var count = Math.Max(api.UserCount ?? 0, ordered.Length);
 
+                // The API can still report the last instance after VRChat closed; only the process
+                // state decides whether the list is current.
                 return new(
-                    _running || count > 0,
+                    _running,
                     api.World?.Name ?? _world,
                     api.Location ?? _apiLocation,
                     ordered,
