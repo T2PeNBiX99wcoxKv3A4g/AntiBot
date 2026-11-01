@@ -557,7 +557,8 @@ export function SettingsPage({info}: SettingsPageProps) {
                         </ToggleField>
                         <Toggle
                             checked={autoClose}
-                            hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.")}
+                            hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.") + " " +
+                                  t("When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.")}
                             onChange={(value) => {
                                 setAutoClose(value);
                                 void persist({autoCloseVrchat: value});

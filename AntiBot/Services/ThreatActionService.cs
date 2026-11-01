@@ -5,9 +5,10 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>
-///     Runs the automatic protection for a high-threat user: block the user, turn their avatar
-///     interactions off and hide their chat box. Disabled actions are skipped, friends are treated like
-///     whitelisted users, and the whole sequence is serialized because VRChat rate-limits these calls.
+///     Runs the automatic protection for a high-threat user. The local actions (closing the client,
+///     Safe Mode, avatar switch) go first because they need no server; the moderation calls queue
+///     behind each other because VRChat rate-limits them. Disabled actions are skipped and friends are
+///     treated like whitelisted users.
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
@@ -57,26 +58,20 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var detail = Describe(user);
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
-        // Closing the client is the only action that can beat an avatar download, and it needs no API
-        // call, so it runs first and outside the rate-limited queue. Safe Mode comes next: it replaces
-        // every non-friend avatar at once, which blocking does not do because the client only re-reads
-        // its moderation list later.
-        var closed = settings.AutoCloseVrchat &&
-                     !(settings.SkipCloseInVr && VrchatClient.IsVrActive()) &&
-                     VrchatClient.Close();
+        // Closing the client is the only action that can beat an avatar download, and it waits for
+        // VRChat to quit, so it runs on its own task instead of holding up everyone else.
+        var close = settings.AutoCloseVrchat && !(settings.SkipCloseInVr && VrchatClient.IsVrActive())
+            ? Task.Run(VrchatClient.Close)
+            : null;
 
-        if (closed)
+        if (close is not null && await close)
         {
             await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
         }
-        else
+        else if (VrchatClient.IsRunning())
         {
-            if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
-                await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
-
-            // A different avatar is only useful if it is not the one already worn, which VRChat reports.
-            if (settings.AutoSafeAvatar && VrchatOscService.Instance.ChangeAvatar(settings.SafeAvatarId))
-                await OperationService.Instance.LogAsync("switchedAvatar", user.UserId, user.Name, detail);
+            // OSC is local and instant, so it goes out now, before the rate-limited API queue.
+            await ApplyOscAsync(user, settings, detail);
         }
 
         try
@@ -130,8 +125,6 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
         try
         {
-            await AuthService.Instance.HideFriendRequestAsync(request.Id, _stop.Token);
-
             try
             {
                 await _actions.WaitAsync(_stop.Token);
@@ -143,6 +136,9 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
             try
             {
+                // Hiding the notification is an API call too, so it waits in the same queue.
+                await PaceAsync();
+                await AuthService.Instance.HideFriendRequestAsync(request.Id, _stop.Token);
                 await ApplyModerationAsync(request.User, settings);
             }
             finally
@@ -173,6 +169,17 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
             Describe(request.User), request.User.IconUrl ?? request.User.AvatarUrl);
     }
 
+    /// <summary>Sends the local actions, which need no server and never wait behind the API calls.</summary>
+    private static async Task ApplyOscAsync(InstanceUser user, AppSettings settings, string detail)
+    {
+        if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
+            await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
+
+        // A different avatar is only useful if it is not the one already worn, which VRChat reports.
+        if (settings.AutoSafeAvatar && VrchatOscService.Instance.ChangeAvatar(settings.SafeAvatarId))
+            await OperationService.Instance.LogAsync("switchedAvatar", user.UserId, user.Name, detail);
+    }
+
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)
     {
         if (settings.AutoBlock)
@@ -193,12 +200,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     {
         for (var attempt = 0; attempt < 3; attempt++)
         {
-            var wait = Interlocked.Read(ref _lastModerationAt) + ModerationGapMilliseconds -
-                       Environment.TickCount64;
-            if (wait > 0)
-                await Task.Delay((int)wait, _stop.Token);
-
-            Interlocked.Exchange(ref _lastModerationAt, Environment.TickCount64);
+            await PaceAsync();
 
             if (await AuthService.Instance.ModerateUserAsync(userId, type, _stop.Token))
                 return true;
@@ -207,6 +209,17 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         }
 
         return false;
+    }
+
+    /// <summary>Waits until the server would accept another call, and marks the moment it was made.</summary>
+    private async Task PaceAsync()
+    {
+        var wait = Interlocked.Read(ref _lastModerationAt) + ModerationGapMilliseconds -
+                   Environment.TickCount64;
+        if (wait > 0)
+            await Task.Delay((int)wait, _stop.Token);
+
+        Interlocked.Exchange(ref _lastModerationAt, Environment.TickCount64);
     }
 
     private static string Describe(InstanceUser user) =>

@@ -303,6 +303,7 @@
   "Hide the user's chat box, so they cannot flood or harass through it.": "Hide the user's chat box, so they cannot flood or harass through it.",
   "Close VRChat": "Close VRChat",
   "Close VRChat, so the client has as little chance as possible to download and cache their avatar.": "Close VRChat, so the client has as little chance as possible to download and cache their avatar.",
+  "When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.": "When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.",
   "Skip while in VR": "Skip while in VR",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.",
   "Closed VRChat": "Closed VRChat",

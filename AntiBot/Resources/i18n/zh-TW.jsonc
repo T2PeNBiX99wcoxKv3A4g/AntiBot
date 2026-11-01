@@ -301,6 +301,7 @@
   "Hide the user's chat box, so they cannot flood or harass through it.": "隱藏該使用者的聊天框，避免洗頻和騷擾。",
   "Close VRChat": "關閉 VRChat",
   "Close VRChat, so the client has as little chance as possible to download and cache their avatar.": "關閉 VRChat，盡量讓客戶端沒有機會下載並快取對方的頭像。",
+  "When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.": "VRChat 真的結束後，OSC 操作會被跳過，因為已經沒有需要保護的東西了。",
   "Skip while in VR": "VR 模式下跳過",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "使用 VR 頭戴裝置時不關閉 VRChat，因為在 VR 中結束很麻煩。",
   "Closed VRChat": "已關閉 VRChat",

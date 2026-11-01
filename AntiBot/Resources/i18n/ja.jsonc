@@ -301,6 +301,7 @@
   "Hide the user's chat box, so they cannot flood or harass through it.": "そのユーザーのチャットボックスを非表示にし、連投や嫌がらせを防ぎます。",
   "Close VRChat": "VRChat を終了",
   "Close VRChat, so the client has as little chance as possible to download and cache their avatar.": "VRChat を終了し、クライアントが相手のアバターをダウンロードしてキャッシュする機会をできるだけ減らします。",
+  "When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.": "VRChat が実際に終了した場合、守るものが残っていないため OSC の操作はスキップされます。",
   "Skip while in VR": "VR 中はスキップ",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "VR ヘッドセットの使用中は VRChat を終了しません。VR からの終了は負担が大きいためです。",
   "Closed VRChat": "VRChat を終了しました",
