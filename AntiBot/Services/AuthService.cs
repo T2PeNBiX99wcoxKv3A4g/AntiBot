@@ -189,6 +189,14 @@ internal sealed class AuthService : Singleton<AuthService>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
 
 #if DEBUG
+    /// <summary>Debug build only: asks the local client to quit, the same way the automatic action does.</summary>
+    private Task<NativeResponse?> DebugCloseVrchatAsync(NativeContext context)
+    {
+        var closed = VrchatClient.Close();
+        Log.Information("Debug close VRChat: {Closed}", closed);
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.closeVrchat.result", new OkPayload(closed)));
+    }
+
     /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
     private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
     {
@@ -252,6 +260,7 @@ internal sealed class AuthService : Singleton<AuthService>
         "auth.device.poll" => PollDeviceAsync(context),
 #if DEBUG
         "debug.user" => DebugUserAsync(context),
+        "debug.closeVrchat" => DebugCloseVrchatAsync(context),
 #endif
         _ => Task.FromResult<NativeResponse?>(null)
     };

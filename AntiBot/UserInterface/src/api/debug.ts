@@ -17,3 +17,9 @@ export interface DebugUserResult {
 export async function scoreUser(input: string): Promise<DebugUserResult> {
     return await Native.request<DebugUserResult>("debug.user", {userId: input}, 60_000);
 }
+
+/** Debug builds only: asks the local VRChat client to quit the way the automatic action does. */
+export async function closeVrchat(): Promise<boolean> {
+    const result = await Native.request<{ ok: boolean }>("debug.closeVrchat", undefined, 60_000);
+    return result.ok;
+}

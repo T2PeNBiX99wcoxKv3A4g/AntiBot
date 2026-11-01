@@ -1,10 +1,69 @@
 import {useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {type DebugUserResult, scoreUser} from "../api/debug";
+import {type DebugUserResult, closeVrchat, scoreUser} from "../api/debug";
 
-/** Debug builds only: scores any user id or profile link, so the rules can be tried without a bot. */
+/** Debug builds only: the actions that are hard to trigger for real. */
 export function DebugPage() {
+    return (
+        <Page>
+            <CloseClient/>
+            <UserCheck/>
+        </Page>
+    );
+}
+
+/** Asks the local client to quit, so the leave packet is sent the same way as a normal exit. */
+function CloseClient() {
+    const t = useTranslation();
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState("");
+    const [failed, setFailed] = useState(false);
+
+    const run = async () => {
+        setBusy(true);
+        setResult("");
+        setFailed(false);
+
+        try {
+            const closed = await closeVrchat();
+            setFailed(!closed);
+            setResult(closed ? t("VRChat closed.") : t("VRChat did not close. Is it running?"));
+        } catch (err) {
+            setFailed(true);
+            setResult(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <Card>
+            <h2>{t("Close VRChat")}</h2>
+            <p>{t("Asks VRChat to quit normally, so the client tells the instance it is leaving.")}</p>
+
+            <Actions>
+                <Primary disabled={busy} onClick={() => void run()} type="button">
+                    {busy ? t("Working…") : t("Close VRChat")}
+                </Primary>
+            </Actions>
+
+            {result && <Status $failed={failed}>{result}</Status>}
+        </Card>
+    );
+}
+
+function Row({label, value}: { label: string; value: string }) {
+    return (
+        <>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+        </>
+    );
+}
+
+/** Scores any user id or profile link, so the rules can be tried without waiting for a bot. */
+function UserCheck() {
     const t = useTranslation();
     const [input, setInput] = useState("");
     const [busy, setBusy] = useState(false);
@@ -26,57 +85,46 @@ export function DebugPage() {
     };
 
     return (
-        <Page>
-            <Card>
-                <h2>{t("User check")}</h2>
-                <p>{t("Paste a VRChat user id or a profile link to see how it would be scored.")}</p>
+        <Card>
+            <h2>{t("User check")}</h2>
+            <p>{t("Paste a VRChat user id or a profile link to see how it would be scored.")}</p>
 
-                <Form onSubmit={(event) => {
-                    event.preventDefault();
-                    void run();
-                }}>
-                    <Input
-                        onChange={(event) => setInput(event.target.value)}
-                        placeholder="usr_… or https://vrchat.com/home/user/usr_…"
-                        value={input}
-                    />
-                    <Primary disabled={busy || input.trim().length === 0} type="submit">
-                        {busy ? t("Checking…") : t("Check")}
-                    </Primary>
-                </Form>
+            <Form onSubmit={(event) => {
+                event.preventDefault();
+                void run();
+            }}>
+                <Input
+                    onChange={(event) => setInput(event.target.value)}
+                    placeholder="usr_… or https://vrchat.com/home/user/usr_…"
+                    value={input}
+                />
+                <Primary disabled={busy || input.trim().length === 0} type="submit">
+                    {busy ? t("Checking…") : t("Check")}
+                </Primary>
+            </Form>
 
-                {error && <ErrorText>{error}</ErrorText>}
+            {error && <ErrorText>{error}</ErrorText>}
 
-                {result && (
-                    <Report>
-                        <Threat $score={result.threat}>{result.threat}%</Threat>
-                        <Rows>
-                            <Row label={t("Name")} value={result.displayName}/>
-                            <Row label={t("User ID")} value={result.id}/>
-                            <Row label={t("Rank")} value={result.trust ?? t("Unknown")}/>
-                            <Row label={t("Joined")} value={result.dateJoined ?? t("Unknown")}/>
-                            <Row label={t("Platform")} value={result.platform ?? t("Unknown")}/>
-                            <Row label={t("Avatar")}
-                                 value={result.avatarName ?? (result.isRobot ? t("Robot (default)") : t("Unknown"))}/>
-                        </Rows>
-                        <Reasons>
-                            {result.reasons.length > 0
-                                ? result.reasons.map((reason) => <li key={reason}>{reason}</li>)
-                                : <li>{t("No signal matched.")}</li>}
-                        </Reasons>
-                    </Report>
-                )}
-            </Card>
-        </Page>
-    );
-}
-
-function Row({label, value}: { label: string; value: string }) {
-    return (
-        <>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-        </>
+            {result && (
+                <Report>
+                    <Threat $score={result.threat}>{result.threat}%</Threat>
+                    <Rows>
+                        <Row label={t("Name")} value={result.displayName}/>
+                        <Row label={t("User ID")} value={result.id}/>
+                        <Row label={t("Rank")} value={result.trust ?? t("Unknown")}/>
+                        <Row label={t("Joined")} value={result.dateJoined ?? t("Unknown")}/>
+                        <Row label={t("Platform")} value={result.platform ?? t("Unknown")}/>
+                        <Row label={t("Avatar")}
+                             value={result.avatarName ?? (result.isRobot ? t("Robot (default)") : t("Unknown"))}/>
+                    </Rows>
+                    <Reasons>
+                        {result.reasons.length > 0
+                            ? result.reasons.map((reason) => <li key={reason}>{reason}</li>)
+                            : <li>{t("No signal matched.")}</li>}
+                    </Reasons>
+                </Report>
+            )}
+        </Card>
     );
 }
 
@@ -115,6 +163,18 @@ const Form = styled.form`
     display: flex;
     align-items: center;
     gap: 10px;
+`;
+
+const Actions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const Status = styled.p<{ $failed: boolean }>`
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: ${({$failed}) => $failed ? "#f87171" : "#4ade80"};
 `;
 
 const Input = styled.input`
