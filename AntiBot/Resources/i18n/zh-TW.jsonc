@@ -78,6 +78,8 @@
   "account created today": "帳號於今天建立",
   "account created yesterday": "帳號於昨天建立",
   "account created {days} days ago": "帳號於 {days} 天前建立",
+  "account created 1 year ago": "帳號於 1 年前建立",
+  "account created {years} years ago": "帳號於 {years} 年前建立",
   "four-character hex suffix": "4 位十六進位後綴",
   "digits mixed into the name": "名稱中混有數字",
   "long letter-digit-letter pattern": "長字母-數字-字母模式",

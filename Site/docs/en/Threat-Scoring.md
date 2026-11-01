@@ -15,8 +15,11 @@ The score is the sum of the reasons shown next to it, and each reason carries it
 | under 90 days | +25 |
 | under 180 days | +15 |
 | under a year | +8 |
-| under two years | +3 |
-| two years or more | 0 |
+| 1–2 years | 0 |
+| 2–3 years | −10 |
+| 3–4 years | −20 |
+| 4–5 years | −30 |
+| 5 years or more | −40 |
 
 ## Trust rank
 

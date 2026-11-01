@@ -79,6 +79,8 @@
   "account created today": "account created today",
   "account created yesterday": "account created yesterday",
   "account created {days} days ago": "account created {days} days ago",
+  "account created 1 year ago": "account created 1 year ago",
+  "account created {years} years ago": "account created {years} years ago",
   "four-character hex suffix": "four-character hex suffix",
   "digits mixed into the name": "digits mixed into the name",
   "long letter-digit-letter pattern": "long letter-digit-letter pattern",

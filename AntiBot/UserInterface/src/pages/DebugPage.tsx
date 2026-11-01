@@ -227,7 +227,7 @@ function UserCheck() {
                         {result.reasons.length > 0
                             ? result.reasons.map((reason) => (
                                 <li key={reason.text}>
-                                    {t(reason.text, reason.detail ? {days: reason.detail} : undefined)}
+                                    {t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)}
                                     <Weight $up={reason.weight > 0}>
                                         {reason.weight > 0 ? `+${reason.weight}` : reason.weight}
                                     </Weight>

@@ -208,7 +208,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         <ThreatBadge $score={threat}
                                       title={(user.threatReasons ?? [])
                                           .map((reason) =>
-                                              `${t(reason.text, reason.detail ? {days: reason.detail} : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
+                                              `${t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
                                           .join(" · ")}>
                             <AlertIcon size={10}/>
                             {threat}
@@ -324,7 +324,7 @@ export function PlayerDialog({user, now, onClose}: {
                                     <ThreatReasons>
                                         {(user.threatReasons ?? []).map((reason) => (
                                             <ThreatReasonChip $up={reason.weight > 0} key={reason.text}>
-                                                {t(reason.text, reason.detail ? {days: reason.detail} : undefined)}
+                                                {t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)}
                                                 <b>{reason.weight > 0 ? `+${reason.weight}` : reason.weight}</b>
                                             </ThreatReasonChip>
                                         ))}

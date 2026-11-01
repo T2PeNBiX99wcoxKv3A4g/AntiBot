@@ -78,6 +78,8 @@
   "account created today": "本日作成されたアカウント",
   "account created yesterday": "昨日作成されたアカウント",
   "account created {days} days ago": "{days} 日前に作成されたアカウント",
+  "account created 1 year ago": "1 年前に作成されたアカウント",
+  "account created {years} years ago": "{years} 年前に作成されたアカウント",
   "four-character hex suffix": "4 文字の 16 進数サフィックス",
   "digits mixed into the name": "名前に数字が混在",
   "long letter-digit-letter pattern": "長い英字-数字-英字パターン",

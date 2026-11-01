@@ -7,19 +7,27 @@ namespace AntiBot.Services;
 
 /// <summary>
 ///     Scores how likely a user is a bot. Each signal adds to the total, except the ranks above
-///     <c>User</c>, which subtract. The name is capped at 40 and the account age at 40, and the total is
-///     clamped at 0 but deliberately not capped at 100, so a profile matching several strong signals can
-///     exceed it. The threshold in the settings decides when the automatic actions run.
+///     <c>User</c> and accounts older than a year, which subtract. The name is capped at 40 and the age
+///     at 40 on the positive side, and the total is clamped at 0 but deliberately not capped at 100, so
+///     a profile matching several strong signals can exceed it. The threshold in the settings decides
+///     when the automatic actions run.
 /// </summary>
 internal static partial class ThreatScoring
 {
-    /// <summary>Age weights: bots are usually a few days old, so an old account is not a signal at all.</summary>
+    /// <summary>
+    ///     Age weights: bots are usually a few days old, so a fresh account is a strong signal. An old
+    ///     account counts against the suspicion instead: from one year it adds nothing, and every
+    ///     further year subtracts, down to a floor at five years.
+    /// </summary>
     private const int AgeMaxDays = 7;
     private const int AgeMonthDays = 30;
     private const int AgeQuarterDays = 90;
     private const int AgeHalfYearDays = 180;
     private const int AgeYearDays = 365;
     private const int AgeTwoYearsDays = 730;
+    private const int AgeThreeYearsDays = 1095;
+    private const int AgeFourYearsDays = 1460;
+    private const int AgeFiveYearsDays = 1825;
     /// <summary>Wording that only adds the small "something is off" weight.</summary>
     private static readonly string[] FuzzyTerms =
     [
@@ -48,7 +56,7 @@ internal static partial class ThreatScoring
             }
 
             var (ageScore, ageText, ageDetail) = AgeScore(profile.DateJoined);
-            if (ageScore > 0)
+            if (ageScore != 0)
             {
                 score += ageScore;
                 reasons.Add(new(ageText, ageScore, ageDetail));
@@ -112,8 +120,9 @@ internal static partial class ThreatScoring
     }
 
     /// <summary>
-    ///     How new the account is. Bots are usually created days before they are used, so a fresh account
-    ///     is a strong signal and an old one is not a signal at all. Capped at 40, the same as the name.
+    ///     How new the account is. A fresh account is a strong signal; from a year old the age adds
+    ///     nothing, and each further year subtracts, down to a floor of -40 at five years. The positive
+    ///     side is capped at 40, the same as the name.
     /// </summary>
     private static (int Score, string Text, string? Detail) AgeScore(string? dateJoined)
     {
@@ -131,21 +140,31 @@ internal static partial class ThreatScoring
             <= AgeMonthDays => 35,
             <= AgeQuarterDays => 25,
             <= AgeHalfYearDays => 15,
-            <= AgeYearDays => 8,
-            <= AgeTwoYearsDays => 3,
-            _ => 0
+            < AgeYearDays => 8,
+            < AgeTwoYearsDays => 0,
+            < AgeThreeYearsDays => -10,
+            < AgeFourYearsDays => -20,
+            < AgeFiveYearsDays => -30,
+            _ => -40
         };
 
         if (score == 0)
             return (0, "", null);
 
-        return (int)days switch
-        {
-            <= 0 => (score, "account created today", null),
-            1 => (score, "account created yesterday", null),
-            var value => (score, "account created {days} days ago",
-                value.ToString(CultureInfo.InvariantCulture))
-        };
+        var whole = (int)days;
+
+        if (whole <= 0)
+            return (score, "account created today", null);
+
+        if (whole == 1)
+            return (score, "account created yesterday", null);
+
+        if (whole < AgeYearDays)
+            return (score, "account created {days} days ago", whole.ToString(CultureInfo.InvariantCulture));
+
+        return whole / 365 == 1
+            ? (score, "account created 1 year ago", null)
+            : (score, "account created {years} years ago", whole.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>
