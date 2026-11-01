@@ -1,12 +1,17 @@
-import {useEffect, useState} from "react";
+import {lazy, Suspense, useEffect, useState} from "react";
 import styled from "styled-components";
 import {loadStrings, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import type {InstanceUser} from "../api/instance";
 import {type AppInfo, setStartup, startupStatus, type StartupStatus} from "../api/system";
-import {AttributionBrowser} from "../components/AttributionBrowser";
+import {Dropdown} from "../components/Dropdown";
 import {FolderIcon, TrashIcon} from "../components/Icons";
+
+/* The licence texts are large, so the notices page is loaded only when it is opened. */
+const AttributionPage = lazy(() =>
+    import("../components/AttributionPage").then((module) => ({default: module.AttributionPage}))
+);
 
 /** Language names are always shown in their own language. */
 const LOCALE_NAMES: Record<string, string> = {
@@ -44,6 +49,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [savedStartHidden, setSavedStartHidden] = useState(false);
     const [startup, setStartupState] = useState<StartupStatus | null>(null);
     const [startupBusy, setStartupBusy] = useState(false);
+    const [attributionOpen, setAttributionOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -196,11 +202,14 @@ export function SettingsPage({info}: SettingsPageProps) {
                 <Card>
                     <Field>
                         <Label>{t("Language")}</Label>
-                        <Select onChange={(event) => void changeLanguage(event.target.value)} value={language}>
-                            {locales.map((locale) => (
-                                <option key={locale} value={locale}>{LOCALE_NAMES[locale] ?? locale}</option>
-                            ))}
-                        </Select>
+                        <Dropdown
+                            onChange={(value) => void changeLanguage(value)}
+                            options={locales.map((locale) => ({
+                                value: locale,
+                                label: LOCALE_NAMES[locale] ?? locale,
+                            }))}
+                            value={language}
+                        />
                         <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
                     </Field>
 
@@ -460,17 +469,13 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
-                <SectionHeader>
-                    <h2>{t("Open source attribution")}</h2>
-                    <span>{t("license")}</span>
-                </SectionHeader>
+            <AttributionLink onClick={() => setAttributionOpen(true)} type="button">
+                {t("Open source attribution")}
+            </AttributionLink>
 
-                <Card>
-                    <Hint>{t("Open source licenses for the libraries AntiBot uses.")}</Hint>
-                    <AttributionBrowser/>
-                </Card>
-            </Section>
+            <Suspense fallback={null}>
+                {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
+            </Suspense>
         </Stack>
     );
 }
@@ -589,21 +594,6 @@ const Input = styled.input`
     }
 `;
 
-const Select = styled.select`
-    padding: 8px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: var(--bg-input);
-    color: var(--text-primary);
-    font: inherit;
-    font-size: 12px;
-
-    &:focus {
-        outline: none;
-        border-color: var(--border-color-hover);
-    }
-`;
-
 const Label = styled.span`
     font-size: 10px;
     font-weight: 600;
@@ -663,6 +653,23 @@ const Button = styled.button`
 const ErrorText = styled.span`
     color: var(--danger);
     font-size: 11px;
+`;
+
+/** A quiet line at the very bottom that opens the notices page. */
+const AttributionLink = styled.button`
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    &:hover {
+        color: var(--text-secondary);
+    }
 `;
 
 const Range = styled.input`
