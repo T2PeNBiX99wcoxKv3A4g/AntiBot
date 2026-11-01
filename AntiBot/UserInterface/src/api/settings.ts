@@ -19,6 +19,8 @@ export interface SettingsView {
     whitelist: string[];
     language: string;
     startHidden: boolean;
+    /** 0 uses the port VRChat reports. */
+    oscPort: number;
 }
 
 export interface AppSettings {
@@ -37,6 +39,7 @@ export interface AppSettings {
     whitelist: string[];
     language: string;
     startHidden: boolean;
+    oscPort: number;
 }
 
 const empty: SettingsView = {
@@ -56,6 +59,7 @@ const empty: SettingsView = {
     whitelist: [],
     language: "en",
     startHidden: false,
+    oscPort: 0,
 };
 
 /** Reads the log folder, the avatar databases and the protection settings. */

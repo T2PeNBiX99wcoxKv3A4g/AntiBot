@@ -56,7 +56,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden);
+            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
 
     /// <summary>
     ///     Older builds wrote the settings into the data folder, next to the session; move them once so
@@ -113,6 +113,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             LogDirectory = directory,
             Language = NormalizeLanguage(settings.Language),
             StartHidden = settings.StartHidden,
+            OscPort = Math.Clamp(settings.OscPort, 0, 65535),
             AvatarApiProviders = providers,
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,

@@ -28,7 +28,8 @@ internal sealed record SettingsPayload(
     int ThreatThreshold,
     string[] Whitelist,
     string Language,
-    bool StartHidden);
+    bool StartHidden,
+    int OscPort);
 
 /// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
 internal sealed record StartupRequest(bool Enabled);
@@ -122,6 +123,12 @@ internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMo
 
 /// <summary>Body for <c>debug.avatar</c>: whether the switch was sent, and why it may not have been.</summary>
 internal sealed record DebugAvatarPayload(bool Ok, bool Listening, bool Already, bool Configured);
+
+/// <summary>Body for <c>osc.status</c>: what the host knows about VRChat's OSC.</summary>
+internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving);
+
+/// <summary>Body for <c>osc.test</c>: whether the test message was sent, plus the same state.</summary>
+internal sealed record OscTestPayload(bool Sent, bool Listening, int Port, bool Receiving);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

@@ -3,6 +3,7 @@ import styled from "styled-components";
 import {loadStrings, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
+import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
 import {type AppInfo, setStartup, startupStatus, type StartupStatus} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
@@ -27,6 +28,7 @@ const SECTIONS = [
     {id: "settings-startup", label: "Start with the system"},
     {id: "settings-log-source", label: "Log source"},
     {id: "settings-avatar-lookups", label: "Avatar name lookups"},
+    {id: "settings-osc", label: "OSC"},
     {id: "settings-protection", label: "Automatic protection"},
     {id: "settings-whitelist", label: "Whitelist"},
     {id: "settings-build", label: "Build"},
@@ -58,6 +60,10 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [language, setLanguage] = useState("en");
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
+    const [oscPort, setOscPort] = useState(0);
+    const [oscState, setOscState] = useState<OscStatus | null>(null);
+    const [oscResult, setOscResult] = useState("");
+    const [oscBusy, setOscBusy] = useState(false);
     const [startup, setStartupState] = useState<StartupStatus | null>(null);
     const [startupBusy, setStartupBusy] = useState(false);
     const [attributionOpen, setAttributionOpen] = useState(false);
@@ -75,6 +81,28 @@ export function SettingsPage({info}: SettingsPageProps) {
                 window.setTimeout(() => void loadPeople(attempt + 1), 1200);
         } catch {
             // The host failed to answer; ids are shown until it does.
+        }
+    };
+
+    /** Whether VRChat is advertising OSC, which the host reads from the log. */
+    const refreshOsc = () => {
+        void oscStatus().then(setOscState, () => setOscState(null));
+    };
+
+    const runOscTest = async () => {
+        setOscBusy(true);
+        setOscResult("");
+
+        try {
+            const result = await testOsc();
+            setOscState({listening: result.listening, port: result.port, receiving: result.receiving});
+            setOscResult(result.sent
+                ? t("Sent to port {port}. If the Quick Menu opened, OSC is working.", {port: result.port})
+                : t("Could not send the test message."));
+        } catch (reason) {
+            setOscResult(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setOscBusy(false);
         }
     };
 
@@ -97,8 +125,10 @@ export function SettingsPage({info}: SettingsPageProps) {
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? "en");
             setStartHidden(settings.startHidden);
+            setOscPort(settings.oscPort ?? 0);
 
             void loadPeople(0);
+            refreshOsc();
         }, () => setError(t("Could not read the settings.")));
     }, []);
 
@@ -150,6 +180,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         whitelist,
         language,
         startHidden,
+        oscPort,
         ...overrides,
     });
 
@@ -386,6 +417,49 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
+            <Section id="settings-osc">
+                <SectionHeader>
+                    <h2>{t("OSC")}</h2>
+                </SectionHeader>
+
+                <Card>
+                    <Field>
+                        <Label>{t("OSC port")}</Label>
+                        <Row>
+                            <Input
+                                aria-label={t("OSC port")}
+                                max={65535}
+                                min={0}
+                                onBlur={() => void persist()}
+                                onChange={(event) => setOscPort(Number(event.target.value) || 0)}
+                                type="number"
+                                value={oscPort}
+                            />
+                        </Row>
+                        <Hint>
+                            {t("Leave 0 to use the port VRChat reports; set it when VRChat was started with a custom --osc port.")}
+                        </Hint>
+                    </Field>
+
+                    <Field>
+                        <Row>
+                            <Button disabled={oscBusy} onClick={() => void runOscTest()} type="button">
+                                {oscBusy ? t("Testing…") : t("Test connection")}
+                            </Button>
+                            <Hint>{t("Opens VRChat's Quick Menu when OSC is working.")}</Hint>
+                        </Row>
+
+                        <Hint>
+                            {oscState?.listening
+                                ? t("VRChat is advertising OSC on port {port}.", {port: oscState.port})
+                                : t("VRChat is not advertising OSC. Enable it in the Action Menu.")}
+                        </Hint>
+
+                        {oscResult && <Hint>{oscResult}</Hint>}
+                    </Field>
+                </Card>
+            </Section>
+
             <Section id="settings-protection">
                 <SectionHeader>
                     <h2>{t("Automatic protection")}</h2>
@@ -445,6 +519,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 setAutoSafeMode(value);
                                 void persist({autoSafeMode: value});
                             }}
+                            requires={t("Requires OSC")}
                             title={t("Safe Mode (OSC)")}
                         />
                         <Toggle
@@ -454,6 +529,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 setAutoSafeAvatar(value);
                                 void persist({autoSafeAvatar: value});
                             }}
+                            requires={t("Requires OSC")}
                             title={t("Switch avatar (OSC)")}
                         />
                         <ToggleField>
@@ -625,12 +701,14 @@ function SecretInput({value, onChange, onBlur, placeholder, disabled}: {
     );
 }
 
-function Toggle({checked, onChange, title, hint, disabled = false}: {
+function Toggle({checked, onChange, title, hint, disabled = false, requires}: {
     checked: boolean;
     onChange: (value: boolean) => void;
     title: string;
     hint: string;
     disabled?: boolean;
+    /** Shown next to the title when the action only works with something else turned on. */
+    requires?: string;
 }) {
     return (
         <ToggleItem>
@@ -642,6 +720,7 @@ function Toggle({checked, onChange, title, hint, disabled = false}: {
                     type="checkbox"
                 />
                 <span>{title}</span>
+                {requires && <Requirement>{requires}</Requirement>}
             </ToggleLabel>
             <ToggleHint>{hint}</ToggleHint>
         </ToggleItem>
@@ -934,6 +1013,16 @@ const ToggleHint = styled.span`
     padding-left: 24px;
     font-size: 10.5px;
     color: var(--text-muted);
+`;
+
+/** Marks an action that only works when VRChat's OSC is enabled. */
+const Requirement = styled.span`
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.14);
+    color: #93c5fd;
+    font-family: var(--font-mono);
+    font-size: 9px;
 `;
 
 const WhitelistList = styled.div`

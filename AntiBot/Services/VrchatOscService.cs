@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using AntiBot.Messaging;
 using AntiBot.Models;
+using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 using Serilog;
 
@@ -27,14 +29,15 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private readonly UdpClient _udp = new();
     private readonly UdpClient? _receive;
     private string? _currentAvatar;
+    private int _detectedPort;
     private bool _oscListening;
-    private int _port = DefaultPort;
     private bool _safeMode;
 
     public VrchatOscService()
     {
         // The log says whether OSC is enabled and what the shield level is; nothing else reports it.
         VrchatLogService.Instance.LinesRead += OnLinesRead;
+        NativeBridge.MessageReceived += HandleMessageAsync;
 
         _receive = TryListen();
 
@@ -51,6 +54,44 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// <summary>The avatar VRChat last reported wearing, or null while it has not said.</summary>
     public string? CurrentAvatar => _currentAvatar;
 
+    /// <summary>The port messages are sent to: the configured one, else the one VRChat reported.</summary>
+    public int Port => SettingsService.Instance.Current.OscPort is > 0 and var configured
+        ? configured
+        : _detectedPort > 0
+            ? _detectedPort
+            : DefaultPort;
+
+    /// <summary>Whether VRChat's own OSC output is being received, which tells the current avatar.</summary>
+    public bool IsReceiving => _receive is not null;
+
+    private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
+    {
+        "osc.status" => Task.FromResult<NativeResponse?>(context.Reply("osc.status.result",
+            new OscStatusPayload(IsListening, Port, IsReceiving))),
+        "osc.test" => Task.FromResult<NativeResponse?>(TestConnection(context)),
+        _ => Task.FromResult<NativeResponse?>(null)
+    };
+
+    /// <summary>Opens VRChat's Quick Menu, which is a visible sign that the messages arrive.</summary>
+    private NativeResponse TestConnection(NativeContext context)
+    {
+        var sent = false;
+
+        try
+        {
+            Send("/input/QuickMenuToggleRight", ",T");
+            Send("/input/QuickMenuToggleRight", ",F");
+            sent = true;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Could not send the OSC test message");
+        }
+
+        Log.Information("OSC test on port {Port}: {Sent}", Port, sent);
+        return context.Reply("osc.test.result", new OscTestPayload(sent, IsListening, Port, IsReceiving));
+    }
+
     /// <summary>
     ///     Presses VRChat's panic button, which turns Safe Mode on and replaces every non-friend avatar
     ///     at once. Does nothing when OSC is off or Safe Mode already looks on, because the button is a
@@ -66,7 +107,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             Send("/input/PanicButton", ",T");
             Send("/input/PanicButton", ",F");
             _safeMode = true;
-            Log.Information("Safe Mode requested over OSC on port {Port}", _port);
+            Log.Information("Safe Mode requested over OSC on port {Port}", Port);
             return true;
         }
         catch (Exception ex)
@@ -167,7 +208,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
         if (argument is not null)
             message.AddRange(Padded(argument));
 
-        _udp.Send([.. message], new IPEndPoint(IPAddress.Loopback, _port));
+        _udp.Send([.. message], new IPEndPoint(IPAddress.Loopback, Port));
     }
 
     private static byte[] Padded(string value)
@@ -189,7 +230,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
                 var port = message[(message.IndexOf(OscLine, StringComparison.Ordinal) + OscLine.Length)..].Trim();
                 if (int.TryParse(port, out var value))
                 {
-                    _port = value;
+                    _detectedPort = value;
                     _oscListening = true;
                 }
             }

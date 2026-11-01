@@ -15,6 +15,9 @@ public sealed record AppSettings
     /// <summary>UI and backend language: <c>en</c>, <c>ja</c>, <c>zh-CN</c> or <c>zh-TW</c>.</summary>
     public string Language { get; init; } = "en";
 
+    /// <summary>The port VRChat listens on for OSC; 0 uses the one its log reports.</summary>
+    public int OscPort { get; init; }
+
     /// <summary>Start with the window hidden in the tray.</summary>
     public bool StartHidden { get; init; }
 
