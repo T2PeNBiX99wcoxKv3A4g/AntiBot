@@ -228,6 +228,7 @@
   "Save": "Save",
   "Currently: {storage}": "Currently: {storage}",
   "Sign in to change this.": "Sign in to change this.",
+  "Change encryption": "Change encryption",
   "Sign in first.": "Sign in first.",
   "Enter the password that unlocks the session.": "Enter the password that unlocks the session.",
   "The passwords do not match.": "The passwords do not match.",

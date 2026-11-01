@@ -197,7 +197,7 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
             </Name>
             <TrustCell>
                 {loaded
-                    ? user.trust ? <Trust $trust={user.trust}>{t(user.trust)}</Trust> : <Dash>{t("—")}</Dash>
+                    ? user.trust ? <Trust $trust={user.trust}>{user.trust}</Trust> : <Dash>{t("—")}</Dash>
                     : <SkeletonBar/>}
             </TrustCell>
             <PronounCell>
@@ -270,7 +270,7 @@ export function PlayerDialog({user, now, onClose}: {
                 <Details>
                     <h2>{user.name}</h2>
                     <Badges>
-                        {user.trust && <Trust $trust={user.trust}>{t(user.trust)}</Trust>}
+                        {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
                         {user.isRobot && <Robot>{t("robot")}</Robot>}
                         {user.whitelisted && <Whitelisted>{t("whitelisted")}</Whitelisted>}
                         {user.local && <You>{t("you")}</You>}
@@ -1082,13 +1082,12 @@ const Robot = styled.span`
 /** VRChat's trust tags, in the colours the site uses for them. */
 function trustColor(trust: string) {
     switch (trust) {
-        case "Trusted":
+        case "Trusted User":
             return "#c4b5fd";
-        case "Known":
+        case "Known User":
             return "#93c5fd";
         case "User":
             return "#86efac";
-        case "New":
         case "New User":
             return "#fcd34d";
         case "Nuisance":
@@ -1100,13 +1099,12 @@ function trustColor(trust: string) {
 
 function trustBackground(trust: string) {
     switch (trust) {
-        case "Trusted":
+        case "Trusted User":
             return "rgba(167, 139, 250, 0.16)";
-        case "Known":
+        case "Known User":
             return "rgba(96, 165, 250, 0.16)";
         case "User":
             return "rgba(74, 222, 128, 0.14)";
-        case "New":
         case "New User":
             return "rgba(250, 204, 21, 0.14)";
         case "Nuisance":

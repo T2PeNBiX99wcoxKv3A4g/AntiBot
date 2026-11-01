@@ -18,7 +18,7 @@ import {
 } from "../api/auth";
 import {EyeIcon, EyeOffIcon, KeyIcon, QrIcon, ShieldIcon, UserIcon} from "../components/Icons";
 
-type Run = (action: () => Promise<AuthSnapshot>) => Promise<void>;
+type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
 /** The VRChat account: sign-in, the second factor, and how the session is kept. */
 export function AccountPage() {
@@ -51,8 +51,10 @@ export function AccountPage() {
 
         try {
             setAuth(await action());
+            return true;
         } catch (err) {
             setError(err instanceof Error ? err.message : String(err));
+            return false;
         } finally {
             setBusy(false);
         }
@@ -431,9 +433,28 @@ function StorageChoice({auth, busy, error, run}: {
     const [localError, setLocalError] = useState("");
 
     const signedIn = auth.state === "loggedIn";
+    const saved = auth.storage !== "none";
+    const [editing, setEditing] = useState(!saved);
+    const lastStorage = useRef(auth.storage);
+
+    // The host answers after mount; once a mode is really stored, collapse the choices.
+    useEffect(() => {
+        if (lastStorage.current === auth.storage) return;
+
+        lastStorage.current = auth.storage;
+        setEditing(auth.storage === "none");
+    }, [auth.storage]);
 
     // Saving is only meaningful when the choice differs from what is stored.
     const dirty = mode !== auth.storage || (mode === "password" && password.length > 0);
+
+    const cancel = () => {
+        setMode(preferred);
+        setPassword("");
+        setConfirm("");
+        setLocalError("");
+        setEditing(false);
+    };
 
     const save = () => {
         if (!signedIn) {
@@ -454,9 +475,12 @@ function StorageChoice({auth, busy, error, run}: {
         }
 
         setLocalError("");
-        void run(() => saveStorage(mode, mode === "password" ? password : undefined)).then(() => {
+        void run(() => saveStorage(mode, mode === "password" ? password : undefined)).then((ok) => {
+            if (!ok) return;
+
             setPassword("");
             setConfirm("");
+            setEditing(false);
         });
     };
 
@@ -472,6 +496,8 @@ function StorageChoice({auth, busy, error, run}: {
                 </div>
             </CardHead>
 
+            {!saved || editing ? (
+                <>
             <Options>
                 <Option
                     $active={mode === "software"}
@@ -585,12 +611,15 @@ function StorageChoice({auth, busy, error, run}: {
                 <Primary disabled={busy || !signedIn || !dirty} onClick={save} type="button">
                     {busy ? t("Saving…") : t("Save")}
                 </Primary>
-                <Muted>
-                    {signedIn
-                        ? t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})
-                        : t("Sign in to change this.")}
-                </Muted>
+                {saved && <Secondary onClick={cancel} type="button">{t("Cancel")}</Secondary>}
             </Actions>
+                </>
+            ) : (
+                <SavedRow>
+                    <SavedValue>{t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})}</SavedValue>
+                    <Secondary onClick={() => setEditing(true)} type="button">{t("Change encryption")}</Secondary>
+                </SavedRow>
+            )}
         </Card>
     );
 }
@@ -879,6 +908,24 @@ const Muted = styled.span`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
+`;
+
+/** The collapsed state of the storage choice: only the current mode and a way to change it. */
+const SavedRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+`;
+
+const SavedValue = styled.span`
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
 `;
 
 const ProfileRow = styled.div`

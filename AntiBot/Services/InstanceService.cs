@@ -717,9 +717,9 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         if (tags.Contains("system_troll") || tags.Contains("system_probable_troll"))
             return "Nuisance";
         if (tags.Contains("system_trust_veteran"))
-            return "Trusted";
+            return "Trusted User";
         if (tags.Contains("system_trust_trusted"))
-            return "Known";
+            return "Known User";
         if (tags.Contains("system_trust_known"))
             return "User";
         if (tags.Contains("system_trust_basic"))

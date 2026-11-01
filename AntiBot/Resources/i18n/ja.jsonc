@@ -226,6 +226,7 @@
   "Save": "保存",
   "Currently: {storage}": "現在: {storage}",
   "Sign in to change this.": "変更するにはサインインしてください。",
+  "Change encryption": "暗号化方式を変更",
   "Sign in first.": "先にサインインしてください。",
   "Enter the password that unlocks the session.": "セッションを解除するパスワードを入力してください。",
   "The passwords do not match.": "パスワードが一致しません。",
