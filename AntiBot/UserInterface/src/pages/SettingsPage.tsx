@@ -397,14 +397,14 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <ThresholdValue>{threshold}%</ThresholdValue>
                         </Row>
                         <Hint>
-                            {t("At or above this score the actions below run. Friends and whitelisted users are never acted on.")}
+                            {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
                         </Hint>
                     </Field>
 
                     <ToggleRow>
                         <Toggle
                             checked={autoBlock}
-                            hint={t("Block the user in VRChat, so you no longer see or hear them.")}
+                            hint={t("Block the user. VRChat may then refuse to send them your avatar if it checks blocks on the server; it may also have no effect.")}
                             onChange={(value) => {
                                 setAutoBlock(value);
                                 void persist({autoBlock: value});
@@ -413,7 +413,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoAvatar}
-                            hint={t("Turn avatar interactions off for the user.")}
+                            hint={t("Turn the user's avatar interactions off, so their avatar cannot trigger anything on yours.")}
                             onChange={(value) => {
                                 setAutoAvatar(value);
                                 void persist({autoDisableAvatarInteraction: value});
@@ -422,7 +422,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoChat}
-                            hint={t("Mute the user's chat box.")}
+                            hint={t("Hide the user's chat box, so they cannot flood or harass through it.")}
                             onChange={(value) => {
                                 setAutoChat(value);
                                 void persist({autoHideChatBox: value});
@@ -431,7 +431,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoClose}
-                            hint={t("Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.")}
+                            hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.")}
                             onChange={(value) => {
                                 setAutoClose(value);
                                 void persist({autoCloseVrchat: value});
@@ -450,7 +450,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoReject}
-                            hint={t("Hide friend requests from high-threat users; undo from the request list.")}
+                            hint={t("Hide friend requests from any user at or above the threshold; undo from the request list.")}
                             onChange={(value) => {
                                 setAutoReject(value);
                                 void persist({autoRejectFriendRequests: value});
