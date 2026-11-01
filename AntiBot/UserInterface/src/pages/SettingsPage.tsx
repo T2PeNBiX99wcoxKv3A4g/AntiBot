@@ -449,13 +449,26 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoSafeAvatar}
-                            hint={t("Switch to another avatar over OSC when a user reaches the threshold. It must be one of your favourites, recents or uploads, and it is not switched back.")}
+                            hint={t("Switch to another avatar over OSC when a user reaches the threshold. It is not switched back.")}
                             onChange={(value) => {
                                 setAutoSafeAvatar(value);
                                 void persist({autoSafeAvatar: value});
                             }}
                             title={t("Switch avatar (OSC)")}
                         />
+                        <ToggleField>
+                            <Label>{t("Safe avatar id")}</Label>
+                            <SecretInput
+                                disabled={!autoSafeAvatar}
+                                onBlur={() => void persist()}
+                                onChange={setSafeAvatarId}
+                                placeholder="avtr_…"
+                                value={safeAvatarId}
+                            />
+                            <Hint>
+                                {t("Only avatars in your favourites, your recents or your own uploads can be used. Copy the id (avtr_…) from the avatar's page on vrchat.com.")}
+                            </Hint>
+                        </ToggleField>
                         <Toggle
                             checked={autoClose}
                             hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.")}
@@ -485,20 +498,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Reject friend requests")}
                         />
                     </ToggleRow>
-
-                    <Field>
-                        <Label>{t("Safe avatar id")}</Label>
-                        <SecretInput
-                            disabled={!autoSafeAvatar}
-                            onBlur={() => void persist()}
-                            onChange={setSafeAvatarId}
-                            placeholder="avtr_…"
-                            value={safeAvatarId}
-                        />
-                        <Hint>
-                            {t("Paste the avatar id. VRChat ignores ids it cannot use, and the switch is not undone.")}
-                        </Hint>
-                    </Field>
                 </Card>
             </Section>
 
@@ -903,6 +902,14 @@ const ToggleRow = styled.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
+`;
+
+/** The field that belongs to a toggle, lined up under its text. */
+const ToggleField = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-left: 24px;
 `;
 
 const ToggleItem = styled.label`
