@@ -1,6 +1,6 @@
-import {type FormEvent, useEffect, useState} from "react";
+import {type FormEvent, useCallback, useEffect, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {Native, useTranslation} from "@photino-net-utils/bridge";
 import {
     type AuthSnapshot,
     type AuthStorage,
@@ -16,7 +16,7 @@ import {
     unlock,
     verify,
 } from "../api/auth";
-import {EyeIcon, EyeOffIcon, KeyIcon, QrIcon, ShieldIcon, UserIcon} from "../components/Icons";
+import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, UserIcon} from "../components/Icons";
 
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
@@ -71,8 +71,9 @@ export function AccountPage() {
     else
         content = <LoginForm busy={busy} error={error} run={run} onSignedIn={setAuth}/>;
 
+    // Before sign-in the page is a full-width stage so the form can sit in the middle of it.
     return (
-        <Page>
+        <Page $wide={auth.state !== "loggedIn"}>
             {content}
             {auth.state === "loggedIn" && <StorageChoice auth={auth} busy={busy} error={error} run={run}/>}
         </Page>
@@ -88,7 +89,6 @@ function LoginForm({busy, error, run, onSignedIn}: {
     const t = useTranslation();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    const [device, setDevice] = useState(false);
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
@@ -96,52 +96,54 @@ function LoginForm({busy, error, run, onSignedIn}: {
     };
 
     return (
-        <>
-            <Card>
-                <CardHead>
-                    <UserIcon size={20}/>
-                    <div>
-                        <h2>{t("Sign in to VRChat")}</h2>
+        <AuthStage>
+            <LoginCard>
+                <LoginSide>
+                    <LoginHead>
+                        <Logo>
+                            <UserIcon size={22}/>
+                        </Logo>
+                        <h1>{t("Sign in to VRChat")}</h1>
                         <p>{t("The password is used for this one request and is never stored.")}</p>
-                    </div>
-                </CardHead>
+                    </LoginHead>
 
-                <Form onSubmit={submit}>
-                    <Field>
-                        <Label htmlFor="username">{t("Username or email")}</Label>
-                        <UsernameInput onChange={setUsername} value={username}/>
-                    </Field>
+                    <Form onSubmit={submit}>
+                        <Field>
+                            <Label htmlFor="username">{t("Username or email")}</Label>
+                            <UsernameInput onChange={setUsername} value={username}/>
+                        </Field>
 
-                    <Field>
-                        <Label htmlFor="password">{t("Password")}</Label>
-                        <PasswordInput
-                            autoComplete="current-password"
-                            id="password"
-                            onChange={setPassword}
-                            value={password}
-                        />
-                    </Field>
+                        <Field>
+                            <Label htmlFor="password">{t("Password")}</Label>
+                            <PasswordInput
+                                autoComplete="current-password"
+                                id="password"
+                                onChange={setPassword}
+                                value={password}
+                            />
+                        </Field>
 
-                    {error && <ErrorText>{error}</ErrorText>}
+                        {error && <ErrorText>{error}</ErrorText>}
 
-                    <Actions>
-                        <Primary disabled={busy} type="submit">
+                        <Submit disabled={busy} type="submit">
                             {busy ? t("Signing in…") : t("Sign in")}
-                        </Primary>
-                        <Secondary onClick={() => setDevice((open) => !open)} type="button">
-                            <QrIcon size={15}/>
-                            {t("Use a device code")}
-                        </Secondary>
-                    </Actions>
-                </Form>
+                        </Submit>
+                    </Form>
 
-                <Note>
-                    {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable. The password is used for this one request and is never stored; the session is kept out of the settings folder.")}
-                </Note>
-            </Card>
+                    <Note>
+                        {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable. The password is used for this one request and is never stored; the session is kept out of the settings folder.")}
+                    </Note>
+                </LoginSide>
 
-            {device && <DeviceLogin onSignedIn={onSignedIn}/>}
-        </>
+                <QrSide>
+                    <div>
+                        <h2>{t("Or scan to sign in")}</h2>
+                        <p>{t("Approve it in the VRChat app; the password never reaches AntiBot.")}</p>
+                    </div>
+                    <DeviceLogin onSignedIn={onSignedIn}/>
+                </QrSide>
+            </LoginCard>
+        </AuthStage>
     );
 }
 
@@ -169,8 +171,8 @@ function TwoFactorForm({auth, busy, error, run}: {
     };
 
     return (
-        <>
-            <Card>
+        <AuthStage>
+            <NarrowCard>
                 <CardHead>
                     <ShieldIcon size={20}/>
                     <div>
@@ -203,14 +205,12 @@ function TwoFactorForm({auth, busy, error, run}: {
 
                     {error && <ErrorText>{error}</ErrorText>}
 
-                    <Actions>
-                        <Primary disabled={busy} type="submit">
-                            {busy ? t("Verifying…") : t("Verify")}
-                        </Primary>
-                    </Actions>
+                    <Submit disabled={busy} type="submit">
+                        {busy ? t("Verifying…") : t("Verify")}
+                    </Submit>
                 </Form>
-            </Card>
-        </>
+            </NarrowCard>
+        </AuthStage>
     );
 }
 
@@ -230,8 +230,8 @@ function UnlockForm({auth, busy, error, run}: {
     };
 
     return (
-        <>
-            <Card>
+        <AuthStage>
+            <NarrowCard>
                 <CardHead>
                     <KeyIcon size={20}/>
                     <div>
@@ -260,19 +260,17 @@ function UnlockForm({auth, busy, error, run}: {
 
                     {error && <ErrorText>{error}</ErrorText>}
 
-                    <Actions>
-                        <Primary disabled={busy} type="submit">
-                            {busy ? t("Unlocking…") : hello ? t("Unlock with Windows Hello") : t("Unlock")}
-                        </Primary>
-                        <Secondary onClick={() => void run(async () => {
-                            return await saveStorage("none");
-                        })} type="button">
-                            {t("Forget it")}
-                        </Secondary>
-                    </Actions>
+                    <Submit disabled={busy} type="submit">
+                        {busy ? t("Unlocking…") : hello ? t("Unlock with Windows Hello") : t("Unlock")}
+                    </Submit>
+                    <SecondaryInline onClick={() => void run(async () => {
+                        return await saveStorage("none");
+                    })} type="button">
+                        {t("Forget it")}
+                    </SecondaryInline>
                 </Form>
-            </Card>
-        </>
+            </NarrowCard>
+        </AuthStage>
     );
 }
 
@@ -303,9 +301,9 @@ function Profile({auth, busy, error, run}: {
                             })}</p>
                         )}
                     </Identity>
-                    <Secondary disabled={busy} onClick={() => void run(logout)} type="button">
+                    <SignOut disabled={busy} onClick={() => void run(logout)} type="button">
                         {t("Sign out")}
-                    </Secondary>
+                    </SignOut>
                 </ProfileRow>
 
                 {error && <ErrorText>{error}</ErrorText>}
@@ -612,6 +610,31 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
     const [device, setDevice] = useState<DeviceCode | null>(null);
     const [error, setError] = useState("");
     const [expired, setExpired] = useState(false);
+    const [starting, setStarting] = useState(true);
+
+    const start = useCallback(async () => {
+        setError("");
+        setExpired(false);
+        setStarting(true);
+
+        try {
+            setDevice(await startDevice());
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setStarting(false);
+        }
+    }, []);
+
+    // The code is shown next to the password form, so it is fetched as soon as the page opens.
+    useEffect(() => {
+        if (!Native.available) {
+            setStarting(false);
+            return;
+        }
+
+        void start();
+    }, [start]);
 
     useEffect(() => {
         if (!device) return;
@@ -655,61 +678,29 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
         };
     }, [device, onSignedIn]);
 
-    const start = async () => {
-        setError("");
-        setExpired(false);
-
-        try {
-            setDevice(await startDevice());
-        } catch (err) {
-            setError(err instanceof Error ? err.message : String(err));
-        }
-    };
-
-    if (!device)
-        return (
-            <Card>
-                <CardHead>
-                    <QrIcon size={20}/>
-                    <div>
-                        <h2>{t("Device sign-in")}</h2>
-                        <p>{t("Approve the sign-in on your phone; the password never reaches AntiBot.")}</p>
-                    </div>
-                </CardHead>
-                {error && <ErrorText>{error}</ErrorText>}
-                <Actions>
-                    <Secondary onClick={() => void start()} type="button">{t("Start")}</Secondary>
-                </Actions>
-            </Card>
-        );
+    const failed = !!error || expired;
 
     return (
-        <Card>
-            <CardHead>
-                <QrIcon size={20}/>
-                <div>
-                    <h2>{t("Approve this sign-in")}</h2>
-                    <p>{t("Scan the code, or open the link, and approve it in the VRChat app or site.")}</p>
-                </div>
-            </CardHead>
-
-            <DeviceBody>
-                {device.qrDataUrl
+        <QrPanel>
+            <QrFrame $dim={!device || failed}>
+                {device?.qrDataUrl
                     ? <Qr alt={t("Device sign-in")} src={device.qrDataUrl}/>
-                    : <p>{device.url}</p>}
+                    : <QrEmpty>{starting ? t("Preparing the code…") : t("The sign-in code is unavailable.")}</QrEmpty>}
+            </QrFrame>
+
+            {failed
+                ? <QrStatus>
+                    <span>{error || t("The code expired. Start again.")}</span>
+                    <LinkButton onClick={() => void start()} type="button">{t("Try again")}</LinkButton>
+                </QrStatus>
+                : <QrStatus>{device ? t("Waiting for approval…") : t("Preparing the code…")}</QrStatus>}
+
+            {device && (
                 <LinkBox>
-                    <a href={device.url} rel="noreferrer" target="_blank">{device.url}</a>
+                    <a href={device.url} rel="noreferrer" target="_blank">{t("Open the link instead")}</a>
                 </LinkBox>
-            </DeviceBody>
-
-            {expired ? <ErrorText>{t("The code expired. Start again.")}</ErrorText> : <Muted>{t("Waiting for approval…")}</Muted>}
-            {error && <ErrorText>{error}</ErrorText>}
-
-            <Actions>
-                <Secondary onClick={() => setDevice(null)} type="button">{t("Cancel")}</Secondary>
-                {expired && <Primary onClick={() => void start()} type="button">{t("Try again")}</Primary>}
-            </Actions>
-        </Card>
+            )}
+        </QrPanel>
     );
 }
 
@@ -752,13 +743,22 @@ function storageLabel(storage: AuthStorage) {
     }
 }
 
-const Page = styled.div`
+const Page = styled.div<{ $wide?: boolean }>`
     display: flex;
     flex: 1;
     flex-direction: column;
     gap: 16px;
     min-height: 0;
-    max-width: 720px;
+    max-width: ${({$wide}) => ($wide ? "none" : "720px")};
+    overflow: auto;
+`;
+
+/** Holds the sign-in forms in the middle of the page instead of stacking them at the top. */
+const AuthStage = styled.div`
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    padding: 12px 0;
     overflow: auto;
 `;
 
@@ -770,6 +770,150 @@ const Card = styled.section`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
+`;
+
+/** A single-column card for the steps after the password, such as the second factor. */
+const NarrowCard = styled(Card)`
+    width: 100%;
+    max-width: 420px;
+    margin: auto;
+`;
+
+const LoginCard = styled.section`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 272px;
+    width: 100%;
+    max-width: 640px;
+    margin: auto;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+
+    @media (max-width: 860px) {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 380px;
+    }
+`;
+
+const LoginSide = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 30px 28px;
+`;
+
+const LoginHead = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    h1 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+    }
+
+    p {
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--text-secondary);
+    }
+`;
+
+const Logo = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(167, 139, 250, 0.14);
+    color: var(--accent-primary);
+`;
+
+const QrSide = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 30px 24px;
+    border-left: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.015);
+
+    h2 {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    p {
+        margin-top: 4px;
+        font-size: 11px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 860px) {
+        border-left: 0;
+        border-top: 1px solid var(--border-color);
+    }
+`;
+
+const QrPanel = styled.div`
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+`;
+
+const QrFrame = styled.div<{ $dim: boolean }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 188px;
+    aspect-ratio: 1;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: #fff;
+    opacity: ${({$dim}) => ($dim ? 0.4 : 1)};
+    transition: opacity 0.15s ease;
+`;
+
+const QrEmpty = styled.span`
+    padding: 0 10px;
+    color: #4b5563;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: center;
+`;
+
+const QrStatus = styled.p`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+`;
+
+const LinkButton = styled.button`
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent-primary);
+    font: inherit;
+    font-size: 10px;
+    text-decoration: underline;
+    cursor: pointer;
 `;
 
 const CardHead = styled.div`
@@ -860,6 +1004,22 @@ const buttonBase = styled.button<{ $primary?: boolean }>`
 const Primary = styled(buttonBase).attrs({$primary: true})``;
 const Secondary = styled(buttonBase).attrs({$primary: false})``;
 
+/** The one call to action of a sign-in step, so it spans the form like a normal login page. */
+const Submit = styled(Primary)`
+    justify-content: center;
+    padding: 10px 14px;
+`;
+
+/** Pushes the sign-out button to the far side of the profile card. */
+const SignOut = styled(Secondary)`
+    margin-left: auto;
+`;
+
+/** A secondary action under a full-width submit, kept narrow instead of spanning the form. */
+const SecondaryInline = styled(Secondary)`
+    align-self: center;
+`;
+
 const MethodRow = styled.div`
     display: flex;
     gap: 8px;
@@ -884,12 +1044,6 @@ const ErrorText = styled.p`
 const Note = styled.p`
     font-size: 11px;
     line-height: 1.5;
-    color: var(--text-muted);
-`;
-
-const Muted = styled.span`
-    font-family: var(--font-mono);
-    font-size: 10px;
     color: var(--text-muted);
 `;
 
@@ -1120,19 +1274,10 @@ function safetyBackground(tone: string) {
     }
 }
 
-const DeviceBody = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-`;
-
 const Qr = styled.img`
-    width: 184px;
-    height: 184px;
-    border-radius: var(--radius-sm);
-    background: #fff;
-    padding: 8px;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 `;
 
 const LinkBox = styled.div`
