@@ -22,19 +22,11 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private const string OscLine = "of type OSC on ";
     private const string AvatarChange = "/avatar/change";
 
-    /// <summary>
-    ///     VRChat's panic button only turns Safe Mode on, so pressing it again is harmless. It is still
-    ///     limited to once every few seconds, which is enough to re-arm Safe Mode after it was turned
-    ///     off without sending a message for every user who joins.
-    /// </summary>
-    private const long SafeModeGapMilliseconds = 5000;
-
     private readonly UdpClient _udp = new();
     private readonly UdpClient? _receive;
     private string? _currentAvatar;
     private int _detectedPort;
     private bool _oscListening;
-    private long _safeModeAt;
 
     public VrchatOscService()
     {
@@ -98,19 +90,18 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
     /// <summary>
     ///     Presses VRChat's panic button, which turns Safe Mode on and replaces every non-friend avatar
-    ///     at once. The button only turns it on, so pressing it again is safe; it is still limited to
-    ///     once every few seconds so a busy instance does not send one message per user.
+    ///     at once. The button only turns it on, so sending it again is harmless; nothing is queued
+    ///     because the message never leaves the machine.
     /// </summary>
     public bool EnableSafeMode()
     {
-        if (!_oscListening || Environment.TickCount64 - _safeModeAt < SafeModeGapMilliseconds)
+        if (!_oscListening)
             return false;
 
         try
         {
             Send("/input/PanicButton", ",T");
             Send("/input/PanicButton", ",F");
-            _safeModeAt = Environment.TickCount64;
             Log.Information("Safe Mode requested over OSC on port {Port}", Port);
             return true;
         }
