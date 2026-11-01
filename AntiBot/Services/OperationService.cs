@@ -132,6 +132,7 @@ internal sealed class OperationService : Singleton<OperationService>
         "block" => "Blocked",
         "avatarInteractionOff" => "Avatar interactions off",
         "chatBoxHidden" => "Chat box hidden",
+        "closeVrchat" => "Closed VRChat",
         "returnHome" => "Returned home",
         "rejectRequest" => "Friend request rejected",
         "undoReject" => "Rejection undone",

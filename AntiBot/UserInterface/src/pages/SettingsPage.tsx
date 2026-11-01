@@ -47,6 +47,8 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [autoBlock, setAutoBlock] = useState(true);
     const [autoAvatar, setAutoAvatar] = useState(true);
     const [autoChat, setAutoChat] = useState(true);
+    const [autoClose, setAutoClose] = useState(false);
+    const [skipCloseVr, setSkipCloseVr] = useState(true);
     const [autoReject, setAutoReject] = useState(true);
     const [threshold, setThreshold] = useState(50);
     const [whitelist, setWhitelist] = useState<string[]>([]);
@@ -76,6 +78,8 @@ export function SettingsPage({info}: SettingsPageProps) {
             setAutoBlock(settings.autoBlock);
             setAutoAvatar(settings.autoDisableAvatarInteraction);
             setAutoChat(settings.autoHideChatBox);
+            setAutoClose(settings.autoCloseVrchat);
+            setSkipCloseVr(settings.skipCloseInVr);
             setAutoReject(settings.autoRejectFriendRequests);
             setThreshold(settings.threatThreshold);
             setWhitelist(settings.whitelist ?? []);
@@ -83,8 +87,8 @@ export function SettingsPage({info}: SettingsPageProps) {
             setStartHidden(settings.startHidden);
             setSavedStartHidden(settings.startHidden);
             setSavedProtection(protectionKey(settings.autoBlock, settings.autoDisableAvatarInteraction,
-                settings.autoHideChatBox, settings.autoRejectFriendRequests,
-                settings.threatThreshold, settings.whitelist ?? []));
+                settings.autoHideChatBox, settings.autoCloseVrchat, settings.skipCloseInVr,
+                settings.autoRejectFriendRequests, settings.threatThreshold, settings.whitelist ?? []));
 
             void getWhitelistPeople().then(setPeople, () => {
                 // The host failed to answer; ids are shown until it does.
@@ -122,7 +126,8 @@ export function SettingsPage({info}: SettingsPageProps) {
     };
 
     const trimmed = directory.trim();
-    const protection = protectionKey(autoBlock, autoAvatar, autoChat, autoReject, threshold, whitelist);
+    const protection = protectionKey(autoBlock, autoAvatar, autoChat, autoClose, skipCloseVr, autoReject,
+        threshold, whitelist);
     const changed = trimmed !== saved || providers.join("\n") !== savedProviders.join("\n") ||
         protection !== savedProtection || startHidden !== savedStartHidden;
 
@@ -133,6 +138,8 @@ export function SettingsPage({info}: SettingsPageProps) {
         autoBlock,
         autoDisableAvatarInteraction: autoAvatar,
         autoHideChatBox: autoChat,
+        autoCloseVrchat: autoClose,
+        skipCloseInVr: skipCloseVr,
         autoRejectFriendRequests: autoReject,
         threatThreshold: threshold,
         whitelist,
@@ -406,6 +413,19 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Hide the chat box")}
                         />
                         <Toggle
+                            checked={autoClose}
+                            hint={t("Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.")}
+                            onChange={setAutoClose}
+                            title={t("Close VRChat")}
+                        />
+                        <Toggle
+                            checked={skipCloseVr}
+                            disabled={!autoClose}
+                            hint={t("Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.")}
+                            onChange={setSkipCloseVr}
+                            title={t("Skip while in VR")}
+                        />
+                        <Toggle
                             checked={autoReject}
                             hint={t("Hide friend requests from high-threat users; undo from the request list.")}
                             onChange={setAutoReject}
@@ -512,9 +532,9 @@ export function SettingsPage({info}: SettingsPageProps) {
     );
 }
 
-function protectionKey(autoBlock: boolean, autoAvatar: boolean, autoChat: boolean,
-    autoReject: boolean, threshold: number, whitelist: string[]): string {
-    return [autoBlock, autoAvatar, autoChat, autoReject, threshold, ...whitelist].join("|");
+function protectionKey(autoBlock: boolean, autoAvatar: boolean, autoChat: boolean, autoClose: boolean,
+    skipCloseVr: boolean, autoReject: boolean, threshold: number, whitelist: string[]): string {
+    return [autoBlock, autoAvatar, autoChat, autoClose, skipCloseVr, autoReject, threshold, ...whitelist].join("|");
 }
 
 function Toggle({checked, onChange, title, hint, disabled = false}: {

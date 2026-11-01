@@ -54,8 +54,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
     private SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
-            Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden);
+            Current.AutoCloseVrchat, Current.SkipCloseInVr, Current.AutoRejectFriendRequests,
+            Current.ThreatThreshold, Current.Whitelist, Current.Language, Current.StartHidden);
 
     /// <summary>
     ///     Older builds wrote the settings into the data folder, next to the session; move them once so
@@ -104,6 +104,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
             AutoHideChatBox = settings.AutoHideChatBox,
+            AutoCloseVrchat = settings.AutoCloseVrchat,
+            SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])

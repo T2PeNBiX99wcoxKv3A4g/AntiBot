@@ -19,6 +19,8 @@ internal sealed record SettingsPayload(
     bool AutoBlock,
     bool AutoDisableAvatarInteraction,
     bool AutoHideChatBox,
+    bool AutoCloseVrchat,
+    bool SkipCloseInVr,
     bool AutoRejectFriendRequests,
     int ThreatThreshold,
     string[] Whitelist,

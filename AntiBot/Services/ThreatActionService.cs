@@ -57,6 +57,12 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         var detail = Describe(user);
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
+        // Closing the client is the only action that can beat an avatar download, and it needs no API
+        // call, so it runs first and outside the rate-limited queue.
+        if (settings.AutoCloseVrchat && !(settings.SkipCloseInVr && VrchatClient.IsVrActive()) &&
+            VrchatClient.Close())
+            await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
+
         try
         {
             await _actions.WaitAsync(_stop.Token);

@@ -163,6 +163,8 @@ function kindKey(kind: string): string {
             return "Avatar interactions off";
         case "chatBoxHidden":
             return "Chat box hidden";
+        case "closeVrchat":
+            return "Closed VRChat";
         case "returnHome":
             return "Returned home";
         case "rejectRequest":
