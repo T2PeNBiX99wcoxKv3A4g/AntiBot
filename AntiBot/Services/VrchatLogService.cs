@@ -428,6 +428,9 @@ internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
         return context.Reply("log.export.result", new LogExportPayload(true, lines.Length, path));
     }
 
+    /// <summary>Whether VRChat's process is running on this machine.</summary>
+    public bool IsRunning => IsVrchatRunning();
+
     /// <summary>Whether VRChat's process exists. Checked at most once a second.</summary>
     private bool IsVrchatRunning()
     {

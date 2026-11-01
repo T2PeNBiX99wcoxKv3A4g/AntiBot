@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -181,11 +182,23 @@ internal sealed class AuthService : Singleton<AuthService>
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
 
-    /// <summary>Invites the account to its own home world, which is how it goes home from here.</summary>
+    /// <summary>
+    ///     Makes the client travel to the account's home world, the way VRChat's own Home button does.
+    ///     The API has no "join" call, so the client is handed the launch link the VRChat website uses;
+    ///     an invite would only sit in the notification list until someone accepted it.
+    /// </summary>
     public async Task<bool> ReturnHomeAsync(CancellationToken token)
     {
         if (!IsReady)
             return false;
+
+        // Opening the link would start VRChat when it is not running here (for instance when the
+        // account is in a world from another device), which is not what "return home" means.
+        if (!VrchatLogService.Instance.IsRunning)
+        {
+            Log.Information("VRChat is not running here, so the home link is not opened");
+            return false;
+        }
 
         var (user, _) = await _api.GetCurrentUserAsync(token);
         var home = user?.HomeLocation ?? user?.HomeLocationLegacy;
@@ -193,7 +206,7 @@ internal sealed class AuthService : Singleton<AuthService>
         if (home is not { Length: > 0 } || !home.StartsWith("wrld_", StringComparison.Ordinal))
             return false;
 
-        // homeLocation is the home world id; the self-invite endpoint needs worldId:instanceId.
+        // homeLocation is often just the world id; a launch link needs an instance.
         if (!home.Contains(':'))
         {
             if (user?.Id is not { Length: > 0 } ownerId)
@@ -208,9 +221,28 @@ internal sealed class AuthService : Singleton<AuthService>
             home = location;
         }
 
-        var invited = await _api.InviteMyselfAsync(home, token);
-        Log.Information("Return home to {Location}: {Invited}", home, invited);
-        return invited;
+        var launched = LaunchClient(home);
+        Log.Information("Return home to {Location}: {Launched}", home, launched);
+        return launched;
+    }
+
+    /// <summary>
+    ///     Hands the running client its own <c>vrchat://launch</c> link. <c>force</c> skips the in-game
+    ///     "travel there?" prompt, so the account leaves the instance without anyone clicking anything.
+    /// </summary>
+    private bool LaunchClient(string location)
+    {
+        try
+        {
+            var uri = $"vrchat://launch?force=true&id={Uri.EscapeDataString(location)}";
+            using var process = Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+            return process is not null;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Could not hand the home link to VRChat");
+            return false;
+        }
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
