@@ -436,6 +436,12 @@ function StorageChoice({auth, busy, error, run}: {
             return;
         }
 
+        // Opening the panel and saving without a change just closes it; there is no other way out.
+        if (!dirty) {
+            setOpen(false);
+            return;
+        }
+
         if (mode === "password") {
             if (password.length < 1) {
                 setLocalError(t("Enter the password that unlocks the session."));
@@ -592,7 +598,7 @@ function StorageChoice({auth, busy, error, run}: {
             {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
 
             <Actions>
-                <Primary disabled={busy || !signedIn || !dirty} onClick={save} type="button">
+                <Primary disabled={busy || !signedIn} onClick={save} type="button">
                     {busy ? t("Saving…") : t("Save")}
                 </Primary>
             </Actions>
