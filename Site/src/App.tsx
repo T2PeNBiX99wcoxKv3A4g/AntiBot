@@ -39,6 +39,19 @@ const GlobalStyle = createGlobalStyle`
         --border-color-hover: rgba(167, 139, 250, 0.4);
     }
 
+    /* The app picks the CJK face per language; the site does the same so the text matches. */
+    html:lang(zh-TW) {
+        --font-cjk: "Noto Sans TC", "Microsoft JhengHei UI", "PingFang TC";
+    }
+
+    html:lang(zh-CN) {
+        --font-cjk: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC";
+    }
+
+    html:lang(ja) {
+        --font-cjk: "Noto Sans JP", "Yu Gothic UI", "Hiragino Kaku Gothic ProN";
+    }
+
     * {
         box-sizing: border-box;
     }

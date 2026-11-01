@@ -104,7 +104,6 @@ const Heading = styled.h2`
 
 const Lead = styled.p`
     margin: 0 0 18px;
-    max-width: 760px;
     color: var(--text-secondary);
     font-size: 0.92rem;
 `;
@@ -162,7 +161,6 @@ const FeatureText = styled.p`
 const Steps = styled.ol`
     display: grid;
     gap: 12px;
-    max-width: 760px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -209,7 +207,6 @@ const PlatformGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
     gap: 12px;
-    max-width: 760px;
 `;
 
 const Platform = styled.a`
@@ -254,7 +251,6 @@ const PlatformNote = styled.span`
 
 const Note = styled.p`
     margin: 16px 0 0;
-    max-width: 760px;
     color: var(--text-muted);
     font-size: 0.8rem;
 `;
