@@ -1687,34 +1687,40 @@ Error generating stack: `+e.message+`
     opacity: 0.75;
     transform: rotate(${({$open:e})=>e?`180deg`:`0`});
     transition: transform 0.18s ease;
-`;function Cc(e,t,n){let[r,i]=(0,_.useState)({});return(0,_.useEffect)(()=>{if(!e)return;let r=()=>{let e=n.current?.getBoundingClientRect();if(!e)return;let r=t?e.top:window.innerHeight-e.bottom;i({maxHeight:Math.max(120,Math.floor(r-10))})};return r(),window.addEventListener(`resize`,r),()=>window.removeEventListener(`resize`,r)},[e,t,n]),r}function wc({value:e,options:t,onChange:n,up:r,disabled:i,title:a}){let[o,s]=(0,_.useState)(!1),c=(0,_.useRef)(null),l=Cc(o,r,c);(0,_.useEffect)(()=>{if(!o)return;let e=e=>{c.current?.contains(e.target)||s(!1)},t=e=>{e.key===`Escape`&&s(!1)};return document.addEventListener(`mousedown`,e),document.addEventListener(`keydown`,t),()=>{document.removeEventListener(`mousedown`,e),document.removeEventListener(`keydown`,t)}},[o]);let u=t.find(t=>t.value===e)?.label??e;return(0,E.jsxs)(yc,{ref:c,children:[(0,E.jsxs)(bc,{"aria-expanded":o,"aria-haspopup":`listbox`,disabled:i,onClick:()=>s(e=>!e),title:a,type:`button`,children:[(0,E.jsx)(xc,{children:u}),(0,E.jsx)(Sc,{$open:o,children:`▾`})]}),o&&(0,E.jsx)(_c,{$up:r,role:`listbox`,style:l,children:t.map(t=>(0,E.jsx)(vc,{$active:t.value===e,"aria-selected":t.value===e,onClick:()=>{s(!1),n(t.value)},role:`option`,type:`button`,children:t.label},t.value))})]})}var Tc=`modulepreload`,Ec=function(e){return`/`+e},Dc={},Oc=function(e){return e.pathname.endsWith(`.css`)},kc=function(e,t,n){if(t in e)return e[t];let r=n();if(!r){e[t]=void 0;return}let i=r.then(()=>{e[t]=void 0},n=>{throw e[t]=void 0,n});return e[t]=i,i},Ac=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e,i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?new URL(import.meta.resolve(e)):new URL(e,import.meta.url)}r=o(t.map(t=>{t=Ec(t,n);let r=s(t),i=Oc(r);return kc(Dc,r.href,()=>{if(e===void 0){e={all:new Set,styles:new Set};let t=document.getElementsByTagName(`link`);for(let n=t.length-1;n>=0;n--){let r=t[n];e.all.add(r.href),r.rel===`stylesheet`&&e.styles.add(r.href)}}if((i?e.styles:e.all).has(r.href))return;let t=document.createElement(`link`);if(t.rel=i?`stylesheet`:Tc,i||(t.as=`script`),t.crossOrigin=``,t.href=r.href,a&&t.setAttribute(`nonce`,a),document.head.appendChild(t),i)return new Promise((e,n)=>{t.addEventListener(`load`,e),t.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${r}`)))})})}).filter(e=>e!==void 0))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})},jc=(0,_.lazy)(()=>Ac(()=>import(`./AttributionPage-CKB6oAcF.js`).then(e=>({default:e.AttributionPage})),[])),Mc={en:`English`,ja:`日本語`,"zh-CN":`简体中文`,"zh-TW":`繁體中文`},Nc=[{id:`settings-language`,label:`Language`},{id:`settings-startup`,label:`Start with the system`},{id:`settings-log-source`,label:`Log source`},{id:`settings-avatar-lookups`,label:`Avatar name lookups`},{id:`settings-protection`,label:`Automatic protection`},{id:`settings-whitelist`,label:`Whitelist`},{id:`settings-build`,label:`Build`}];function Pc({info:e}){let t=D(),[n,r]=(0,_.useState)(``),[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(``),[c,l]=(0,_.useState)([]),[u,d]=(0,_.useState)([]),[f,p]=(0,_.useState)(``),[m,h]=(0,_.useState)(!0),[g,v]=(0,_.useState)(!0),[y,b]=(0,_.useState)(!0),[x,S]=(0,_.useState)(!0),[C,ee]=(0,_.useState)(!0),[w,te]=(0,_.useState)(50),[T,ne]=(0,_.useState)([]),[re,ie]=(0,_.useState)(``),[oe,se]=(0,_.useState)([]),[ce,le]=(0,_.useState)(``),[ue,de]=(0,_.useState)(`en`),[fe,pe]=(0,_.useState)([]),[me,he]=(0,_.useState)(!1),[O,ge]=(0,_.useState)(!1),[k,_e]=(0,_.useState)(null),[ve,ye]=(0,_.useState)(!1),[be,A]=(0,_.useState)(!1),[j,xe]=(0,_.useState)(Nc[0].id),[Se,Ce]=(0,_.useState)(null),[we,Te]=(0,_.useState)(!1);(0,_.useEffect)(()=>{fc().then(e=>{let t=e.avatarApiProviders??[];r(e.logDirectory??``),a(e.logDirectory??``),s(e.defaultLogDirectory??``),l(t),d(t),h(e.autoBlock),v(e.autoDisableAvatarInteraction),b(e.autoHideChatBox),S(e.autoReturnHome),ee(e.autoRejectFriendRequests),te(e.threatThreshold),ne(e.whitelist??[]),de(e.language??`en`),he(e.startHidden),ge(e.startHidden),le(Fc(e.autoBlock,e.autoDisableAvatarInteraction,e.autoHideChatBox,e.autoReturnHome,e.autoRejectFriendRequests,e.threatThreshold,e.whitelist??[])),mc().then(se,()=>{})},()=>Ce(t(`Could not read the settings.`)))},[]),(0,_.useEffect)(()=>{ae().then(e=>pe(e.available),()=>pe([]))},[]),(0,_.useEffect)(()=>{hr().then(_e,()=>_e(null))},[]),(0,_.useEffect)(()=>{let e=Nc.map(e=>document.getElementById(e.id));if(e.some(e=>e===null))return;let t=new IntersectionObserver(e=>{let t=e.filter(e=>e.isIntersecting).sort((e,t)=>e.boundingClientRect.top-t.boundingClientRect.top)[0];t&&xe(t.target.id)},{rootMargin:`-8% 0px -70% 0px`});return e.forEach(e=>t.observe(e)),()=>t.disconnect()},[]);let M=e=>{xe(e),document.getElementById(e)?.scrollIntoView({behavior:`smooth`,block:`start`})},Ee=n.trim(),N=Fc(m,g,y,x,C,w,T),De=Ee!==i||c.join(`
+`;function Cc(e,t,n){let[r,i]=(0,_.useState)({});return(0,_.useEffect)(()=>{if(!e)return;let r=()=>{let e=n.current?.getBoundingClientRect();if(!e)return;let r=t?e.top:window.innerHeight-e.bottom;i({maxHeight:Math.max(120,Math.floor(r-10))})};return r(),window.addEventListener(`resize`,r),()=>window.removeEventListener(`resize`,r)},[e,t,n]),r}function wc({value:e,options:t,onChange:n,up:r,disabled:i,title:a}){let[o,s]=(0,_.useState)(!1),c=(0,_.useRef)(null),l=Cc(o,r,c);(0,_.useEffect)(()=>{if(!o)return;let e=e=>{c.current?.contains(e.target)||s(!1)},t=e=>{e.key===`Escape`&&s(!1)};return document.addEventListener(`mousedown`,e),document.addEventListener(`keydown`,t),()=>{document.removeEventListener(`mousedown`,e),document.removeEventListener(`keydown`,t)}},[o]);let u=t.find(t=>t.value===e)?.label??e;return(0,E.jsxs)(yc,{ref:c,children:[(0,E.jsxs)(bc,{"aria-expanded":o,"aria-haspopup":`listbox`,disabled:i,onClick:()=>s(e=>!e),title:a,type:`button`,children:[(0,E.jsx)(xc,{children:u}),(0,E.jsx)(Sc,{$open:o,children:`▾`})]}),o&&(0,E.jsx)(_c,{$up:r,role:`listbox`,style:l,children:t.map(t=>(0,E.jsx)(vc,{$active:t.value===e,"aria-selected":t.value===e,onClick:()=>{s(!1),n(t.value)},role:`option`,type:`button`,children:t.label},t.value))})]})}var Tc=`modulepreload`,Ec=function(e){return`/`+e},Dc={},Oc=function(e){return e.pathname.endsWith(`.css`)},kc=function(e,t,n){if(t in e)return e[t];let r=n();if(!r){e[t]=void 0;return}let i=r.then(()=>{e[t]=void 0},n=>{throw e[t]=void 0,n});return e[t]=i,i},Ac=function(e,t,n){let r=Promise.resolve();if(t&&t.length>0){let e,i=document.querySelector(`meta[property=csp-nonce]`),a=i?.nonce||i?.getAttribute(`nonce`);function o(e){return Promise.all(e.map(e=>Promise.resolve(e).then(e=>({status:`fulfilled`,value:e}),e=>({status:`rejected`,reason:e}))))}function s(e){return import.meta.resolve?new URL(import.meta.resolve(e)):new URL(e,import.meta.url)}r=o(t.map(t=>{t=Ec(t,n);let r=s(t),i=Oc(r);return kc(Dc,r.href,()=>{if(e===void 0){e={all:new Set,styles:new Set};let t=document.getElementsByTagName(`link`);for(let n=t.length-1;n>=0;n--){let r=t[n];e.all.add(r.href),r.rel===`stylesheet`&&e.styles.add(r.href)}}if((i?e.styles:e.all).has(r.href))return;let t=document.createElement(`link`);if(t.rel=i?`stylesheet`:Tc,i||(t.as=`script`),t.crossOrigin=``,t.href=r.href,a&&t.setAttribute(`nonce`,a),document.head.appendChild(t),i)return new Promise((e,n)=>{t.addEventListener(`load`,e),t.addEventListener(`error`,()=>n(Error(`Unable to preload CSS for ${r}`)))})})}).filter(e=>e!==void 0))}function i(e){let t=new Event(`vite:preloadError`,{cancelable:!0});if(t.payload=e,window.dispatchEvent(t),!t.defaultPrevented)throw e}return r.then(t=>{for(let e of t||[])e.status===`rejected`&&i(e.reason);return e().catch(i)})},jc=(0,_.lazy)(()=>Ac(()=>import(`./AttributionPage-DWyGeCN6.js`).then(e=>({default:e.AttributionPage})),[])),Mc={en:`English`,ja:`日本語`,"zh-CN":`简体中文`,"zh-TW":`繁體中文`},Nc=[{id:`settings-language`,label:`Language`},{id:`settings-startup`,label:`Start with the system`},{id:`settings-log-source`,label:`Log source`},{id:`settings-avatar-lookups`,label:`Avatar name lookups`},{id:`settings-protection`,label:`Automatic protection`},{id:`settings-whitelist`,label:`Whitelist`},{id:`settings-build`,label:`Build`}];function Pc({info:e}){let t=D(),[n,r]=(0,_.useState)(``),[i,a]=(0,_.useState)(``),[o,s]=(0,_.useState)(``),[c,l]=(0,_.useState)([]),[u,d]=(0,_.useState)([]),[f,p]=(0,_.useState)(``),[m,h]=(0,_.useState)(!0),[g,v]=(0,_.useState)(!0),[y,b]=(0,_.useState)(!0),[x,S]=(0,_.useState)(!0),[C,ee]=(0,_.useState)(!0),[w,te]=(0,_.useState)(50),[T,ne]=(0,_.useState)([]),[re,ie]=(0,_.useState)(``),[oe,se]=(0,_.useState)([]),[ce,le]=(0,_.useState)(``),[ue,de]=(0,_.useState)(`en`),[fe,pe]=(0,_.useState)([]),[me,he]=(0,_.useState)(!1),[O,ge]=(0,_.useState)(!1),[k,_e]=(0,_.useState)(null),[ve,ye]=(0,_.useState)(!1),[be,A]=(0,_.useState)(!1),[j,xe]=(0,_.useState)(Nc[0].id),[Se,Ce]=(0,_.useState)(null),[we,Te]=(0,_.useState)(!1);(0,_.useEffect)(()=>{fc().then(e=>{let t=e.avatarApiProviders??[];r(e.logDirectory??``),a(e.logDirectory??``),s(e.defaultLogDirectory??``),l(t),d(t),h(e.autoBlock),v(e.autoDisableAvatarInteraction),b(e.autoHideChatBox),S(e.autoReturnHome),ee(e.autoRejectFriendRequests),te(e.threatThreshold),ne(e.whitelist??[]),de(e.language??`en`),he(e.startHidden),ge(e.startHidden),le(Fc(e.autoBlock,e.autoDisableAvatarInteraction,e.autoHideChatBox,e.autoReturnHome,e.autoRejectFriendRequests,e.threatThreshold,e.whitelist??[])),mc().then(se,()=>{})},()=>Ce(t(`Could not read the settings.`)))},[]),(0,_.useEffect)(()=>{ae().then(e=>pe(e.available),()=>pe([]))},[]),(0,_.useEffect)(()=>{hr().then(_e,()=>_e(null))},[]),(0,_.useEffect)(()=>{let e=Nc.map(e=>document.getElementById(e.id));if(e.some(e=>e===null))return;let t=new IntersectionObserver(e=>{let t=e.filter(e=>e.isIntersecting).sort((e,t)=>e.boundingClientRect.top-t.boundingClientRect.top)[0];t&&xe(t.target.id)},{rootMargin:`-8% 0px -70% 0px`});return e.forEach(e=>t.observe(e)),()=>t.disconnect()},[]);let M=e=>{xe(e),document.getElementById(e)?.scrollIntoView({behavior:`smooth`,block:`start`})},Ee=n.trim(),N=Fc(m,g,y,x,C,w,T),De=Ee!==i||c.join(`
 `)!==u.join(`
-`)||N!==ce||me!==O,P=(e={})=>({logDirectory:Ee,avatarApiProviders:c.map(e=>e.trim()).filter(e=>e.length>0),autoBlock:m,autoDisableAvatarInteraction:g,autoHideChatBox:y,autoReturnHome:x,autoRejectFriendRequests:C,threatThreshold:w,whitelist:T,language:ue,startHidden:me,...e}),Oe=async()=>{Ce(null),Te(!0);try{let e=await pc(P());r(e.logDirectory),a(e.logDirectory),l(e.avatarApiProviders),d(e.avatarApiProviders),de(e.language),he(e.startHidden),ge(e.startHidden),le(N),mc().then(se,()=>{})}catch(e){Ce(e instanceof Error?e.message:String(e))}finally{Te(!1)}},ke=async e=>{de(e),Ce(null);try{let t=await pc(P({language:e}));de(t.language),ge(t.startHidden)}catch(e){Ce(e instanceof Error?e.message:String(e))}},Ae=async e=>{ye(!0),Ce(null);try{_e(await gr(e))}catch(e){Ce(e instanceof Error?e.message:String(e))}finally{ye(!1)}},je=async()=>{Ce(null);try{await ai()}catch(e){Ce(e instanceof Error?e.message:String(e))}},Me=()=>{let e=f.trim();e.length===0||c.includes(e)||(l([...c,e]),p(``))},Ne=()=>{let e=re.trim();e.length===0||T.includes(e)||(ne([...T,e]),ie(``))},Pe=e=>ne(T.filter(t=>t!==e));return(0,E.jsxs)(E.Fragment,{children:[(0,E.jsx)(Ic,{children:Nc.map(e=>(0,E.jsx)(Lc,{$active:j===e.id,onClick:()=>M(e.id),type:`button`,children:t(e.label)},e.id))}),(0,E.jsxs)(Rc,{children:[(0,E.jsxs)(zc,{id:`settings-language`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Language`)})}),(0,E.jsx)(Vc,{children:(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`Language`)}),(0,E.jsx)(wc,{onChange:e=>void ke(e),options:fe.map(e=>({value:e,label:Mc[e]??e})),value:ue}),(0,E.jsx)(Yc,{children:t(`Language used by both the interface and the desktop backend.`)})]})})]}),(0,E.jsxs)(zc,{id:`settings-startup`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Start with the system`)})}),(0,E.jsx)(Vc,{children:(0,E.jsxs)(nl,{children:[(0,E.jsx)(H,{checked:k?.enabled??!1,disabled:ve||!k?.supported,hint:t(`Create an autostart entry for this user.`),onChange:e=>void Ae(e),title:t(`Start with the system`)}),(0,E.jsx)(H,{checked:me,hint:t(`Open in the tray instead of showing the window.`),onChange:he,title:t(`Start hidden`)})]})})]}),(0,E.jsxs)(zc,{id:`settings-log-source`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Log source`)})}),(0,E.jsxs)(Vc,{children:[(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`VRChat log folder`)}),(0,E.jsx)(Uc,{children:(0,E.jsx)(Kc,{"aria-label":t(`VRChat log folder`),onChange:e=>r(e.target.value),placeholder:t(`VRChat's log folder`),spellCheck:!1,value:n})}),(0,E.jsx)(Yc,{children:t(`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`)})]}),(0,E.jsxs)(Xc,{children:[(0,E.jsxs)(Zc,{disabled:!ti,onClick:je,type:`button`,children:[(0,E.jsx)(wr,{}),t(`Open folder`)]}),(0,E.jsx)(Zc,{disabled:!o||Ee===o,onClick:()=>r(o),type:`button`,children:t(`Use VRChat's folder`)})]})]})]}),(0,E.jsxs)(zc,{id:`settings-avatar-lookups`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Avatar name lookups`)})}),(0,E.jsx)(Vc,{children:(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`API endpoints`)}),(0,E.jsxs)(Yc,{children:[t(`Tried in order; the first name wins. Each is called as`),(0,E.jsx)(`code`,{children:` ?fileId=file_…`}),` `,t(`and must answer with JSON containing a`),(0,E.jsx)(`code`,{children:` name`}),`.`]}),(0,E.jsxs)(Wc,{children:[c.length===0&&(0,E.jsx)(Gc,{children:t(`No endpoint; avatar names stay unknown.`)}),c.map((e,n)=>(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Kc,{"aria-label":t(`Avatar API endpoint`),onChange:e=>{let t=[...c];t[n]=e.target.value,l(t)},spellCheck:!1,value:e}),(0,E.jsx)(Zc,{"aria-label":t(`Remove endpoint`),onClick:()=>l(c.filter((e,t)=>t!==n)),type:`button`,children:(0,E.jsx)(Cr,{})})]},`${e}-${n}`))]}),(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Kc,{"aria-label":t(`New avatar API endpoint`),onChange:e=>p(e.target.value),placeholder:`https://example.com/avatars`,spellCheck:!1,value:f}),(0,E.jsx)(Zc,{disabled:f.trim().length===0,onClick:Me,type:`button`,children:t(`Add`)})]})]})})]}),(0,E.jsxs)(zc,{id:`settings-protection`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Automatic protection`)})}),(0,E.jsxs)(Vc,{children:[(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`Threat threshold`)}),(0,E.jsxs)(Uc,{children:[(0,E.jsx)(el,{max:100,min:0,onChange:e=>te(Number(e.target.value)),step:5,type:`range`,value:w}),(0,E.jsxs)(tl,{children:[w,`%`]})]}),(0,E.jsx)(Yc,{children:t(`At or above this score the actions below run. Friends and whitelisted users are never acted on.`)})]}),(0,E.jsxs)(nl,{children:[(0,E.jsx)(H,{checked:m,hint:t(`VRChat block: their avatar and interactions are hidden.`),onChange:h,title:t(`Block the user`)}),(0,E.jsx)(H,{checked:g,hint:t(`Turn avatar interactions off for the user.`),onChange:v,title:t(`Disable avatar interactions`)}),(0,E.jsx)(H,{checked:y,hint:t(`Mute the user's chat box.`),onChange:b,title:t(`Hide the chat box`)}),(0,E.jsx)(H,{checked:x,hint:t(`Invite yourself to your home world once per instance.`),onChange:S,title:t(`Return home`)}),(0,E.jsx)(H,{checked:C,hint:t(`Hide friend requests from high-threat users; undo from the request list.`),onChange:ee,title:t(`Reject friend requests`)})]})]})]}),(0,E.jsxs)(zc,{id:`settings-whitelist`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Whitelist`)})}),(0,E.jsxs)(Vc,{children:[(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`Add a user`)}),(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Kc,{"aria-label":t(`Whitelisted user id`),onChange:e=>ie(e.target.value),placeholder:`usr_…`,spellCheck:!1,value:re}),(0,E.jsx)(Zc,{disabled:re.trim().length===0,onClick:Ne,type:`button`,children:t(`Add`)})]}),(0,E.jsx)(Yc,{children:t(`Paste a VRChat user id. Whitelisted users get a white row and no automatic action.`)})]}),(0,E.jsxs)(ol,{children:[T.length===0&&(0,E.jsx)(Gc,{children:t(`Nobody is whitelisted.`)}),T.map(e=>{let n=oe.find(t=>t.userId===e);return(0,E.jsxs)(sl,{children:[(0,E.jsx)(cl,{$src:n?.iconUrl??n?.avatarUrl}),(0,E.jsxs)(ll,{children:[(0,E.jsx)(`strong`,{children:n?.name??e}),(0,E.jsx)(`span`,{children:n?.trust??e})]}),(0,E.jsx)(Zc,{"aria-label":t(`Remove from whitelist`),onClick:()=>Pe(e),type:`button`,children:(0,E.jsx)(Cr,{})})]},e)})]})]})]}),Se&&(0,E.jsx)(Qc,{children:Se}),(0,E.jsx)(Xc,{children:(0,E.jsx)(Zc,{disabled:!De||Ee.length===0||we,onClick:Oe,type:`button`,children:t(we?`Saving…`:`Save settings`)})}),(0,E.jsxs)(zc,{id:`settings-build`,children:[(0,E.jsx)(Bc,{children:(0,E.jsx)(`h2`,{children:t(`Build`)})}),(0,E.jsx)(Vc,{children:(0,E.jsxs)(Hc,{children:[(0,E.jsx)(qc,{children:t(`Version`)}),(0,E.jsx)(Jc,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:t(`browser preview`)}),(0,E.jsx)(Yc,{children:t(`Read from the executable the interface is running in.`)})]})})]}),(0,E.jsx)($c,{onClick:()=>A(!0),type:`button`,children:t(`Open source attribution`)}),(0,E.jsx)(_.Suspense,{fallback:null,children:be&&(0,E.jsx)(jc,{onClose:()=>A(!1)})})]})]})}function Fc(e,t,n,r,i,a,o){return[e,t,n,r,i,a,...o].join(`|`)}function H({checked:e,onChange:t,title:n,hint:r,disabled:i=!1}){return(0,E.jsxs)(rl,{children:[(0,E.jsxs)(il,{children:[(0,E.jsx)(`input`,{checked:e,disabled:i,onChange:e=>t(e.target.checked),type:`checkbox`}),(0,E.jsx)(`span`,{children:n})]}),(0,E.jsx)(al,{children:r})]})}var Ic=I.nav`
+`)||N!==ce||me!==O,P=(e={})=>({logDirectory:Ee,avatarApiProviders:c.map(e=>e.trim()).filter(e=>e.length>0),autoBlock:m,autoDisableAvatarInteraction:g,autoHideChatBox:y,autoReturnHome:x,autoRejectFriendRequests:C,threatThreshold:w,whitelist:T,language:ue,startHidden:me,...e}),Oe=async()=>{Ce(null),Te(!0);try{let e=await pc(P());r(e.logDirectory),a(e.logDirectory),l(e.avatarApiProviders),d(e.avatarApiProviders),de(e.language),he(e.startHidden),ge(e.startHidden),le(N),mc().then(se,()=>{})}catch(e){Ce(e instanceof Error?e.message:String(e))}finally{Te(!1)}},ke=async e=>{de(e),Ce(null);try{let t=await pc(P({language:e}));de(t.language),ge(t.startHidden)}catch(e){Ce(e instanceof Error?e.message:String(e))}},Ae=async e=>{ye(!0),Ce(null);try{_e(await gr(e))}catch(e){Ce(e instanceof Error?e.message:String(e))}finally{ye(!1)}},je=async()=>{Ce(null);try{await ai()}catch(e){Ce(e instanceof Error?e.message:String(e))}},Me=()=>{let e=f.trim();e.length===0||c.includes(e)||(l([...c,e]),p(``))},Ne=()=>{let e=re.trim();e.length===0||T.includes(e)||(ne([...T,e]),ie(``))},Pe=e=>ne(T.filter(t=>t!==e));return(0,E.jsxs)(Ic,{children:[(0,E.jsx)(Lc,{children:Nc.map(e=>(0,E.jsx)(Rc,{$active:j===e.id,onClick:()=>M(e.id),type:`button`,children:t(e.label)},e.id))}),(0,E.jsxs)(zc,{children:[(0,E.jsxs)(Bc,{id:`settings-language`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Language`)})}),(0,E.jsx)(Hc,{children:(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`Language`)}),(0,E.jsx)(wc,{onChange:e=>void ke(e),options:fe.map(e=>({value:e,label:Mc[e]??e})),value:ue}),(0,E.jsx)(Xc,{children:t(`Language used by both the interface and the desktop backend.`)})]})})]}),(0,E.jsxs)(Bc,{id:`settings-startup`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Start with the system`)})}),(0,E.jsx)(Hc,{children:(0,E.jsxs)(rl,{children:[(0,E.jsx)(H,{checked:k?.enabled??!1,disabled:ve||!k?.supported,hint:t(`Create an autostart entry for this user.`),onChange:e=>void Ae(e),title:t(`Start with the system`)}),(0,E.jsx)(H,{checked:me,hint:t(`Open in the tray instead of showing the window.`),onChange:he,title:t(`Start hidden`)})]})})]}),(0,E.jsxs)(Bc,{id:`settings-log-source`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Log source`)})}),(0,E.jsxs)(Hc,{children:[(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`VRChat log folder`)}),(0,E.jsx)(Wc,{children:(0,E.jsx)(qc,{"aria-label":t(`VRChat log folder`),onChange:e=>r(e.target.value),placeholder:t(`VRChat's log folder`),spellCheck:!1,value:n})}),(0,E.jsx)(Xc,{children:t(`The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.`)})]}),(0,E.jsxs)(Zc,{children:[(0,E.jsxs)(Qc,{disabled:!ti,onClick:je,type:`button`,children:[(0,E.jsx)(wr,{}),t(`Open folder`)]}),(0,E.jsx)(Qc,{disabled:!o||Ee===o,onClick:()=>r(o),type:`button`,children:t(`Use VRChat's folder`)})]})]})]}),(0,E.jsxs)(Bc,{id:`settings-avatar-lookups`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Avatar name lookups`)})}),(0,E.jsx)(Hc,{children:(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`API endpoints`)}),(0,E.jsxs)(Xc,{children:[t(`Tried in order; the first name wins. Each is called as`),(0,E.jsx)(`code`,{children:` ?fileId=file_…`}),` `,t(`and must answer with JSON containing a`),(0,E.jsx)(`code`,{children:` name`}),`.`]}),(0,E.jsxs)(Gc,{children:[c.length===0&&(0,E.jsx)(Kc,{children:t(`No endpoint; avatar names stay unknown.`)}),c.map((e,n)=>(0,E.jsxs)(Wc,{children:[(0,E.jsx)(qc,{"aria-label":t(`Avatar API endpoint`),onChange:e=>{let t=[...c];t[n]=e.target.value,l(t)},spellCheck:!1,value:e}),(0,E.jsx)(Qc,{"aria-label":t(`Remove endpoint`),onClick:()=>l(c.filter((e,t)=>t!==n)),type:`button`,children:(0,E.jsx)(Cr,{})})]},`${e}-${n}`))]}),(0,E.jsxs)(Wc,{children:[(0,E.jsx)(qc,{"aria-label":t(`New avatar API endpoint`),onChange:e=>p(e.target.value),placeholder:`https://example.com/avatars`,spellCheck:!1,value:f}),(0,E.jsx)(Qc,{disabled:f.trim().length===0,onClick:Me,type:`button`,children:t(`Add`)})]})]})})]}),(0,E.jsxs)(Bc,{id:`settings-protection`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Automatic protection`)})}),(0,E.jsxs)(Hc,{children:[(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`Threat threshold`)}),(0,E.jsxs)(Wc,{children:[(0,E.jsx)(tl,{max:100,min:0,onChange:e=>te(Number(e.target.value)),step:5,type:`range`,value:w}),(0,E.jsxs)(nl,{children:[w,`%`]})]}),(0,E.jsx)(Xc,{children:t(`At or above this score the actions below run. Friends and whitelisted users are never acted on.`)})]}),(0,E.jsxs)(rl,{children:[(0,E.jsx)(H,{checked:m,hint:t(`VRChat block: their avatar and interactions are hidden.`),onChange:h,title:t(`Block the user`)}),(0,E.jsx)(H,{checked:g,hint:t(`Turn avatar interactions off for the user.`),onChange:v,title:t(`Disable avatar interactions`)}),(0,E.jsx)(H,{checked:y,hint:t(`Mute the user's chat box.`),onChange:b,title:t(`Hide the chat box`)}),(0,E.jsx)(H,{checked:x,hint:t(`Invite yourself to your home world once per instance.`),onChange:S,title:t(`Return home`)}),(0,E.jsx)(H,{checked:C,hint:t(`Hide friend requests from high-threat users; undo from the request list.`),onChange:ee,title:t(`Reject friend requests`)})]})]})]}),(0,E.jsxs)(Bc,{id:`settings-whitelist`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Whitelist`)})}),(0,E.jsxs)(Hc,{children:[(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`Add a user`)}),(0,E.jsxs)(Wc,{children:[(0,E.jsx)(qc,{"aria-label":t(`Whitelisted user id`),onChange:e=>ie(e.target.value),placeholder:`usr_…`,spellCheck:!1,value:re}),(0,E.jsx)(Qc,{disabled:re.trim().length===0,onClick:Ne,type:`button`,children:t(`Add`)})]}),(0,E.jsx)(Xc,{children:t(`Paste a VRChat user id. Whitelisted users get a white row and no automatic action.`)})]}),(0,E.jsxs)(sl,{children:[T.length===0&&(0,E.jsx)(Kc,{children:t(`Nobody is whitelisted.`)}),T.map(e=>{let n=oe.find(t=>t.userId===e);return(0,E.jsxs)(cl,{children:[(0,E.jsx)(ll,{$src:n?.iconUrl??n?.avatarUrl}),(0,E.jsxs)(ul,{children:[(0,E.jsx)(`strong`,{children:n?.name??e}),(0,E.jsx)(`span`,{children:n?.trust??e})]}),(0,E.jsx)(Qc,{"aria-label":t(`Remove from whitelist`),onClick:()=>Pe(e),type:`button`,children:(0,E.jsx)(Cr,{})})]},e)})]})]})]}),Se&&(0,E.jsx)($c,{children:Se}),(0,E.jsx)(Zc,{children:(0,E.jsx)(Qc,{disabled:!De||Ee.length===0||we,onClick:Oe,type:`button`,children:t(we?`Saving…`:`Save settings`)})}),(0,E.jsxs)(Bc,{id:`settings-build`,children:[(0,E.jsx)(Vc,{children:(0,E.jsx)(`h2`,{children:t(`Build`)})}),(0,E.jsx)(Hc,{children:(0,E.jsxs)(Uc,{children:[(0,E.jsx)(Jc,{children:t(`Version`)}),(0,E.jsx)(Yc,{$mono:!0,children:e?`v${e.version} · ${e.platform}`:t(`browser preview`)}),(0,E.jsx)(Xc,{children:t(`Read from the executable the interface is running in.`)})]})})]}),(0,E.jsx)(el,{onClick:()=>A(!0),type:`button`,children:t(`Open source attribution`)}),(0,E.jsx)(_.Suspense,{fallback:null,children:be&&(0,E.jsx)(jc,{onClose:()=>A(!1)})})]})]})}function Fc(e,t,n,r,i,a,o){return[e,t,n,r,i,a,...o].join(`|`)}function H({checked:e,onChange:t,title:n,hint:r,disabled:i=!1}){return(0,E.jsxs)(il,{children:[(0,E.jsxs)(al,{children:[(0,E.jsx)(`input`,{checked:e,disabled:i,onChange:e=>t(e.target.checked),type:`checkbox`}),(0,E.jsx)(`span`,{children:n})]}),(0,E.jsx)(ol,{children:r})]})}var Ic=I.div`
+    max-width: 760px;
+`,Lc=I.nav`
     position: sticky;
     top: 0;
     z-index: 20;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    max-width: 760px;
+    flex-direction: column;
+    gap: 2px;
+    width: 140px;
     margin-bottom: 14px;
     padding: 6px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    background: rgba(22, 19, 38, 0.82);
+    background: rgba(22, 19, 38, 0.86);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-`,Lc=I.button`
-    padding: 5px 9px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+`,Rc=I.button`
+    width: 100%;
+    overflow: hidden;
+    padding: 6px 9px;
     border: 0;
-    border-radius: 999px;
+    border-radius: 7px;
     background: ${({$active:e})=>e?`rgba(167, 139, 250, 0.16)`:`transparent`};
     color: ${({$active:e})=>e?`var(--text-primary)`:`var(--text-muted)`};
     font: inherit;
     font-size: 10.5px;
     font-weight: ${({$active:e})=>e?`600`:`500`};
     line-height: 1.35;
+    text-align: left;
+    text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
 
@@ -1722,23 +1728,23 @@ Error generating stack: `+e.message+`
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`,Rc=I.div`
+`,zc=I.div`
     display: flex;
     flex-direction: column;
     gap: 18px;
     max-width: 760px;
     min-width: 0;
-`,zc=I.section`
+`,Bc=I.section`
     display: flex;
     flex-direction: column;
     gap: 10px;
     scroll-margin-top: 24px;
-`,Bc=I.div`
+`,Vc=I.div`
     h2 {
         font-size: 13px;
         font-weight: 600;
     }
-`,Vc=I.div`
+`,Hc=I.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1746,22 +1752,22 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: var(--bg-card);
-`,Hc=I.div`
+`,Uc=I.div`
     display: flex;
     flex-direction: column;
     gap: 5px;
-`,Uc=I.div`
+`,Wc=I.div`
     display: flex;
     align-items: center;
     gap: 8px;
-`,Wc=I.div`
+`,Gc=I.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
-`,Gc=I.span`
+`,Kc=I.span`
     font-size: 11px;
     color: var(--text-muted);
-`,Kc=I.input`
+`,qc=I.input`
     flex: 1;
     min-width: 0;
     padding: 8px 10px;
@@ -1781,18 +1787,18 @@ Error generating stack: `+e.message+`
         outline: none;
         border-color: var(--border-color-hover);
     }
-`,qc=I.span`
+`,Jc=I.span`
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-`,Jc=I.span`
+`,Yc=I.span`
     font-family: ${({$mono:e})=>e?`var(--font-mono)`:`var(--font-sans)`};
     font-size: 12px;
     color: var(--text-primary);
     overflow-wrap: anywhere;
-`,Yc=I.span`
+`,Xc=I.span`
     font-size: 10px;
     line-height: 1.5;
     color: var(--text-muted);
@@ -1800,11 +1806,11 @@ Error generating stack: `+e.message+`
     code {
         font-family: var(--font-mono);
     }
-`,Xc=I.div`
+`,Zc=I.div`
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-`,Zc=I.button`
+`,Qc=I.button`
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -1827,10 +1833,10 @@ Error generating stack: `+e.message+`
         opacity: 0.4;
         cursor: default;
     }
-`,Qc=I.span`
+`,$c=I.span`
     color: var(--danger);
     font-size: 11px;
-`,$c=I.button`
+`,el=I.button`
     align-self: flex-start;
     padding: 0;
     border: none;
@@ -1844,25 +1850,25 @@ Error generating stack: `+e.message+`
     &:hover {
         color: var(--text-secondary);
     }
-`,el=I.input`
+`,tl=I.input`
     flex: 1;
     accent-color: var(--accent-primary);
-`,tl=I.strong`
+`,nl=I.strong`
     width: 48px;
     text-align: right;
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--accent-primary);
-`,nl=I.div`
+`,rl=I.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
-`,rl=I.label`
+`,il=I.label`
     display: flex;
     flex-direction: column;
     gap: 2px;
     cursor: pointer;
-`,il=I.span`
+`,al=I.span`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1871,15 +1877,15 @@ Error generating stack: `+e.message+`
     input {
         accent-color: var(--accent-primary);
     }
-`,al=I.span`
+`,ol=I.span`
     padding-left: 24px;
     font-size: 10.5px;
     color: var(--text-muted);
-`,ol=I.div`
+`,sl=I.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
-`,sl=I.div`
+`,cl=I.div`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1887,7 +1893,7 @@ Error generating stack: `+e.message+`
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.05);
-`,cl=I.span`
+`,ll=I.span`
     width: 30px;
     height: 30px;
     flex-shrink: 0;
@@ -1895,7 +1901,7 @@ Error generating stack: `+e.message+`
     background: var(--bg-primary) center / cover no-repeat;
     background-image: ${({$src:e})=>e?`url("${e}")`:`none`};
     box-shadow: inset 0 0 0 1px var(--border-color);
-`,ll=I.div`
+`,ul=I.div`
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1917,7 +1923,7 @@ Error generating stack: `+e.message+`
         font-size: 9.5px;
         color: var(--text-muted);
     }
-`,ul={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},requests:{title:`Friend requests`,subtitle:`Every incoming request AntiBot has recorded, with the sender's profile.`},operations:{title:`Operations`,subtitle:`The automatic actions AntiBot has taken, newest first.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function dl(){let e=D(),[t,n]=(0,_.useState)(`logs`),[r,i]=(0,_.useState)(null),a=pe(),o=ci(),s=xi().state===`loggedIn`;(0,_.useEffect)(()=>{mr().then(i,()=>i(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>T.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:c,subtitle:l}=ul[t];return(0,E.jsxs)(fl,{$rounded:a,children:[(0,E.jsx)(Jr,{}),(0,E.jsxs)(pl,{children:[(0,E.jsx)(zr,{onNavigate:n,page:t,status:o.status}),(0,E.jsxs)(ml,{children:[(0,E.jsxs)(hl,{children:[(0,E.jsxs)(gl,{children:[(0,E.jsx)(`h1`,{children:e(c)}),(0,E.jsx)(`p`,{children:e(l)})]}),(0,E.jsx)(_l,{children:!s&&(0,E.jsx)(vl,{onClick:()=>n(`account`),type:`button`,children:e(`Not signed in · only the log is available`)})})]}),(0,E.jsx)(U,{$flush:t!==`settings`,children:t===`logs`?(0,E.jsx)(Wo,{log:o}):t===`instance`?(0,E.jsx)(va,{signedIn:s,onSignIn:()=>n(`account`)}):t===`requests`?(0,E.jsx)(Ks,{signedIn:s,onSignIn:()=>n(`account`)}):t===`operations`?(0,E.jsx)(ys,{}):t===`account`?(0,E.jsx)(Si,{}):(0,E.jsx)(Pc,{info:r})}),(0,E.jsx)(yl,{children:(0,E.jsx)(`span`,{children:r?`v${r.version} · ${r.platform}`:e(`browser preview`)})})]})]}),(0,E.jsx)(he,{})]})}var fl=I.div`
+`,dl={logs:{title:`VRChat log`,subtitle:`Live output of VRChat's log while it is running.`},instance:{title:`Instance`,subtitle:`Players in your VRChat instance, from the API once signed in.`},requests:{title:`Friend requests`,subtitle:`Every incoming request AntiBot has recorded, with the sender's profile.`},operations:{title:`Operations`,subtitle:`The automatic actions AntiBot has taken, newest first.`},account:{title:`Account`,subtitle:`Sign in to VRChat so the instance comes from the API, not the log.`},settings:{title:`Settings`,subtitle:`Where the log comes from, and what AntiBot does with it.`}};function fl(){let e=D(),[t,n]=(0,_.useState)(`logs`),[r,i]=(0,_.useState)(null),a=pe(),o=ci(),s=xi().state===`loggedIn`;(0,_.useEffect)(()=>{mr().then(i,()=>i(null))},[]),(0,_.useEffect)(()=>{let e=window.setTimeout(()=>T.send({type:`app.ready`}),200);return()=>window.clearTimeout(e)},[]);let{title:c,subtitle:l}=dl[t];return(0,E.jsxs)(pl,{$rounded:a,children:[(0,E.jsx)(Jr,{}),(0,E.jsxs)(ml,{children:[(0,E.jsx)(zr,{onNavigate:n,page:t,status:o.status}),(0,E.jsxs)(hl,{children:[(0,E.jsxs)(gl,{children:[(0,E.jsxs)(_l,{children:[(0,E.jsx)(`h1`,{children:e(c)}),(0,E.jsx)(`p`,{children:e(l)})]}),(0,E.jsx)(vl,{children:!s&&(0,E.jsx)(U,{onClick:()=>n(`account`),type:`button`,children:e(`Not signed in · only the log is available`)})})]}),(0,E.jsx)(yl,{$flush:t!==`settings`,children:t===`logs`?(0,E.jsx)(Wo,{log:o}):t===`instance`?(0,E.jsx)(va,{signedIn:s,onSignIn:()=>n(`account`)}):t===`requests`?(0,E.jsx)(Ks,{signedIn:s,onSignIn:()=>n(`account`)}):t===`operations`?(0,E.jsx)(ys,{}):t===`account`?(0,E.jsx)(Si,{}):(0,E.jsx)(Pc,{info:r})}),(0,E.jsx)(bl,{children:(0,E.jsx)(`span`,{children:r?`v${r.version} · ${r.platform}`:e(`browser preview`)})})]})]}),(0,E.jsx)(he,{})]})}var pl=I.div`
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -1927,26 +1933,26 @@ Error generating stack: `+e.message+`
     /* An undecorated window gets no frame from the compositor, so the corners are drawn here. */
     border-radius: ${({$rounded:e})=>e?`10px`:`0`};
     box-shadow: ${({$rounded:e})=>e?`inset 0 0 0 1px var(--border-color)`:`none`};
-`,pl=I.div`
+`,ml=I.div`
     display: flex;
     flex: 1;
     min-height: 0;
     background: radial-gradient(1100px 620px at 18% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
     radial-gradient(900px 500px at 110% 15%, rgba(99, 102, 241, 0.12), transparent 55%),
     var(--bg-primary);
-`,ml=I.main`
+`,hl=I.main`
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
-`,hl=I.header`
+`,gl=I.header`
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 20px;
     padding: 22px 26px 16px;
     border-bottom: 1px solid var(--border-color);
-`,gl=I.div`
+`,_l=I.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -1961,12 +1967,12 @@ Error generating stack: `+e.message+`
         font-size: 12px;
         color: var(--text-secondary);
     }
-`,_l=I.div`
+`,vl=I.div`
     display: flex;
     align-items: center;
     gap: 8px;
     padding-top: 4px;
-`,vl=I.button`
+`,U=I.button`
     display: flex;
     align-items: center;
     gap: 7px;
@@ -1983,14 +1989,14 @@ Error generating stack: `+e.message+`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
-`,U=I.div`
+`,yl=I.div`
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
     padding: ${({$flush:e})=>e?`16px 26px 18px`:`22px 30px 30px`};
     overflow: ${({$flush:e})=>e?`hidden`:`auto`};
-`,yl=I.footer`
+`,bl=I.footer`
     display: flex;
     justify-content: flex-end;
     gap: 16px;
@@ -2005,4 +2011,4 @@ Error generating stack: `+e.message+`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-`,bl=document.getElementById(`root`);bl&&(0,v.createRoot)(bl).render((0,E.jsx)(_.StrictMode,{children:(0,E.jsx)(le,{children:(0,E.jsx)(dl,{})})}));export{c as a,u as i,D as n,re as r,I as t};
+`,xl=document.getElementById(`root`);xl&&(0,v.createRoot)(xl).render((0,E.jsx)(_.StrictMode,{children:(0,E.jsx)(le,{children:(0,E.jsx)(fl,{})})}));export{c as a,u as i,D as n,re as r,I as t};

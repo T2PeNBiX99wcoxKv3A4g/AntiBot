@@ -225,7 +225,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const removeWhitelist = (id: string) => setWhitelist(whitelist.filter((item) => item !== id));
 
     return (
-        <>
+        <Page>
             <SettingsNav>
                 {SECTIONS.map((section) => (
                     <NavItem
@@ -517,7 +517,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                 {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
             </Suspense>
             </Stack>
-        </>
+        </Page>
     );
 }
 
@@ -549,35 +549,43 @@ function Toggle({checked, onChange, title, hint, disabled = false}: {
     );
 }
 
-/** A floating bar above the settings; it never takes horizontal space from the cards. */
+const Page = styled.div`
+    max-width: 760px;
+`;
+
+/** A vertical jump list floating above the settings; it never pushes the cards sideways. */
 const SettingsNav = styled.nav`
     position: sticky;
     top: 0;
     z-index: 20;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    max-width: 760px;
+    flex-direction: column;
+    gap: 2px;
+    width: 140px;
     margin-bottom: 14px;
     padding: 6px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    background: rgba(22, 19, 38, 0.82);
+    background: rgba(22, 19, 38, 0.86);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 `;
 
 const NavItem = styled.button<{ $active: boolean }>`
-    padding: 5px 9px;
+    width: 100%;
+    overflow: hidden;
+    padding: 6px 9px;
     border: 0;
-    border-radius: 999px;
+    border-radius: 7px;
     background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.16)" : "transparent"};
     color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-muted)"};
     font: inherit;
     font-size: 10.5px;
     font-weight: ${({$active}) => $active ? "600" : "500"};
     line-height: 1.35;
+    text-align: left;
+    text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
 
