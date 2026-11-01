@@ -1,7 +1,7 @@
 import React from "react";
 import styled, {keyframes} from "styled-components";
 import {BookOpen, Download, FileText, Lock, ShieldAlert, ShieldCheck, UserCog, UserPlus, Users, Zap, type LucideIcon} from "lucide-react";
-import {siGithub} from "simple-icons";
+import {siArchlinux, siFedora, siGithub, siUbuntu} from "simple-icons";
 import {ICON, REPOSITORY, RELEASES} from "../constants";
 import {useCopy} from "../language";
 
@@ -205,11 +205,17 @@ const Step = styled.li`
     }
 `;
 
-const InstallCard = styled.a`
+const PlatformGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 12px;
+    max-width: 760px;
+`;
+
+const Platform = styled.a`
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 320px;
     padding: 16px 18px;
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -257,6 +263,8 @@ const featureIcons: LucideIcon[] = [Users, ShieldAlert, ShieldCheck, Zap, UserCo
 
 /** simple-icons dropped the Windows mark, so the four squares are drawn here. */
 const windowsLogo = {path: "M3 3h8v8H3zM13 3h8v8h-8zM3 13h8v8H3zM13 13h8v8h-8z"};
+
+const platformIcons: { path: string }[] = [windowsLogo, siFedora, siUbuntu, siArchlinux];
 
 export const HomePage: React.FC = () => {
     const home = useCopy().home;
@@ -323,15 +331,23 @@ export const HomePage: React.FC = () => {
                     <a href={REPOSITORY}>{home.readme}</a>
                     {home.installAfter}
                 </Lead>
-                <InstallCard href={RELEASES}>
-                    <PlatformName>
-                        <BrandIcon viewBox="0 0 24 24" aria-hidden="true">
-                            <path d={windowsLogo.path}/>
-                        </BrandIcon>
-                        {home.platform.name}
-                    </PlatformName>
-                    <PlatformNote>{home.platform.note}</PlatformNote>
-                </InstallCard>
+                <PlatformGrid>
+                    {home.platforms.map(({name, note}, index) => {
+                        const icon = platformIcons[index] ?? windowsLogo;
+
+                        return (
+                            <Platform href={RELEASES} key={name}>
+                                <PlatformName>
+                                    <BrandIcon viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d={icon.path}/>
+                                    </BrandIcon>
+                                    {name}
+                                </PlatformName>
+                                <PlatformNote>{note}</PlatformNote>
+                            </Platform>
+                        );
+                    })}
+                </PlatformGrid>
                 <Note>{home.oscNote}</Note>
             </Section>
         </>

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, {css, keyframes} from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
@@ -23,6 +23,16 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
 
 const debugItem: { id: Page; label: string; icon: typeof LogIcon } =
     {id: "debug", label: "Debug", icon: AlertIcon};
+
+/** The running dot breathes instead of sitting still, so the status is visible without reading it. */
+const pulse = keyframes`
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.45);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(167, 139, 250, 0);
+    }
+`;
 
 export function Sidebar({page, onNavigate, status, debug}: SidebarProps) {
     const t = useTranslation();
@@ -68,6 +78,7 @@ const Nav = styled.nav`
 `;
 
 const Item = styled.button<{ $active: boolean }>`
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -82,14 +93,44 @@ const Item = styled.button<{ $active: boolean }>`
     cursor: pointer;
     transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 
+    /* A small bar grows beside the active item instead of the row jumping into place. */
+    &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 2px;
+        height: 0;
+        border-radius: 2px;
+        background: var(--accent-primary);
+        transform: translateY(-50%);
+        transition: height 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    ${({$active}) => $active && css`
+        &::before {
+            height: 55%;
+        }
+    `}
+
     svg {
         color: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
+        transition: color 120ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+        transform: scale(${({$active}) => $active ? 1.08 : 1});
     }
 
     &:hover {
         background: var(--bg-card-hover);
         border-color: var(--border-color);
         color: var(--text-primary);
+
+        svg {
+            transform: scale(1.08);
+        }
+    }
+
+    &:active {
+        transform: scale(0.99);
     }
 
     &:focus-visible {
@@ -132,5 +173,5 @@ const Dot = styled.span<{ $active: boolean }>`
     flex-shrink: 0;
     border-radius: 50%;
     background: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
-    box-shadow: ${({$active}) => $active ? "0 0 8px var(--accent-primary)" : "none"};
+    animation: ${({$active}) => $active ? css`${pulse} 2s ease-in-out infinite` : "none"};
 `;

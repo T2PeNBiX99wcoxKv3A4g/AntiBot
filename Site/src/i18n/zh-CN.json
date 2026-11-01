@@ -53,14 +53,28 @@
       "设定阈值并选择要执行的操作。低于阈值时什么都不会发生。"
     ],
     "installTitle": "安装",
-    "installBefore": "Windows x64，自包含：已内置 .NET 运行时，不需要另外安装。程序没有代码签名，第一次运行时 Windows 可能会警告（见 ",
+    "installBefore": "自包含版本：已内置 .NET 运行时，不需要另外安装。Windows 还需要 WebView2 运行时，Windows 10 和 11 已经自带；Linux 需要 WebKitGTK 4.1 和 AppIndicator 库（见 ",
     "readme": "README",
-    "installAfter": "）。",
+    "installAfter": "）。Windows 版没有代码签名，第一次运行时 Windows 可能会警告。",
     "oscNote": "安全模式和切换头像需要在 VRChat 的快捷菜单中启用 OSC。其他操作不需要 OSC。",
-    "platform": {
-      "name": "Windows",
-      "note": "x64，自包含 (.exe)"
-    }
+    "platforms": [
+      {
+        "name": "Windows",
+        "note": "x64 安装包 (.msi)"
+      },
+      {
+        "name": "Fedora",
+        "note": "x86_64 (.rpm)"
+      },
+      {
+        "name": "Debian / Ubuntu",
+        "note": "amd64 (.deb)"
+      },
+      {
+        "name": "Arch Linux",
+        "note": "x86_64 (.pkg.tar.zst)"
+      }
+    ]
   },
   "docs": {
     "setup": "设置",

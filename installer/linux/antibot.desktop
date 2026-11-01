@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AntiBot
+GenericName=VRChat Anti-Bot
+Comment=Watch VRChat's log and act on suspicious users
+Exec=/opt/AntiBot/AntiBot
+Icon=antibot
+Terminal=false
+StartupWMClass=antibot
+Categories=Network;Utility;

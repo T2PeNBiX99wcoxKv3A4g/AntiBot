@@ -4,7 +4,7 @@ AntiBot reads the log VRChat already writes, shows who is in your instance, and 
 
 ## What you need
 
-- Windows x64. The download is self-contained, so the .NET runtime does not need to be installed.
+- Windows or Linux, x64. The download is self-contained, so the .NET runtime does not need to be installed.
 - VRChat running on the same machine. AntiBot reads its log, so it only knows about an instance while VRChat is in it.
 - OSC enabled in VRChat for the two actions that use it: Safe Mode and the avatar switch. See [OSC](OSC).
 

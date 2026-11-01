@@ -4,7 +4,7 @@ AntiBot 读取 VRChat 自己写出的日志，显示实例里有谁，并给每�
 
 ## 需要什么
 
-- Windows x64。下载的是自包含版本，不需要另外安装 .NET 运行时。
+- Windows 或 Linux，x64。下载的是自包含版本，不需要另外安装 .NET 运行时。
 - 同一台电脑上运行着 VRChat。AntiBot 读取它的日志，所以只有在 VRChat 进入实例后才知道里面的情况。
 - 两个需要 OSC 的操作（安全模式和切换头像）要在 VRChat 中启用 OSC，见 [OSC](OSC)。
 

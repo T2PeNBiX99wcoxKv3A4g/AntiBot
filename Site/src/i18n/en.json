@@ -53,14 +53,28 @@
       "Set a threshold and pick the actions you want. Nothing happens below it."
     ],
     "installTitle": "Install",
-    "installBefore": "Windows x64, self-contained: the .NET runtime is bundled, so nothing else needs installing. The build is not code-signed, so Windows may warn the first time (see the ",
+    "installBefore": "Self-contained builds: the .NET runtime is bundled, so nothing else needs installing. Windows also needs the WebView2 runtime, which Windows 10 and 11 already have; Linux needs WebKitGTK 4.1 and the AppIndicator library (see the ",
     "readme": "README",
-    "installAfter": ").",
+    "installAfter": "). The Windows build is not code-signed, so Windows may warn the first time.",
     "oscNote": "Safe Mode and the avatar switch need OSC enabled in VRChat's Action Menu. Every other action works without it.",
-    "platform": {
-      "name": "Windows",
-      "note": "x64, self-contained (.exe)"
-    }
+    "platforms": [
+      {
+        "name": "Windows",
+        "note": "x64 installer (.msi)"
+      },
+      {
+        "name": "Fedora",
+        "note": "x86_64 (.rpm)"
+      },
+      {
+        "name": "Debian / Ubuntu",
+        "note": "amd64 (.deb)"
+      },
+      {
+        "name": "Arch Linux",
+        "note": "x86_64 (.pkg.tar.zst)"
+      }
+    ]
   },
   "docs": {
     "setup": "Setup",

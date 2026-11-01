@@ -53,14 +53,28 @@
       "設定閾值並選擇要執行的操作。低於閾值時什麼都不會發生。"
     ],
     "installTitle": "安裝",
-    "installBefore": "Windows x64，自包含：已內建 .NET 執行階段，不需要另外安裝。程式沒有程式碼簽章，第一次執行時 Windows 可能會警告（見 ",
+    "installBefore": "自包含版本：已內建 .NET 執行階段，不需要另外安裝。Windows 還需要 WebView2 執行階段，Windows 10 和 11 已經內建；Linux 需要 WebKitGTK 4.1 和 AppIndicator 函式庫（見 ",
     "readme": "README",
-    "installAfter": "）。",
+    "installAfter": "）。Windows 版沒有程式碼簽章，第一次執行時 Windows 可能會警告。",
     "oscNote": "安全模式和切換頭像需要在 VRChat 的快捷選單中啟用 OSC。其他操作不需要 OSC。",
-    "platform": {
-      "name": "Windows",
-      "note": "x64，自包含 (.exe)"
-    }
+    "platforms": [
+      {
+        "name": "Windows",
+        "note": "x64 安裝程式 (.msi)"
+      },
+      {
+        "name": "Fedora",
+        "note": "x86_64 (.rpm)"
+      },
+      {
+        "name": "Debian / Ubuntu",
+        "note": "amd64 (.deb)"
+      },
+      {
+        "name": "Arch Linux",
+        "note": "x86_64 (.pkg.tar.zst)"
+      }
+    ]
   },
   "docs": {
     "setup": "設定",

@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import styled from "styled-components";
+import styled, {keyframes} from "styled-components";
 import {Native, ResizeHandles, useTranslation, useWindowCorners} from "@photino-net-utils/bridge";
 import {type AppInfo, getAppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
@@ -15,8 +15,19 @@ import {RequestsPage} from "./pages/RequestsPage";
 import {SettingsPage} from "./pages/SettingsPage";
 import type {Page} from "./pages";
 
-const pageMeta: Record<Page, { title: string; subtitle: string }> = {
-    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
+/** Pages fade in from a little below, which makes a switch feel like a change of view. */
+const pageIn = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.995);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+`;
+
+const pageMeta: Record<Page, { title: string; subtitle: string }> = {    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
     requests: {
         title: "Friend requests",
@@ -73,7 +84,7 @@ export default function App() {
 
                 <Main>
                     <Header>
-                        <HeaderText>
+                        <HeaderText key={page}>
                             <h1>{t(title)}</h1>
                             <p>{t(subtitle)}</p>
                         </HeaderText>
@@ -86,7 +97,7 @@ export default function App() {
                         </HeaderMeta>
                     </Header>
 
-                    <Content $flush={page !== "settings"}>
+                    <Content $flush={page !== "settings"} key={page}>
                         {page === "logs"
                             ? <LogViewerPage log={log}/>
                             : page === "instance"
@@ -154,6 +165,7 @@ const HeaderText = styled.div`
     display: flex;
     flex-direction: column;
     gap: 3px;
+    animation: ${pageIn} 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 
     h1 {
         font-size: 20px;
@@ -187,9 +199,16 @@ const SignInPill = styled.button`
     font-size: 10px;
     white-space: nowrap;
     cursor: pointer;
+    transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
 
     &:hover {
         background: rgba(251, 191, 36, 0.2);
+        border-color: rgba(251, 191, 36, 0.7);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
     }
 `;
 
@@ -200,6 +219,7 @@ const Content = styled.div<{ $flush: boolean }>`
     min-height: 0;
     padding: ${({$flush}) => $flush ? "16px 26px 18px" : "22px 30px 30px"};
     overflow: ${({$flush}) => $flush ? "hidden" : "auto"};
+    animation: ${pageIn} 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 const Footer = styled.footer`
