@@ -1,0 +1,63 @@
+{
+  "nav": {
+    "home": "Home"
+  },
+  "version": "Version",
+  "footer": "AntiBot is under the MIT license.",
+  "home": {
+    "tagline": "Keep bots out of your VRChat instance.",
+    "download": "Download",
+    "whatTitle": "What it does",
+    "whatText": "AntiBot reads the log VRChat already writes, sees who joins your instance, and scores each new user. Above your threshold it can act before their avatar finishes loading: block them, turn their avatar interactions off, hide their chat box, press Safe Mode over OSC, switch to a low-risk avatar, or close the client.",
+    "featuresTitle": "Features",
+    "features": [
+      {
+        "name": "Live instance list",
+        "text": "Everyone in the instance with trust rank, join time, platform, pronouns and a threat score."
+      },
+      {
+        "name": "Threat scoring",
+        "text": "Account age, rank, name patterns and avatar are weighed into a score, and every reason is shown with its own points."
+      },
+      {
+        "name": "Automatic protection",
+        "text": "At your threshold, block the user, disable their avatar interactions and hide their chat box. Friends and whitelisted users are never touched."
+      },
+      {
+        "name": "Safe Mode over OSC",
+        "text": "Press VRChat's panic button the moment a user crosses the threshold, so every non-friend avatar is replaced at once."
+      },
+      {
+        "name": "Avatar switch",
+        "text": "Optionally switch yourself to a low-risk avatar id over OSC. It is not switched back automatically."
+      },
+      {
+        "name": "Friend requests",
+        "text": "High-threat friend requests are rejected, and the same moderation actions are applied to the sender."
+      },
+      {
+        "name": "Log viewer",
+        "text": "A live, searchable view of VRChat's log, with the join, leave and avatar lines kept readable."
+      },
+      {
+        "name": "Stays local",
+        "text": "The log, the database and the settings stay on your PC. Only the VRChat API is called, at the pace it allows."
+      }
+    ],
+    "howTitle": "How it works",
+    "how": [
+      "Sign in with your VRChat account. Email codes, 2FA and Windows Hello are supported.",
+      "Point AntiBot at VRChat's log folder. It tails the same file VRChat writes, so no plugin is needed.",
+      "Set a threshold and pick the actions you want. Nothing happens below it."
+    ],
+    "installTitle": "Install",
+    "installBefore": "Windows x64, self-contained: the .NET runtime is bundled, so nothing else needs installing. The build is not code-signed, so Windows may warn the first time (see the ",
+    "readme": "README",
+    "installAfter": ").",
+    "oscNote": "Safe Mode and the avatar switch need OSC enabled in VRChat's Action Menu. Every other action works without it.",
+    "platform": {
+      "name": "Windows",
+      "note": "x64, self-contained (.exe)"
+    }
+  }
+}
