@@ -15,6 +15,9 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     /// <summary>VRChat accepts about one moderation request every few seconds.</summary>
     private const long ModerationGapMilliseconds = 3000;
 
+    /// <summary>After going home the account needs time to travel; do not try again for a while.</summary>
+    private static readonly TimeSpan ReturnHomeCooldown = TimeSpan.FromMinutes(10);
+
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim _actions = new(1, 1);
     private readonly Lock _gate = new();
@@ -22,7 +25,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
     private long _lastModerationAt;
-    private bool _returnedHome;
+    private DateTimeOffset _returnedHomeAt = DateTimeOffset.MinValue;
     private bool _returningHome;
 
     public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
@@ -36,7 +39,9 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
             {
                 _instance = snapshot.Instance;
                 _acted.Clear();
-                _returnedHome = false;
+
+                // The cooldown is deliberately not reset here: travelling home changes the instance,
+                // and resetting it made the action fire again on every refresh.
             }
 
         foreach (var user in snapshot.Users)
@@ -96,12 +101,12 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         }
     }
 
-    /// <summary>Sends the account home once per instance; a failed attempt may be retried.</summary>
+    /// <summary>Sends the account home at most once per cooldown; a failed attempt may be retried.</summary>
     private async Task<bool> TryReturnHomeAsync()
     {
         lock (_gate)
         {
-            if (_returnedHome || _returningHome)
+            if (_returningHome || DateTimeOffset.UtcNow - _returnedHomeAt < ReturnHomeCooldown)
                 return false;
 
             _returningHome = true;
@@ -112,7 +117,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
             var returned = await AuthService.Instance.ReturnHomeAsync(_stop.Token);
             if (returned)
                 lock (_gate)
-                    _returnedHome = true;
+                    _returnedHomeAt = DateTimeOffset.UtcNow;
 
             return returned;
         }

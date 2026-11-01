@@ -264,6 +264,14 @@ internal sealed class VrchatApi : IDisposable
                    : null);
     }
 
+    /// <summary>Sends the account an invite to a location; its own home world is how it goes home.</summary>
+    public async Task<bool> InviteMyselfAsync(string location, CancellationToken token)
+    {
+        using var response = await _http.PostAsync($"invite/myself/to/{location}", null, token);
+        Logger.Debug("Self invite to {Location} answered {Status}", location, response.StatusCode);
+        return response.IsSuccessStatusCode;
+    }
+
     /// <summary>Starts a device (QR) sign-in; the account is approved in a browser or the VRChat app.</summary>
     public async Task<ApiDeviceCode?> StartDeviceAsync(CancellationToken token)
     {

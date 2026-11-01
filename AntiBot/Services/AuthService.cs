@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -85,6 +84,16 @@ internal sealed class AuthService : Singleton<AuthService>
         {
             lock (_gate)
                 return _state;
+        }
+    }
+
+    /// <summary>The signed-in account's id, so the instance list can tell the local player apart.</summary>
+    public string? CurrentUserId
+    {
+        get
+        {
+            lock (_gate)
+                return _account?.Id;
         }
     }
 
@@ -183,66 +192,45 @@ internal sealed class AuthService : Singleton<AuthService>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
 
     /// <summary>
-    ///     Makes the client travel to the account's home world, the way VRChat's own Home button does.
-    ///     The API has no "join" call, so the client is handed the launch link the VRChat website uses;
-    ///     an invite would only sit in the notification list until someone accepted it.
+    ///     Sends the account an invite to its own home world. VRChat has no "join" call, and handing the
+    ///     client a launch link makes the shell start a second VRChat when one is already running, which
+    ///     the account then flaps between; an invite is the only way to move it without that.
     /// </summary>
     public async Task<bool> ReturnHomeAsync(CancellationToken token)
     {
         if (!IsReady)
             return false;
 
-        // Opening the link would start VRChat when it is not running here (for instance when the
-        // account is in a world from another device), which is not what "return home" means.
-        if (!VrchatLogService.Instance.IsRunning)
-        {
-            Log.Information("VRChat is not running here, so the home link is not opened");
-            return false;
-        }
-
         var (user, _) = await _api.GetCurrentUserAsync(token);
-        var home = user?.HomeLocation ?? user?.HomeLocationLegacy;
+        if (user is null)
+            return false;
 
+        // Only an account that is actually sitting in a world needs to go home.
+        if (user.Location is not { Length: > 0 } location || !location.StartsWith("wrld_", StringComparison.Ordinal))
+            return false;
+
+        var home = user.HomeLocation ?? user.HomeLocationLegacy;
         if (home is not { Length: > 0 } || !home.StartsWith("wrld_", StringComparison.Ordinal))
             return false;
 
-        // homeLocation is often just the world id; a launch link needs an instance.
+        // homeLocation is often just the world id; an invite needs worldId:instanceId.
         if (!home.Contains(':'))
         {
-            if (user?.Id is not { Length: > 0 } ownerId)
+            if (user.Id is not { Length: > 0 } ownerId)
                 return false;
 
             // A group world or a world that refuses new instances must not leave the account stuck.
-            var location = await _api.CreateInstanceAsync(home, ownerId, token)
-                           ?? await _api.CreateInstanceAsync(DefaultHomeWorld, ownerId, token);
-            if (location is not { Length: > 0 })
+            var created = await _api.CreateInstanceAsync(home, ownerId, token)
+                          ?? await _api.CreateInstanceAsync(DefaultHomeWorld, ownerId, token);
+            if (created is not { Length: > 0 })
                 return false;
 
-            home = location;
+            home = created;
         }
 
-        var launched = LaunchClient(home);
-        Log.Information("Return home to {Location}: {Launched}", home, launched);
-        return launched;
-    }
-
-    /// <summary>
-    ///     Hands the running client its own <c>vrchat://launch</c> link. <c>force</c> skips the in-game
-    ///     "travel there?" prompt, so the account leaves the instance without anyone clicking anything.
-    /// </summary>
-    private bool LaunchClient(string location)
-    {
-        try
-        {
-            var uri = $"vrchat://launch?force=true&id={Uri.EscapeDataString(location)}";
-            using var process = Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
-            return process is not null;
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Could not hand the home link to VRChat");
-            return false;
-        }
+        var invited = await _api.InviteMyselfAsync(home, token);
+        Log.Information("Return home to {Location}: {Invited}", home, invited);
+        return invited;
     }
 
 #if DEBUG

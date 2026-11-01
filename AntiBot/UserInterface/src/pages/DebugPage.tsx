@@ -19,8 +19,8 @@ export function DebugPage() {
             const returned = await returnHome();
             setFailed(!returned);
             setResult(returned
-                ? t("The launch link was handed to VRChat.")
-                : t("VRChat did not take the launch link. Is it running on this machine?"));
+                ? t("The home invite was sent.")
+                : t("The home invite could not be sent. Check the connection and the sign-in."));
         } catch (err) {
             setFailed(true);
             setResult(err instanceof Error ? err.message : String(err));

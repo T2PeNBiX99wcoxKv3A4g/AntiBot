@@ -689,12 +689,18 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
 
         var avatarName = AvatarService.Instance.NameFor(fileId);
         var isRobot = AvatarService.IsRobot(fileId);
-        var threat = ThreatScoring.Assess(profile, name, avatarName, isRobot, platform);
+
+        // The signed-in account is never scored: a generated-looking name must not flag its own user.
+        var local = (known?.Local ?? false) ||
+                    string.Equals(userId, AuthService.Instance.CurrentUserId, StringComparison.OrdinalIgnoreCase);
+        var (score, reasons) = local
+            ? (0, Array.Empty<string>())
+            : ThreatScoring.Assess(profile, name, avatarName, isRobot, platform);
 
         return new(
             userId,
             name.Length > 0 ? name : profile?.DisplayName ?? userId,
-            known?.Local ?? false,
+            local,
             known?.JoinedAt ?? "",
             avatar,
             profile?.AvatarImageUrl,
@@ -709,8 +715,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
             avatarName,
             isRobot,
             profile?.IsFriend ?? false,
-            threat.Score,
-            threat.Reasons,
+            score,
+            reasons,
             SettingsService.Instance.Current.Whitelist.Contains(userId, StringComparer.OrdinalIgnoreCase),
             profile is not null || PlayerService.Instance.IsLoaded(userId),
             fileId is null ? profile is not null : AvatarService.Instance.IsResolved(fileId));
