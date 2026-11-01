@@ -301,7 +301,7 @@
   "Hide the chat box": "Hide the chat box",
   "Mute the user's chat box.": "Mute the user's chat box.",
   "Close VRChat": "Close VRChat",
-  "Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.": "Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.",
+  "Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.": "Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.",
   "Skip while in VR": "Skip while in VR",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.",
   "Closed VRChat": "Closed VRChat",

@@ -299,7 +299,7 @@
   "Hide the chat box": "チャットボックスを隠す",
   "Mute the user's chat box.": "そのユーザーのチャットボックスをミュートします。",
   "Close VRChat": "VRChat を終了",
-  "Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.": "高脅威ユーザーが現れたら VRChat を終了します。アバターのダウンロードを止められるのはインスタンスを離れることだけです。",
+  "Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.": "高脅威ユーザーが現れたら VRChat を終了します。ブロックには少し時間がかかり、その間にアバターをダウンロードされる可能性があります。",
   "Skip while in VR": "VR 中はスキップ",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "VR ヘッドセットの使用中は VRChat を終了しません。VR からの終了は負担が大きいためです。",
   "Closed VRChat": "VRChat を終了しました",

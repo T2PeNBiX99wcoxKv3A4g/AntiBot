@@ -431,7 +431,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         />
                         <Toggle
                             checked={autoClose}
-                            hint={t("Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.")}
+                            hint={t("Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.")}
                             onChange={(value) => {
                                 setAutoClose(value);
                                 void persist({autoCloseVrchat: value});

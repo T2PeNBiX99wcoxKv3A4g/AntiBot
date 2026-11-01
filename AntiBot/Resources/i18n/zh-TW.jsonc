@@ -299,7 +299,7 @@
   "Hide the chat box": "隱藏聊天框",
   "Mute the user's chat box.": "靜音該使用者的聊天框。",
   "Close VRChat": "關閉 VRChat",
-  "Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.": "出現高威脅使用者時關閉 VRChat。只有離開實例才能及時阻止頭像下載。",
+  "Close VRChat when a high-threat user appears. Blocking takes a moment, and that is long enough to download an avatar.": "出現高威脅使用者時關閉 VRChat。封鎖需要一點時間，這段時間足以讓對方下載頭像。",
   "Skip while in VR": "VR 模式下跳過",
   "Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.": "使用 VR 頭戴裝置時不關閉 VRChat，因為在 VR 中結束很麻煩。",
   "Closed VRChat": "已關閉 VRChat",
