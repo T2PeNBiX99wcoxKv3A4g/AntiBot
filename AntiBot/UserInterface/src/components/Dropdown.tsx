@@ -39,7 +39,9 @@ const Menu = styled.div<{ $up?: boolean }>`
     padding: 5px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
-    background: var(--bg-card);
+    background: rgba(22, 19, 38, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     z-index: 30;
     transform-origin: ${({$up}) => $up ? "bottom" : "top"};
@@ -82,7 +84,9 @@ const Trigger = styled.button`
     padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: var(--bg-input);
+    background: rgba(12, 10, 22, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: var(--text-primary);
     font: inherit;
     font-size: 12px;
