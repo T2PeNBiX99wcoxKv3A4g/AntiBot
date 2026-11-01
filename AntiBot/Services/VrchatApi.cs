@@ -296,7 +296,13 @@ internal sealed class VrchatApi : IDisposable
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
-            return (false, Describe(response.StatusCode, body));
+            return (false, response.StatusCode switch
+            {
+                // VRChat reports "still waiting" as a bad request, like the OAuth device flow it copies.
+                HttpStatusCode.BadRequest => "pending",
+                HttpStatusCode.TooManyRequests => "rate_limited",
+                _ => Describe(response.StatusCode, body)
+            });
 
         var status = Deserialize(body, VrchatJsonContext.Default.ApiDeviceStatus);
         return (status?.User is not null, status?.User is null ? "authorization_pending" : null);

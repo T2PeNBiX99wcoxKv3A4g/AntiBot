@@ -135,15 +135,23 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         try
         {
             while (await timer.WaitForNextTickAsync(token))
-                await RefreshFromApiAsync(token);
+                try
+                {
+                    await RefreshFromApiAsync(token);
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    // A switch replaces the HTTP client, which cancels whatever was in flight.
+                    Log.Debug(ex, "The VRChat API refresh failed");
+                }
         }
         catch (OperationCanceledException)
         {
             // Shutting down.
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "The VRChat API refresh stopped");
         }
     }
 

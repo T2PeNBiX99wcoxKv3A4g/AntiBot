@@ -504,6 +504,11 @@ internal sealed class AuthService : Singleton<AuthService>
         PersistIndex();
         Log.Information("Session storage of {Name} set to {Mode}", account.Name, mode);
         Notify();
+
+        // The picture can only be cached once the account has a folder.
+        if (account.Stored)
+            _ = RefreshAvatarAsync(account);
+
         return context.Reply("auth.storage.save.result", Snapshot());
     }
 
@@ -527,8 +532,18 @@ internal sealed class AuthService : Singleton<AuthService>
 
     private async Task<NativeResponse?> StartDeviceAsync(NativeContext context)
     {
-        var api = NewDeviceApi();
-        var device = await api.StartDeviceAsync(CancellationToken.None);
+        ApiDeviceCode? device;
+
+        try
+        {
+            device = await NewDeviceApi().StartDeviceAsync(CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
+        {
+            Log.Warning(ex, "Could not start a device sign-in");
+            return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceNetwork"));
+        }
+
         if (device?.DeviceCode is not { Length: > 0 } code ||
             device.VerificationUrlComplete is not { Length: > 0 } url)
             return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceStart"));
@@ -544,7 +559,19 @@ internal sealed class AuthService : Singleton<AuthService>
             return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceMissing"));
 
         var api = DeviceApi();
-        var (approved, reason) = await api.PollDeviceAsync(code, CancellationToken.None);
+
+        bool approved;
+        string? reason;
+
+        try
+        {
+            (approved, reason) = await api.PollDeviceAsync(code, CancellationToken.None);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
+        {
+            Log.Warning(ex, "Could not poll the device sign-in");
+            return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceNetwork"));
+        }
 
         if (!approved)
             return context.Reply("auth.device.poll.result", new DevicePollPayload(false, reason ?? "pending", null));
@@ -1066,13 +1093,16 @@ internal sealed class AuthService : Singleton<AuthService>
             return _device ??= new VrchatApi();
     }
 
-    /// <summary>Each new code gets a fresh client, so an older one cannot hold a stale session.</summary>
+    /// <summary>Each new code reuses the client, so a request in flight is not cut off.</summary>
     private VrchatApi NewDeviceApi()
     {
         lock (_gate)
         {
-            _device?.Dispose();
-            return _device = new VrchatApi();
+            if (_device is null)
+                return _device = new VrchatApi();
+
+            _device.ResetCookies();
+            return _device;
         }
     }
 
@@ -1132,7 +1162,7 @@ internal sealed class AuthService : Singleton<AuthService>
                 .Select(account => new AccountSummaryPayload(
                     account.Dir,
                     account.Name,
-                    account.Avatar,
+                    account.Avatar ?? account.AvatarUrl,
                     StorageName(account.Storage),
                     ReferenceEquals(account, _active),
                     account.Stored))

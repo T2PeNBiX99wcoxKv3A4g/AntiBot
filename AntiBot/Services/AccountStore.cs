@@ -26,8 +26,16 @@ internal sealed record AccountIndex(string? Active, StoredAccount[] Accounts);
 internal static class AccountStore
 {
     private static readonly ILogger Logger = Log.ForContext(typeof(AccountStore));
-    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+    private static readonly HttpClient Http = CreateHttp();
     private static readonly ConcurrentDictionary<string, string?> Avatars = new();
+
+    private static HttpClient CreateHttp()
+    {
+        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
+        return client;
+    }
 
     public static string Root => Path.Combine(Constants.DataDirectory, "accounts");
 
@@ -110,7 +118,7 @@ internal static class AccountStore
         }
         catch (Exception ex)
         {
-            Logger.Debug(ex, "Could not cache the avatar of {Dir}", dir);
+            Logger.Warning(ex, "Could not cache the avatar of {Dir}", dir);
             return null;
         }
     }
@@ -128,7 +136,7 @@ internal static class AccountStore
         }
         catch (Exception ex)
         {
-            Logger.Debug(ex, "Could not read the avatar of {Url}", url);
+            Logger.Warning(ex, "Could not read the avatar of {Url}", url);
             return null;
         }
     }

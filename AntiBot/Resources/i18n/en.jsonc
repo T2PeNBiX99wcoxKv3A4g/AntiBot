@@ -353,6 +353,7 @@
   "error.authAccountSignedOut": "That account is not signed in. Sign in again.",
   "error.authDeviceStart": "VRChat did not start a device sign-in.",
   "error.authDeviceMissing": "The device sign-in is missing its code.",
+  "error.authDeviceNetwork": "VRChat could not be reached. Check the connection and try again.",
   "error.authUnauthorized": "The username or password is not correct.",
   "error.authForbidden": "VRChat refused the sign-in. A VPN or a blocked network can cause this.",
   "error.authRateLimited": "Too many attempts. Wait a moment, then try again.",

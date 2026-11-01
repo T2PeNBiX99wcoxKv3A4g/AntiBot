@@ -351,6 +351,7 @@
   "error.authAccountSignedOut": "そのアカウントはサインインしていません。もう一度サインインしてください。",
   "error.authDeviceStart": "VRChat がデバイスサインインを開始しませんでした。",
   "error.authDeviceMissing": "デバイスサインインのコードがありません。",
+  "error.authDeviceNetwork": "VRChat に接続できませんでした。通信を確認して再試行してください。",
   "error.authUnauthorized": "ユーザー名またはパスワードが正しくありません。",
   "error.authForbidden": "VRChat がサインインを拒否しました。VPN やブロックされたネットワークが原因の場合があります。",
   "error.authRateLimited": "試行回数が多すぎます。しばらく待ってから再試行してください。",

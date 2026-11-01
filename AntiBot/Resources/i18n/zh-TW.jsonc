@@ -351,6 +351,7 @@
   "error.authAccountSignedOut": "該帳號未登入，請重新登入。",
   "error.authDeviceStart": "VRChat 沒有啟動裝置登入。",
   "error.authDeviceMissing": "裝置登入缺少代碼。",
+  "error.authDeviceNetwork": "無法連線到 VRChat，請檢查網路後重試。",
   "error.authUnauthorized": "使用者名稱或密碼不正確。",
   "error.authForbidden": "VRChat 拒絕了登入。VPN 或被封鎖的網路可能造成此問題。",
   "error.authRateLimited": "嘗試次數過多，請稍後再試。",

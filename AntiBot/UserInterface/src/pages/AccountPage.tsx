@@ -1,4 +1,4 @@
-import {type FormEvent, useCallback, useEffect, useState} from "react";
+import {type FormEvent, useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {Native, useTranslation} from "@photino-net-utils/bridge";
 import {
@@ -76,7 +76,10 @@ export function AccountPage() {
     };
 
     const hasAccounts = auth.accounts.length > 0;
-    const showAdd = !signedIn && (adding || auth.state === "loggedOut" && !hasAccounts);
+    const showAdd = adding || !signedIn && auth.state === "loggedOut" && !hasAccounts;
+
+    // The sign-in steps are centred cards, so their page spans the whole content area.
+    const centred = showAdd || auth.state === "twoFactor" || auth.state === "locked" && !browsing;
 
     const switchTo = async (account: AccountSummary) => {
         setError("");
@@ -155,7 +158,10 @@ export function AccountPage() {
                                 onCancel={hasAccounts ? cancelAdd : undefined}/>;
     else if (showAdd)
         content = <LoginForm busy={busy} error={error} onCancel={hasAccounts ? cancelAdd : undefined}
-                             onSignedIn={setAuth} run={run}/>;
+                             onSignedIn={(next) => {
+                                 setAuth(next);
+                                 setAdding(false);
+                             }} run={run}/>;
     else
         content = (
             <>
@@ -170,7 +176,7 @@ export function AccountPage() {
         );
 
     return (
-        <Page $wide={showAdd}>
+        <Page $wide={centred}>
             {content}
             {signedIn && <StorageChoice key={auth.user?.id} auth={auth} busy={busy} error={error} run={run}/>}
             {unlocking && (
@@ -851,8 +857,14 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
     const [error, setError] = useState("");
     const [expired, setExpired] = useState(false);
     const [starting, setStarting] = useState(true);
+    const inFlight = useRef(false);
 
     const start = useCallback(async () => {
+        // The page can mount twice in a row, and two codes would only fight over the client.
+        if (inFlight.current)
+            return;
+
+        inFlight.current = true;
         setError("");
         setExpired(false);
         setStarting(true);
@@ -862,6 +874,7 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
         } catch (err) {
             setError(err instanceof Error ? err.message : String(err));
         } finally {
+            inFlight.current = false;
             setStarting(false);
         }
     }, []);
@@ -899,12 +912,23 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
                     return;
                 }
 
-                if (poll.reason === "expired_token") {
+                const reason = poll.reason ?? "pending";
+
+                if (reason === "expired_token") {
                     setExpired(true);
                     return;
                 }
 
-                if (poll.reason === "slow_down") interval += 5000;
+                if (reason === "slow_down") {
+                    interval += 5000;
+                } else if (reason === "rate_limited") {
+                    // VRChat is throttling the polls; wait longer instead of hammering it.
+                    interval = Math.max(interval, 15_000);
+                } else if (reason !== "pending" && reason !== "authorization_pending") {
+                    setError(reason);
+                    return;
+                }
+
                 timer = window.setTimeout(() => void tick(), interval);
             } catch (err) {
                 if (!cancelled) setError(err instanceof Error ? err.message : String(err));
