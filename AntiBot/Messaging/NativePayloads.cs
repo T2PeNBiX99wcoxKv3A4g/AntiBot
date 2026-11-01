@@ -112,7 +112,7 @@ internal sealed record DebugUserPayload(
     string? AvatarName,
     bool IsRobot,
     int Threat,
-    string[] Reasons);
+    ThreatReason[] Reasons);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

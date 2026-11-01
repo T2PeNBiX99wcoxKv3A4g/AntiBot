@@ -1,5 +1,11 @@
 namespace AntiBot.Models;
 
+/// <summary>
+///     One scoring signal. <see cref="Text" /> is a translation key and <see cref="Detail" /> fills its
+///     <c>{days}</c> placeholder; <see cref="Weight" /> is the points it added, negative for trust.
+/// </summary>
+public sealed record ThreatReason(string Text, int Weight, string? Detail = null);
+
 /// <summary>One player in the current instance, with whatever the cached profile adds.</summary>
 public sealed record InstanceUser(
     string UserId,
@@ -20,7 +26,7 @@ public sealed record InstanceUser(
     bool IsRobot = false,
     bool IsFriend = false,
     int Threat = 0,
-    string[]? ThreatReasons = null,
+    ThreatReason[]? ThreatReasons = null,
     bool Whitelisted = false,
     bool ProfileLoaded = false,
     bool AvatarLoaded = false);

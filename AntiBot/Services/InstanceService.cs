@@ -694,7 +694,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
         var local = (known?.Local ?? false) ||
                     string.Equals(userId, AuthService.Instance.CurrentUserId, StringComparison.OrdinalIgnoreCase);
         var (score, reasons) = local
-            ? (0, Array.Empty<string>())
+            ? (0, Array.Empty<ThreatReason>())
             : ThreatScoring.Assess(profile, name, avatarName, isRobot, platform);
 
         return new(

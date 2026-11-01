@@ -1,4 +1,5 @@
 import {Native} from "@photino-net-utils/bridge";
+import type {ThreatReason} from "./instance";
 
 /** Everything the scoring looks at, plus what it decided. */
 export interface DebugUserResult {
@@ -10,7 +11,7 @@ export interface DebugUserResult {
     avatarName?: string;
     isRobot: boolean;
     threat: number;
-    reasons: string[];
+    reasons: ThreatReason[];
 }
 
 /** Debug builds only: scores a user id or a profile link without waiting for them to join. */

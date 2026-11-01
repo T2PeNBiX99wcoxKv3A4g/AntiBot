@@ -185,7 +185,10 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                     </span>
                     {threat > 0 && (
                         <ThreatBadge $score={threat}
-                                      title={(user.threatReasons ?? []).map((reason) => t(reason)).join(" · ")}>
+                                      title={(user.threatReasons ?? [])
+                                          .map((reason) =>
+                                              `${t(reason.text, reason.detail ? {days: reason.detail} : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
+                                          .join(" · ")}>
                             <AlertIcon size={10}/>
                             {threat}%
                         </ThreatBadge>
@@ -289,15 +292,22 @@ export function PlayerDialog({user, now, onClose}: {
                             </ProfileLink>
                         </FieldRow>
                         <StatusField status={status} text={user.statusDescription} t={t}/>
-                        {(user.threat ?? 0) > 0 && (
+                        {((user.threat ?? 0) > 0 || (user.threatReasons?.length ?? 0) > 0) && (
                             <FieldRow>
                                 <span>{t("Threat")}</span>
                                 <ThreatLine>
-                                    <ThreatBadge $score={user.threat!}>
+                                    <ThreatBadge $score={user.threat ?? 0}>
                                         <AlertIcon size={10}/>
-                                        {user.threat}%
+                                        {user.threat ?? 0}%
                                     </ThreatBadge>
-                                    <ThreatText>{(user.threatReasons ?? []).map((reason) => t(reason)).join(" · ")}</ThreatText>
+                                    <ThreatReasons>
+                                        {(user.threatReasons ?? []).map((reason) => (
+                                            <ThreatReasonChip $up={reason.weight > 0} key={reason.text}>
+                                                {t(reason.text, reason.detail ? {days: reason.detail} : undefined)}
+                                                <b>{reason.weight > 0 ? `+${reason.weight}` : reason.weight}</b>
+                                            </ThreatReasonChip>
+                                        ))}
+                                    </ThreatReasons>
                                 </ThreatLine>
                             </FieldRow>
                         )}
@@ -983,10 +993,29 @@ const ThreatLine = styled.div`
     min-width: 0;
 `;
 
-const ThreatText = styled.span`
-    color: var(--text-secondary);
-    font-size: 11px;
-    line-height: 1.5;
+const ThreatReasons = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+`;
+
+/** A signal, coloured by whether it raised or lowered the score. */
+const ThreatReasonChip = styled.span<{ $up: boolean }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: ${({$up}) => $up ? "rgba(248, 113, 113, 0.16)" : "rgba(74, 222, 128, 0.16)"};
+    color: ${({$up}) => $up ? "#fca5a5" : "#86efac"};
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.6;
+
+    b {
+        font-weight: 600;
+    }
 `;
 
 const Whitelisted = styled.span`

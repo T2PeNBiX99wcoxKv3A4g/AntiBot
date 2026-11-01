@@ -195,5 +195,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
     private static string Describe(InstanceUser user) =>
         $"{user.Threat}%" +
-        (user.ThreatReasons is { Length: > 0 } reasons ? " · " + string.Join(", ", reasons) : "");
+        (user.ThreatReasons is { Length: > 0 } reasons
+            ? " · " + string.Join(", ", reasons.Select(reason => reason.Text))
+            : "");
 }

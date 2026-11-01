@@ -1,5 +1,13 @@
 import {Native} from "@photino-net-utils/bridge";
 
+/** One scoring signal: a translation key, the points it added (negative for trust) and a placeholder. */
+export interface ThreatReason {
+    text: string;
+    weight: number;
+    /** Fills the `{days}` placeholder of the text, when it has one. */
+    detail?: string;
+}
+
 /** One player in the current instance. */
 export interface InstanceUser {
     userId: string;
@@ -31,7 +39,7 @@ export interface InstanceUser {
     /** 0-100 bot threat score. */
     threat?: number;
     /** Why the score is what it is. */
-    threatReasons?: string[];
+    threatReasons?: ThreatReason[];
     /** True when the user is on the whitelist and never acted on. */
     whitelisted?: boolean;
     /** Whether the profile lookup finished; false means the row is still loading. */

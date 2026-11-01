@@ -62,6 +62,8 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(InstanceSnapshot))]
 [JsonSerializable(typeof(InstanceUser))]
 [JsonSerializable(typeof(InstanceUser[]))]
+[JsonSerializable(typeof(ThreatReason))]
+[JsonSerializable(typeof(ThreatReason[]))]
 [JsonSerializable(typeof(FriendRequest[]))]
 [JsonSerializable(typeof(VrchatLogLine))]
 [JsonSerializable(typeof(VrchatLogSnapshot))]

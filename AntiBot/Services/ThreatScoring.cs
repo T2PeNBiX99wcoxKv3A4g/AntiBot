@@ -27,10 +27,10 @@ internal static partial class ThreatScoring
         "voice data", "banned", "collect avatars", "player locations", "buy now"
     ];
 
-    public static (int Score, string[] Reasons) Assess(PlayerProfile? profile, string? displayName,
+    public static (int Score, ThreatReason[] Reasons) Assess(PlayerProfile? profile, string? displayName,
         string? avatarName, bool isRobot, string? platform)
     {
-        var reasons = new List<string>();
+        var reasons = new List<ThreatReason>();
         var score = 0;
 
         var (nameScore, nameReasons) = NameScore(profile?.DisplayName ?? displayName ?? "");
@@ -44,29 +44,31 @@ internal static partial class ThreatScoring
             if (trustScore != 0)
             {
                 score += trustScore;
-                reasons.Add(trustReason);
+                reasons.Add(new(trustReason, trustScore));
             }
 
-            var (ageScore, ageReason) = AgeScore(profile.DateJoined);
+            var (ageScore, ageText, ageDetail) = AgeScore(profile.DateJoined);
             if (ageScore > 0)
             {
                 score += ageScore;
-                reasons.Add(ageReason);
+                reasons.Add(new(ageText, ageScore, ageDetail));
             }
         }
 
-        score += TextScore(profile, reasons);
+        var (textScore, textReasons) = TextScore(profile);
+        score += textScore;
+        reasons.AddRange(textReasons);
 
         // Only the two exact avatars are scored; a name that merely looks similar is not enough.
         if (string.Equals(avatarName?.Trim(), "Sex Bot", StringComparison.OrdinalIgnoreCase))
         {
             score += 10;
-            reasons.Add("avatar named \"Sex Bot\"");
+            reasons.Add(new("avatar named \"Sex Bot\"", 10));
         }
         else if (isRobot)
         {
             score += 5;
-            reasons.Add("default Robot avatar");
+            reasons.Add(new("default Robot avatar", 5));
         }
 
         // Quest and iOS are very unlikely to host a bot; halve whatever the other signals added.
@@ -74,8 +76,9 @@ internal static partial class ThreatScoring
             (string.Equals(platform, "android", StringComparison.OrdinalIgnoreCase) ||
              string.Equals(platform, "ios", StringComparison.OrdinalIgnoreCase)))
         {
-            score /= 2;
-            reasons.Add("Quest/iOS platform (score halved)");
+            var halved = score / 2;
+            reasons.Add(new("Quest/iOS platform (score halved)", halved - score));
+            score = halved;
         }
 
         return (Math.Max(score, 0), [.. reasons]);
@@ -112,11 +115,11 @@ internal static partial class ThreatScoring
     ///     How new the account is. Bots are usually created days before they are used, so a fresh account
     ///     is a strong signal and an old one is not a signal at all. Capped at 40, the same as the name.
     /// </summary>
-    private static (int Score, string Reason) AgeScore(string? dateJoined)
+    private static (int Score, string Text, string? Detail) AgeScore(string? dateJoined)
     {
         if (!DateTimeOffset.TryParse(dateJoined, CultureInfo.InvariantCulture,
                 DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var joined))
-            return (0, "");
+            return (0, "", null);
 
         var days = (DateTimeOffset.UtcNow - joined).TotalDays;
         if (days < 0)
@@ -134,90 +137,90 @@ internal static partial class ThreatScoring
         };
 
         if (score == 0)
-            return (0, "");
+            return (0, "", null);
 
-        var age = (int)days switch
+        return (int)days switch
         {
-            <= 0 => "account created today",
-            1 => "account created yesterday",
-            var value => $"account created {value} days ago"
+            <= 0 => (score, "account created today", null),
+            1 => (score, "account created yesterday", null),
+            var value => (score, "account created {days} days ago",
+                value.ToString(CultureInfo.InvariantCulture))
         };
-
-        return (score, age);
     }
 
     /// <summary>
     ///     The generated-name signals. Each feature adds its own weight, capped at 40 so a name alone
     ///     can never reach the default threshold.
     /// </summary>
-    private static (int Score, string[] Reasons) NameScore(string name)
+    private static (int Score, ThreatReason[] Reasons) NameScore(string name)
     {
         if (name.Length == 0)
             return (0, []);
 
         var score = 0;
-        var reasons = new List<string>();
+        var reasons = new List<ThreatReason>();
         var hexSuffix = HexSuffixPattern().IsMatch(name);
         var body = hexSuffix ? name[..^5] : name;
 
         if (hexSuffix)
         {
             score += 10;
-            reasons.Add("four-character hex suffix");
+            reasons.Add(new("four-character hex suffix", 10));
         }
 
         if (LetterDigitPattern().IsMatch(body))
         {
             score += 10;
-            reasons.Add("digits mixed into the name");
+            reasons.Add(new("digits mixed into the name", 10));
         }
 
         if (MixedPattern().IsMatch(name))
         {
             score += 20;
-            reasons.Add("long letter-digit-letter pattern");
+            reasons.Add(new("long letter-digit-letter pattern", 20));
         }
 
         return (Math.Min(score, 40), [.. reasons]);
     }
 
     /// <summary>The custom status, pronouns and bio, matched after punctuation is normalised.</summary>
-    private static int TextScore(PlayerProfile? profile, List<string> reasons)
+    private static (int Score, ThreatReason[] Reasons) TextScore(PlayerProfile? profile)
     {
         var text = Normalize(string.Join('\n',
             new[] { profile?.StatusDescription, profile?.Pronouns, profile?.Bio }
                 .Where(value => !string.IsNullOrWhiteSpace(value))));
 
         if (text.Length == 0)
-            return 0;
+            return (0, []);
 
         var score = 0;
+        var reasons = new List<ThreatReason>();
 
         if (FuzzyTerms.Any(term => text.Contains(term, StringComparison.Ordinal)))
         {
             score += 5;
-            reasons.Add("suspicious wording in the profile");
+            reasons.Add(new("suspicious wording in the profile", 5));
         }
 
         if (text.Contains("hexed", StringComparison.Ordinal))
         {
             score += 10;
-            reasons.Add("known bot site (hexed)");
+            reasons.Add(new("known bot site (hexed)", 10));
         }
 
         if (text.Contains("check bio", StringComparison.Ordinal))
         {
             score += 5;
-            reasons.Add("status says \"check bio\"");
+            reasons.Add(new("status says \"check bio\"", 5));
         }
 
         if (text.Contains("hexed.cc", StringComparison.Ordinal))
         {
             score += 100;
-            reasons.Add("known bot site (hexed.cc)");
+            reasons.Add(new("known bot site (hexed.cc)", 100));
         }
 
-        return score;
+        return (score, [.. reasons]);
     }
 
     /// <summary>

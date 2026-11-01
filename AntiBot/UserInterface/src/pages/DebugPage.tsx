@@ -119,7 +119,14 @@ function UserCheck() {
                     </Rows>
                     <Reasons>
                         {result.reasons.length > 0
-                            ? result.reasons.map((reason) => <li key={reason}>{reason}</li>)
+                            ? result.reasons.map((reason) => (
+                                <li key={reason.text}>
+                                    {t(reason.text, reason.detail ? {days: reason.detail} : undefined)}
+                                    <Weight $up={reason.weight > 0}>
+                                        {reason.weight > 0 ? `+${reason.weight}` : reason.weight}
+                                    </Weight>
+                                </li>
+                            ))
                             : <li>{t("No signal matched.")}</li>}
                     </Reasons>
                 </Report>
@@ -264,4 +271,9 @@ const Reasons = styled.ul`
     padding-left: 16px;
     font-size: 11px;
     color: var(--text-secondary);
+`;
+
+const Weight = styled.b<{ $up: boolean }>`
+    margin-left: 6px;
+    color: ${({$up}) => $up ? "#fca5a5" : "#86efac"};
 `;
