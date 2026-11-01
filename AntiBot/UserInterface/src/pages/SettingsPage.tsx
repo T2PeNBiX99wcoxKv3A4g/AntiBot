@@ -225,7 +225,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const removeWhitelist = (id: string) => setWhitelist(whitelist.filter((item) => item !== id));
 
     return (
-        <Layout>
+        <>
             <SettingsNav>
                 {SECTIONS.map((section) => (
                     <NavItem
@@ -517,7 +517,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                 {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
             </Suspense>
             </Stack>
-        </Layout>
+        </>
     );
 }
 
@@ -549,40 +549,36 @@ function Toggle({checked, onChange, title, hint, disabled = false}: {
     );
 }
 
-const Layout = styled.div`
-    display: flex;
-    align-items: flex-start;
-    gap: 20px;
-`;
-
-/** A jump list that stays beside the settings while the page scrolls. */
+/** A floating bar above the settings; it never takes horizontal space from the cards. */
 const SettingsNav = styled.nav`
     position: sticky;
     top: 0;
+    z-index: 20;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    width: 150px;
-    flex-shrink: 0;
-    padding-top: 2px;
-    user-select: none;
-
-    @media (max-width: 1050px) {
-        display: none;
-    }
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 760px;
+    margin-bottom: 14px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: rgba(22, 19, 38, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 `;
 
 const NavItem = styled.button<{ $active: boolean }>`
-    padding: 6px 10px;
+    padding: 5px 9px;
     border: 0;
-    border-radius: 7px;
-    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.14)" : "transparent"};
+    border-radius: 999px;
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.16)" : "transparent"};
     color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-muted)"};
     font: inherit;
     font-size: 10.5px;
     font-weight: ${({$active}) => $active ? "600" : "500"};
     line-height: 1.35;
-    text-align: left;
+    white-space: nowrap;
     cursor: pointer;
 
     &:hover {
