@@ -194,7 +194,6 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                         </ThreatBadge>
                     )}
                     {badge}
-                    {user.isRobot && <Robot>{t("robot")}</Robot>}
                     {user.local && <You>{t("you")}</You>}
                 </NameText>
             </Name>
@@ -274,7 +273,6 @@ export function PlayerDialog({user, now, onClose}: {
                     <h2>{user.name}</h2>
                     <Badges>
                         {user.trust && <Trust $trust={user.trust}>{user.trust}</Trust>}
-                        {user.isRobot && <Robot>{t("robot")}</Robot>}
                         {user.whitelisted && <Whitelisted>{t("whitelisted")}</Whitelisted>}
                         {user.local && <You>{t("you")}</You>}
                     </Badges>
@@ -1094,16 +1092,6 @@ const You = styled.span`
     border-radius: 999px;
     background: rgba(167, 139, 250, 0.16);
     color: var(--accent-primary);
-    font-family: var(--font-mono);
-    font-size: 9px;
-`;
-
-const Robot = styled.span`
-    padding: 1px 6px;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: rgba(248, 113, 113, 0.16);
-    color: #fca5a5;
     font-family: var(--font-mono);
     font-size: 9px;
 `;
