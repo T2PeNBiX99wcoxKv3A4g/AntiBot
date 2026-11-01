@@ -38,7 +38,8 @@ const Panel = styled.div`
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    max-width: 960px;
+    max-width: 1100px;
+    height: min(80vh, 760px);
     max-height: 100%;
     padding: 20px;
     border: 1px solid var(--border-color);

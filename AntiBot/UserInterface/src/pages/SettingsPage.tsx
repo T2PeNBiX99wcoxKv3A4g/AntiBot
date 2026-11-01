@@ -225,20 +225,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const removeWhitelist = (id: string) => setWhitelist(whitelist.filter((item) => item !== id));
 
     return (
-        <Page>
-            <SettingsNav>
-                {SECTIONS.map((section) => (
-                    <NavItem
-                        $active={activeSection === section.id}
-                        key={section.id}
-                        onClick={() => jumpTo(section.id)}
-                        type="button"
-                    >
-                        {t(section.label)}
-                    </NavItem>
-                ))}
-            </SettingsNav>
-
+        <SettingsBody>
             <Stack>
             <Section id="settings-language">
                 <SectionHeader>
@@ -517,7 +504,20 @@ export function SettingsPage({info}: SettingsPageProps) {
                 {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
             </Suspense>
             </Stack>
-        </Page>
+
+            <SettingsNav>
+                {SECTIONS.map((section) => (
+                    <NavItem
+                        $active={activeSection === section.id}
+                        key={section.id}
+                        onClick={() => jumpTo(section.id)}
+                        type="button"
+                    >
+                        {t(section.label)}
+                    </NavItem>
+                ))}
+            </SettingsNav>
+        </SettingsBody>
     );
 }
 
@@ -549,27 +549,26 @@ function Toggle({checked, onChange, title, hint, disabled = false}: {
     );
 }
 
-const Page = styled.div`
-    max-width: 760px;
+const SettingsBody = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    max-width: 960px;
 `;
 
-/** A vertical jump list floating above the settings; it never pushes the cards sideways. */
+/** The jump list sits to the right of the cards, like URLCheck's settings page. */
 const SettingsNav = styled.nav`
-    position: sticky;
-    top: 0;
-    z-index: 20;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: 140px;
-    margin-bottom: 14px;
-    padding: 6px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: rgba(22, 19, 38, 0.86);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    width: 144px;
+    flex-shrink: 0;
+    padding-top: 2px;
+    user-select: none;
+
+    @media (max-width: 1050px) {
+        display: none;
+    }
 `;
 
 const NavItem = styled.button<{ $active: boolean }>`

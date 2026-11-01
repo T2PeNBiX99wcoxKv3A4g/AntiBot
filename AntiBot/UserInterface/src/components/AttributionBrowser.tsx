@@ -35,9 +35,9 @@ export function AttributionBrowser() {
 
 const Browser = styled.div`
     display: grid;
-    grid-template-columns: minmax(160px, 0.8fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.6fr);
     gap: 12px;
-    height: 340px;
+    flex: 1;
     min-height: 0;
 `;
 

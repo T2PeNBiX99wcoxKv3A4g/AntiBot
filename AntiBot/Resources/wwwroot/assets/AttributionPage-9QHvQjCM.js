@@ -1,4 +1,4 @@
-import{a as e,i as t,n,r,t as i}from"./index-BDYXMOYd.js";var a=e(t(),1),o=[{name:`@fontsource/inter`,version:`5.3.0`,license:`OFL-1.1`,text:`Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+import{a as e,i as t,n,r,t as i}from"./index-C5XlfzdY.js";var a=e(t(),1),o=[{name:`@fontsource/inter`,version:`5.3.0`,license:`OFL-1.1`,text:`Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
@@ -4772,9 +4772,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l,{children:[(0,s.jsx)(u,{children:o.map(n=>(0,s.jsxs)(d,{$active:n.name===e.name,onClick:()=>t(n),type:`button`,children:[(0,s.jsx)(`strong`,{children:n.name}),(0,s.jsx)(`span`,{children:[n.version,n.license].filter(Boolean).join(` · `)})]},`${n.name}@${n.version}`))}),(0,s.jsxs)(f,{children:[(0,s.jsxs)(p,{children:[(0,s.jsx)(`strong`,{children:e.name}),(0,s.jsx)(`span`,{children:[e.version,e.license].filter(Boolean).join(` · `)})]}),(0,s.jsx)(m,{children:e.text})]})]})}var l=i.div`
     display: grid;
-    grid-template-columns: minmax(160px, 0.8fr) minmax(0, 1.6fr);
+    grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.6fr);
     gap: 12px;
-    height: 340px;
+    flex: 1;
     min-height: 0;
 `,u=i.div`
     display: flex;
@@ -4872,7 +4872,8 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     flex-direction: column;
     gap: 12px;
     width: 100%;
-    max-width: 960px;
+    max-width: 1100px;
+    height: min(80vh, 760px);
     max-height: 100%;
     padding: 20px;
     border: 1px solid var(--border-color);
