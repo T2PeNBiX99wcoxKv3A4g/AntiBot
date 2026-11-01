@@ -49,6 +49,24 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
         return () => window.clearInterval(timer);
     }, []);
 
+    // The context menu can whitelist a user; show it at once instead of waiting for a snapshot.
+    useEffect(() => {
+        const onWhitelist = (event: Event) => {
+            const detail = (event as CustomEvent<{ userId: string; whitelisted: boolean }>).detail;
+            if (!detail) return;
+
+            setSnapshot((current) => ({
+                ...current,
+                users: current.users.map((user) => user.userId === detail.userId
+                    ? {...user, whitelisted: detail.whitelisted}
+                    : user),
+            }));
+        };
+
+        window.addEventListener("antibot:whitelist", onWhitelist);
+        return () => window.removeEventListener("antibot:whitelist", onWhitelist);
+    }, []);
+
     const {
         running, world, users, worldName, capacity,
         worldId = "", worldThumbnail,
@@ -169,7 +187,10 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                 : user.isFriend ? "friend" : "none");
 
     return (
-        <Row $tone={resolved} $threat={threat} $showTime={showTime} $dim={dim} onClick={() => onSelect(user)}>
+        <Row $tone={resolved} $threat={threat} $showTime={showTime} $dim={dim}
+             data-user-id={user.userId}
+             data-whitelisted={user.whitelisted ? "true" : "false"}
+             onClick={() => onSelect(user)}>
             <AvatarCell>
                 {icon
                     ? <AvatarLarge $src={icon}/>
@@ -264,7 +285,9 @@ export function PlayerDialog({user, now, onClose}: {
 
     return (
         <Overlay onClick={onClose}>
-            <Dialog onClick={(event) => event.stopPropagation()}>
+            <Dialog data-user-id={user.userId}
+                    data-whitelisted={user.whitelisted ? "true" : "false"}
+                    onClick={(event) => event.stopPropagation()}>
                 <Portrait $src={icon}>
                     {!icon && user.name.slice(0, 1).toUpperCase()}
                 </Portrait>

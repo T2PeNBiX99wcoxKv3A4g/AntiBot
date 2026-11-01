@@ -82,3 +82,16 @@ export async function getWhitelistPeople(): Promise<InstanceUser[]> {
 
     return await Native.request<InstanceUser[]>("whitelist.people");
 }
+
+/** Adds or removes one user id and returns the stored list. */
+export async function setWhitelisted(userId: string, whitelisted: boolean): Promise<string[]> {
+    if (!Native.available) return [];
+
+    const view = await getSettings();
+    const list = view.whitelist.filter((id) => id !== userId);
+
+    if (whitelisted)
+        list.push(userId);
+
+    return (await saveSettings({...view, whitelist: list})).whitelist;
+}

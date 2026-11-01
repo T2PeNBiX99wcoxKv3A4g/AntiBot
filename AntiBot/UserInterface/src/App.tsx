@@ -4,6 +4,7 @@ import {Native, ResizeHandles, useTranslation, useWindowCorners} from "@photino-
 import {type AppInfo, getAppInfo} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
+import {ContextMenu} from "./components/ContextMenu";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
@@ -120,6 +121,7 @@ export default function App() {
             </Shell>
 
             <ResizeHandles/>
+            <ContextMenu/>
         </Root>
     );
 }
