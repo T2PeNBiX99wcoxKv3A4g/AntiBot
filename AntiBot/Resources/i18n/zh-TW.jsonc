@@ -316,7 +316,6 @@
   "Paste a VRChat user id. Whitelisted users get a white row and no automatic action.": "貼上 VRChat 使用者 ID。白名單使用者顯示為白色列，且不會觸發自動操作。",
   "Nobody is whitelisted.": "白名單中沒有人。",
   "Remove from whitelist": "從白名單移除",
-  "Save settings": "儲存設定",
   "Build": "建置",
   "app.info": "app.info",
   "Version": "版本",

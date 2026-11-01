@@ -1,4 +1,4 @@
-import {lazy, Suspense, useEffect, useState} from "react";
+import {lazy, Suspense, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {loadStrings, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
@@ -39,10 +39,8 @@ interface SettingsPageProps {
 export function SettingsPage({info}: SettingsPageProps) {
     const t = useTranslation();
     const [directory, setDirectory] = useState("");
-    const [saved, setSaved] = useState("");
     const [defaultDirectory, setDefaultDirectory] = useState("");
     const [providers, setProviders] = useState<string[]>([]);
-    const [savedProviders, setSavedProviders] = useState<string[]>([]);
     const [newProvider, setNewProvider] = useState("");
     const [autoBlock, setAutoBlock] = useState(true);
     const [autoAvatar, setAutoAvatar] = useState(true);
@@ -54,26 +52,34 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [newWhitelist, setNewWhitelist] = useState("");
     const [people, setPeople] = useState<InstanceUser[]>([]);
-    const [savedProtection, setSavedProtection] = useState("");
     const [language, setLanguage] = useState("en");
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
-    const [savedStartHidden, setSavedStartHidden] = useState(false);
     const [startup, setStartupState] = useState<StartupStatus | null>(null);
     const [startupBusy, setStartupBusy] = useState(false);
     const [attributionOpen, setAttributionOpen] = useState(false);
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
+    const thresholdTimer = useRef(0);
+
+    /** A profile is fetched the first time it is asked for, so the names arrive a moment later. */
+    const loadPeople = async (attempt: number) => {
+        try {
+            const list = await getWhitelistPeople();
+            setPeople(list);
+
+            if (attempt < 6 && list.some((person) => person.name === person.userId))
+                window.setTimeout(() => void loadPeople(attempt + 1), 1200);
+        } catch {
+            // The host failed to answer; ids are shown until it does.
+        }
+    };
 
     useEffect(() => {
         void getSettings().then((settings) => {
-            const stored = settings.avatarApiProviders ?? [];
             setDirectory(settings.logDirectory ?? "");
-            setSaved(settings.logDirectory ?? "");
             setDefaultDirectory(settings.defaultLogDirectory ?? "");
-            setProviders(stored);
-            setSavedProviders(stored);
+            setProviders(settings.avatarApiProviders ?? []);
 
             setAutoBlock(settings.autoBlock);
             setAutoAvatar(settings.autoDisableAvatarInteraction);
@@ -85,14 +91,8 @@ export function SettingsPage({info}: SettingsPageProps) {
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? "en");
             setStartHidden(settings.startHidden);
-            setSavedStartHidden(settings.startHidden);
-            setSavedProtection(protectionKey(settings.autoBlock, settings.autoDisableAvatarInteraction,
-                settings.autoHideChatBox, settings.autoCloseVrchat, settings.skipCloseInVr,
-                settings.autoRejectFriendRequests, settings.threatThreshold, settings.whitelist ?? []));
 
-            void getWhitelistPeople().then(setPeople, () => {
-                // The host failed to answer; ids are shown until it does.
-            });
+            void loadPeople(0);
         }, () => setError(t("Could not read the settings.")));
     }, []);
 
@@ -126,10 +126,6 @@ export function SettingsPage({info}: SettingsPageProps) {
     };
 
     const trimmed = directory.trim();
-    const protection = protectionKey(autoBlock, autoAvatar, autoChat, autoClose, skipCloseVr, autoReject,
-        threshold, whitelist);
-    const changed = trimmed !== saved || providers.join("\n") !== savedProviders.join("\n") ||
-        protection !== savedProtection || startHidden !== savedStartHidden;
 
     /** The form values as the backend expects them, with any field overridden for an immediate save. */
     const formSettings = (overrides: Partial<AppSettings> = {}): AppSettings => ({
@@ -148,42 +144,25 @@ export function SettingsPage({info}: SettingsPageProps) {
         ...overrides,
     });
 
-    const save = async () => {
+    /** Every control saves itself, so nothing waits for a separate save button. */
+    const persist = async (overrides: Partial<AppSettings> = {}, reloadPeople = false) => {
         setError(null);
-        setSaving(true);
 
         try {
-            const stored = await saveSettings(formSettings());
-            setDirectory(stored.logDirectory);
-            setSaved(stored.logDirectory);
-            setProviders(stored.avatarApiProviders);
-            setSavedProviders(stored.avatarApiProviders);
-            setLanguage(stored.language);
-            setStartHidden(stored.startHidden);
-            setSavedStartHidden(stored.startHidden);
-            setSavedProtection(protection);
-            void getWhitelistPeople().then(setPeople, () => {
-                // Names appear once the profiles are fetched.
-            });
+            const stored = await saveSettings(formSettings(overrides));
+            setWhitelist(stored.whitelist ?? []);
+
+            if (reloadPeople)
+                void loadPeople(0);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
-        } finally {
-            setSaving(false);
         }
     };
 
     /** Language applies immediately; the provider reloads the strings when settings.changed arrives. */
-    const changeLanguage = async (next: string) => {
+    const changeLanguage = (next: string) => {
         setLanguage(next);
-        setError(null);
-
-        try {
-            const stored = await saveSettings(formSettings({language: next}));
-            setLanguage(stored.language);
-            setSavedStartHidden(stored.startHidden);
-        } catch (reason) {
-            setError(reason instanceof Error ? reason.message : String(reason));
-        }
+        void persist({language: next});
     };
 
     /** The startup entry lives outside the settings; its presence is the state. */
@@ -210,23 +189,44 @@ export function SettingsPage({info}: SettingsPageProps) {
         }
     };
 
+    /** The slider fires on every step, so the save waits for it to settle. */
+    const changeThreshold = (value: number) => {
+        setThreshold(value);
+        window.clearTimeout(thresholdTimer.current);
+        thresholdTimer.current = window.setTimeout(() => void persist({threatThreshold: value}), 400);
+    };
+
     const addProvider = () => {
         const value = newProvider.trim();
         if (value.length === 0 || providers.includes(value)) return;
 
-        setProviders([...providers, value]);
+        const next = [...providers, value];
+        setProviders(next);
         setNewProvider("");
+        void persist({avatarApiProviders: next});
+    };
+
+    const removeProvider = (index: number) => {
+        const next = providers.filter((_, i) => i !== index);
+        setProviders(next);
+        void persist({avatarApiProviders: next});
     };
 
     const addWhitelist = () => {
         const id = newWhitelist.trim();
         if (id.length === 0 || whitelist.includes(id)) return;
 
-        setWhitelist([...whitelist, id]);
+        const next = [...whitelist, id];
+        setWhitelist(next);
         setNewWhitelist("");
+        void persist({whitelist: next}, true);
     };
 
-    const removeWhitelist = (id: string) => setWhitelist(whitelist.filter((item) => item !== id));
+    const removeWhitelist = (id: string) => {
+        const next = whitelist.filter((item) => item !== id);
+        setWhitelist(next);
+        void persist({whitelist: next}, true);
+    };
 
     return (
         <SettingsBody>
@@ -270,7 +270,10 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Toggle
                             checked={startHidden}
                             hint={t("Open in the tray instead of showing the window.")}
-                            onChange={setStartHidden}
+                            onChange={(value) => {
+                                setStartHidden(value);
+                                void persist({startHidden: value});
+                            }}
                             title={t("Start hidden")}
                         />
                     </ToggleRow>
@@ -288,6 +291,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Row>
                             <Input
                                 aria-label={t("VRChat log folder")}
+                                onBlur={() => void persist()}
                                 onChange={(event) => setDirectory(event.target.value)}
                                 placeholder={t("VRChat's log folder")}
                                 spellCheck={false}
@@ -305,7 +309,10 @@ export function SettingsPage({info}: SettingsPageProps) {
                         </Button>
                         <Button
                             disabled={!defaultDirectory || trimmed === defaultDirectory}
-                            onClick={() => setDirectory(defaultDirectory)}
+                            onClick={() => {
+                                setDirectory(defaultDirectory);
+                                void persist({logDirectory: defaultDirectory});
+                            }}
                             type="button"
                         >
                             {t("Use VRChat's folder")}
@@ -334,6 +341,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 <Row key={`${provider}-${index}`}>
                                     <Input
                                         aria-label={t("Avatar API endpoint")}
+                                        onBlur={() => void persist()}
                                         onChange={(event) => {
                                             const next = [...providers];
                                             next[index] = event.target.value;
@@ -344,7 +352,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                     />
                                     <Button
                                         aria-label={t("Remove endpoint")}
-                                        onClick={() => setProviders(providers.filter((_, i) => i !== index))}
+                                        onClick={() => removeProvider(index)}
                                         type="button"
                                     >
                                         <TrashIcon/>
@@ -381,7 +389,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Range
                                 max={100}
                                 min={0}
-                                onChange={(event) => setThreshold(Number(event.target.value))}
+                                onChange={(event) => changeThreshold(Number(event.target.value))}
                                 step={5}
                                 type="range"
                                 value={threshold}
@@ -397,38 +405,56 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Toggle
                             checked={autoBlock}
                             hint={t("VRChat block: their avatar and interactions are hidden.")}
-                            onChange={setAutoBlock}
+                            onChange={(value) => {
+                                setAutoBlock(value);
+                                void persist({autoBlock: value});
+                            }}
                             title={t("Block the user")}
                         />
                         <Toggle
                             checked={autoAvatar}
                             hint={t("Turn avatar interactions off for the user.")}
-                            onChange={setAutoAvatar}
+                            onChange={(value) => {
+                                setAutoAvatar(value);
+                                void persist({autoDisableAvatarInteraction: value});
+                            }}
                             title={t("Disable avatar interactions")}
                         />
                         <Toggle
                             checked={autoChat}
                             hint={t("Mute the user's chat box.")}
-                            onChange={setAutoChat}
+                            onChange={(value) => {
+                                setAutoChat(value);
+                                void persist({autoHideChatBox: value});
+                            }}
                             title={t("Hide the chat box")}
                         />
                         <Toggle
                             checked={autoClose}
                             hint={t("Close VRChat when a high-threat user appears. Leaving the instance is the only way to stop an avatar download in time.")}
-                            onChange={setAutoClose}
+                            onChange={(value) => {
+                                setAutoClose(value);
+                                void persist({autoCloseVrchat: value});
+                            }}
                             title={t("Close VRChat")}
                         />
                         <Toggle
                             checked={skipCloseVr}
                             disabled={!autoClose}
                             hint={t("Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.")}
-                            onChange={setSkipCloseVr}
+                            onChange={(value) => {
+                                setSkipCloseVr(value);
+                                void persist({skipCloseInVr: value});
+                            }}
                             title={t("Skip while in VR")}
                         />
                         <Toggle
                             checked={autoReject}
                             hint={t("Hide friend requests from high-threat users; undo from the request list.")}
-                            onChange={setAutoReject}
+                            onChange={(value) => {
+                                setAutoReject(value);
+                                void persist({autoRejectFriendRequests: value});
+                            }}
                             title={t("Reject friend requests")}
                         />
                     </ToggleRow>
@@ -487,12 +513,6 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             {error && <ErrorText>{error}</ErrorText>}
 
-            <Actions>
-                <Button disabled={!changed || trimmed.length === 0 || saving} onClick={save} type="button">
-                    {saving ? t("Saving…") : t("Save settings")}
-                </Button>
-            </Actions>
-
             <Section id="settings-build">
                 <SectionHeader>
                     <h2>{t("Build")}</h2>
@@ -530,11 +550,6 @@ export function SettingsPage({info}: SettingsPageProps) {
             </SettingsNav>
         </SettingsBody>
     );
-}
-
-function protectionKey(autoBlock: boolean, autoAvatar: boolean, autoChat: boolean, autoClose: boolean,
-    skipCloseVr: boolean, autoReject: boolean, threshold: number, whitelist: string[]): string {
-    return [autoBlock, autoAvatar, autoChat, autoClose, skipCloseVr, autoReject, threshold, ...whitelist].join("|");
 }
 
 function Toggle({checked, onChange, title, hint, disabled = false}: {

@@ -316,7 +316,6 @@
   "Paste a VRChat user id. Whitelisted users get a white row and no automatic action.": "VRChat のユーザー ID を貼り付けてください。ホワイトリストのユーザーは白い行になり、自動操作されません。",
   "Nobody is whitelisted.": "ホワイトリストに登録されたユーザーはいません。",
   "Remove from whitelist": "ホワイトリストから削除",
-  "Save settings": "設定を保存",
   "Build": "ビルド",
   "app.info": "app.info",
   "Version": "バージョン",

@@ -75,10 +75,22 @@ internal sealed class SettingsService : Singleton<SettingsService>
     {
         "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result", Payload())),
         "settings.save" => SaveAsync(context),
-        "whitelist.people" => Task.FromResult<NativeResponse?>(context.Reply("whitelist.people.result",
-            Current.Whitelist.Select(id => InstanceService.Instance.Describe(id, "")).ToArray())),
+        "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
+
+    /// <summary>
+    ///     Describes every whitelisted user and starts the profile lookups, so a newly added id turns
+    ///     into a name without waiting for the instance list to refresh.
+    /// </summary>
+    private NativeResponse WhitelistPeople(NativeContext context)
+    {
+        foreach (var id in Current.Whitelist)
+            PlayerService.Instance.Request(id);
+
+        return context.Reply("whitelist.people.result",
+            Current.Whitelist.Select(id => InstanceService.Instance.Describe(id, "")).ToArray());
+    }
 
     private async Task<NativeResponse?> SaveAsync(NativeContext context)
     {
