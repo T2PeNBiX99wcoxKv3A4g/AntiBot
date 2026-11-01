@@ -295,7 +295,7 @@
   "Threat threshold": "Threat threshold",
   "At or above this score the actions below run. Friends and whitelisted users are never acted on.": "At or above this score the actions below run. Friends and whitelisted users are never acted on.",
   "Block the user": "Block the user",
-  "VRChat block: their avatar and interactions are hidden.": "VRChat block: their avatar and interactions are hidden.",
+  "Block the user in VRChat, so you no longer see or hear them.": "Block the user in VRChat, so you no longer see or hear them.",
   "Disable avatar interactions": "Disable avatar interactions",
   "Turn avatar interactions off for the user.": "Turn avatar interactions off for the user.",
   "Hide the chat box": "Hide the chat box",

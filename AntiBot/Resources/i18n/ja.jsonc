@@ -293,7 +293,7 @@
   "Threat threshold": "脅威度のしきい値",
   "At or above this score the actions below run. Friends and whitelisted users are never acted on.": "この値以上で以下の操作を実行します。フレンドとホワイトリストのユーザーには実行しません。",
   "Block the user": "ユーザーをブロック",
-  "VRChat block: their avatar and interactions are hidden.": "VRChat のブロック。アバターと相互作用が非表示になります。",
+  "Block the user in VRChat, so you no longer see or hear them.": "VRChat でユーザーをブロックします。相手のアバターが見えなくなり、声も聞こえなくなります。",
   "Disable avatar interactions": "アバター相互作用を無効化",
   "Turn avatar interactions off for the user.": "そのユーザーのアバター相互作用をオフにします。",
   "Hide the chat box": "チャットボックスを隠す",

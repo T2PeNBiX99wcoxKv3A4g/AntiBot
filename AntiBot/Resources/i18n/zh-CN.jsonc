@@ -293,7 +293,7 @@
   "Threat threshold": "威胁度阈值",
   "At or above this score the actions below run. Friends and whitelisted users are never acted on.": "达到或超过此分数时执行以下操作。好友和白名单用户永远不会被处理。",
   "Block the user": "屏蔽用户",
-  "VRChat block: their avatar and interactions are hidden.": "VRChat 屏蔽：隐藏其头像和互动。",
+  "Block the user in VRChat, so you no longer see or hear them.": "在 VRChat 中屏蔽该用户，之后看不到也听不到对方。",
   "Disable avatar interactions": "关闭头像互动",
   "Turn avatar interactions off for the user.": "关闭该用户的头像互动。",
   "Hide the chat box": "隐藏聊天框",

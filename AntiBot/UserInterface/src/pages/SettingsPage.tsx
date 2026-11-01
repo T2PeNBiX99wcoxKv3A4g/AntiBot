@@ -404,7 +404,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                     <ToggleRow>
                         <Toggle
                             checked={autoBlock}
-                            hint={t("VRChat block: their avatar and interactions are hidden.")}
+                            hint={t("Block the user in VRChat, so you no longer see or hear them.")}
                             onChange={(value) => {
                                 setAutoBlock(value);
                                 void persist({autoBlock: value});
