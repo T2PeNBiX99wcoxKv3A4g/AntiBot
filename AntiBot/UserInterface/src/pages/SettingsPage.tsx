@@ -21,6 +21,17 @@ const LOCALE_NAMES: Record<string, string> = {
     "zh-TW": "繁體中文",
 };
 
+/** The settings sections, in page order; the jump list is built from this. */
+const SECTIONS = [
+    {id: "settings-language", label: "Language"},
+    {id: "settings-startup", label: "Start with the system"},
+    {id: "settings-log-source", label: "Log source"},
+    {id: "settings-avatar-lookups", label: "Avatar name lookups"},
+    {id: "settings-protection", label: "Automatic protection"},
+    {id: "settings-whitelist", label: "Whitelist"},
+    {id: "settings-build", label: "Build"},
+];
+
 interface SettingsPageProps {
     info: AppInfo | null;
 }
@@ -50,6 +61,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [startup, setStartupState] = useState<StartupStatus | null>(null);
     const [startupBusy, setStartupBusy] = useState(false);
     const [attributionOpen, setAttributionOpen] = useState(false);
+    const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -89,6 +101,27 @@ export function SettingsPage({info}: SettingsPageProps) {
     useEffect(() => {
         void startupStatus().then(setStartupState, () => setStartupState(null));
     }, []);
+
+    /* Marks the section being read, so the jump list also shows where the page is. */
+    useEffect(() => {
+        const sections = SECTIONS.map((section) => document.getElementById(section.id));
+        if (sections.some((section) => section === null)) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            const top = entries
+                .filter((entry) => entry.isIntersecting)
+                .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+            if (top) setActiveSection(top.target.id);
+        }, {rootMargin: "-8% 0px -70% 0px"});
+
+        sections.forEach((section) => observer.observe(section!));
+        return () => observer.disconnect();
+    }, []);
+
+    const jumpTo = (id: string) => {
+        setActiveSection(id);
+        document.getElementById(id)?.scrollIntoView({behavior: "smooth", block: "start"});
+    };
 
     const trimmed = directory.trim();
     const protection = protectionKey(autoBlock, autoAvatar, autoChat, autoHome, autoReject, threshold, whitelist);
@@ -192,11 +225,24 @@ export function SettingsPage({info}: SettingsPageProps) {
     const removeWhitelist = (id: string) => setWhitelist(whitelist.filter((item) => item !== id));
 
     return (
-        <Stack>
-            <Section>
+        <Layout>
+            <SettingsNav>
+                {SECTIONS.map((section) => (
+                    <NavItem
+                        $active={activeSection === section.id}
+                        key={section.id}
+                        onClick={() => jumpTo(section.id)}
+                        type="button"
+                    >
+                        {t(section.label)}
+                    </NavItem>
+                ))}
+            </SettingsNav>
+
+            <Stack>
+            <Section id="settings-language">
                 <SectionHeader>
                     <h2>{t("Language")}</h2>
-                    <span>{language}</span>
                 </SectionHeader>
 
                 <Card>
@@ -216,10 +262,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
+            <Section id="settings-startup">
                 <SectionHeader>
                     <h2>{t("Start with the system")}</h2>
-                    <span>{startup?.enabled ? t("enabled") : t("disabled")}</span>
                 </SectionHeader>
 
                 <Card>
@@ -241,10 +286,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
+            <Section id="settings-log-source">
                 <SectionHeader>
                     <h2>{t("Log source")}</h2>
-                    <span>{t("configurable")}</span>
                 </SectionHeader>
 
                 <Card>
@@ -279,10 +323,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
+            <Section id="settings-avatar-lookups">
                 <SectionHeader>
                     <h2>{t("Avatar name lookups")}</h2>
-                    <span>{t("same format as VRCX")}</span>
                 </SectionHeader>
 
                 <Card>
@@ -335,10 +378,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
+            <Section id="settings-protection">
                 <SectionHeader>
                     <h2>{t("Automatic protection")}</h2>
-                    <span>{t("threat ≥ {threshold}%", {threshold})}</span>
                 </SectionHeader>
 
                 <Card>
@@ -395,10 +437,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Card>
             </Section>
 
-            <Section>
+            <Section id="settings-whitelist">
                 <SectionHeader>
                     <h2>{t("Whitelist")}</h2>
-                    <span>{t("never acted on")}</span>
                 </SectionHeader>
 
                 <Card>
@@ -454,10 +495,9 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Button>
             </Actions>
 
-            <Section>
+            <Section id="settings-build">
                 <SectionHeader>
                     <h2>{t("Build")}</h2>
-                    <span>{t("app.info")}</span>
                 </SectionHeader>
 
                 <Card>
@@ -476,7 +516,8 @@ export function SettingsPage({info}: SettingsPageProps) {
             <Suspense fallback={null}>
                 {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
             </Suspense>
-        </Stack>
+            </Stack>
+        </Layout>
     );
 }
 
@@ -508,34 +549,67 @@ function Toggle({checked, onChange, title, hint, disabled = false}: {
     );
 }
 
+const Layout = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+`;
+
+/** A jump list that stays beside the settings while the page scrolls. */
+const SettingsNav = styled.nav`
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 150px;
+    flex-shrink: 0;
+    padding-top: 2px;
+    user-select: none;
+
+    @media (max-width: 1050px) {
+        display: none;
+    }
+`;
+
+const NavItem = styled.button<{ $active: boolean }>`
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.14)" : "transparent"};
+    color: ${({$active}) => $active ? "var(--text-primary)" : "var(--text-muted)"};
+    font: inherit;
+    font-size: 10.5px;
+    font-weight: ${({$active}) => $active ? "600" : "500"};
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
+    }
+`;
+
 const Stack = styled.div`
     display: flex;
     flex-direction: column;
     gap: 18px;
     max-width: 760px;
+    min-width: 0;
 `;
 
 const Section = styled.section`
     display: flex;
     flex-direction: column;
     gap: 10px;
+    scroll-margin-top: 24px;
 `;
 
 const SectionHeader = styled.div`
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-
     h2 {
         font-size: 13px;
         font-weight: 600;
-    }
-
-    span {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--text-muted);
     }
 `;
 
