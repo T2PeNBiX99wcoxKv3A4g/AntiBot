@@ -9,7 +9,7 @@ namespace AntiBot.Messaging;
 internal sealed record OkPayload(bool Ok = true);
 
 /// <summary>Body for <c>app.info</c>.</summary>
-internal sealed record AppInfoPayload(string Version, string Platform, bool Rounded);
+internal sealed record AppInfoPayload(string Version, string Platform, bool Rounded, bool Debug);
 
 /// <summary>Body for <c>settings.get</c>.</summary>
 internal sealed record SettingsPayload(
@@ -97,6 +97,21 @@ internal sealed record DevicePollRequest(string DeviceCode);
 
 /// <summary>Body for <c>auth.device.poll</c>: pending with a reason, or the signed-in session.</summary>
 internal sealed record DevicePollPayload(bool Approved, string? Reason, AuthPayload? Auth);
+
+/// <summary>Payload for <c>debug.user</c>: a user id or a link that contains one.</summary>
+internal sealed record DebugUserRequest(string UserId);
+
+/// <summary>Body for <c>debug.user</c>: everything the scoring looks at, and its result.</summary>
+internal sealed record DebugUserPayload(
+    string Id,
+    string DisplayName,
+    string? DateJoined,
+    string? Trust,
+    string? Platform,
+    string? AvatarName,
+    bool IsRobot,
+    int Threat,
+    string[] Reasons);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

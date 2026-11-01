@@ -5,11 +5,13 @@ export interface AppInfo {
     platform: string;
     /** True when the interface has to paint the window's rounded corners itself (Linux). */
     rounded: boolean;
+    /** True in a debug build, which is the only one that offers the debug page. */
+    debug: boolean;
 }
 
 /** Reads the app version declared in the csproj, plus the host platform id. */
 export async function getAppInfo(): Promise<AppInfo> {
-    if (!Native.available) return {version: "dev", platform: "web", rounded: false};
+    if (!Native.available) return {version: "dev", platform: "web", rounded: false, debug: false};
 
     return await Native.request<AppInfo>("app.info");
 }

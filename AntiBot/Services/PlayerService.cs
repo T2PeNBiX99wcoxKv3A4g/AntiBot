@@ -107,6 +107,12 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
 
+#if DEBUG
+    /// <summary>Debug build only: fetches a profile now, so the scoring page can test any user id.</summary>
+    public Task<PlayerProfile?> FetchAsync(string userId, CancellationToken token) =>
+        FetchProfileAsync(userId, token);
+#endif
+
     /// <summary>Whether a lookup for this user has finished, successfully or not.</summary>
     public bool IsLoaded(string userId) => _loaded.ContainsKey(userId);
 

@@ -717,7 +717,7 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     }
 
     /// <summary>VRChat's trust tags, highest first; a Nuisance tag outranks the normal ranks.</summary>
-    private static string? TrustLevel(string[]? tags)
+    internal static string? TrustLevel(string[]? tags)
     {
         if (tags is null)
             return null;

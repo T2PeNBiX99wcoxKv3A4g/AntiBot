@@ -19,6 +19,13 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
         OperatingSystem.IsWindows() ? "windows" :
         OperatingSystem.IsLinux() ? "linux" : "unknown";
 
+    /// <summary>Whether this is a debug build, which is the only one that shows the debug page.</summary>
+#if DEBUG
+    [PublicAPI] public static readonly bool Debug = true;
+#else
+    [PublicAPI] public static readonly bool Debug = false;
+#endif
+
     /// <summary>
     ///     Changes whenever this build does. The interface is always served from the same address, so
     ///     this is what tells the web view that what it cached belongs to an older build.
@@ -30,7 +37,7 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
     private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "app.info" => Task.FromResult<NativeResponse?>(context.Reply("app.info.result",
-            new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners))),
+            new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners, Debug))),
         "system.openUrl" => Task.FromResult<NativeResponse?>(OpenUrl(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };

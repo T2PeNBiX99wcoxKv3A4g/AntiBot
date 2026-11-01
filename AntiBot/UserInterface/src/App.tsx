@@ -7,6 +7,7 @@ import {TitleBar} from "./components/TitleBar";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
+import {DebugPage} from "./pages/DebugPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
 import {OperationsPage} from "./pages/OperationsPage";
@@ -27,6 +28,7 @@ const pageMeta: Record<Page, { title: string; subtitle: string }> = {
     },
     account: {title: "Account", subtitle: "Sign in to VRChat so the instance comes from the API, not the log."},
     settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
+    debug: {title: "Debug", subtitle: "Tools that only a debug build shows."},
 };
 
 export default function App() {
@@ -67,7 +69,7 @@ export default function App() {
             <TitleBar/>
 
             <Shell>
-                <Sidebar onNavigate={setPage} page={page} status={log.status}/>
+                <Sidebar debug={info?.debug ?? false} onNavigate={setPage} page={page} status={log.status}/>
 
                 <Main>
                     <Header>
@@ -95,7 +97,9 @@ export default function App() {
                                         ? <OperationsPage/>
                                         : page === "account"
                                             ? <AccountPage initial={auth} ready={ready}/>
-                                            : <SettingsPage info={info}/>}
+                                            : page === "debug"
+                                                ? <DebugPage/>
+                                                : <SettingsPage info={info}/>}
                     </Content>
 
                     <Footer>

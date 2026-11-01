@@ -245,6 +245,63 @@ internal sealed class AuthService : Singleton<AuthService>
         }
     }
 
+#if DEBUG
+    /// <summary>Debug build only: runs the return-home action on demand instead of waiting for a bot.</summary>
+    private async Task<NativeResponse?> DebugReturnHomeAsync(NativeContext context)
+    {
+        var returned = await ReturnHomeAsync(CancellationToken.None);
+        Log.Information("Debug return home: {Returned}", returned);
+        return context.Reply("debug.returnHome.result", new OkPayload(returned));
+    }
+
+    /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
+    private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
+    {
+        var input = context.Payload<DebugUserRequest>()?.UserId ?? "";
+        var userId = ParseUserId(input);
+
+        if (userId is null)
+            return context.Fail("debug.user.result", Localization.Get("error.debugUserMissing"));
+
+        if (!IsLoggedIn)
+            return context.Fail("debug.user.result", Localization.Get("error.authSignInFirst"));
+
+        var profile = await PlayerService.Instance.FetchAsync(userId, CancellationToken.None);
+        if (profile is null)
+            return context.Fail("debug.user.result", Localization.Get("error.debugUserNotFound"));
+
+        var fileId = AvatarService.FileIdOf(profile.AvatarUrl)
+                     ?? AvatarService.FileIdOf(profile.AvatarImageUrl)
+                     ?? AvatarService.FileIdOf(profile.IconUrl);
+        var avatarName = fileId is null ? null : AvatarService.Instance.NameFor(fileId);
+        var isRobot = AvatarService.IsRobot(fileId);
+        var platform = profile.Platform is { Length: > 0 } value && value != "offline"
+            ? value
+            : profile.LastPlatform;
+        var threat = ThreatScoring.Assess(profile, profile.DisplayName, avatarName, isRobot, platform);
+
+        Log.Information("Debug score for {UserId}: {Score}", userId, threat.Score);
+
+        return context.Reply("debug.user.result", new DebugUserPayload(
+            profile.Id, profile.DisplayName, profile.DateJoined, InstanceService.TrustLevel(profile.Tags),
+            platform, avatarName, isRobot, threat.Score, threat.Reasons));
+    }
+
+    /// <summary>Pulls a <c>usr_…</c> id out of a bare id or any link that contains one.</summary>
+    private static string? ParseUserId(string input)
+    {
+        const string prefix = "usr_";
+        const int bodyLength = 36;
+
+        var start = input.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+        if (start < 0 || input.Length - start < prefix.Length + bodyLength)
+            return null;
+
+        var id = input.Substring(start, prefix.Length + bodyLength);
+        return id[prefix.Length..].All(c => char.IsAsciiHexDigit(c) || c == '-') ? id : null;
+    }
+#endif
+
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "auth.state" => Task.FromResult<NativeResponse?>(context.Reply("auth.state.result", Snapshot())),
@@ -258,6 +315,10 @@ internal sealed class AuthService : Singleton<AuthService>
         "auth.logout" => LogoutAsync(context),
         "auth.device.start" => StartDeviceAsync(context),
         "auth.device.poll" => PollDeviceAsync(context),
+#if DEBUG
+        "debug.returnHome" => DebugReturnHomeAsync(context),
+        "debug.user" => DebugUserAsync(context),
+#endif
         _ => Task.FromResult<NativeResponse?>(null)
     };
 

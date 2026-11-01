@@ -2,12 +2,14 @@ import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
+import {AlertIcon, BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
     onNavigate: (page: Page) => void;
     status: LogStatus;
+    /** Only a debug build shows the debug page. */
+    debug: boolean;
 }
 
 const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
@@ -19,13 +21,17 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
     {id: "settings", label: "Settings", icon: SlidersIcon},
 ];
 
-export function Sidebar({page, onNavigate, status}: SidebarProps) {
+const debugItem: { id: Page; label: string; icon: typeof LogIcon } =
+    {id: "debug", label: "Debug", icon: AlertIcon};
+
+export function Sidebar({page, onNavigate, status, debug}: SidebarProps) {
     const t = useTranslation();
+    const nav = debug ? [...items, debugItem] : items;
 
     return (
         <Aside>
             <Nav>
-                {items.map(({id, label, icon: Icon}) => (
+                {nav.map(({id, label, icon: Icon}) => (
                     <Item key={id} $active={page === id} onClick={() => onNavigate(id)} type="button">
                         <Icon/>
                         <span>{t(label)}</span>
