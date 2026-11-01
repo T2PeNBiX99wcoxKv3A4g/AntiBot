@@ -33,7 +33,7 @@ export function Sidebar({page, onNavigate, status, debug}: SidebarProps) {
             <Nav>
                 {nav.map(({id, label, icon: Icon}) => (
                     <Item key={id} $active={page === id} onClick={() => onNavigate(id)} type="button">
-                        <Icon/>
+                        <Icon size={18}/>
                         <span>{t(label)}</span>
                     </Item>
                 ))}
