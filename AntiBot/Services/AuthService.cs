@@ -231,7 +231,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
     {
         var input = context.Payload<DebugUserRequest>()?.UserId ?? "";
-        var userId = ParseUserId(input);
+        var userId = Ids.User(input);
 
         if (userId is null)
             return context.Fail("debug.user.result", Localization.Get("error.debugUserMissing"));
@@ -260,19 +260,6 @@ internal sealed class AuthService : Singleton<AuthService>
             platform, avatarName, isRobot, threat.Score, threat.Reasons));
     }
 
-    /// <summary>Pulls a <c>usr_…</c> id out of a bare id or any link that contains one.</summary>
-    private static string? ParseUserId(string input)
-    {
-        const string prefix = "usr_";
-        const int bodyLength = 36;
-
-        var start = input.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
-        if (start < 0 || input.Length - start < prefix.Length + bodyLength)
-            return null;
-
-        var id = input.Substring(start, prefix.Length + bodyLength);
-        return id[prefix.Length..].All(c => char.IsAsciiHexDigit(c) || c == '-') ? id : null;
-    }
 #endif
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch

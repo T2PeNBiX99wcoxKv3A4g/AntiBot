@@ -45,7 +45,12 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
                 // An empty list is a real choice: it turns the external lookups off.
                 AvatarApiProviders = stored.AvatarApiProviders ?? [],
-                OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000
+                OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000,
+
+                // The fields accept a link as well as an id; keep only the id it points at.
+                SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
+                Whitelist = (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
             };
     }
 
@@ -122,13 +127,13 @@ internal sealed class SettingsService : Singleton<SettingsService>
             AutoCloseVrchat = settings.AutoCloseVrchat,
             AutoSafeMode = settings.AutoSafeMode,
             AutoSafeAvatar = settings.AutoSafeAvatar,
-            SafeAvatarId = settings.SafeAvatarId?.Trim() ?? "",
+            SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
             SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])
-                .Select(id => id.Trim())
-                .Where(id => id.Length > 0)
+                .Select(Ids.User)
+                .OfType<string>()
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray()
         };

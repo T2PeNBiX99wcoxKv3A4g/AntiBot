@@ -45,11 +45,26 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
     const visible = useMemo(() => filterLines(lines, query, hidden), [lines, query, hidden]);
 
-    // Keep the newest line in view while following.
+    // Keep the newest line in view while following. Rows use `content-visibility: auto`, so the
+    // height of the newest ones is only known once they come near the viewport; scrolling again on
+    // the next frame (and once more after it settles) lands on the real bottom instead of behind it.
     useEffect(() => {
-        if (!follow || !rowsRef.current) return;
+        const element = rowsRef.current;
+        if (!follow || !element) return;
 
-        rowsRef.current.scrollTop = rowsRef.current.scrollHeight;
+        const toBottom = () => {
+            element.scrollTop = element.scrollHeight;
+        };
+
+        toBottom();
+
+        const frame = window.requestAnimationFrame(toBottom);
+        const timer = window.setTimeout(toBottom, 60);
+
+        return () => {
+            window.cancelAnimationFrame(frame);
+            window.clearTimeout(timer);
+        };
     }, [visible, follow]);
 
     useEffect(() => {

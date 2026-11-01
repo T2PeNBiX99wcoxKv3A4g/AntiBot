@@ -199,6 +199,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         try {
             const stored = await saveSettings(formSettings(overrides));
             setWhitelist(stored.whitelist ?? []);
+            setSafeAvatarId(stored.safeAvatarId ?? "");
 
             if (reloadPeople)
                 void loadPeople(0);
@@ -548,11 +549,11 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 disabled={!autoSafeAvatar}
                                 onBlur={() => void persist()}
                                 onChange={setSafeAvatarId}
-                                placeholder="avtr_…"
+                                placeholder="avtr_… or https://vrchat.com/home/avatar/avtr_…"
                                 value={safeAvatarId}
                             />
                             <Hint>
-                                {t("Only avatars in your favourites, your recents or your own uploads can be used. Copy the id (avtr_…) from the avatar's page on vrchat.com.")}
+                                {t("Only avatars in your favourites, your recents or your own uploads can be used. Paste the avatar's link or its id (avtr_…).")}
                             </Hint>
                         </ToggleField>
                         <Toggle
@@ -600,7 +601,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Input
                                 aria-label={t("Whitelisted user id")}
                                 onChange={(event) => setNewWhitelist(event.target.value)}
-                                placeholder="usr_…"
+                                placeholder="usr_… or https://vrchat.com/home/user/usr_…"
                                 spellCheck={false}
                                 value={newWhitelist}
                             />
@@ -609,7 +610,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                             </Button>
                         </Row>
                         <Hint>
-                            {t("Paste a VRChat user id. Whitelisted users get a white row and no automatic action.")}
+                            {t("Paste a VRChat user id or profile link. Whitelisted users get a white row and no automatic action.")}
                         </Hint>
                     </Field>
 
