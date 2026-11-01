@@ -35,7 +35,7 @@ export default function App() {
     const [info, setInfo] = useState<AppInfo | null>(null);
     const corners = useWindowCorners();
     const log = useVrchatLog();
-    const auth = useAuth();
+    const {auth, ready} = useAuth();
     const signedIn = auth.state === "loggedIn";
 
     useEffect(() => {
@@ -94,7 +94,7 @@ export default function App() {
                                     : page === "operations"
                                         ? <OperationsPage/>
                                         : page === "account"
-                                            ? <AccountPage/>
+                                            ? <AccountPage initial={auth} ready={ready}/>
                                             : <SettingsPage info={info}/>}
                     </Content>
 

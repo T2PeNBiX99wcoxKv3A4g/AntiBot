@@ -25,8 +25,9 @@ import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
 /** The VRChat account: the account list, sign-in, the second factor, and how each session is kept. */
-export function AccountPage() {
-    const [auth, setAuth] = useState<AuthSnapshot>(signedOut);
+export function AccountPage({initial, ready = false}: { initial?: AuthSnapshot; ready?: boolean }) {
+    const [auth, setAuth] = useState<AuthSnapshot>(initial ?? signedOut);
+    const [loaded, setLoaded] = useState(ready);
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [adding, setAdding] = useState(false);
@@ -38,13 +39,20 @@ export function AccountPage() {
         let cancelled = false;
 
         const unsubscribe = onAuthChanged((next) => {
-            if (!cancelled) setAuth(next);
+            if (cancelled) return;
+
+            setAuth(next);
+            setLoaded(true);
         });
 
         void getAuth().then((next) => {
-            if (!cancelled) setAuth(next);
+            if (cancelled) return;
+
+            setAuth(next);
+            setLoaded(true);
         }, () => {
             // The host failed to answer; the signed-out form already covers it.
+            if (!cancelled) setLoaded(true);
         });
 
         return () => {
@@ -148,6 +156,10 @@ export function AccountPage() {
         void cancelSignIn().then(setAuth, () => {});
     };
 
+    // Until the host answers, drawing the signed-out page would flash it over a signed-in account.
+    if (!loaded)
+        return <Page $wide/>;
+
     let content;
 
     if (auth.state === "locked" && !browsing)
@@ -218,31 +230,58 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
 
             {accounts.length > 0 && (
                 <List>
-                    {accounts.map((account) => (
-                        <AccountRow key={account.dir} $active={account.active}>
-                            <AvatarSmall $src={account.avatar}>
-                                {account.avatar ? null : account.name.slice(0, 1).toUpperCase()}
-                            </AvatarSmall>
-                            <RowText>
-                                <strong>{account.name}</strong>
-                                <span>{t(storageLabel(account.storage))}</span>
-                            </RowText>
-                            {account.active && signedIn
-                                ? <ActiveTag>{t("Signed in")}</ActiveTag>
-                                : (
-                                    <RowActions>
-                                        <SmallButton disabled={busy} onClick={() => onSwitch(account)}
-                                                     type="button">
-                                            {signedIn ? t("Switch") : t("Sign in")}
-                                        </SmallButton>
-                                        <IconButton aria-label={t("Remove account")} disabled={busy}
-                                                    onClick={() => onRemove(account)} type="button">
-                                            <TrashIcon size={14}/>
-                                        </IconButton>
-                                    </RowActions>
-                                )}
-                        </AccountRow>
-                    ))}
+                    {accounts.map((account) => {
+                        const current = account.active && signedIn;
+
+                        const open = () => {
+                            if (!busy && !current)
+                                onSwitch(account);
+                        };
+
+                        return (
+                            <AccountRow
+                                $active={account.active}
+                                $clickable={!current}
+                                aria-current={current ? "true" : undefined}
+                                key={account.dir}
+                                onClick={open}
+                                onKeyDown={(event) => {
+                                    if (event.key !== "Enter" && event.key !== " ")
+                                        return;
+
+                                    event.preventDefault();
+                                    open();
+                                }}
+                                role={current ? undefined : "button"}
+                                tabIndex={current ? undefined : 0}
+                            >
+                                <AvatarSmall $src={account.avatar}>
+                                    {account.avatar ? null : account.name.slice(0, 1).toUpperCase()}
+                                </AvatarSmall>
+                                <RowText>
+                                    <strong>{account.name}</strong>
+                                    <span>{t(storageLabel(account.storage))}</span>
+                                </RowText>
+                                {current
+                                    ? <ActiveTag>{t("Signed in")}</ActiveTag>
+                                    : (
+                                        <RowActions>
+                                            <IconButton
+                                                aria-label={t("Remove account")}
+                                                disabled={busy}
+                                                onClick={(event) => {
+                                                    // The row itself switches accounts.
+                                                    event.stopPropagation();
+                                                    onRemove(account);
+                                                }}
+                                                type="button">
+                                                <TrashIcon size={14}/>
+                                            </IconButton>
+                                        </RowActions>
+                                    )}
+                            </AccountRow>
+                        );
+                    })}
                 </List>
             )}
 
@@ -1379,7 +1418,7 @@ const List = styled.div`
     gap: 6px;
 `;
 
-const AccountRow = styled.div<{ $active: boolean }>`
+const AccountRow = styled.div<{ $active: boolean; $clickable: boolean }>`
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1387,6 +1426,18 @@ const AccountRow = styled.div<{ $active: boolean }>`
     border: 1px solid ${({$active}) => $active ? "var(--accent-primary)" : "var(--border-color)"};
     border-radius: var(--radius-sm);
     background: ${({$active}) => $active ? "rgba(167, 139, 250, 0.08)" : "var(--bg-primary)"};
+    cursor: ${({$clickable}) => $clickable ? "pointer" : "default"};
+
+    ${({$clickable}) => $clickable && `
+        &:hover {
+            background: var(--bg-card-hover);
+        }
+    `}
+
+    &:focus-visible {
+        outline: 2px solid var(--border-color-focus);
+        outline-offset: 1px;
+    }
 `;
 
 const AvatarSmall = styled.div<{ $src?: string }>`
@@ -1431,26 +1482,6 @@ const RowActions = styled.div`
     align-items: center;
     gap: 6px;
     margin-left: auto;
-`;
-
-const SmallButton = styled.button`
-    padding: 5px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-primary);
-    font: inherit;
-    font-size: 11px;
-    cursor: pointer;
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: default;
-    }
-
-    &:hover:not(:disabled) {
-        background: var(--bg-card-hover);
-    }
 `;
 
 const ActiveTag = styled.span`
