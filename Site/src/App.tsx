@@ -1,18 +1,42 @@
-import React, {useEffect} from "react";
-import styled, {createGlobalStyle} from "styled-components";
-import {Globe, House} from "lucide-react";
+import React, {useEffect, useState} from "react";
+import styled, {createGlobalStyle, keyframes} from "styled-components";
+import {BookOpen, Globe, House} from "lucide-react";
 import {siGithub} from "simple-icons";
 import {HomePage} from "./pages/Home";
+import {DocsPage} from "./pages/Docs";
+import {docs} from "./docs.generated";
 import {ICON, REPOSITORY, RELEASES} from "./constants";
 import {useVersion} from "./version";
-import {LANGUAGES, type Language} from "./i18n";
+import {LANGUAGES, type Copy, type Language} from "./i18n";
 import {LanguageProvider, useCopy, useLanguage} from "./language";
+
+/** The app fades its panels in the same way, so the site uses the same curve. */
+const fadeIn = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+`;
 
 const GlobalStyle = createGlobalStyle`
     :root {
         color-scheme: dark;
-        --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
-        --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+        --font-cjk: sans-serif;
+        --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial;
+        --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, var(--font-cjk);
+        --accent: #a78bfa;
+        --accent-strong: #8b5cf6;
+        --bg-primary: #08070f;
+        --bg-card: rgba(22, 19, 38, 0.78);
+        --text-primary: #f5f3ff;
+        --text-secondary: #a9a2c4;
+        --text-muted: #6f6885;
+        --border-color: rgba(167, 139, 250, 0.12);
+        --border-color-hover: rgba(167, 139, 250, 0.4);
     }
 
     * {
@@ -22,20 +46,37 @@ const GlobalStyle = createGlobalStyle`
     body {
         margin: 0;
         min-height: 100vh;
-        background-color: #0b0f19;
-        background-image: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.14), transparent 70%);
-        color: #f9fafb;
-        font-family: var(--font-sans);
+        background-color: var(--bg-primary);
+        background-image:
+            radial-gradient(circle at 50% -10%, rgba(139, 92, 246, 0.22), transparent 60%),
+            radial-gradient(circle at 85% 15%, rgba(99, 102, 241, 0.1), transparent 55%);
+        background-attachment: fixed;
+        color: var(--text-primary);
+        font-family: var(--font-sans), var(--font-cjk);
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
     }
 
     a {
-        color: #60a5fa;
+        color: var(--accent);
     }
 
     code {
         font-family: var(--font-mono);
+    }
+
+    ::selection {
+        background: rgba(167, 139, 250, 0.35);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.001ms !important;
+        }
     }
 `;
 
@@ -53,16 +94,17 @@ const TopBar = styled.header`
     align-items: center;
     gap: 24px;
     padding: 14px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(11, 15, 25, 0.85);
-    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-color);
+    background: rgba(8, 7, 15, 0.82);
+    backdrop-filter: blur(16px);
+    animation: ${fadeIn} 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 const Brand = styled.a`
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #f9fafb;
+    color: var(--text-primary);
     font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -72,6 +114,11 @@ const Brand = styled.a`
 const BrandIcon = styled.img`
     width: 22px;
     height: 22px;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+
+    ${Brand}:hover & {
+        transform: rotate(-6deg) scale(1.06);
+    }
 `;
 
 /** The brand and its release badge travel together; the nav keeps the rest of the row. */
@@ -83,18 +130,19 @@ const BrandGroup = styled.div`
 
 const VersionBadge = styled.a`
     padding: 2px 8px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--border-color);
     border-radius: 999px;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-size: 0.68rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     text-decoration: none;
+    transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 
     &:hover {
-        color: #f9fafb;
-        border-color: rgba(255, 255, 255, 0.25);
-        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-primary);
+        border-color: var(--border-color-hover);
+        background: rgba(167, 139, 250, 0.08);
     }
 `;
 
@@ -110,14 +158,15 @@ const NavLink = styled.a<{ $active?: boolean }>`
     gap: 6px;
     padding: 6px 12px;
     border-radius: 7px;
-    color: ${(props) => (props.$active ? "#f9fafb" : "#9ca3af")};
-    background: ${(props) => (props.$active ? "rgba(255, 255, 255, 0.08)" : "transparent")};
+    color: ${(props) => (props.$active ? "var(--text-primary)" : "var(--text-secondary)")};
+    background: ${(props) => (props.$active ? "rgba(167, 139, 250, 0.16)" : "transparent")};
     font-size: 0.85rem;
     text-decoration: none;
+    transition: background 120ms ease, color 120ms ease;
 
     &:hover {
-        color: #f9fafb;
-        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-primary);
+        background: rgba(167, 139, 250, 0.08);
     }
 `;
 
@@ -138,7 +187,7 @@ const LanguagePicker = styled.label`
     svg {
         position: absolute;
         left: 8px;
-        color: #9ca3af;
+        color: var(--text-secondary);
         pointer-events: none;
     }
 `;
@@ -146,16 +195,18 @@ const LanguagePicker = styled.label`
 const LanguageSelect = styled.select`
     padding: 6px 8px 6px 28px;
     border-radius: 7px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(17, 24, 39, 0.9);
-    color: #d1d5db;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
     font: inherit;
     font-size: 0.8rem;
     cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 
     &:hover {
-        color: #f9fafb;
-        border-color: rgba(255, 255, 255, 0.25);
+        color: var(--text-primary);
+        border-color: var(--border-color-hover);
+        background: rgba(34, 29, 56, 0.9);
     }
 `;
 
@@ -165,29 +216,62 @@ const Content = styled.main`
     max-width: 1080px;
     margin: 0 auto;
     padding: 40px 24px 64px;
+    animation: ${fadeIn} 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 const Footer = styled.footer`
     padding: 20px 24px 28px;
-    color: #6b7280;
+    color: var(--text-muted);
     font-size: 0.78rem;
     text-align: center;
 `;
 
+/** `#/docs` and `#%2Fdocs` both mean the same page; a stray encoding must not break the route. */
+function decodeHash(value: string) {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
+    }
+}
+
+/** `#/section/page` — the site is static, so the hash keeps deep links working on Pages. */
+function useRoute() {
+    const [hash, setHash] = useState(() => window.location.hash);
+
+    useEffect(() => {
+        const update = () => setHash(window.location.hash);
+        window.addEventListener("hashchange", update);
+        return () => window.removeEventListener("hashchange", update);
+    }, []);
+
+    const path = decodeHash(hash.replace(/^#\/?/, "")).replace(/^\/+/, "");
+    const [section, ...rest] = path.split("/");
+
+    return {section: section || "home", page: rest.join("/")};
+}
+
+/** Keeps the browser tab in step with the current page and language. */
+function useTitle(section: string, page: string, language: Language, copy: Copy) {
+    useEffect(() => {
+        const doc = (docs[language] ?? docs.en).find((entry) => entry.slug === page);
+        const name = section === "docs" ? doc?.title ?? copy.nav.docs : "";
+        document.title = name ? `${name} — AntiBot` : "AntiBot";
+    }, [section, page, language, copy]);
+}
+
 const Site: React.FC = () => {
+    const route = useRoute();
     const {language, setLanguage} = useLanguage();
     const copy = useCopy();
     const version = useVersion();
-
-    useEffect(() => {
-        document.title = "AntiBot";
-    }, []);
+    useTitle(route.section, route.page, language, copy);
 
     return (
         <Shell>
             <TopBar>
                 <BrandGroup>
-                    <Brand href="#">
+                    <Brand href="#/">
                         <BrandIcon src={ICON} alt=""/>
                         AntiBot
                     </Brand>
@@ -202,9 +286,13 @@ const Site: React.FC = () => {
                     )}
                 </BrandGroup>
                 <Nav>
-                    <NavLink $active href="#">
+                    <NavLink $active={route.section === "home"} href="#/">
                         <House size={15}/>
                         {copy.nav.home}
+                    </NavLink>
+                    <NavLink $active={route.section === "docs"} href="#/docs/Getting-Started">
+                        <BookOpen size={15}/>
+                        {copy.nav.docs}
                     </NavLink>
                     <NavLink href={REPOSITORY}>
                         <BrandMark viewBox="0 0 24 24" aria-hidden="true">
@@ -229,8 +317,8 @@ const Site: React.FC = () => {
                 </Nav>
             </TopBar>
 
-            <Content>
-                <HomePage/>
+            <Content key={`${route.section}/${route.page}/${language}`}>
+                {route.section === "docs" ? <DocsPage page={route.page}/> : <HomePage/>}
             </Content>
 
             <Footer>{copy.footer}</Footer>

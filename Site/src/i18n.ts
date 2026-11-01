@@ -18,13 +18,14 @@ export type Language = (typeof LANGUAGES)[number]["id"];
 export const DEFAULT_LANGUAGE: Language = "en";
 
 export interface Copy {
-    nav: { home: string };
+    nav: { home: string; docs: string };
     /** Label for the release badge, read out with the version number. */
     version: string;
     footer: string;
     home: {
         tagline: string;
         download: string;
+        documentation: string;
         whatTitle: string;
         whatText: string;
         featuresTitle: string;
@@ -39,6 +40,7 @@ export interface Copy {
         oscNote: string;
         platform: { name: string; note: string };
     };
+    docs: { setup: string; reference: string };
 }
 
 export const COPY: Record<Language, Copy> = {

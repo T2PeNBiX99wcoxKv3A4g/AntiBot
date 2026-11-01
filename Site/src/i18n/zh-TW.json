@@ -1,12 +1,14 @@
 {
   "nav": {
-    "home": "首頁"
+    "home": "首頁",
+    "docs": "文件"
   },
   "version": "版本",
   "footer": "AntiBot 使用 MIT 授權。",
   "home": {
     "tagline": "把機器人擋在你的 VRChat 實例之外。",
     "download": "下載",
+    "documentation": "文件",
     "whatTitle": "它能做什麼",
     "whatText": "AntiBot 讀取 VRChat 自己寫出的日誌，看到誰進入了你的實例，並替每個新使用者評分。超過閾值時，它能在對方的頭像載入完成之前行動：封鎖、關閉頭像互動、隱藏聊天框、透過 OSC 開啟安全模式、切換到低風險頭像，或關閉客戶端。",
     "featuresTitle": "功能",
@@ -59,5 +61,9 @@
       "name": "Windows",
       "note": "x64，自包含 (.exe)"
     }
+  },
+  "docs": {
+    "setup": "設定",
+    "reference": "參考"
   }
 }

@@ -1,12 +1,14 @@
 {
   "nav": {
-    "home": "ホーム"
+    "home": "ホーム",
+    "docs": "ドキュメント"
   },
   "version": "バージョン",
   "footer": "AntiBot は MIT ライセンスです。",
   "home": {
     "tagline": "VRChat のインスタンスにボットを入れない。",
     "download": "ダウンロード",
+    "documentation": "ドキュメント",
     "whatTitle": "できること",
     "whatText": "AntiBot は VRChat が書き出しているログを読み、インスタンスに入ってきたユーザーを採点します。しきい値を超えたら、アバターの読み込みが終わる前に行動できます。ブロック、アバター操作の無効化、チャットボックスの非表示、OSC 経由のセーフモード、低リスクなアバターへの切り替え、クライアントの終了などです。",
     "featuresTitle": "機能",
@@ -59,5 +61,9 @@
       "name": "Windows",
       "note": "x64、自己完結 (.exe)"
     }
+  },
+  "docs": {
+    "setup": "セットアップ",
+    "reference": "リファレンス"
   }
 }

@@ -1,9 +1,30 @@
 import React from "react";
-import styled from "styled-components";
-import {Download, FileText, Lock, ShieldAlert, ShieldCheck, UserCog, UserPlus, Users, Zap, type LucideIcon} from "lucide-react";
+import styled, {keyframes} from "styled-components";
+import {BookOpen, Download, FileText, Lock, ShieldAlert, ShieldCheck, UserCog, UserPlus, Users, Zap, type LucideIcon} from "lucide-react";
 import {siGithub} from "simple-icons";
 import {ICON, REPOSITORY, RELEASES} from "../constants";
 import {useCopy} from "../language";
+
+const fadeIn = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+`;
+
+/** The icon drifts a little, which keeps the hero from feeling like a static screenshot. */
+const float = keyframes`
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+`;
 
 const Hero = styled.section`
     display: flex;
@@ -12,11 +33,14 @@ const Hero = styled.section`
     gap: 12px;
     padding: 24px 0 8px;
     text-align: center;
+    animation: ${fadeIn} 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 const AppIcon = styled.img`
     width: 88px;
     height: 88px;
+    filter: drop-shadow(0 12px 32px rgba(139, 92, 246, 0.35));
+    animation: ${float} 6s ease-in-out infinite;
 `;
 
 const Title = styled.h1`
@@ -28,7 +52,7 @@ const Title = styled.h1`
 const Tagline = styled.p`
     margin: 0;
     max-width: 560px;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-size: 1.05rem;
 `;
 
@@ -46,22 +70,30 @@ const Button = styled.a<{ $primary?: boolean }>`
     gap: 8px;
     padding: 10px 18px;
     border-radius: 9px;
-    border: 1px solid ${(props) => (props.$primary ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.12)")};
-    background: ${(props) => (props.$primary ? "rgba(59, 130, 246, 0.2)" : "transparent")};
-    color: ${(props) => (props.$primary ? "#bfdbfe" : "#d1d5db")};
+    border: 1px solid ${(props) => (props.$primary ? "rgba(139, 92, 246, 0.5)" : "var(--border-color)")};
+    background: ${(props) => (props.$primary ? "rgba(139, 92, 246, 0.2)" : "transparent")};
+    color: ${(props) => (props.$primary ? "#ddd6fe" : "var(--text-secondary)")};
     font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 
     &:hover {
-        background: ${(props) => (props.$primary ? "rgba(59, 130, 246, 0.32)" : "rgba(255, 255, 255, 0.06)")};
-        border-color: rgba(255, 255, 255, 0.25);
+        background: ${(props) => (props.$primary ? "rgba(139, 92, 246, 0.32)" : "rgba(167, 139, 250, 0.08)")};
+        border-color: var(--border-color-hover);
+        color: ${(props) => (props.$primary ? "#f5f3ff" : "var(--text-primary)")};
+        transform: translateY(-1px);
+        box-shadow: ${(props) => (props.$primary ? "0 0 28px rgba(139, 92, 246, 0.28)" : "none")};
+    }
+
+    &:active {
+        transform: translateY(0);
     }
 `;
 
 const Section = styled.section`
     margin-top: 56px;
+    animation: ${fadeIn} 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 `;
 
 const Heading = styled.h2`
@@ -73,7 +105,7 @@ const Heading = styled.h2`
 const Lead = styled.p`
     margin: 0 0 18px;
     max-width: 760px;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-size: 0.92rem;
 `;
 
@@ -85,9 +117,17 @@ const Grid = styled.div`
 
 const Feature = styled.article`
     padding: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    background: rgba(17, 24, 39, 0.6);
+    background: var(--bg-card);
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+
+    &:hover {
+        border-color: var(--border-color-hover);
+        background: rgba(34, 29, 56, 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
 `;
 
 const FeatureIcon = styled.span`
@@ -98,8 +138,14 @@ const FeatureIcon = styled.span`
     height: 30px;
     margin-bottom: 10px;
     border-radius: 8px;
-    background: rgba(59, 130, 246, 0.14);
-    color: #93c5fd;
+    background: rgba(167, 139, 250, 0.14);
+    color: #c4b5fd;
+    transition: background 180ms ease, transform 180ms ease;
+
+    ${Feature}:hover & {
+        background: rgba(167, 139, 250, 0.24);
+        transform: scale(1.08);
+    }
 `;
 
 const FeatureName = styled.h3`
@@ -109,7 +155,7 @@ const FeatureName = styled.h3`
 
 const FeatureText = styled.p`
     margin: 0;
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-size: 0.84rem;
 `;
 
@@ -128,12 +174,13 @@ const Step = styled.li`
     gap: 12px;
     align-items: flex-start;
     padding: 14px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    background: rgba(17, 24, 39, 0.6);
-    color: #d1d5db;
+    background: var(--bg-card);
+    color: #d8d3ea;
     font-size: 0.88rem;
     counter-increment: step;
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
 
     &::before {
         content: counter(step);
@@ -144,11 +191,17 @@ const Step = styled.li`
         width: 22px;
         height: 22px;
         border-radius: 50%;
-        background: rgba(59, 130, 246, 0.18);
-        color: #93c5fd;
+        background: rgba(167, 139, 250, 0.18);
+        color: #c4b5fd;
         font-family: var(--font-mono);
         font-size: 0.72rem;
         font-weight: 700;
+    }
+
+    &:hover {
+        border-color: var(--border-color-hover);
+        background: rgba(34, 29, 56, 0.9);
+        transform: translateX(2px);
     }
 `;
 
@@ -158,15 +211,17 @@ const InstallCard = styled.a`
     gap: 4px;
     max-width: 320px;
     padding: 16px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
-    background: rgba(17, 24, 39, 0.6);
+    background: var(--bg-card);
     text-decoration: none;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 
     &:hover {
-        border-color: rgba(99, 102, 241, 0.45);
-        background: rgba(30, 41, 59, 0.7);
+        border-color: var(--border-color-hover);
+        background: rgba(34, 29, 56, 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     }
 `;
 
@@ -174,7 +229,7 @@ const PlatformName = styled.span`
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #f9fafb;
+    color: var(--text-primary);
     font-size: 0.95rem;
     font-weight: 600;
 `;
@@ -183,18 +238,18 @@ const BrandIcon = styled.svg`
     width: 18px;
     height: 18px;
     flex-shrink: 0;
-    fill: #93c5fd;
+    fill: #c4b5fd;
 `;
 
 const PlatformNote = styled.span`
-    color: #9ca3af;
+    color: var(--text-secondary);
     font-size: 0.8rem;
 `;
 
 const Note = styled.p`
     margin: 16px 0 0;
     max-width: 760px;
-    color: #6b7280;
+    color: var(--text-muted);
     font-size: 0.8rem;
 `;
 
@@ -216,6 +271,10 @@ export const HomePage: React.FC = () => {
                     <Button $primary href={RELEASES}>
                         <Download size={17}/>
                         {home.download}
+                    </Button>
+                    <Button href="#/docs/Getting-Started">
+                        <BookOpen size={17}/>
+                        {home.documentation}
                     </Button>
                     <Button href={REPOSITORY}>
                         <BrandIcon viewBox="0 0 24 24" aria-hidden="true">

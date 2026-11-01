@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "generate": "node scripts/generate-docs.mjs",
+    "dev": "npm run generate && vite",
+    "build": "npm run generate && tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^1.65.0",
     "react": "^19",
     "react-dom": "^19",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "simple-icons": "^16.36.0",
     "styled-components": "^6.6.0"
   },

@@ -24,6 +24,7 @@ nul
 .temp/
 **/dist/
 **/build/
+Site/src/*.generated.ts
 *.tsbuildinfo
 **/package-lock.json
 **/node_modules/
