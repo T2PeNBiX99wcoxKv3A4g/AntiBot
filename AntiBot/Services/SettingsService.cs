@@ -42,9 +42,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
                     ? directory
                     : Current.LogDirectory,
                 Language = NormalizeLanguage(stored.Language),
-                AvatarApiProviders = stored.AvatarApiProviders is { Length: > 0 } providers
-                    ? providers
-                    : AppSettings.DefaultAvatarApiProviders
+
+                // An empty list is a real choice: it turns the external lookups off.
+                AvatarApiProviders = stored.AvatarApiProviders ?? []
             };
     }
 
@@ -100,7 +100,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
         if (settings.LogDirectory.Trim() is not { Length: > 0 } directory)
             return context.Fail("settings.save.result", Localization.Get("error.invalidLogDirectory"));
 
-        // Only absolute http(s) providers are kept; an empty list falls back to the built-in ones.
+        // Only absolute http(s) providers are kept; an empty list turns the lookups off.
         var providers = (settings.AvatarApiProviders ?? [])
             .Select(provider => provider.Trim())
             .Where(IsHttpUrl)
@@ -112,7 +112,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             LogDirectory = directory,
             Language = NormalizeLanguage(settings.Language),
             StartHidden = settings.StartHidden,
-            AvatarApiProviders = providers.Length > 0 ? providers : AppSettings.DefaultAvatarApiProviders,
+            AvatarApiProviders = providers,
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
             AutoHideChatBox = settings.AutoHideChatBox,
