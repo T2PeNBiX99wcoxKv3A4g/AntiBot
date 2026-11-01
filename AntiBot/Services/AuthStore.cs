@@ -63,6 +63,9 @@ internal static class AuthStore
     private static readonly string FilePath = Path.Combine(Constants.DataDirectory, "auth.bin");
     private static readonly string KeyPath = Path.Combine(Constants.DataDirectory, "auth.key");
 
+    /// <summary>Marker for "the user has picked a storage mode", including "do not remember".</summary>
+    private static readonly string ChoicePath = Path.Combine(Constants.DataDirectory, "auth.chosen");
+
     /// <summary>Whether the platform can protect the session without a password.</summary>
     public static bool IsSystemStorageAvailable =>
         OperatingSystem.IsWindows() || OperatingSystem.IsLinux() && Keyring.Available;
@@ -84,6 +87,11 @@ internal static class AuthStore
 
     public static bool Exists =>
         File.Exists(FilePath) || OperatingSystem.IsLinux() && Keyring.HasEntry();
+
+    /// <summary>Whether the user has already chosen how the session is kept.</summary>
+    public static bool ChoiceMade => File.Exists(ChoicePath);
+
+    public static void MarkChoiceMade() => Try.Run(() => File.WriteAllText(ChoicePath, "1"));
 
     /// <summary>How the session on disk is protected, or <see cref="AuthStorage.None" /> when there is none.</summary>
     public static AuthStorage StoredMode
@@ -111,6 +119,7 @@ internal static class AuthStore
         {
             case AuthStorage.None:
                 Delete();
+                MarkChoiceMade();
                 return true;
 
             case AuthStorage.Password when password is { Length: > 0 }:
@@ -173,6 +182,7 @@ internal static class AuthStore
     {
         Try.Run(() => File.Delete(FilePath)).OnFailure(ex => Log.Warning(ex, "Could not delete the stored session"));
         Try.Run(() => File.Delete(KeyPath));
+        Try.Run(() => File.Delete(ChoicePath));
 
         if (OperatingSystem.IsLinux() && Keyring.Available)
             Keyring.Clear();

@@ -1,4 +1,4 @@
-import {type FormEvent, useEffect, useRef, useState} from "react";
+import {type FormEvent, useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
 import {
@@ -74,7 +74,7 @@ export function AccountPage() {
     return (
         <Page>
             {content}
-            <StorageChoice auth={auth} busy={busy} error={error} run={run}/>
+            {auth.state === "loggedIn" && <StorageChoice auth={auth} busy={busy} error={error} run={run}/>}
         </Page>
     );
 }
@@ -404,57 +404,31 @@ function StorageChoice({auth, busy, error, run}: {
     const tpmAvailable = auth.tpmStorage;
     const helloAvailable = auth.helloStorage;
     const softwareAvailable = auth.softwareStorage;
+    const saved = auth.storage !== "none";
+    const signedIn = auth.state === "loggedIn";
 
-    // What the account is actually using, or the best available mode when nothing is stored yet.
-    const preferred: AuthStorage = auth.storage !== "none"
-        ? auth.storage
-        : helloAvailable
-            ? "hello"
-            : tpmAvailable
-                ? "tpm"
-                : systemAvailable
-                    ? "system"
-                    : softwareAvailable
-                        ? "software"
-                        : "password";
-
-    const [mode, setMode] = useState<AuthStorage>(preferred);
-    const lastPreferred = useRef(preferred);
-
-    // The page mounts before the host answers, so the selection is corrected when the state arrives.
-    useEffect(() => {
-        if (preferred === lastPreferred.current) return;
-
-        lastPreferred.current = preferred;
-        setMode(preferred);
-    }, [preferred]);
+    const [open, setOpen] = useState(!saved && !auth.storageChosen);
+    const [mode, setMode] = useState<AuthStorage>(saved ? auth.storage : "none");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [localError, setLocalError] = useState("");
 
-    const signedIn = auth.state === "loggedIn";
-    const saved = auth.storage !== "none";
-    const [editing, setEditing] = useState(!saved);
-    const lastStorage = useRef(auth.storage);
-
-    // The host answers after mount; once a mode is really stored, collapse the choices.
+    // If the host answers after mount with a stored choice, do not pop the panel.
     useEffect(() => {
-        if (lastStorage.current === auth.storage) return;
+        if (saved || auth.storageChosen)
+            setOpen(false);
+    }, [saved, auth.storageChosen]);
 
-        lastStorage.current = auth.storage;
-        setEditing(auth.storage === "none");
-    }, [auth.storage]);
-
-    // Saving is only meaningful when the choice differs from what is stored.
-    const dirty = mode !== auth.storage || (mode === "password" && password.length > 0);
-
-    const cancel = () => {
-        setMode(preferred);
+    const openPanel = () => {
+        setMode(saved ? auth.storage : "none");
         setPassword("");
         setConfirm("");
         setLocalError("");
-        setEditing(false);
+        setOpen(true);
     };
+
+    // A fresh login has no stored choice yet, so the default "Do not remember" must still be savable.
+    const dirty = mode !== auth.storage || (mode === "password" && password.length > 0) || !auth.storageChosen;
 
     const save = () => {
         if (!signedIn) {
@@ -480,12 +454,24 @@ function StorageChoice({auth, busy, error, run}: {
 
             setPassword("");
             setConfirm("");
-            setEditing(false);
+            setOpen(false);
         });
     };
 
+    if (!open) {
+        return (
+            <Card>
+                <SavedRow>
+                    <SavedValue>{t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})}</SavedValue>
+                    <Secondary onClick={openPanel} type="button">{t("Change save method")}</Secondary>
+                </SavedRow>
+            </Card>
+        );
+    }
+
     return (
-        <Card>
+        <StorageOverlay>
+            <StoragePanel aria-modal="true" role="dialog">
             <CardHead>
                 <ShieldIcon size={20}/>
                 <div>
@@ -496,8 +482,6 @@ function StorageChoice({auth, busy, error, run}: {
                 </div>
             </CardHead>
 
-            {!saved || editing ? (
-                <>
             <Options>
                 <Option
                     $active={mode === "software"}
@@ -611,16 +595,9 @@ function StorageChoice({auth, busy, error, run}: {
                 <Primary disabled={busy || !signedIn || !dirty} onClick={save} type="button">
                     {busy ? t("Saving…") : t("Save")}
                 </Primary>
-                {saved && <Secondary onClick={cancel} type="button">{t("Cancel")}</Secondary>}
             </Actions>
-                </>
-            ) : (
-                <SavedRow>
-                    <SavedValue>{t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})}</SavedValue>
-                    <Secondary onClick={() => setEditing(true)} type="button">{t("Change encryption")}</Secondary>
-                </SavedRow>
-            )}
-        </Card>
+            </StoragePanel>
+        </StorageOverlay>
     );
 }
 
@@ -926,6 +903,34 @@ const SavedValue = styled.span`
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--text-secondary);
+`;
+
+/** The storage choices are a modal page: it can only be left by saving. */
+const StorageOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(6, 4, 12, 0.72);
+    backdrop-filter: blur(3px);
+`;
+
+const StoragePanel = styled.section`
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 620px;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 `;
 
 const ProfileRow = styled.div`

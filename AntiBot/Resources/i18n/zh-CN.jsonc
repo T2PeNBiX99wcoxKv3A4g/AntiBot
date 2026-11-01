@@ -227,6 +227,7 @@
   "Currently: {storage}": "当前：{storage}",
   "Sign in to change this.": "登录后才能修改。",
   "Change encryption": "更改加密方式",
+  "Change save method": "更改保存方式",
   "Sign in first.": "请先登录。",
   "Enter the password that unlocks the session.": "请输入解锁会话的密码。",
   "The passwords do not match.": "两次密码不一致。",

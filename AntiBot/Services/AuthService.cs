@@ -314,6 +314,8 @@ internal sealed class AuthService : Singleton<AuthService>
         {
             if (!await AuthStore.SaveAsync(cookies, mode, request?.Password))
                 return context.Fail("auth.storage.save.result", Localization.Get("error.authStoragePassword"));
+
+            AuthStore.MarkChoiceMade();
         }
         finally
         {
@@ -423,7 +425,8 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            await AuthStore.SaveAsync(cookies, storage, null);
+            if (await AuthStore.SaveAsync(cookies, storage, null))
+                AuthStore.MarkChoiceMade();
         }
         finally
         {
@@ -578,7 +581,8 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
             return new(_state, _account, StorageName(_storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
-                AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt);
+                AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt,
+                AuthStore.ChoiceMade);
     }
 
     /// <summary>When the stored <c>auth</c> cookie expires, or null for a session cookie.</summary>

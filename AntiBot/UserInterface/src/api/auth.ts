@@ -29,6 +29,8 @@ export interface AuthSnapshot {
     softwareStorage: boolean;
     /** When the session cookie expires, if VRChat gave it an expiry. */
     expiresAt?: string;
+    /** Whether the user has already picked a storage mode, including "do not remember". */
+    storageChosen: boolean;
 }
 
 export const signedOut: AuthSnapshot = {
@@ -40,6 +42,7 @@ export const signedOut: AuthSnapshot = {
     tpmStorage: false,
     helloStorage: false,
     softwareStorage: false,
+    storageChosen: false,
 };
 
 export interface DeviceCode {
