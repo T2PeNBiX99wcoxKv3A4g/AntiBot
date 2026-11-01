@@ -15,8 +15,8 @@ public sealed record AppSettings
     /// <summary>UI and backend language: <c>en</c>, <c>ja</c>, <c>zh-CN</c> or <c>zh-TW</c>.</summary>
     public string Language { get; init; } = "en";
 
-    /// <summary>The port VRChat listens on for OSC; 0 uses the one its log reports.</summary>
-    public int OscPort { get; init; }
+    /// <summary>The port VRChat listens on for OSC.</summary>
+    public int OscPort { get; init; } = 9000;
 
     /// <summary>Start with the window hidden in the tray.</summary>
     public bool StartHidden { get; init; }
@@ -36,7 +36,7 @@ public sealed record AppSettings
     public bool AutoCloseVrchat { get; init; }
 
     /// <summary>Turn VRChat's Safe Mode on over OSC, which replaces every non-friend avatar at once.</summary>
-    public bool AutoSafeMode { get; init; }
+    public bool AutoSafeMode { get; init; } = true;
 
     /// <summary>Switch to <see cref="SafeAvatarId" /> over OSC when a high-threat user appears.</summary>
     public bool AutoSafeAvatar { get; init; }

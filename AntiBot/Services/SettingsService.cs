@@ -44,7 +44,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
                 Language = NormalizeLanguage(stored.Language),
 
                 // An empty list is a real choice: it turns the external lookups off.
-                AvatarApiProviders = stored.AvatarApiProviders ?? []
+                AvatarApiProviders = stored.AvatarApiProviders ?? [],
+                OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000
             };
     }
 
@@ -113,7 +114,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             LogDirectory = directory,
             Language = NormalizeLanguage(settings.Language),
             StartHidden = settings.StartHidden,
-            OscPort = Math.Clamp(settings.OscPort, 0, 65535),
+            OscPort = settings.OscPort is > 0 and <= 65535 ? settings.OscPort : 9000,
             AvatarApiProviders = providers,
             AutoBlock = settings.AutoBlock,
             AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,

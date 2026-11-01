@@ -125,10 +125,13 @@ internal sealed record DebugSafeModePayload(bool Ok, bool Listening, bool SafeMo
 internal sealed record DebugAvatarPayload(bool Ok, bool Listening, bool Already, bool Configured);
 
 /// <summary>Body for <c>osc.status</c>: what the host knows about VRChat's OSC.</summary>
-internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving);
+internal sealed record OscStatusPayload(bool Listening, int Port, bool Receiving, int Detected);
+
+/// <summary>Payload for <c>osc.test</c>: the port to try, so an unsaved field still works.</summary>
+internal sealed record OscTestRequest(int Port);
 
 /// <summary>Body for <c>osc.test</c>: whether the test message was sent, plus the same state.</summary>
-internal sealed record OscTestPayload(bool Sent, bool Listening, int Port, bool Receiving);
+internal sealed record OscTestPayload(bool Sent, bool Listening, int Port, bool Receiving, int Detected);
 
 /// <summary>Payload for <c>app.navigate</c>: the page the tray asked the interface to open.</summary>
 internal sealed record AppNavigatePayload(string Page);

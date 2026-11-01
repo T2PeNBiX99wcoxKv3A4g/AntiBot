@@ -60,7 +60,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [language, setLanguage] = useState("en");
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
-    const [oscPort, setOscPort] = useState(0);
+    const [oscPort, setOscPort] = useState(9000);
     const [oscState, setOscState] = useState<OscStatus | null>(null);
     const [oscResult, setOscResult] = useState("");
     const [oscBusy, setOscBusy] = useState(false);
@@ -70,6 +70,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
     const thresholdTimer = useRef(0);
+    const oscTimer = useRef(0);
 
     /** A profile is fetched the first time it is asked for, so the names arrive a moment later. */
     const loadPeople = async (attempt: number) => {
@@ -94,8 +95,13 @@ export function SettingsPage({info}: SettingsPageProps) {
         setOscResult("");
 
         try {
-            const result = await testOsc();
-            setOscState({listening: result.listening, port: result.port, receiving: result.receiving});
+            const result = await testOsc(oscPort);
+            setOscState({
+                listening: result.listening,
+                port: result.port,
+                receiving: result.receiving,
+                detected: result.detected,
+            });
             setOscResult(result.sent
                 ? t("Sent to port {port}. If the Quick Menu opened, OSC is working.", {port: result.port})
                 : t("Could not send the test message."));
@@ -104,6 +110,13 @@ export function SettingsPage({info}: SettingsPageProps) {
         } finally {
             setOscBusy(false);
         }
+    };
+
+    /** The slider fires on every step, so the save waits for it to settle. */
+    const changeOscPort = (value: number) => {
+        setOscPort(value);
+        window.clearTimeout(oscTimer.current);
+        oscTimer.current = window.setTimeout(() => void persist({oscPort: value}), 400);
     };
 
     useEffect(() => {
@@ -125,7 +138,7 @@ export function SettingsPage({info}: SettingsPageProps) {
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? "en");
             setStartHidden(settings.startHidden);
-            setOscPort(settings.oscPort ?? 0);
+            setOscPort(settings.oscPort || 9000);
 
             void loadPeople(0);
             refreshOsc();
@@ -429,15 +442,14 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Input
                                 aria-label={t("OSC port")}
                                 max={65535}
-                                min={0}
-                                onBlur={() => void persist()}
-                                onChange={(event) => setOscPort(Number(event.target.value) || 0)}
+                                min={1}
+                                onChange={(event) => changeOscPort(Number(event.target.value) || 9000)}
                                 type="number"
                                 value={oscPort}
                             />
                         </Row>
                         <Hint>
-                            {t("Leave 0 to use the port VRChat reports; set it when VRChat was started with a custom --osc port.")}
+                            {t("VRChat listens on 9000 unless it was started with a custom --osc port.")}
                         </Hint>
                     </Field>
 
@@ -451,7 +463,10 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                         <Hint>
                             {oscState?.listening
-                                ? t("VRChat is advertising OSC on port {port}.", {port: oscState.port})
+                                ? oscState.detected > 0 && oscState.detected !== oscPort
+                                    ? t("VRChat reports port {detected}; AntiBot sends to {port}.",
+                                        {detected: oscState.detected, port: oscPort})
+                                    : t("VRChat is advertising OSC on port {port}.", {port: oscPort})
                                 : t("VRChat is not advertising OSC. Enable it in the Action Menu.")}
                         </Hint>
 

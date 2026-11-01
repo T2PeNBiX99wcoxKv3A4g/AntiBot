@@ -16,9 +16,6 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed class VrchatOscService : Singleton<VrchatOscService>
 {
-    /// <summary>VRChat listens here unless it was started with <c>--osc=inPort:ip:outPort</c>.</summary>
-    private const int DefaultPort = 9000;
-
     /// <summary>VRChat sends its own OSC here; that is how the current avatar becomes known.</summary>
     private const int DefaultOutPort = 9001;
 
@@ -54,12 +51,11 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// <summary>The avatar VRChat last reported wearing, or null while it has not said.</summary>
     public string? CurrentAvatar => _currentAvatar;
 
-    /// <summary>The port messages are sent to: the configured one, else the one VRChat reported.</summary>
-    public int Port => SettingsService.Instance.Current.OscPort is > 0 and var configured
-        ? configured
-        : _detectedPort > 0
-            ? _detectedPort
-            : DefaultPort;
+    /// <summary>The port messages are sent to, as configured; VRChat listens on 9000 by default.</summary>
+    public int Port => SettingsService.Instance.Current.OscPort;
+
+    /// <summary>The port VRChat itself advertised in its log, or 0 when it has not said.</summary>
+    public int DetectedPort => _detectedPort;
 
     /// <summary>Whether VRChat's own OSC output is being received, which tells the current avatar.</summary>
     public bool IsReceiving => _receive is not null;
@@ -67,20 +63,24 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "osc.status" => Task.FromResult<NativeResponse?>(context.Reply("osc.status.result",
-            new OscStatusPayload(IsListening, Port, IsReceiving))),
+            new OscStatusPayload(IsListening, Port, IsReceiving, DetectedPort))),
         "osc.test" => Task.FromResult<NativeResponse?>(TestConnection(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
 
-    /// <summary>Opens VRChat's Quick Menu, which is a visible sign that the messages arrive.</summary>
+    /// <summary>
+    ///     Opens VRChat's Quick Menu, which is a visible sign that the messages arrive. The port from
+    ///     the request wins, so the test also works before the field was saved.
+    /// </summary>
     private NativeResponse TestConnection(NativeContext context)
     {
+        var port = context.Payload<OscTestRequest>()?.Port is > 0 and var requested ? requested : Port;
         var sent = false;
 
         try
         {
-            Send("/input/QuickMenuToggleRight", ",T");
-            Send("/input/QuickMenuToggleRight", ",F");
+            Send("/input/QuickMenuToggleRight", ",T", null, port);
+            Send("/input/QuickMenuToggleRight", ",F", null, port);
             sent = true;
         }
         catch (Exception ex)
@@ -88,8 +88,9 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             Log.Warning(ex, "Could not send the OSC test message");
         }
 
-        Log.Information("OSC test on port {Port}: {Sent}", Port, sent);
-        return context.Reply("osc.test.result", new OscTestPayload(sent, IsListening, Port, IsReceiving));
+        Log.Information("OSC test on port {Port}: {Sent}", port, sent);
+        return context.Reply("osc.test.result",
+            new OscTestPayload(sent, IsListening, port, IsReceiving, DetectedPort));
     }
 
     /// <summary>
@@ -199,7 +200,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
         return Encoding.ASCII.GetString(data, offset, end - offset);
     }
 
-    private void Send(string address, string tags, string? argument = null)
+    private void Send(string address, string tags, string? argument = null, int? port = null)
     {
         var message = new List<byte>();
         message.AddRange(Padded(address));
@@ -208,7 +209,9 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
         if (argument is not null)
             message.AddRange(Padded(argument));
 
-        _udp.Send([.. message], new IPEndPoint(IPAddress.Loopback, Port));
+        var target = port ?? Port;
+        _udp.Send([.. message], new IPEndPoint(IPAddress.Loopback, target));
+        Log.Debug("OSC {Address} sent to port {Port} ({Bytes} bytes)", address, target, message.Count);
     }
 
     private static byte[] Padded(string value)
