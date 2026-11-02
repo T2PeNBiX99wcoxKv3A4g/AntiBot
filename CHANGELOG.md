@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.0..v0.1.1) - 2026-11-02
+
+### 🐛 Bug Fixes
+
+- Shut down cleanly on SIGTERM - ([38b5d6d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/38b5d6de449baf0411ced64947cf3d4d1374d239))
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump the nuget group with 1 update - ([7f46415](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7f464150c849de155e7d98289700b3aee5aec8b5))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([e3254af](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e3254af66d24a8cd4abedc19a9dd4faa13025b31))
+
+## New Contributors ❤️
+
+* @github-actions[bot] made their first contribution in [#1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/pull/1)
+* @dependabot[bot] made their first contribution
+
 ## [0.1.0] - 2026-11-02
 
 ### ⛰️  Features
