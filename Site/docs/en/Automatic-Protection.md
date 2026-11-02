@@ -7,8 +7,8 @@ When a user reaches the threshold, AntiBot runs the actions you enabled in **Set
 | Action | Needs OSC | What it does |
 | --- | --- | --- |
 | Close VRChat | no | Quits the client normally, so the leave packet is still sent. |
-| Safe Mode (OSC) | yes | Presses VRChat's panic button, replacing every non-friend avatar at once. |
-| Switch avatar (OSC) | yes | Asks VRChat to wear the avatar id from the settings. |
+| Safe Mode | yes | Presses VRChat's panic button, replacing every non-friend avatar at once. |
+| Switch avatar | yes | Asks VRChat to wear the avatar id from the settings. |
 | Block the user | no | Calls the VRChat API. |
 | Disable avatar interactions | no | Calls the VRChat API. |
 | Hide the chat box | no | Calls the VRChat API. |

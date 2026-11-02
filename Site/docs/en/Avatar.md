@@ -10,7 +10,7 @@ VRChat identifies avatars with an id that starts with `avtr_`, for example:
 avtr_4d3c393f-ef70-4468-bb9e-8380f8a43d8f
 ```
 
-Paste it under **Settings → Automatic protection → Switch avatar (OSC)**. The field is masked like a password; use the eye button to check what you pasted.
+Paste it under **Settings → Automatic protection → Switch avatar**. The field is masked like a password; use the eye button to check what you pasted.
 
 ## Which avatars can be switched to
 
