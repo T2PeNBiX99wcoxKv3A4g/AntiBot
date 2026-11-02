@@ -7,6 +7,8 @@
   "footer": "AntiBot 使用 MIT 授權。",
   "home": {
     "tagline": "把機器人擋在你的 VRChat 實例之外。",
+    "noteTitle": "關於判別",
+    "noteText": "AntiBot 主要針對透過改造客戶端收集資料的自動機器人。如果使用改造客戶端的是真人，通常很難分辨；信任等級高也不代表帳號一定屬於真人。請把分數當作提示，而不是判定。",
     "download": "下載",
     "documentation": "文件",
     "whatTitle": "它能做什麼",

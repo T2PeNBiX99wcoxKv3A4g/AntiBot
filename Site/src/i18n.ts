@@ -24,6 +24,8 @@ export interface Copy {
     footer: string;
     home: {
         tagline: string;
+        noteTitle: string;
+        noteText: string;
         download: string;
         documentation: string;
         whatTitle: string;

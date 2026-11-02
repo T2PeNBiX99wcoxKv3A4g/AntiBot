@@ -7,6 +7,8 @@
   "footer": "AntiBot is under the MIT license.",
   "home": {
     "tagline": "Keep bots out of your VRChat instance.",
+    "noteTitle": "A note on detection",
+    "noteText": "AntiBot targets automated bots that collect data through modified clients. A real person using a modified client can be very hard to tell apart, and a high trust rank does not prove that an account belongs to a human. Treat the score as a hint, not a judgment.",
     "download": "Download",
     "documentation": "Documentation",
     "whatTitle": "What it does",

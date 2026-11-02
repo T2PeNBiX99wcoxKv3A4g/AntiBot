@@ -7,6 +7,8 @@
   "footer": "AntiBot 使用 MIT 许可证。",
   "home": {
     "tagline": "把机器人挡在你的 VRChat 实例之外。",
+    "noteTitle": "关于判别",
+    "noteText": "AntiBot 主要针对通过改造客户端收集资料的自动机器人。如果使用改造客户端的是真人，通常很难分辨；信任等级高也不代表账号一定属于真人。请把分数当作提示，而不是判定。",
     "download": "下载",
     "documentation": "文档",
     "whatTitle": "它能做什么",

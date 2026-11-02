@@ -250,6 +250,26 @@ const PlatformNote = styled.span`
     font-size: 0.8rem;
 `;
 
+/** The detection limits sit at the bottom, away from the sales pitch. */
+const Disclaimer = styled.aside`
+    padding: 18px 20px;
+    border: 1px solid rgba(251, 191, 36, 0.22);
+    border-radius: 12px;
+    background: rgba(251, 191, 36, 0.06);
+
+    h2 {
+        margin: 0 0 6px;
+        color: #fbbf24;
+        font-size: 0.95rem;
+    }
+
+    p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.84rem;
+    }
+`;
+
 const featureIcons: LucideIcon[] = [Users, ShieldAlert, ShieldCheck, Zap, UserCog, UserPlus, FileText, Lock];
 
 /** simple-icons dropped the Windows mark, so the four squares are drawn here. */
@@ -339,6 +359,13 @@ export const HomePage: React.FC = () => {
                         );
                     })}
                 </PlatformGrid>
+            </Section>
+
+            <Section>
+                <Disclaimer>
+                    <h2>{home.noteTitle}</h2>
+                    <p>{home.noteText}</p>
+                </Disclaimer>
             </Section>
         </>
     );
