@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.4.1..v0.5.0) - 2026-11-02
+
+### ⛰️  Features
+
+- *(auth)* Detect and announce expired sessions - ([46cc7b8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/46cc7b8e5688d814ff4b80fd464eec6b5a2d27ce))
+- *(site)* Add detection limits to the home page - ([e2f9ced](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e2f9cedd1e90c66143d65cd11bbdc1204c0a1f6b))
+
+### 📚 Documentation
+
+- Clarify modified-client bot limits - ([997460c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/997460c91250d702430f297a339ec07fc48804a2))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([4c301fa](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4c301fa313e9e0379a9234d55e9f146844bd1902))
+
+
 ## [0.4.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.4.0..v0.4.1) - 2026-11-02
 
 ### 🐛 Bug Fixes
