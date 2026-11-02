@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
 import {Native, ResizeHandles, useTranslation, useWindowCorners} from "@photino-net-utils/bridge";
-import {type AppInfo, getAppInfo} from "./api/system";
+import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
 import {ContextMenu} from "./components/ContextMenu";
@@ -47,6 +47,7 @@ export default function App() {
     const t = useTranslation();
     const [page, setPage] = useState<Page>("logs");
     const [info, setInfo] = useState<AppInfo | null>(null);
+    const [update, setUpdate] = useState<UpdateCheck | null>(null);
     const corners = useWindowCorners();
     const log = useVrchatLog();
     const {auth, ready} = useAuth();
@@ -54,6 +55,11 @@ export default function App() {
 
     useEffect(() => {
         void getAppInfo().then(setInfo, () => setInfo(null));
+    }, []);
+
+    // The backend caches the published version, so this normally answers at once.
+    useEffect(() => {
+        void getUpdateStatus().then(setUpdate, () => undefined);
     }, []);
 
     // The host waits for this before pushing events; sending to a web view that is still loading
@@ -66,6 +72,11 @@ export default function App() {
     // The tray can ask for a page (for example "Settings") while the window is hidden.
     useEffect(() => {
         return Native.on((message) => {
+            if (message.type === "app.update") {
+                setUpdate((message.data as UpdateCheck | undefined) ?? null);
+                return;
+            }
+
             if (message.type !== "app.navigate")
                 return;
 
@@ -115,7 +126,18 @@ export default function App() {
                     </Content>
 
                     <Footer>
-                        <span>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</span>
+                        <Version>
+                            <VersionText>
+                                {info ? `v${info.version} · ${info.platform}` : t("browser preview")}
+                            </VersionText>
+                            {update?.available && (
+                                <UpdateDot
+                                    aria-label={t("Version {version} is available.", {version: update.latest})}
+                                    role="status"
+                                    title={t("Version {version} is available.", {version: update.latest})}
+                                />
+                            )}
+                        </Version>
                     </Footer>
                 </Main>
             </Shell>
@@ -233,10 +255,28 @@ const Footer = styled.footer`
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--text-muted);
+`;
 
-    span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+const Version = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+`;
+
+const VersionText = styled.span`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+`;
+
+/** Shown next to the version only when the published build is newer than this one. */
+const UpdateDot = styled.span`
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.14), 0 0 10px rgba(167, 139, 250, 0.55);
+    cursor: help;
 `;
