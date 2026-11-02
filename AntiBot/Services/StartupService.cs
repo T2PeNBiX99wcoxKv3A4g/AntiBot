@@ -1,6 +1,4 @@
-using System.Runtime.Versioning;
 using AntiBot.Messaging;
-using PhotinoNetUtils;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
@@ -17,30 +15,23 @@ namespace AntiBot.Services;
 /// </remarks>
 internal sealed class StartupService : Singleton<StartupService>
 {
-    private const string ShortcutName = "AntiBot.lnk";
-    private const string DesktopEntryName = "AntiBot.desktop";
-
-    private readonly string _entryPath;
+    private readonly StartupRegistration _registration = new(typeof(StartupService).Assembly, Constants.Name, "antibot");
 
     public StartupService()
     {
-        _entryPath = OperatingSystem.IsWindows()
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), ShortcutName)
-            : Path.Combine(ConfigHome(), "autostart", DesktopEntryName);
-
         NativeBridge.MessageReceived += HandleMessageAsync;
         Refresh();
     }
 
-    public static bool IsSupported => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+    public static bool IsSupported => StartupRegistration.IsSupported;
 
-    private bool IsEnabled => IsSupported && File.Exists(_entryPath);
+    private bool IsEnabled => _registration.IsEnabled;
 
     /// <summary>Rewrites an existing entry so a moved executable or a new icon is picked up.</summary>
     private void Refresh()
     {
         if (IsEnabled)
-            Try.Run(Create).OnFailure(ex => Log.Warning(ex, "Failed to refresh the autostart entry"));
+            Try.Run(_registration.Refresh).OnFailure(ex => Log.Warning(ex, "Failed to refresh the autostart entry"));
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
@@ -60,59 +51,9 @@ internal sealed class StartupService : Singleton<StartupService>
         if (!IsSupported)
             return context.Reply("app.setStartup.result", new StartupPayload(false, false));
 
-        Try.Run(() =>
-        {
-            if (enabled)
-                Create();
-            else if (File.Exists(_entryPath))
-                File.Delete(_entryPath);
-        }).OnFailure(ex => Log.Warning(ex, "Failed to update the autostart entry"));
+        Try.Run(() => _registration.SetEnabled(enabled))
+            .OnFailure(ex => Log.Warning(ex, "Failed to update the autostart entry"));
 
         return context.Reply("app.setStartup.result", new StartupPayload(IsSupported, IsEnabled));
-    }
-
-    private void Create()
-    {
-        var executable = Environment.ProcessPath;
-        if (string.IsNullOrEmpty(executable))
-        {
-            Log.Warning("Cannot create the autostart entry: the executable path is unknown");
-            return;
-        }
-
-        if (OperatingSystem.IsLinux())
-            WriteDesktopEntry(executable);
-        else if (OperatingSystem.IsWindows())
-            WindowsShortcut.Create(_entryPath, executable, "", Path.GetDirectoryName(executable) ?? "",
-                Constants.WindowTitle);
-    }
-
-    [SupportedOSPlatform("linux")]
-    private void WriteDesktopEntry(string executable)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(_entryPath)!);
-
-        var icon = AppIcon.EnsureExtracted(typeof(StartupService).Assembly, Constants.Name) ?? "antibot";
-
-        File.WriteAllText(_entryPath, string.Join("\n",
-            "[Desktop Entry]",
-            "Type=Application",
-            $"Name={Constants.WindowTitle}",
-            $"Comment={Constants.WindowTitle}",
-            $"Exec=\"{executable}\"",
-            $"Icon={icon}",
-            "Terminal=false",
-            "X-GNOME-Autostart-enabled=true",
-            ""));
-
-        File.SetUnixFileMode(_entryPath, File.GetUnixFileMode(_entryPath) | UnixFileMode.UserExecute);
-    }
-
-    private static string ConfigHome()
-    {
-        var configured = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-        return string.IsNullOrEmpty(configured)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config")
-            : configured;
     }
 }

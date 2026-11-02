@@ -1,5 +1,6 @@
 using AntiBot.Messaging;
 using JetBrains.Annotations;
+using PhotinoNetUtils;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
@@ -12,12 +13,10 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
 {
     /// <summary>The version declared in the csproj (<c>&lt;Version&gt;</c>).</summary>
     [PublicAPI] public static readonly string Version =
-        typeof(AppInfoService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+        BuildInfo.VersionOf(typeof(AppInfoService).Assembly);
 
     /// <summary>Lower-case platform id, so the UI can adapt platform-specific actions.</summary>
-    [PublicAPI] public static readonly string Platform =
-        OperatingSystem.IsWindows() ? "windows" :
-        OperatingSystem.IsLinux() ? "linux" : "unknown";
+    [PublicAPI] public static readonly string Platform = BuildInfo.Platform;
 
     /// <summary>Whether this is a debug build, which is the only one that shows the debug page.</summary>
 #if DEBUG
@@ -30,7 +29,7 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
     ///     Changes whenever this build does. The interface is always served from the same address, so
     ///     this is what tells the web view that what it cached belongs to an older build.
     /// </summary>
-    [PublicAPI] public static readonly string BuildToken = ResolveBuildToken();
+    [PublicAPI] public static readonly string BuildToken = BuildInfo.BuildTokenFor(typeof(AppInfoService).Assembly);
 
     public AppInfoService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
@@ -58,13 +57,4 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
         Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         (uri.Host == "vrchat.com" || uri.Host.EndsWith(".vrchat.com", StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>The executable's write time, which a replacement binary always changes.</summary>
-    private static string ResolveBuildToken()
-    {
-        var executable = Environment.ProcessPath;
-        return string.IsNullOrEmpty(executable)
-            ? Version
-            : File.GetLastWriteTimeUtc(executable).Ticks.ToString();
-    }
 }
