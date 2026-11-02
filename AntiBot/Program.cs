@@ -112,6 +112,8 @@ internal static class Program
             manager.CreateMainWindow();
             StartTray(tray);
             VrchatLogService.Instance.Start();
+
+            using var termination = TerminationSignals.Handle(manager.Exit);
             manager.Run();
 
             Log.Information("Exiting");
