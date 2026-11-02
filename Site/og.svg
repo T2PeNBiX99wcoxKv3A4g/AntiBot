@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+    <title id="title">AntiBot</title>
+    <desc id="desc">Keep bots out of your VRChat instance.</desc>
+
+    <defs>
+        <radialGradient id="glow-top" cx="18%" cy="-10%" r="75%">
+            <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.38"/>
+            <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="glow-bottom" cx="95%" cy="110%" r="70%">
+            <stop offset="0" stop-color="#6366f1" stop-opacity="0.28"/>
+            <stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="icon-bg" x1="8" y1="8" x2="248" y2="248" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#6366f1"/>
+            <stop offset="1" stop-color="#a855f7"/>
+        </linearGradient>
+    </defs>
+
+    <rect width="1200" height="630" fill="#08070f"/>
+    <rect width="1200" height="630" fill="url(#glow-top)"/>
+    <rect width="1200" height="630" fill="url(#glow-bottom)"/>
+
+    <rect x="24" y="24" width="1152" height="582" rx="28" fill="none"
+          stroke="#a78bfa" stroke-opacity="0.16" stroke-width="2"/>
+
+    <!-- The app mark, scaled from icon.svg. -->
+    <g transform="translate(90 205) scale(0.86)">
+        <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#icon-bg)"/>
+        <circle cx="128" cy="98" r="40" fill="#f8fafc"/>
+        <path d="M62 198c0-33.1 29.5-60 66-60s66 26.9 66 60z" fill="#f8fafc"/>
+        <path d="M56 200 200 56" stroke="url(#icon-bg)" stroke-width="18" stroke-linecap="round"/>
+    </g>
+
+    <g font-family="Segoe UI, Arial, sans-serif">
+        <text x="360" y="306" fill="#f5f3ff" font-size="96" font-weight="700" letter-spacing="-3">AntiBot</text>
+        <text x="364" y="374" fill="#a9a2c4" font-size="32">Keep bots out of your VRChat instance.</text>
+        <text x="364" y="432" fill="#6f6885" font-size="23" letter-spacing="0.4">VRChat anti-bot tooling</text>
+    </g>
+
+    <text x="1110" y="570" fill="#6f6885" font-family="Cascadia Mono, Consolas, monospace"
+          font-size="19" text-anchor="end">t2penbix99wcoxkv3a4g.github.io/AntiBot</text>
+</svg>
