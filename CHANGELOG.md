@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.3.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.2.0..v0.3.0) - 2026-11-02
+
+### ⛰️  Features
+
+- *(site)* Make docs and home pages indexable - ([e8d146c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e8d146cbced2a5bf5cf2f475e20276b9c0ad1e4e))
+- *(site)* Add social preview metadata - ([dc36b6f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/dc36b6f8691f1321468ae844dc6793156cc7253f))
+
+### 🐛 Bug Fixes
+
+- *(i18n)* Remove duplicate OSC suffix from settings - ([a351898](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a351898b940d0ba6903438b30bd456782e62f51d))
+
+### 🚜 Refactor
+
+- *(site)* Keep every language in the SPA - ([b01ea30](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b01ea30aa7b08a658757cc4abb781413779811ae))
+- *(site)* Keep docs navigation in the SPA - ([7381912](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/738191293a866d21d429af9fc5e72cd802df6cfc))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(site)* Add Google Search Console verification - ([7cf3404](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7cf3404daacf12d3d3ced530a8fa63bd076fc4ca))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([c943c98](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c943c982ec7b47db7297cf18f3c3ae0e693de33c))
+
+
 ## [0.2.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.2..v0.2.0) - 2026-11-02
 
 ### ⛰️  Features
