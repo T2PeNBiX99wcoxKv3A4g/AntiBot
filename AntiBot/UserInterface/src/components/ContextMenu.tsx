@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {setWhitelisted} from "../api/settings";
+import {getSettings, setWhitelisted} from "../api/settings";
 
 /** Inputs where pasting text makes no sense. */
 const NON_TEXT_INPUTS = new Set([
@@ -14,7 +14,6 @@ interface MenuState {
     selection: string;
     editable: HTMLElement | null;
     userId: string | null;
-    whitelisted: boolean;
 }
 
 function isTextControl(element: Element | null): element is HTMLElement {
@@ -65,6 +64,7 @@ function insertText(control: HTMLElement, text: string) {
 export function ContextMenu() {
     const t = useTranslation();
     const [menu, setMenu] = useState<MenuState | null>(null);
+    const [whitelist, setWhitelist] = useState<Set<string>>(new Set());
     const [toast, setToast] = useState("");
     const toastTimer = useRef(0);
 
@@ -73,6 +73,15 @@ export function ContextMenu() {
         window.clearTimeout(toastTimer.current);
         toastTimer.current = window.setTimeout(() => setToast(""), 1800);
     };
+
+    // The whitelist lives in the settings, so it is read again each time a user row is opened. That
+    // keeps the toggle right after the settings page changed it, and works for the operation history,
+    // which knows only the user id.
+    useEffect(() => {
+        if (!menu?.userId) return;
+
+        void getSettings().then((settings) => setWhitelist(new Set(settings.whitelist)), () => {});
+    }, [menu]);
 
     useEffect(() => {
         const onContextMenu = (event: MouseEvent) => {
@@ -96,7 +105,6 @@ export function ContextMenu() {
                 selection,
                 editable,
                 userId: row?.dataset.userId ?? null,
-                whitelisted: row?.dataset.whitelisted === "true",
             });
         };
 
@@ -151,12 +159,20 @@ export function ContextMenu() {
         setMenu(null);
         try {
             await setWhitelisted(userId, whitelisted);
+            setWhitelist((current) => {
+                const next = new Set(current);
+                if (whitelisted) next.add(userId);
+                else next.delete(userId);
+                return next;
+            });
             window.dispatchEvent(new CustomEvent("antibot:whitelist", {detail: {userId, whitelisted}}));
             flash(whitelisted ? t("Added to whitelist") : t("Removed from whitelist"));
         } catch {
             // The host refused; the settings page can still change the list by hand.
         }
     };
+
+    const whitelisted = menu?.userId ? whitelist.has(menu.userId) : false;
 
     return (
         <>
@@ -168,13 +184,18 @@ export function ContextMenu() {
                         </Item>
                     )}
                     {menu.userId && (
-                        <Item onClick={() => void copy(`https://vrchat.com/home/user/${menu.userId}`)} type="button">
-                            {t("Copy VRChat profile link")}
+                        <Item onClick={() => void copy(menu.userId!)} type="button">
+                            {t("Copy ID")}
                         </Item>
                     )}
                     {menu.userId && (
-                        <Item onClick={() => void toggleWhitelist(menu.userId!, !menu.whitelisted)} type="button">
-                            {menu.whitelisted ? t("Remove from whitelist") : t("Add to whitelist")}
+                        <Item onClick={() => void copy(`https://vrchat.com/home/user/${menu.userId}`)} type="button">
+                            {t("Copy profile URL")}
+                        </Item>
+                    )}
+                    {menu.userId && (
+                        <Item onClick={() => void toggleWhitelist(menu.userId!, !whitelisted)} type="button">
+                            {whitelisted ? t("Remove from whitelist") : t("Add to whitelist")}
                         </Item>
                     )}
                     {menu.editable && (

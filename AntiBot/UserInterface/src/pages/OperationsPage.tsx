@@ -101,7 +101,7 @@ export function OperationsPage() {
                     {entries.length === 0 ? (
                         <Empty>{t("AntiBot has not taken an automatic action yet.")}</Empty>
                     ) : entries.map((entry) => (
-                        <Item key={entry.id} onClick={() => openUser(entry)}>
+                        <Item data-user-id={entry.userId || undefined} key={entry.id} onClick={() => openUser(entry)}>
                             <Avatar $src={entry.avatarUrl}/>
                             <Time>{formatTime(entry.at, locale)}</Time>
                             <Kind $kind={entry.kind}>{t(kindKey(entry.kind))}</Kind>
