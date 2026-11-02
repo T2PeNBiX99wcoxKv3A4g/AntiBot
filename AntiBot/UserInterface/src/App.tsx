@@ -48,6 +48,7 @@ export default function App() {
     const [page, setPage] = useState<Page>("logs");
     const [info, setInfo] = useState<AppInfo | null>(null);
     const [update, setUpdate] = useState<UpdateCheck | null>(null);
+    const [pendingSettingsSection, setPendingSettingsSection] = useState<string | null>(null);
     const corners = useWindowCorners();
     const log = useVrchatLog();
     const {auth, ready} = useAuth();
@@ -61,6 +62,19 @@ export default function App() {
     useEffect(() => {
         void getUpdateStatus().then(setUpdate, () => undefined);
     }, []);
+
+    // A footer click asks for the settings page and one of its sections in the same action.
+    useEffect(() => {
+        if (page !== "settings" || !pendingSettingsSection)
+            return;
+
+        const frame = window.requestAnimationFrame(() => {
+            document.getElementById(pendingSettingsSection)?.scrollIntoView({behavior: "smooth", block: "start"});
+            setPendingSettingsSection(null);
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [page, pendingSettingsSection]);
 
     // The host waits for this before pushing events; sending to a web view that is still loading
     // would abort it.
@@ -133,8 +147,12 @@ export default function App() {
                             {update?.available && (
                                 <UpdateDot
                                     aria-label={t("Version {version} is available.", {version: update.latest})}
-                                    role="status"
+                                    onClick={() => {
+                                        setPage("settings");
+                                        setPendingSettingsSection("settings-build");
+                                    }}
                                     title={t("Version {version} is available.", {version: update.latest})}
+                                    type="button"
                                 />
                             )}
                         </Version>
@@ -271,12 +289,25 @@ const VersionText = styled.span`
 `;
 
 /** Shown next to the version only when the published build is newer than this one. */
-const UpdateDot = styled.span`
+const UpdateDot = styled.button`
     width: 7px;
     height: 7px;
     flex-shrink: 0;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
     background: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.14), 0 0 10px rgba(167, 139, 250, 0.55);
-    cursor: help;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+
+    &:hover {
+        transform: scale(1.25);
+        box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.2), 0 0 14px rgba(167, 139, 250, 0.7);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--border-color-focus);
+        outline-offset: 3px;
+    }
 `;
