@@ -363,6 +363,12 @@
   "app.info": "app.info",
   "Version": "版本",
   "Read from the executable the interface is running in.": "从界面所在的执行文件读取。",
+  "Check for updates": "检查更新",
+  "Open release page": "打开发布页面",
+  "Open log folder": "打开日志文件夹",
+  "Log files are written to:": "日志写入位置：",
+  "Up to date: {version} is the newest version.": "已是最新版本：{version} 是最新版本。",
+  "Version {version} is available.": "版本 {version} 可用。",
   "Language": "语言",
   "Language used by both the interface and the desktop backend.": "界面和桌面后端共同使用的语言。",
   "Start with the system": "随系统启动",
@@ -416,5 +422,8 @@
   "error.authUnauthorized": "用户名或密码不正确。",
   "error.authForbidden": "VRChat 拒绝了登录。VPN 或被封锁的网络可能导致此问题。",
   "error.authRateLimited": "尝试次数过多，请稍后再试。",
-  "error.vrchatStatus": "VRChat 返回了 {status}。"
+  "error.vrchatStatus": "VRChat 返回了 {status}。",
+  "error.openLogsFailed": "无法打开日志文件夹。",
+  "error.openReleasesFailed": "无法打开发布页面。",
+  "error.updateCheckFailed": "无法读取已发布的版本。"
 }

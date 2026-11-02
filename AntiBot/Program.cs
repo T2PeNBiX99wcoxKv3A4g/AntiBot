@@ -71,6 +71,7 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
+            _ = UpdateService.Instance;
             _ = StartupService.Instance;
             _ = VrchatLogService.Instance;
 

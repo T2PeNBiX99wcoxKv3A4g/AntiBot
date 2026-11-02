@@ -363,6 +363,12 @@
   "app.info": "app.info",
   "Version": "バージョン",
   "Read from the executable the interface is running in.": "インターフェースが動作している実行ファイルから読み取ります。",
+  "Check for updates": "アップデートを確認",
+  "Open release page": "リリースページを開く",
+  "Open log folder": "ログフォルダーを開く",
+  "Log files are written to:": "ログの保存先：",
+  "Up to date: {version} is the newest version.": "最新版です：{version} が最新バージョンです。",
+  "Version {version} is available.": "バージョン {version} が利用可能です。",
   "Language": "言語",
   "Language used by both the interface and the desktop backend.": "インターフェースとデスクトップバックエンドの両方で使う言語です。",
   "Start with the system": "システムと同時に起動",
@@ -416,5 +422,8 @@
   "error.authUnauthorized": "ユーザー名またはパスワードが正しくありません。",
   "error.authForbidden": "VRChat がサインインを拒否しました。VPN やブロックされたネットワークが原因の場合があります。",
   "error.authRateLimited": "試行回数が多すぎます。しばらく待ってから再試行してください。",
-  "error.vrchatStatus": "VRChat が {status} を返しました。"
+  "error.vrchatStatus": "VRChat が {status} を返しました。",
+  "error.openLogsFailed": "ログフォルダーを開けませんでした。",
+  "error.openReleasesFailed": "リリースページを開けませんでした。",
+  "error.updateCheckFailed": "公開バージョンを読み取れませんでした。"
 }

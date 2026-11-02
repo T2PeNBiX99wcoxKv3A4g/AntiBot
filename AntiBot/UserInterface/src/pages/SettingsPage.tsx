@@ -5,7 +5,7 @@ import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
-import {type AppInfo, setStartup, startupStatus, type StartupStatus} from "../api/system";
+import {type AppInfo, checkForUpdates, getUpdateStatus, openLogsFolder, openReleasesPage, setStartup, startupStatus, type StartupStatus, type UpdateCheck} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
 import {FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
 
@@ -66,6 +66,8 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [oscBusy, setOscBusy] = useState(false);
     const [startup, setStartupState] = useState<StartupStatus | null>(null);
     const [startupBusy, setStartupBusy] = useState(false);
+    const [updateResult, setUpdateResult] = useState<UpdateCheck | null>(null);
+    const [updateBusy, setUpdateBusy] = useState(false);
     const [attributionOpen, setAttributionOpen] = useState(false);
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
@@ -146,6 +148,10 @@ export function SettingsPage({info}: SettingsPageProps) {
 
     useEffect(() => {
         void startupStatus().then(setStartupState, () => setStartupState(null));
+    }, []);
+
+    useEffect(() => {
+        void getUpdateStatus().then(setUpdateResult, () => undefined);
     }, []);
 
     /* Marks the section being read, so the jump list also shows where the page is. */
@@ -233,6 +239,42 @@ export function SettingsPage({info}: SettingsPageProps) {
 
         try {
             await openLogFolder();
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        }
+    };
+
+    /** Opens the folder the backend writes its own logs to, ready to attach to a bug report. */
+    const revealLogs = async () => {
+        setError(null);
+
+        try {
+            await openLogsFolder();
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        }
+    };
+
+    /** Reads the published version file and compares it with this build. */
+    const checkUpdates = async () => {
+        setUpdateBusy(true);
+        setUpdateResult(null);
+        setError(null);
+
+        try {
+            setUpdateResult(await checkForUpdates());
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setUpdateBusy(false);
+        }
+    };
+
+    const openReleasePage = async () => {
+        setError(null);
+
+        try {
+            await openReleasesPage();
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
         }
@@ -652,6 +694,35 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</Value>
                         <Hint>{t("Read from the executable the interface is running in.")}</Hint>
                     </Field>
+
+                    <Actions>
+                        <Button disabled={updateBusy} onClick={() => void checkUpdates()} type="button">
+                            {updateBusy ? t("Checking…") : t("Check for updates")}
+                        </Button>
+                        {updateResult?.available && (
+                            <Button onClick={() => void openReleasePage()} type="button">
+                                {t("Open release page")}
+                            </Button>
+                        )}
+                        <Button onClick={() => void revealLogs()} type="button">
+                            <FolderIcon/>{t("Open log folder")}
+                        </Button>
+                    </Actions>
+
+                    {updateResult && (updateResult.available
+                        ? <UpdateAvailable>
+                            {t("Version {version} is available.", {version: updateResult.latest})}
+                        </UpdateAvailable>
+                        : <Hint>
+                            {t("Up to date: {version} is the newest version.", {version: updateResult.current})}
+                        </Hint>)}
+
+                    {info?.logDirectory && (
+                        <Field>
+                            <Label>{t("Log files are written to:")}</Label>
+                            <Value $mono>{info.logDirectory}</Value>
+                        </Field>
+                    )}
                 </Card>
             </Section>
 
@@ -957,6 +1028,12 @@ const Button = styled.button`
 const ErrorText = styled.span`
     color: var(--danger);
     font-size: 11px;
+`;
+
+/** The published version is newer than this build. */
+const UpdateAvailable = styled.span`
+    font-size: 11px;
+    color: var(--accent-primary);
 `;
 
 /** A quiet line at the very bottom that opens the notices page. */

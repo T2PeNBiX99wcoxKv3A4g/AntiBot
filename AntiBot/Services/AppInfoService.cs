@@ -8,7 +8,7 @@ using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
-/// <summary>Answers the <c>app.info</c> message so the UI can show the build version.</summary>
+/// <summary>Answers the <c>app.*</c> messages about the build, its log folder and the release page.</summary>
 internal sealed class AppInfoService : Singleton<AppInfoService>
 {
     /// <summary>The version declared in the csproj (<c>&lt;Version&gt;</c>).</summary>
@@ -36,10 +36,27 @@ internal sealed class AppInfoService : Singleton<AppInfoService>
     private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
         "app.info" => Task.FromResult<NativeResponse?>(context.Reply("app.info.result",
-            new AppInfoPayload(Version, Platform, WindowManager.Instance.DrawsWindowCorners, Debug))),
+            new AppInfoPayload(Version, Platform, Constants.LogDirectory, WindowManager.Instance.DrawsWindowCorners,
+                Debug))),
+        "app.openLogs" => Task.FromResult<NativeResponse?>(Open(context, Constants.LogDirectory,
+            "app.openLogs.result", "error.openLogsFailed")),
+        "app.openReleases" => Task.FromResult<NativeResponse?>(Open(context, Constants.ReleasesUrl,
+            "app.openReleases.result", "error.openReleasesFailed")),
         "system.openUrl" => Task.FromResult<NativeResponse?>(OpenUrl(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
+
+    /// <summary>Opens a folder or a fixed link with the system's default handler.</summary>
+    private static NativeResponse Open(NativeContext context, string target, string replyType, string errorKey)
+    {
+        var started = Try.Run(() => SystemLauncher.Open(target));
+
+        if (started.Exception is not { } exception)
+            return context.Reply(replyType, new OkPayload());
+
+        Constants.Logger.Warning(exception, "Failed to open {Target}", target);
+        return context.Fail(replyType, Localization.Get(errorKey));
+    }
 
     /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
     private static NativeResponse OpenUrl(NativeContext context)

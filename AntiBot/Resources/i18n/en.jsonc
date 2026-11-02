@@ -365,6 +365,12 @@
   "app.info": "app.info",
   "Version": "Version",
   "Read from the executable the interface is running in.": "Read from the executable the interface is running in.",
+  "Check for updates": "Check for updates",
+  "Open release page": "Open release page",
+  "Open log folder": "Open log folder",
+  "Log files are written to:": "Log files are written to:",
+  "Up to date: {version} is the newest version.": "Up to date: {version} is the newest version.",
+  "Version {version} is available.": "Version {version} is available.",
   "Language": "Language",
   "Language used by both the interface and the desktop backend.": "Language used by both the interface and the desktop backend.",
   "Start with the system": "Start with the system",
@@ -418,5 +424,8 @@
   "error.authUnauthorized": "The username or password is not correct.",
   "error.authForbidden": "VRChat refused the sign-in. A VPN or a blocked network can cause this.",
   "error.authRateLimited": "Too many attempts. Wait a moment, then try again.",
-  "error.vrchatStatus": "VRChat answered {status}."
+  "error.vrchatStatus": "VRChat answered {status}.",
+  "error.openLogsFailed": "Could not open the log folder.",
+  "error.openReleasesFailed": "Could not open the release page.",
+  "error.updateCheckFailed": "Could not read the published version."
 }
