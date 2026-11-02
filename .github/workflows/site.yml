@@ -1,5 +1,6 @@
 name: Site
 
+# Rebuilds the landing page and documentation whenever the site changes.
 on:
   workflow_dispatch:
   push:

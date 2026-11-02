@@ -1,5 +1,6 @@
 name: Pre Release
 
+# Pre-releases are built from every dev/** branch; master is handled by release.yml.
 on:
   workflow_dispatch:
   push:
