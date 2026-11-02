@@ -6,22 +6,12 @@ import {existsSync} from "node:fs";
 import {readFile, writeFile} from "node:fs/promises";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
+import {DOC_PAGES as pages, LANGUAGES as languages} from "./docs-config.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(here, "..");
 const docsDirectory = path.join(siteRoot, "docs");
 const output = path.join(siteRoot, "src", "docs.generated.ts");
-
-/** English is the source; the others are the `<page>.md` files in their own folder. */
-const languages = ["en", "ja", "zh-CN", "zh-TW"];
-
-const pages = [
-    {slug: "Getting-Started", group: "setup"},
-    {slug: "OSC", group: "setup"},
-    {slug: "Avatar", group: "setup"},
-    {slug: "Threat-Scoring", group: "reference"},
-    {slug: "Automatic-Protection", group: "reference"}
-];
 
 const known = new Set(pages.map((page) => page.slug));
 

@@ -3,6 +3,7 @@ import styled, {keyframes} from "styled-components";
 import {BookOpen, Download, FileText, Lock, ShieldAlert, ShieldCheck, UserCog, UserPlus, Users, Zap, type LucideIcon} from "lucide-react";
 import {siArchlinux, siFedora, siGithub, siUbuntu} from "simple-icons";
 import {ICON, REPOSITORY, RELEASES} from "../constants";
+import {docsHref} from "../links";
 import {useCopy} from "../language";
 
 const fadeIn = keyframes`
@@ -270,7 +271,7 @@ export const HomePage: React.FC = () => {
                         <Download size={17}/>
                         {home.download}
                     </Button>
-                    <Button href="#/docs/Getting-Started">
+                    <Button href={docsHref("Getting-Started")}>
                         <BookOpen size={17}/>
                         {home.documentation}
                     </Button>

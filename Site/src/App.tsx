@@ -6,6 +6,7 @@ import {HomePage} from "./pages/Home";
 import {DocsPage} from "./pages/Docs";
 import {docs} from "./docs.generated";
 import {ICON, REPOSITORY, RELEASES} from "./constants";
+import {docsHref, homeHref} from "./links";
 import {useVersion} from "./version";
 import {LANGUAGES, type Copy, type Language} from "./i18n";
 import {LanguageProvider, useCopy, useLanguage} from "./language";
@@ -284,7 +285,7 @@ const Site: React.FC = () => {
         <Shell>
             <TopBar>
                 <BrandGroup>
-                    <Brand href="#/">
+                    <Brand href={homeHref()}>
                         <BrandIcon src={ICON} alt=""/>
                         AntiBot
                     </Brand>
@@ -299,11 +300,11 @@ const Site: React.FC = () => {
                     )}
                 </BrandGroup>
                 <Nav>
-                    <NavLink $active={route.section === "home"} href="#/">
+                    <NavLink $active={route.section === "home"} href={homeHref()}>
                         <House size={15}/>
                         {copy.nav.home}
                     </NavLink>
-                    <NavLink $active={route.section === "docs"} href="#/docs/Getting-Started">
+                    <NavLink $active={route.section === "docs"} href={docsHref("Getting-Started")}>
                         <BookOpen size={15}/>
                         {copy.nav.docs}
                     </NavLink>
