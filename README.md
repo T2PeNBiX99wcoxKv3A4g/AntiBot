@@ -6,6 +6,11 @@
     <a href="https://t2penbix99wcoxkv3a4g.github.io/AntiBot/">Website</a> ·
     <a href="https://t2penbix99wcoxkv3a4g.github.io/AntiBot/#/docs/Getting-Started">Documentation</a>
   </p>
+  <p>
+    <a href="README.ja.md">日本語</a> ·
+    <a href="README.zh-CN.md">简体中文</a> ·
+    <a href="README.zh-TW.md">繁體中文</a>
+  </p>
 </div>
 
 AntiBot watches the log VRChat already writes, shows who is in your instance, and scores every user
@@ -57,8 +62,8 @@ reason is shown with its own points, so you can see why a user was flagged.
   reasons. Most actions can be undone.
 - **Multiple accounts** — keep several VRChat accounts and switch between them. A session can be
   stored behind Windows Hello, the TPM, DPAPI, the system keyring or a password you choose.
-- **Stays local** — the log, the database and the settings stay on your PC. Only the VRChat API is
-  called, at the pace it allows.
+- **Stays local** — the log, the database and the settings stay on your PC. Network calls go only to
+  the VRChat API and the avatar-name providers you have configured.
 
 ## Built with
 
@@ -154,7 +159,7 @@ npm run dev
 dotnet run --project AntiBot
 ```
 
-Debug builds load the interface from the dev server. The Debug page is only present in a Debug
+Debug builds load the interface from the dev server. The Debug page is only offered in a Debug
 build.
 
 ### Release
