@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.2..v0.2.0) - 2026-11-02
+
+### ⛰️  Features
+
+- Add update check and log folder shortcut - ([40292f8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/40292f80892fb14233a6a3aa2f92c64309711373))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([f27a8af](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f27a8af7daee45d4b8793b03a2a90f5efcb182e4))
+
+
 ## [0.1.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.1..v0.1.2) - 2026-11-02
 
 ### 🚜 Refactor
