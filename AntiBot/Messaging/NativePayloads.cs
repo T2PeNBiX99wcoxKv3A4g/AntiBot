@@ -76,6 +76,9 @@ internal sealed record AuthPayload(
     bool StorageChosen,
     AccountSummaryPayload[] Accounts);
 
+/// <summary>Body for the <c>auth.expired</c> event: the saved VRChat session stopped working.</summary>
+internal sealed record AuthExpiredPayload(string Reason);
+
 /// <summary>Payload for <c>auth.login</c>.</summary>
 internal sealed record AuthLoginRequest(string Username, string Password);
 

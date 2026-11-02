@@ -35,6 +35,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(WindowStatePayload))]
 [JsonSerializable(typeof(WindowResizeRequest))]
 [JsonSerializable(typeof(AuthPayload))]
+[JsonSerializable(typeof(AuthExpiredPayload))]
 [JsonSerializable(typeof(AccountSummaryPayload))]
 [JsonSerializable(typeof(AccountIndex))]
 [JsonSerializable(typeof(StoredAccount[]))]

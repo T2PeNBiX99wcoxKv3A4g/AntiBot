@@ -196,6 +196,7 @@
   "Forget it": "忘れる",
   "Signed in to VRChat": "VRChat にサインイン済み",
   "Session expires {date}": "セッション有効期限 {date}",
+  "VRChat session expired. Sign in again.": "VRChat のセッションが切れました。もう一度サインインしてください。",
   "Sign out": "サインアウト",
   "Keep the session between launches": "起動間でセッションを保持",
   "Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.": "保存されるのは VRChat のセッション Cookie のみで、パスワードは保存されません。「記憶しない」以外は暗号化され、解除方法だけが異なります。",

@@ -25,7 +25,12 @@ import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
 /** The VRChat account: the account list, sign-in, the second factor, and how each session is kept. */
-export function AccountPage({initial, ready = false}: { initial?: AuthSnapshot; ready?: boolean }) {
+export function AccountPage({initial, ready = false, expired = false}: {
+    initial?: AuthSnapshot;
+    ready?: boolean;
+    expired?: boolean;
+}) {
+    const t = useTranslation();
     const [auth, setAuth] = useState<AuthSnapshot>(initial ?? signedOut);
     const [loaded, setLoaded] = useState(ready);
     const [error, setError] = useState("");
@@ -189,6 +194,12 @@ export function AccountPage({initial, ready = false}: { initial?: AuthSnapshot; 
 
     return (
         <Page $wide={centred}>
+            {expired && (
+                <SessionNotice role="alert">
+                    <ShieldIcon size={16}/>
+                    <span>{t("VRChat session expired. Sign in again.")}</span>
+                </SessionNotice>
+            )}
             {content}
             {signedIn && <StorageChoice key={auth.user?.id} auth={auth} busy={busy} error={error} run={run}/>}
             {unlocking && (
@@ -1342,6 +1353,25 @@ const Method = styled.button<{ $active: boolean }>`
 const ErrorText = styled.p`
     font-size: 12px;
     color: #f87171;
+`;
+
+/** The saved session stopped working; shown above the sign-in/account panels. */
+const SessionNotice = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border: 1px solid rgba(251, 191, 36, 0.32);
+    border-radius: 10px;
+    background: rgba(251, 191, 36, 0.08);
+    color: #fbbf24;
+    font-size: 12px;
+    line-height: 1.4;
+
+    svg {
+        flex-shrink: 0;
+    }
 `;
 
 const Note = styled.p`

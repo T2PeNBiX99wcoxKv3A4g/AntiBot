@@ -48,11 +48,17 @@ export default function App() {
     const [page, setPage] = useState<Page>("logs");
     const [info, setInfo] = useState<AppInfo | null>(null);
     const [update, setUpdate] = useState<UpdateCheck | null>(null);
+    const [authExpired, setAuthExpired] = useState(false);
     const [pendingSettingsSection, setPendingSettingsSection] = useState<string | null>(null);
     const corners = useWindowCorners();
     const log = useVrchatLog();
     const {auth, ready} = useAuth();
     const signedIn = auth.state === "loggedIn";
+
+    // A successful sign-in makes the expiry notice obsolete.
+    useEffect(() => {
+        if (signedIn) setAuthExpired(false);
+    }, [signedIn]);
 
     useEffect(() => {
         void getAppInfo().then(setInfo, () => setInfo(null));
@@ -86,6 +92,12 @@ export default function App() {
     // The tray can ask for a page (for example "Settings") while the window is hidden.
     useEffect(() => {
         return Native.on((message) => {
+            if (message.type === "auth.expired") {
+                setAuthExpired(true);
+                setPage("account");
+                return;
+            }
+
             if (message.type === "app.update") {
                 setUpdate((message.data as UpdateCheck | undefined) ?? null);
                 return;
@@ -133,7 +145,7 @@ export default function App() {
                                     : page === "operations"
                                         ? <OperationsPage/>
                                         : page === "account"
-                                            ? <AccountPage initial={auth} ready={ready}/>
+                                            ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
                                             : page === "debug"
                                                 ? <DebugPage/>
                                                 : <SettingsPage info={info}/>}

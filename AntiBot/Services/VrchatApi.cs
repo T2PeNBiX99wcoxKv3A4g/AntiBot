@@ -32,6 +32,9 @@ internal sealed class VrchatApi : IDisposable
     /// <summary>The value of the <c>auth</c> cookie, which the pipeline websocket accepts.</summary>
     public string? AuthToken => _cookies.GetCookies(BaseUri)["auth"]?.Value;
 
+    /// <summary>Raised when the active session is rejected with HTTP 401.</summary>
+    public event Action? Unauthorized;
+
     public void Dispose() => _http.Dispose();
 
     /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
@@ -68,6 +71,7 @@ internal sealed class VrchatApi : IDisposable
     public async Task<(ApiAuthUser? User, HttpStatusCode Status)> GetCurrentUserAsync(CancellationToken token)
     {
         using var response = await _http.GetAsync("auth/user", token);
+        ReportUnauthorized(response);
         if (!response.IsSuccessStatusCode)
             return (null, response.StatusCode);
 
@@ -82,6 +86,7 @@ internal sealed class VrchatApi : IDisposable
         CancellationToken token)
     {
         using var response = await _http.GetAsync(new Uri(BaseUri, $"instances/{location}"), token);
+        ReportUnauthorized(response);
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
@@ -94,6 +99,7 @@ internal sealed class VrchatApi : IDisposable
     public async Task<(ApiUser? User, string? Error)> GetUserAsync(string userId, CancellationToken token)
     {
         using var response = await _http.GetAsync(new Uri(BaseUri, $"users/{Uri.EscapeDataString(userId)}"), token);
+        ReportUnauthorized(response);
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
@@ -109,6 +115,7 @@ internal sealed class VrchatApi : IDisposable
     public async Task<(ApiFile? File, HttpStatusCode Status)> GetFileAsync(string fileId, CancellationToken token)
     {
         using var response = await _http.GetAsync(new Uri(BaseUri, $"file/{Uri.EscapeDataString(fileId)}"), token);
+        ReportUnauthorized(response);
         if (!response.IsSuccessStatusCode)
         {
             Logger.Debug("File lookup {FileId} answered {Status}", fileId, response.StatusCode);
@@ -173,6 +180,7 @@ internal sealed class VrchatApi : IDisposable
         var attempt = await Try.Run(async () =>
         {
             using var response = await _http.GetAsync(path, token);
+            ReportUnauthorized(response);
             if (!response.IsSuccessStatusCode)
                 return null;
 
@@ -190,6 +198,7 @@ internal sealed class VrchatApi : IDisposable
     {
         using var response = await _http.GetAsync(new Uri(BaseUri, $"profile/{Uri.EscapeDataString(userId)}"),
             token);
+        ReportUnauthorized(response);
         if (!response.IsSuccessStatusCode)
             return null;
 
@@ -202,6 +211,7 @@ internal sealed class VrchatApi : IDisposable
     {
         using var response = await _http.PutAsync(
             $"auth/user/notifications/{Uri.EscapeDataString(notificationId)}/hide", null, token);
+        ReportUnauthorized(response);
         return response.IsSuccessStatusCode;
     }
 
@@ -211,6 +221,7 @@ internal sealed class VrchatApi : IDisposable
         using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
             VrchatJsonContext.Default.ApiModerationRequest));
         using var response = await _http.PostAsync("auth/user/playermoderations", content, token);
+        ReportUnauthorized(response);
 
         if (!response.IsSuccessStatusCode)
             Logger.Warning("Moderation {Type} for {UserId} answered {Status}", type, userId, response.StatusCode);
@@ -224,6 +235,7 @@ internal sealed class VrchatApi : IDisposable
         using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
             VrchatJsonContext.Default.ApiModerationRequest));
         using var response = await _http.PutAsync("auth/user/unplayermoderate", content, token);
+        ReportUnauthorized(response);
         return response.IsSuccessStatusCode;
     }
 
@@ -248,6 +260,7 @@ internal sealed class VrchatApi : IDisposable
             new ApiCreateInstanceRequest(worldId, type, "us", ownerId, false),
             VrchatJsonContext.Default.ApiCreateInstanceRequest));
         using var response = await _http.PostAsync("instances", content, token);
+        ReportUnauthorized(response);
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
@@ -351,6 +364,13 @@ internal sealed class VrchatApi : IDisposable
     {
         _http.Dispose();
         Build();
+    }
+
+    /// <summary>Lets the owning auth service expire the session on the first rejected request.</summary>
+    private void ReportUnauthorized(HttpResponseMessage response)
+    {
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+            Unauthorized?.Invoke();
     }
 
     private void Build()

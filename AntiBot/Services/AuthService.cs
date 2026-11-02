@@ -39,6 +39,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private VrchatAccount? _account;
     private Account? _active;
     private VrchatApi? _device;
+    private int _expired;
     private int _generation;
     private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
@@ -50,6 +51,9 @@ internal sealed class AuthService : Singleton<AuthService>
 
     public AuthService()
     {
+        // Any request made with the active session can notice that the cookie was rejected.
+        _api.Unauthorized += Expire;
+
         NativeBridge.MessageReceived += HandleMessageAsync;
 
         // The pipeline updates the account's presence within seconds; the account page reads it from here.
@@ -748,6 +752,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _twoFactorMethods = [];
             _legacyStorage = AuthStorage.None;
             _ready = true;
+            Interlocked.Exchange(ref _expired, 0);
         }
 
         Log.Information("Signed in as {Name}", account.Name);
@@ -1107,6 +1112,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _twoFactorMethods = [];
             _userRefreshedAt = DateTimeOffset.MinValue;
             _ready = false;
+            Interlocked.Exchange(ref _expired, 0);
         }
 
         Notify();
@@ -1115,6 +1121,10 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>The session stopped working. The stored cookie stays, so an unlock can still try it.</summary>
     private void Expire()
     {
+        // A burst of requests can all receive 401; only the first one changes the state.
+        if (!IsReady || Interlocked.Exchange(ref _expired, 1) == 1)
+            return;
+
         _pipeline.Stop();
         PresenceService.Instance.Clear();
         Database.Instance.ClearAccount();
@@ -1131,6 +1141,7 @@ internal sealed class AuthService : Singleton<AuthService>
         }
 
         Log.Warning("The VRChat session expired");
+        WindowManager.Instance.NotifyMainWindow("auth.expired", new AuthExpiredPayload("expired"));
         PersistIndex();
         Notify();
     }
