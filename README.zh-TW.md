@@ -72,17 +72,17 @@ AntiBot 會監看 VRChat 原本就會寫入的日誌，顯示目前實例中有�
 
 ## 執行
 
-發佈的版本是**自包含**的 —— 它們包含 .NET 執行階段，因此不需要額外安裝任何東西。作業系統仍需
+發佈的版本是 **自包含**的 —— 它們包含 .NET 執行階段，因此不需要額外安裝任何東西。作業系統仍需
 提供下列項目。
 
 除了純壓縮檔外，還會發佈四種套件格式：
 
-| 檔案                                            | 用途                                                                                                                                                                 |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AntiBot-<version>-win-x64.msi`                 | 每位使用者的 Windows 安裝程式：安裝到 `%LOCALAPPDATA%\Programs\AntiBot`，加入開始功能表與桌面捷徑，且永遠不會要求系統管理員權限。                                   |
-| `antibot-<version>-1.fcXX.x86_64.rpm`           | Fedora 套件：`sudo dnf install ./antibot-<version>-*.rpm`。安裝到 `/opt/AntiBot`，包含 `antibot` 指令、桌面項目與圖示。                                              |
-| `antibot_<version>_amd64.deb`                   | Debian/Ubuntu 套件：`sudo apt install ./antibot_<version>_amd64.deb`。配置與 RPM 相同。                                                                              |
-| `antibot-<version>-1-x86_64.pkg.tar.zst`        | Arch Linux 套件：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。配置與 RPM 相同。                                                                           |
+| 檔案                                     | 用途                                                                                                                              |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `AntiBot-<version>-win-x64.msi`          | 每位使用者的 Windows 安裝程式：安裝到 `%LOCALAPPDATA%\Programs\AntiBot`，加入開始功能表與桌面捷徑，且永遠不會要求系統管理員權限。 |
+| `antibot-<version>-1.fcXX.x86_64.rpm`    | Fedora 套件：`sudo dnf install ./antibot-<version>-*.rpm`。安裝到 `/opt/AntiBot`，包含 `antibot` 指令、桌面項目與圖示。           |
+| `antibot_<version>_amd64.deb`            | Debian/Ubuntu 套件：`sudo apt install ./antibot_<version>_amd64.deb`。配置與 RPM 相同。                                           |
+| `antibot-<version>-1-x86_64.pkg.tar.zst` | Arch Linux 套件：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。配置與 RPM 相同。                                       |
 
 ### Windows
 
@@ -99,12 +99,12 @@ AntiBot 會監看 VRChat 原本就會寫入的日誌，顯示目前實例中有�
 3. 自包含版本所需的 .NET 執行階段函式庫（ICU、OpenSSL、zlib、krb5、fontconfig、freetype）會由
    套件一併安裝。使用純壓縮檔時需要自行安裝。
 
-| 發行版          | 套件                                                                     |
-|-----------------|--------------------------------------------------------------------------|
-| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`  |
+| 發行版          | 套件                                                                         |
+|-----------------|------------------------------------------------------------------------------|
+| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`      |
 | Debian / Ubuntu | `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 libnotify4` |
-| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                  |
-| 其他            | 尋找提供下列函式庫的套件                                                 |
+| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                      |
+| 其他            | 尋找提供下列函式庫的套件                                                     |
 
 ```
 libwebkit2gtk-4.1.so.0          libjavascriptcoregtk-4.1.so.0
@@ -125,7 +125,7 @@ libayatana-appindicator3.so.1   （或較舊的 libappindicator3.so.1）
    Windows 上為 `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat`；Linux 上會自動尋找 Proton
    前綴。AntiBot 會跟隨該資料夾中最新的 `output_log_*.txt`。
 3. **設定 0 到 100 的門檻。** 低於門檻不會有任何動作，而每個分數的原因都會顯示在列表中。
-4. **選擇操作。** 在**設定 → 自動保護**中開啟你要的項目。安全模式和切換頭像需要 OSC；其他
+4. **選擇操作。** 在 **設定 → 自動保護**中開啟你要的項目。安全模式和切換頭像需要 OSC；其他
    功能不需要。
 
 完整說明請見[文件](https://t2penbix99wcoxkv3a4g.github.io/AntiBot/#/docs/Getting-Started)。
@@ -170,14 +170,14 @@ Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net10.0/<rid>/pu
 
 ## 資料存放位置
 
-|              | Windows                                       | Linux                                             |
-|--------------|-----------------------------------------------|---------------------------------------------------|
-| 設定         | `%APPDATA%\AntiBot\settings.json`             | `~/.config/AntiBot/settings.json`                 |
-| 資料庫       | `%APPDATA%\AntiBot\antibot.db`                | `~/.config/AntiBot/antibot.db`                    |
-| 帳號         | `%LOCALAPPDATA%\AntiBot\accounts`             | `~/.local/share/AntiBot/accounts`                 |
-| WebView      | `%LOCALAPPDATA%\AntiBot\webview`              | `~/.local/share/AntiBot/webview`                  |
-| 擷取的圖示   | `%LOCALAPPDATA%\AntiBot\icon.ico`             | `~/.local/share/AntiBot/icon.png`                 |
-| 日誌         | `%APPDATA%\AntiBot\logs\antibot-*.log`        | `~/.config/AntiBot/logs/antibot-*.log`            |
+|            | Windows                                | Linux                                  |
+|------------|----------------------------------------|----------------------------------------|
+| 設定       | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| 資料庫     | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
+| 帳號       | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
+| WebView    | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |
+| 擷取的圖示 | `%LOCALAPPDATA%\AntiBot\icon.ico`      | `~/.local/share/AntiBot/icon.png`      |
+| 日誌       | `%APPDATA%\AntiBot\logs\antibot-*.log` | `~/.config/AntiBot/logs/antibot-*.log` |
 
 每個帳號會將自己的工作階段、salt 與儲存方式保存在自己的資料夾中，資料夾名稱是帳號 ID 的雜湊。
 帳號索引只保存顯示名稱和上次使用時間。
@@ -191,7 +191,7 @@ Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net10.0/<rid>/pu
   知道該實例。
 - 登入後實例列表來自 API，否則來自日誌。若實例不是你帳號所擁有，API 的名單可能不完整，因此
   那裡仍會使用日誌。
-- 關閉視窗會將應用程式縮到系統匣。若希望啟動時就隱藏，請在設定中開啟**隱藏啟動**；沒有系統匣
+- 關閉視窗會將應用程式縮到系統匣。若希望啟動時就隱藏，請在設定中開啟 **隱藏啟動**；沒有系統匣
   時一律顯示視窗。
 - API 大約每幾秒只允許一次管理請求。AntiBot 會遵守這個頻率，並重試被拒絕的請求，而不是放棄
   該操作。

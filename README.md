@@ -82,12 +82,12 @@ installed for them. What the operating system still has to provide is listed bel
 
 Four package formats are published beside the plain archives:
 
-| File                                            | What it does                                                                                                                                                         |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AntiBot-<version>-win-x64.msi`                 | Per-user Windows installer: installs into `%LOCALAPPDATA%\Programs\AntiBot`, adds Start menu and desktop shortcuts, and never asks for administrator rights.          |
-| `antibot-<version>-1.fcXX.x86_64.rpm`           | Fedora package: `sudo dnf install ./antibot-<version>-*.rpm`. Installs to `/opt/AntiBot` with an `antibot` command, a desktop entry and the icon.                    |
-| `antibot_<version>_amd64.deb`                   | Debian/Ubuntu package: `sudo apt install ./antibot_<version>_amd64.deb`. Same layout as the RPM.                                                                     |
-| `antibot-<version>-1-x86_64.pkg.tar.zst`        | Arch Linux package: `sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`. Same layout as the RPM.                                                                 |
+| File                                     | What it does                                                                                                                                                 |
+|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AntiBot-<version>-win-x64.msi`          | Per-user Windows installer: installs into `%LOCALAPPDATA%\Programs\AntiBot`, adds Start menu and desktop shortcuts, and never asks for administrator rights. |
+| `antibot-<version>-1.fcXX.x86_64.rpm`    | Fedora package: `sudo dnf install ./antibot-<version>-*.rpm`. Installs to `/opt/AntiBot` with an `antibot` command, a desktop entry and the icon.            |
+| `antibot_<version>_amd64.deb`            | Debian/Ubuntu package: `sudo apt install ./antibot_<version>_amd64.deb`. Same layout as the RPM.                                                             |
+| `antibot-<version>-1-x86_64.pkg.tar.zst` | Arch Linux package: `sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`. Same layout as the RPM.                                                         |
 
 ### Windows
 
@@ -104,12 +104,12 @@ Four package formats are published beside the plain archives:
 3. The .NET runtime libraries the self-contained build needs (ICU, OpenSSL, zlib, krb5, fontconfig,
    freetype) are pulled in by the packages. A plain archive needs them installed by hand.
 
-| Distribution    | Packages                                                                |
-|-----------------|-------------------------------------------------------------------------|
-| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify` |
+| Distribution    | Packages                                                                     |
+|-----------------|------------------------------------------------------------------------------|
+| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`      |
 | Debian / Ubuntu | `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 libnotify4` |
-| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                 |
-| anything else   | find whatever provides the libraries below                              |
+| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                      |
+| anything else   | find whatever provides the libraries below                                   |
 
 ```
 libwebkit2gtk-4.1.so.0          libjavascriptcoregtk-4.1.so.0
@@ -177,14 +177,14 @@ Use `-r linux-x64` for Linux. That produces a single self-contained executable u
 
 ## Where things are stored
 
-|              | Windows                                       | Linux                                             |
-|--------------|-----------------------------------------------|---------------------------------------------------|
-| Settings     | `%APPDATA%\AntiBot\settings.json`             | `~/.config/AntiBot/settings.json`                 |
-| Database     | `%APPDATA%\AntiBot\antibot.db`                | `~/.config/AntiBot/antibot.db`                    |
-| Accounts     | `%LOCALAPPDATA%\AntiBot\accounts`             | `~/.local/share/AntiBot/accounts`                 |
-| Web view     | `%LOCALAPPDATA%\AntiBot\webview`              | `~/.local/share/AntiBot/webview`                  |
-| Extracted icon | `%LOCALAPPDATA%\AntiBot\icon.ico`           | `~/.local/share/AntiBot/icon.png`                 |
-| Logs         | `%APPDATA%\AntiBot\logs\antibot-*.log`        | `~/.config/AntiBot/logs/antibot-*.log`            |
+|                | Windows                                | Linux                                  |
+|----------------|----------------------------------------|----------------------------------------|
+| Settings       | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| Database       | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
+| Accounts       | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
+| Web view       | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |
+| Extracted icon | `%LOCALAPPDATA%\AntiBot\icon.ico`      | `~/.local/share/AntiBot/icon.png`      |
+| Logs           | `%APPDATA%\AntiBot\logs\antibot-*.log` | `~/.config/AntiBot/logs/antibot-*.log` |
 
 Each account keeps its session, salt and storage choice in its own folder, named after a hash of the
 account id. The account index holds only the display name and when it was last used.

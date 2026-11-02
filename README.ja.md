@@ -74,7 +74,7 @@ MOD、プラグイン、改造した VRChat クライアントは不要です。
 
 - **.NET 10 上の C#** — ログの読み取り、VRChat API との通信、採点、モデレーション、OSC、
   ローカルデータベースなど、すべてのロジック。
-- **React 19 + TypeScript**、**Vite** でバンドルし **styled-components** でスタイルを適用 —
+- **React 19 + TypeScript**、 **Vite** でバンドルし **styled-components** でスタイルを適用 —
   インターフェース。C# 側と JSON メッセージを交換するだけで、自身では処理を行いません。
 - **Photino.NET** — デスクトップシェル。OS 自身の WebView にインターフェースを表示するため、
   WebView は実行時の依存関係です。Windows では WebView2、Linux では WebKitGTK です。
@@ -82,17 +82,17 @@ MOD、プラグイン、改造した VRChat クライアントは不要です。
 
 ## 実行
 
-公開ビルドは**自己完結型**で、.NET ランタイムを同梱しているため追加のインストールは不要です。
+公開ビルドは **自己完結型**で、.NET ランタイムを同梱しているため追加のインストールは不要です。
 OS 側で必要なものは以下です。
 
 配布アーカイブとは別に、4 種類のパッケージが公開されます。
 
-| ファイル                                        | 内容                                                                                                                                                                 |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AntiBot-<version>-win-x64.msi`                 | ユーザー単位の Windows インストーラー：`%LOCALAPPDATA%\Programs\AntiBot` にインストールし、スタートメニューとデスクトップのショートカットを追加します。管理者権限は要求しません。 |
-| `antibot-<version>-1.fcXX.x86_64.rpm`           | Fedora パッケージ：`sudo dnf install ./antibot-<version>-*.rpm`。`/opt/AntiBot` にインストールし、`antibot` コマンド、デスクトップエントリ、アイコンを含みます。          |
-| `antibot_<version>_amd64.deb`                   | Debian/Ubuntu パッケージ：`sudo apt install ./antibot_<version>_amd64.deb`。レイアウトは RPM と同じです。                                                            |
-| `antibot-<version>-1-x86_64.pkg.tar.zst`        | Arch Linux パッケージ：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。レイアウトは RPM と同じです。                                                         |
+| ファイル                                 | 内容                                                                                                                                                                              |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AntiBot-<version>-win-x64.msi`          | ユーザー単位の Windows インストーラー：`%LOCALAPPDATA%\Programs\AntiBot` にインストールし、スタートメニューとデスクトップのショートカットを追加します。管理者権限は要求しません。 |
+| `antibot-<version>-1.fcXX.x86_64.rpm`    | Fedora パッケージ：`sudo dnf install ./antibot-<version>-*.rpm`。`/opt/AntiBot` にインストールし、`antibot` コマンド、デスクトップエントリ、アイコンを含みます。                  |
+| `antibot_<version>_amd64.deb`            | Debian/Ubuntu パッケージ：`sudo apt install ./antibot_<version>_amd64.deb`。レイアウトは RPM と同じです。                                                                         |
+| `antibot-<version>-1-x86_64.pkg.tar.zst` | Arch Linux パッケージ：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。レイアウトは RPM と同じです。                                                                     |
 
 ### Windows
 
@@ -110,12 +110,12 @@ OS 側で必要なものは以下です。
 3. 自己完結型ビルドが必要とする .NET ランタイムライブラリ（ICU、OpenSSL、zlib、krb5、fontconfig、
    freetype）はパッケージに含まれます。単体のアーカイブを使う場合は手動でインストールしてください。
 
-| ディストリビューション | パッケージ                                                               |
-|------------------------|--------------------------------------------------------------------------|
-| Fedora                 | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`  |
+| ディストリビューション | パッケージ                                                                   |
+|------------------------|------------------------------------------------------------------------------|
+| Fedora                 | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`      |
 | Debian / Ubuntu        | `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 libnotify4` |
-| Arch Linux             | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                  |
-| その他                 | 以下のライブラリを提供するパッケージを探してください                     |
+| Arch Linux             | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                      |
+| その他                 | 以下のライブラリを提供するパッケージを探してください                         |
 
 ```
 libwebkit2gtk-4.1.so.0          libjavascriptcoregtk-4.1.so.0
@@ -130,7 +130,7 @@ WebView ライブラリがない場合、起動時に `Unable to load shared lib
 
 ## 初回起動
 
-1. 普段使っている VRChat アカウントで**サインイン**します。VRChat が要求したときに、メール
+1. 普段使っている VRChat アカウントで **サインイン**します。VRChat が要求したときに、メール
    コードと二要素認証コードを尋ねます。パスワードはその 1 回のリクエストにのみ使われ、保存される
    ことはありません。
 2. **ログフォルダを指定します。** 既定は VRChat 自身のフォルダです。Windows では
@@ -185,14 +185,14 @@ Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net10.0/<r
 
 ## データの保存場所
 
-|              | Windows                                       | Linux                                             |
-|--------------|-----------------------------------------------|---------------------------------------------------|
-| 設定         | `%APPDATA%\AntiBot\settings.json`             | `~/.config/AntiBot/settings.json`                 |
-| データベース | `%APPDATA%\AntiBot\antibot.db`                | `~/.config/AntiBot/antibot.db`                    |
-| アカウント   | `%LOCALAPPDATA%\AntiBot\accounts`             | `~/.local/share/AntiBot/accounts`                 |
-| WebView      | `%LOCALAPPDATA%\AntiBot\webview`              | `~/.local/share/AntiBot/webview`                  |
-| 抽出されたアイコン | `%LOCALAPPDATA%\AntiBot\icon.ico`       | `~/.local/share/AntiBot/icon.png`                 |
-| ログ         | `%APPDATA%\AntiBot\logs\antibot-*.log`        | `~/.config/AntiBot/logs/antibot-*.log`            |
+|                    | Windows                                | Linux                                  |
+|--------------------|----------------------------------------|----------------------------------------|
+| 設定               | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| データベース       | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
+| アカウント         | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
+| WebView            | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |
+| 抽出されたアイコン | `%LOCALAPPDATA%\AntiBot\icon.ico`      | `~/.local/share/AntiBot/icon.png`      |
+| ログ               | `%APPDATA%\AntiBot\logs\antibot-*.log` | `~/.config/AntiBot/logs/antibot-*.log` |
 
 各アカウントはセッション、salt、保存方法を専用フォルダに保持し、フォルダ名はアカウント ID の
 ハッシュです。アカウント索引には表示名と最終使用日時だけが保存されます。
@@ -207,8 +207,8 @@ Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net10.0/<r
   インスタンスにいる間だけ、そのインスタンスを認識できます。
 - インスタンス一覧はサインイン後は API から、それ以外はログから取得します。所有していない
   インスタンスでは API のロスターが一部のみのことがあるため、そこではログも使用します。
-- ウィンドウを閉じるとアプリはシステムトレイに格納されます。起動時から非表示にするには、設定の
-  **非表示で起動**を有効にしてください。トレイがない場合は常にウィンドウを表示します。
+- ウィンドウを閉じるとアプリはシステムトレイに格納されます。起動時から非表示にするには、設定の **非表示で起動**
+  を有効にしてください。トレイがない場合は常にウィンドウを表示します。
 - API は数秒に 1 回程度のモデレーションリクエストしか許可しません。AntiBot はそのペースを守り、
   拒否されたリクエストは破棄せず再試行します。
 

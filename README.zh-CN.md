@@ -72,17 +72,17 @@ AntiBot 会监视 VRChat 本来就会写入的日志，显示当前实例中有�
 
 ## 运行
 
-发布的版本是**自包含**的 —— 它们包含 .NET 运行时，因此不需要额外安装任何东西。操作系统仍需
+发布的版本是 **自包含**的 —— 它们包含 .NET 运行时，因此不需要额外安装任何东西。操作系统仍需
 提供下列项目。
 
 除了纯压缩包外，还会发布四种软件包格式：
 
-| 文件                                            | 用途                                                                                                                                                                 |
-|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AntiBot-<version>-win-x64.msi`                 | 每位用户的 Windows 安装程序：安装到 `%LOCALAPPDATA%\Programs\AntiBot`，添加开始菜单与桌面快捷方式，且永远不会要求管理员权限。                                     |
-| `antibot-<version>-1.fcXX.x86_64.rpm`           | Fedora 软件包：`sudo dnf install ./antibot-<version>-*.rpm`。安装到 `/opt/AntiBot`，包含 `antibot` 命令、桌面入口与图标。                                           |
-| `antibot_<version>_amd64.deb`                   | Debian/Ubuntu 软件包：`sudo apt install ./antibot_<version>_amd64.deb`。布局与 RPM 相同。                                                                          |
-| `antibot-<version>-1-x86_64.pkg.tar.zst`        | Arch Linux 软件包：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。布局与 RPM 相同。                                                                       |
+| 文件                                     | 用途                                                                                                                          |
+|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `AntiBot-<version>-win-x64.msi`          | 每位用户的 Windows 安装程序：安装到 `%LOCALAPPDATA%\Programs\AntiBot`，添加开始菜单与桌面快捷方式，且永远不会要求管理员权限。 |
+| `antibot-<version>-1.fcXX.x86_64.rpm`    | Fedora 软件包：`sudo dnf install ./antibot-<version>-*.rpm`。安装到 `/opt/AntiBot`，包含 `antibot` 命令、桌面入口与图标。     |
+| `antibot_<version>_amd64.deb`            | Debian/Ubuntu 软件包：`sudo apt install ./antibot_<version>_amd64.deb`。布局与 RPM 相同。                                     |
+| `antibot-<version>-1-x86_64.pkg.tar.zst` | Arch Linux 软件包：`sudo pacman -U antibot-<version>-1-x86_64.pkg.tar.zst`。布局与 RPM 相同。                                 |
 
 ### Windows
 
@@ -99,12 +99,12 @@ AntiBot 会监视 VRChat 本来就会写入的日志，显示当前实例中有�
 3. 自包含版本所需的 .NET 运行时库（ICU、OpenSSL、zlib、krb5、fontconfig、freetype）会由软件包
    一并安装。使用纯压缩包时需要自行安装。
 
-| 发行版          | 软件包                                                                   |
-|-----------------|--------------------------------------------------------------------------|
-| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`  |
+| 发行版          | 软件包                                                                       |
+|-----------------|------------------------------------------------------------------------------|
+| Fedora          | `sudo dnf install webkit2gtk4.1 libayatana-appindicator-gtk3 libnotify`      |
 | Debian / Ubuntu | `sudo apt install libwebkit2gtk-4.1-0 libayatana-appindicator3-1 libnotify4` |
-| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                  |
-| 其他            | 寻找提供下列库的软件包                                                   |
+| Arch Linux      | `sudo pacman -S webkit2gtk-4.1 libayatana-appindicator`                      |
+| 其他            | 寻找提供下列库的软件包                                                       |
 
 ```
 libwebkit2gtk-4.1.so.0          libjavascriptcoregtk-4.1.so.0
@@ -125,7 +125,7 @@ soname 属于哪个软件包，可以询问包管理器 —— 例如
    Windows 上为 `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat`；Linux 上会自动寻找 Proton
    前缀。AntiBot 会跟随该文件夹中最新的 `output_log_*.txt`。
 3. **设置 0 到 100 的阈值。** 低于阈值不会有任何操作，而每个分数的原因都会显示在列表中。
-4. **选择操作。** 在**设置 → 自动保护**中开启你要的项目。安全模式和切换头像需要 OSC；其他
+4. **选择操作。** 在 **设置 → 自动保护**中开启你要的项目。安全模式和切换头像需要 OSC；其他
    功能不需要。
 
 完整说明请见[文档](https://t2penbix99wcoxkv3a4g.github.io/AntiBot/#/docs/Getting-Started)。
@@ -170,14 +170,14 @@ Linux 请使用 `-r linux-x64`。这会在 `AntiBot/bin/Release/net10.0/<rid>/pu
 
 ## 文件存放位置
 
-|              | Windows                                       | Linux                                             |
-|--------------|-----------------------------------------------|---------------------------------------------------|
-| 设置         | `%APPDATA%\AntiBot\settings.json`             | `~/.config/AntiBot/settings.json`                 |
-| 数据库       | `%APPDATA%\AntiBot\antibot.db`                | `~/.config/AntiBot/antibot.db`                    |
-| 账户         | `%LOCALAPPDATA%\AntiBot\accounts`             | `~/.local/share/AntiBot/accounts`                 |
-| WebView      | `%LOCALAPPDATA%\AntiBot\webview`              | `~/.local/share/AntiBot/webview`                  |
-| 提取的图标   | `%LOCALAPPDATA%\AntiBot\icon.ico`             | `~/.local/share/AntiBot/icon.png`                 |
-| 日志         | `%APPDATA%\AntiBot\logs\antibot-*.log`        | `~/.config/AntiBot/logs/antibot-*.log`            |
+|            | Windows                                | Linux                                  |
+|------------|----------------------------------------|----------------------------------------|
+| 设置       | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| 数据库     | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
+| 账户       | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
+| WebView    | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |
+| 提取的图标 | `%LOCALAPPDATA%\AntiBot\icon.ico`      | `~/.local/share/AntiBot/icon.png`      |
+| 日志       | `%APPDATA%\AntiBot\logs\antibot-*.log` | `~/.config/AntiBot/logs/antibot-*.log` |
 
 每个账户会将自己的会话、salt 与保存方式保存在自己的文件夹中，文件夹名称是账户 ID 的哈希。
 账户索引只保存显示名称和上次使用时间。
@@ -191,7 +191,7 @@ Linux 请使用 `-r linux-x64`。这会在 `AntiBot/bin/Release/net10.0/<rid>/pu
   知道该实例。
 - 登录后实例列表来自 API，否则来自日志。若实例不是你账户所拥有，API 的名册可能不完整，因此
   那里仍会使用日志。
-- 关闭窗口会将应用缩到系统托盘。若希望启动时就隐藏，请在设置中开启**隐藏启动**；没有托盘时
+- 关闭窗口会将应用缩到系统托盘。若希望启动时就隐藏，请在设置中开启 **隐藏启动**；没有托盘时
   一律显示窗口。
 - API 大约每隔几秒才允许一次管理请求。AntiBot 会遵守这个频率，并重试被拒绝的请求，而不是放弃
   该操作。
