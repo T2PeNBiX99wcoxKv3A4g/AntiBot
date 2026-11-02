@@ -196,7 +196,12 @@ Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net10.0/<rid>/pu
 - API 大約每幾秒只允許一次管理請求。AntiBot 會遵守這個頻率，並重試被拒絕的請求，而不是放棄
   該操作。
 
+## 致謝
+
+- **[VRCX](https://github.com/vrcx-team/VRCX)** — 大部分的 VRChat API 整合參考自 VRCX 的實作，
+  包括端點、登入與雙重驗證流程、處置操作、頭像查詢格式，以及部分日誌解析。VRCX 的 MIT 授權
+  收錄於 [LICENSE_VRCX](LICENSE_VRCX)。
+
 ## 授權
 
-MIT —— 詳見 [LICENSE](LICENSE)。部分 VRChat 日誌解析基於
-[VRCX](https://github.com/vrcx-team/VRCX)，其授權位於 [LICENSE_VRCX](LICENSE_VRCX)。
+MIT —— 詳見 [LICENSE](LICENSE)。

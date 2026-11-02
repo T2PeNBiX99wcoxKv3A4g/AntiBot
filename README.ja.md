@@ -212,8 +212,13 @@ Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net10.0/<r
 - API は数秒に 1 回程度のモデレーションリクエストしか許可しません。AntiBot はそのペースを守り、
   拒否されたリクエストは破棄せず再試行します。
 
+## クレジット
+
+- **[VRCX](https://github.com/vrcx-team/VRCX)** — VRChat API 統合の大部分は VRCX の実装を参考に
+  しています。エンドポイント、サインインと二要素認証の流れ、モデレーション操作、アバター検索の
+  形式、ログ解析の一部が含まれます。VRCX の MIT ライセンスは
+  [LICENSE_VRCX](LICENSE_VRCX) に収録しています。
+
 ## ライセンス
 
-MIT — [LICENSE](LICENSE) を参照してください。VRChat ログ解析の一部は
-[VRCX](https://github.com/vrcx-team/VRCX) に基づいており、そのライセンスは
-[LICENSE_VRCX](LICENSE_VRCX) にあります。
+MIT — [LICENSE](LICENSE) を参照してください。

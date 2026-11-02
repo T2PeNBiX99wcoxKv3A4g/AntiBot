@@ -204,7 +204,13 @@ on startup.
 - The API allows roughly one moderation request every few seconds. AntiBot keeps to that pace and
   retries a refused request instead of dropping the action.
 
+## Credits
+
+- **[VRCX](https://github.com/vrcx-team/VRCX)** — most of the VRChat API integration is based on
+  VRCX's implementation: the endpoints, the sign-in and two-factor flow, moderation calls, the
+  avatar lookup format, and parts of the log parsing. VRCX's MIT license is reproduced in
+  [LICENSE_VRCX](LICENSE_VRCX).
+
 ## License
 
-MIT — see [LICENSE](LICENSE). Parts of the VRChat log parsing are based on
-[VRCX](https://github.com/vrcx-team/VRCX), whose license is in [LICENSE_VRCX](LICENSE_VRCX).
+MIT — see [LICENSE](LICENSE).
