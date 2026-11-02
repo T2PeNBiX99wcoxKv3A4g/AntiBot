@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.1..v0.1.2) - 2026-11-02
+
+### 🚜 Refactor
+
+- *(docs)* Improve table formatting in README files across all languages - ([4b88e4d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4b88e4df81e5e3a91069de1ccbf3920a35d5e66b))
+
+### 📚 Documentation
+
+- Credit VRCX for the API implementation - ([2b975dc](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2b975dc68379eb3aa3f1909aff63f592fd7b6316))
+
+### ⚙️ Miscellaneous Tasks
+
+- Refresh the site and pre-release workflow files - ([2a6b11b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2a6b11bfc9de45ebdfddbe0f615b178595644b6a))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([8011a84](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/8011a84b0d08f6352f0b094937b75dea9e87dced))
+
+
 ## [0.1.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.1.0..v0.1.1) - 2026-11-02
 
 ### 🐛 Bug Fixes
