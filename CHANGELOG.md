@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.3.0..v0.4.0) - 2026-11-02
+
+### ⛰️  Features
+
+- *(ui)* Show update indicator in the footer - ([b31632b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b31632be8139e1a53f87ee840dd1921cb5698562))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([fbffa94](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fbffa9424f4834b6cd3ec9991f3e476de5575cd8))
+
+
 ## [0.3.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.2.0..v0.3.0) - 2026-11-02
 
 ### ⛰️  Features
