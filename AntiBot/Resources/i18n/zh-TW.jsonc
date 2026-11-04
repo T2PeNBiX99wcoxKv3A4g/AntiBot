@@ -371,6 +371,7 @@
   "Up to date: {version} is the newest version.": "已是最新版本：{version} 是最新版本。",
   "Version {version} is available.": "版本 {version} 已推出。",
   "Language": "語言",
+  "System default": "系統預設",
   "Language used by both the interface and the desktop backend.": "介面和桌面後端共同使用的語言。",
   "Start with the system": "隨系統啟動",
   "Create an autostart entry for this user.": "為目前使用者建立開機啟動項目。",

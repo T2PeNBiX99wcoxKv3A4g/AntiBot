@@ -373,6 +373,7 @@
   "Up to date: {version} is the newest version.": "Up to date: {version} is the newest version.",
   "Version {version} is available.": "Version {version} is available.",
   "Language": "Language",
+  "System default": "System default",
   "Language used by both the interface and the desktop backend.": "Language used by both the interface and the desktop backend.",
   "Start with the system": "Start with the system",
   "Create an autostart entry for this user.": "Create an autostart entry for this user.",

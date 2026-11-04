@@ -371,6 +371,7 @@
   "Up to date: {version} is the newest version.": "最新版です：{version} が最新バージョンです。",
   "Version {version} is available.": "バージョン {version} が利用可能です。",
   "Language": "言語",
+  "System default": "システムの既定",
   "Language used by both the interface and the desktop backend.": "インターフェースとデスクトップバックエンドの両方で使う言語です。",
   "Start with the system": "システムと同時に起動",
   "Create an autostart entry for this user.": "このユーザーの自動起動エントリを作成します。",

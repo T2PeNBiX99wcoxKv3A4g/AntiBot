@@ -57,7 +57,7 @@ const empty: SettingsView = {
     autoRejectFriendRequests: true,
     threatThreshold: 50,
     whitelist: [],
-    language: "en",
+    language: "system",
     startHidden: false,
     oscPort: 0,
 };

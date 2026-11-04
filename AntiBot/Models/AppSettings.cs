@@ -12,8 +12,8 @@ public sealed record AppSettings
 
     public string LogDirectory { get; init; } = ResolveDefaultLogDirectory();
 
-    /// <summary>UI and backend language: <c>en</c>, <c>ja</c>, <c>zh-CN</c> or <c>zh-TW</c>.</summary>
-    public string Language { get; init; } = "en";
+    /// <summary>UI and backend language: <c>system</c>, <c>en</c>, <c>ja</c>, <c>zh-CN</c> or <c>zh-TW</c>.</summary>
+    public string Language { get; init; } = "system";
 
     /// <summary>The port VRChat listens on for OSC.</summary>
     public int OscPort { get; init; } = 9000;

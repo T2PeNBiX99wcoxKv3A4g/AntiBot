@@ -14,6 +14,9 @@ const AttributionPage = lazy(() =>
     import("../components/AttributionPage").then((module) => ({default: module.AttributionPage}))
 );
 
+/** The stored value that follows the operating system's language. */
+const SYSTEM_LOCALE = "system";
+
 /** Language names are always shown in their own language. */
 const LOCALE_NAMES: Record<string, string> = {
     en: "English",
@@ -57,7 +60,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [newWhitelist, setNewWhitelist] = useState("");
     const [people, setPeople] = useState<InstanceUser[]>([]);
-    const [language, setLanguage] = useState("en");
+    const [language, setLanguage] = useState(SYSTEM_LOCALE);
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
     const [oscPort, setOscPort] = useState(9000);
@@ -133,7 +136,7 @@ export function SettingsPage({info}: SettingsPageProps) {
             setAutoReject(settings.autoRejectFriendRequests);
             setThreshold(settings.threatThreshold);
             setWhitelist(settings.whitelist ?? []);
-            setLanguage(settings.language ?? "en");
+            setLanguage(settings.language ?? SYSTEM_LOCALE);
             setStartHidden(settings.startHidden);
             setOscPort(settings.oscPort || 9000);
 
@@ -332,10 +335,13 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Label>{t("Language")}</Label>
                         <Dropdown
                             onChange={(value) => void changeLanguage(value)}
-                            options={locales.map((locale) => ({
-                                value: locale,
-                                label: LOCALE_NAMES[locale] ?? locale,
-                            }))}
+                            options={[
+                                {value: SYSTEM_LOCALE, label: t("System default")},
+                                ...locales.map((locale) => ({
+                                    value: locale,
+                                    label: LOCALE_NAMES[locale] ?? locale,
+                                })),
+                            ]}
                             value={language}
                         />
                         <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>

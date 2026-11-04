@@ -55,7 +55,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
     }
 
     private static string NormalizeLanguage(string? language) =>
-        language is "ja" or "zh-CN" or "zh-TW" ? language : "en";
+        language is "system" or "ja" or "zh-CN" or "zh-TW" ? language : "en";
 
     private SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
