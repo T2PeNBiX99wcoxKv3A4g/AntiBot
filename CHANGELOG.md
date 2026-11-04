@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.5.1..v0.6.0) - 2026-11-04
+
+### ⛰️  Features
+
+- *(i18n)* Default to the system language - ([462fbde](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/462fbde3bc5d97525b833c824ebf63ea43f6c8f5))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([686f755](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/686f7557546d4d8d9ee6d0723806047d3814f5df))
+
+
 ## [0.5.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.5.0..v0.5.1) - 2026-11-03
 
 ### ⚙️ Miscellaneous Tasks
