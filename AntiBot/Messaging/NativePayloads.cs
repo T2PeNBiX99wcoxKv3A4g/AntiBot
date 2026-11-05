@@ -98,7 +98,8 @@ internal sealed record AuthAccountRequest(string Dir);
 ///     Body for <c>auth.switch</c>. A password-protected session is not opened here; the interface asks
 ///     for the password first, so a cancelled switch leaves the current account untouched.
 /// </summary>
-internal sealed record SwitchPayload(bool Ok, bool NeedsPassword, string? Error, AuthPayload? Auth);
+internal sealed record SwitchPayload(bool Ok, bool NeedsPassword, string? Error, AuthPayload? Auth,
+    bool NeedsLogin = false);
 
 /// <summary>Payload for <c>auth.storage.save</c>; <c>mode</c> is <c>none</c>, <c>password</c> or <c>system</c>.</summary>
 internal sealed record AuthStorageRequest(string Mode, string? Password);

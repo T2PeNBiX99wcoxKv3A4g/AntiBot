@@ -103,6 +103,8 @@ export interface SwitchResult {
     needsPassword: boolean;
     error?: string;
     auth?: AuthSnapshot;
+    /** The saved session is gone, so the account has to be signed in again. */
+    needsLogin?: boolean;
 }
 
 /** Makes another stored account the signed-in one. */

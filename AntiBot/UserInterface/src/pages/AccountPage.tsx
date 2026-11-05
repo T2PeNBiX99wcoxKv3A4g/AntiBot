@@ -115,6 +115,13 @@ export function AccountPage({initial, ready = false, expired = false}: {
                 return;
             }
 
+            // An expired session cannot be retried; show why once and go straight to the sign-in form.
+            if (result.needsLogin) {
+                setError(result.error ?? "");
+                setAdding(true);
+                return;
+            }
+
             if (!result.ok || !result.auth) {
                 setError(result.error ?? "");
                 return;
@@ -136,7 +143,19 @@ export function AccountPage({initial, ready = false, expired = false}: {
             setAuth(await unlock(password, account.dir));
             setUnlocking(null);
         } catch (err) {
-            setUnlockError(err instanceof Error ? err.message : String(err));
+            const message = err instanceof Error ? err.message : String(err);
+            setUnlockError(message);
+
+            // The backend drops a session VRChat rejected, so offer a fresh sign-in instead of
+            // leaving the same expired password panel open. The reason stays on the sign-in form.
+            const next = await getAuth().catch(() => null);
+            if (next && !next.accounts.some((entry) => entry.dir === account.dir && entry.stored)) {
+                setAuth(next);
+                setUnlockError("");
+                setUnlocking(null);
+                setError(message);
+                setAdding(true);
+            }
         } finally {
             setBusy(false);
         }
@@ -198,6 +217,12 @@ export function AccountPage({initial, ready = false, expired = false}: {
                 <SessionNotice role="alert">
                     <ShieldIcon size={16}/>
                     <span>{t("VRChat session expired. Sign in again.")}</span>
+                    <NoticeSignIn disabled={busy} onClick={() => {
+                        setError("");
+                        setAdding(true);
+                    }} type="button">
+                        {t("Sign in")}
+                    </NoticeSignIn>
                 </SessionNotice>
             )}
             {content}
@@ -1371,6 +1396,20 @@ const SessionNotice = styled.div`
 
     svg {
         flex-shrink: 0;
+    }
+`;
+
+/** The shortcut in the expiry notice, so the rejected session is never tried again. */
+const NoticeSignIn = styled(buttonBase)`
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 5px 10px;
+    border-color: rgba(251, 191, 36, 0.45);
+    color: #fbbf24;
+    font-size: 11px;
+
+    &:hover:not(:disabled) {
+        background: rgba(251, 191, 36, 0.14);
     }
 `;
 

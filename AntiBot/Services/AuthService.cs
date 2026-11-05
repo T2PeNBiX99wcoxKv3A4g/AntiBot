@@ -385,10 +385,15 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            var error = await ActivateAsync(account, payload, null, false);
-            return error is null
-                ? context.Reply("auth.unlock.result", Snapshot())
-                : context.Fail("auth.unlock.result", error);
+            var (error, dead) = await ActivateAsync(account, payload, null, false);
+
+            if (error is null)
+                return context.Reply("auth.unlock.result", Snapshot());
+
+            if (dead)
+                DropSession(account);
+
+            return context.Fail("auth.unlock.result", error);
         }
         finally
         {
@@ -425,7 +430,7 @@ internal sealed class AuthService : Singleton<AuthService>
             {
                 DropSession(account);
                 return context.Reply("auth.switch.result",
-                    new SwitchPayload(false, false, Localization.Get("error.authSessionExpired"), null));
+                    new SwitchPayload(false, false, Localization.Get("error.authSessionExpired"), null, true));
             }
 
             payload = loaded;
@@ -434,17 +439,23 @@ internal sealed class AuthService : Singleton<AuthService>
         {
             if (account.Cookies is not { Length: > 0 } cookies)
                 return context.Reply("auth.switch.result",
-                    new SwitchPayload(false, false, Localization.Get("error.authAccountSignedOut"), null));
+                    new SwitchPayload(false, false, Localization.Get("error.authAccountSignedOut"), null, true));
 
             payload = JsonSerializer.SerializeToUtf8Bytes(cookies, VrchatJsonContext.Default.CookieRecordArray);
         }
 
         try
         {
-            var error = await ActivateAsync(account, payload, null, false);
-            return error is null
-                ? context.Reply("auth.switch.result", new SwitchPayload(true, false, null, Snapshot()))
-                : context.Reply("auth.switch.result", new SwitchPayload(false, false, error, null));
+            var (error, dead) = await ActivateAsync(account, payload, null, false);
+
+            if (error is null)
+                return context.Reply("auth.switch.result", new SwitchPayload(true, false, null, Snapshot()));
+
+            // A session VRChat rejected cannot be retried, so forget it before asking for a new sign-in.
+            if (dead)
+                DropSession(account);
+
+            return context.Reply("auth.switch.result", new SwitchPayload(false, false, error, null, dead));
         }
         finally
         {
@@ -652,7 +663,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            return await ActivateAsync(FindOrAdd(id, user.DisplayName), payload, user, true) is null;
+            return (await ActivateAsync(FindOrAdd(id, user.DisplayName), payload, user, true)).Error is null;
         }
         finally
         {
@@ -663,9 +674,11 @@ internal sealed class AuthService : Singleton<AuthService>
 
     /// <summary>
     ///     Replaces the client's cookies with <paramref name="payload" /> and marks the account active.
-    ///     Returns an error message, or null. The previous account is restored when the new one is dead.
+    ///     Returns an error message, or null. <c>Dead</c> means VRChat rejected the session itself, so it
+    ///     is worth dropping instead of retrying. The previous account is restored either way.
     /// </summary>
-    private async Task<string?> ActivateAsync(Account account, byte[] payload, ApiAuthUser? known, bool fresh)
+    private async Task<(string? Error, bool Dead)> ActivateAsync(Account account, byte[] payload,
+        ApiAuthUser? known, bool fresh)
     {
         var previous = _active;
         var previousCookies = _api.AuthToken is { Length: > 0 } ? _api.ExportCookies() : null;
@@ -693,7 +706,7 @@ internal sealed class AuthService : Singleton<AuthService>
             .GetOrNull();
 
         if (cookies is not { Length: > 0 })
-            return Localization.Get("error.authSessionExpired");
+            return (Localization.Get("error.authSessionExpired"), true);
 
         _api.ImportCookies(cookies);
 
@@ -707,11 +720,11 @@ internal sealed class AuthService : Singleton<AuthService>
         if (user?.Id is not { Length: > 0 })
         {
             Restore(previous, previousCookies);
-            return Localization.Get("error.authSessionExpired");
+            return (Localization.Get("error.authSessionExpired"), true);
         }
 
         await CompleteAsync(account, user, fresh);
-        return null;
+        return (null, false);
     }
 
     /// <summary>Takes the account from an API reply and marks the session as signed in.</summary>
@@ -855,7 +868,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            var error = await ActivateAsync(active, payload, null, false);
+            var (error, _) = await ActivateAsync(active, payload, null, false);
             if (error is null)
                 Log.Information("Restored the stored VRChat session");
             else
