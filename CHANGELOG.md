@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.6.0..v0.6.1) - 2026-11-05
+
+### 🐛 Bug Fixes
+
+- *(auth)* Open the sign-in form when a saved session expired - ([435dc06](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/435dc060caa8df085857d063e3adf60b0b1bcb0b))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([1ba93d4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1ba93d431c8acdcf48e228491115a0722b6e647a))
+
+
 ## [0.6.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.5.1..v0.6.0) - 2026-11-04
 
 ### ⛰️  Features
