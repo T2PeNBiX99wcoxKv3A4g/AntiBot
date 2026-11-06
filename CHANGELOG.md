@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.6.1..v0.7.0) - 2026-11-06
+
+### ⛰️  Features
+
+- Recover blank WebView and add tray reload - ([b650fd4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b650fd45c4609c90ed419f22faf3a0d1da018c62))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update PhotinoNETUtils dependency - ([e7220a1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e7220a19e7ade3fe36fa7adae7f2afe611e1ab70))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([f2d1719](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f2d17198ea6ad2aa258120474b6115df0aec82d3))
+
+
 ## [0.6.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.6.0..v0.6.1) - 2026-11-05
 
 ### 🐛 Bug Fixes
