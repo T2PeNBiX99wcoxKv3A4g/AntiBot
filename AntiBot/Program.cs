@@ -156,6 +156,8 @@ internal static class Program
             Localization.Get("tray.exit"),
             () => manager.ShowMainWindow(),
             () => manager.ShowMainWindow("settings"),
-            manager.Exit);
+            manager.Exit,
+            manager.ReloadWebView,
+            Localization.Get("tray.reload"));
     }
 }

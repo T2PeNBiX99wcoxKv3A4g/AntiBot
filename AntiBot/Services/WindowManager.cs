@@ -23,6 +23,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
     private bool _allowClose;
     private readonly Lock _gate = new();
     private PhotinoWindow? _mainWindow;
+    private PhotinoNetUtils.Services.WebViewRecovery? _webViewRecovery;
     private bool _hideWhenRendered;
 
     /// <summary>The newest event of each type, held until the page reports in.</summary>
@@ -126,6 +127,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
             MainWindowCreated?.Invoke();
         });
 
+        _webViewRecovery = PhotinoNetUtils.Services.WebViewRecovery.Attach(window, AppUrl);
         window.Load(AppUrl);
         _mainWindow = window;
     }
@@ -286,8 +288,12 @@ internal sealed class WindowManager : Singleton<WindowManager>
     public void Exit()
     {
         _allowClose = true;
+        _webViewRecovery?.Dispose();
         RunOnMainWindow(() => _mainWindow?.Close());
     }
+
+    /// <summary>Reloads the main UI from the tray's recovery action.</summary>
+    public void ReloadWebView() => _webViewRecovery?.Reload();
 
     private static void Show(PhotinoWindow window)
     {
