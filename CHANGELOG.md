@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.0..v0.7.1) - 2026-11-06
+
+### ⚙️ Miscellaneous Tasks
+
+- Update shared PhotinoNETUtils to 0.12.1 - ([014a8e9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/014a8e99006036e48286d88adf4b6d779b1f8092))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([7a0e10d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7a0e10d91c65885973917972f1c32f09af61aa7e))
+
+
 ## [0.7.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.6.1..v0.7.0) - 2026-11-06
 
 ### ⛰️  Features
