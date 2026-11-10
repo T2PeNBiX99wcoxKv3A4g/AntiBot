@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.4..v0.7.5) - 2026-11-10
+
+### ⚙️ Miscellaneous Tasks
+
+- Update NuGet packages - ([c13c4f0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c13c4f029b6bf7f0b770a4fcf5c185fb838f87cd))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([0a7497b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0a7497b2599b4af6bd5d8fe2fe8c06ae03373c3f))
+
+
 ## [0.7.4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.3..v0.7.4) - 2026-11-10
 
 ### ⚙️ Miscellaneous Tasks
