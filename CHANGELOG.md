@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.3..v0.7.4) - 2026-11-10
+
+### ⚙️ Miscellaneous Tasks
+
+- Update node dependencies and shared PhotinoNETUtils - ([9a674e6](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9a674e6c94edd6858c75a47f40bbe093061b30a6))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([243f457](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/243f457ba0dbec2fd0e3b7c61b0b28435c05d7b6))
+
+
 ## [0.7.3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.2..v0.7.3) - 2026-11-10
 
 ### ⚙️ Miscellaneous Tasks
