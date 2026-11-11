@@ -65,7 +65,8 @@ reason is shown with its own points, so you can see why a user was flagged.
 - **Multiple accounts** — keep several VRChat accounts and switch between them. A session can be
   stored behind Windows Hello, the TPM, DPAPI, the system keyring or a password you choose.
 - **Automatic sign-in** — optionally keep the login name and password encrypted by the TPM or DPAPI,
-  so an expired session can sign in again without asking. VRChat may still ask for a two-factor code.
+  so an expired session can sign in again without asking. Turn it on from the Account page; VRChat may
+  still ask for a two-factor code.
 - **Stays local** — the log, the database and the settings stay on your PC. Network calls go only to
   the VRChat API and the avatar-name providers you have configured.
 

@@ -56,7 +56,7 @@ The name signals are capped at 40 in total, so a name alone cannot reach the def
 
 The custom status, pronouns and bio are matched after punctuation is normalised, so lookalike characters do not dodge the check.
 
-The bio comes from the public profile. AntiBot fetches it for accounts whose other signals already look suspicious, and always for the batch page and the details panel.
+The bio comes from the public profile. AntiBot fetches it for every player and refreshes it at most every ten minutes; the batch page and the details panel always load it.
 
 | Text | Points |
 | --- | --- |

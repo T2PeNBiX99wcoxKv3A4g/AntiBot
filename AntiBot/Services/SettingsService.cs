@@ -86,6 +86,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
     {
         "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result", Payload())),
         "settings.save" => SaveAsync(context),
+        "settings.rememberPassword" => SaveRememberPasswordAsync(context),
         "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
@@ -134,7 +135,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
             SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
             SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
-            RememberPassword = settings.RememberPassword,
+
+            // The account page owns this switch; a general settings save must not reset it.
+            RememberPassword = Current.RememberPassword,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])
                 .Select(Ids.User)
@@ -160,6 +163,23 @@ internal sealed class SettingsService : Singleton<SettingsService>
         WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
         Saved?.Invoke();
         return context.Reply("settings.save.result", payload);
+    }
+
+    /// <summary>Changes only the automatic sign-in switch; the rest of the settings stay as they are.</summary>
+    private async Task<NativeResponse?> SaveRememberPasswordAsync(NativeContext context)
+    {
+        var enabled = context.Payload<RememberPasswordRequest>()?.Enabled ?? false;
+        Current = Current with { RememberPassword = enabled };
+
+        var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
+            JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Failed to write {File}", FilePath));
+
+        var payload = Payload();
+        WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
+        Saved?.Invoke();
+        return context.Reply("settings.rememberPassword.result", payload);
     }
 
     private static bool IsHttpUrl(string value) =>

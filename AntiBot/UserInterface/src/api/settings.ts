@@ -41,7 +41,6 @@ export interface AppSettings {
     language: string;
     startHidden: boolean;
     oscPort: number;
-    rememberPassword: boolean;
 }
 
 const empty: SettingsView = {
@@ -77,6 +76,13 @@ export async function saveSettings(settings: AppSettings): Promise<SettingsView>
     if (!Native.available) return {...empty, ...settings};
 
     return await Native.request<SettingsView>("settings.save", settings);
+}
+
+/** Turns the optional remembered password on or off without touching the other settings. */
+export async function saveRememberPassword(enabled: boolean): Promise<SettingsView> {
+    if (!Native.available) return {...empty, rememberPassword: enabled};
+
+    return await Native.request<SettingsView>("settings.rememberPassword", {enabled}, 60_000);
 }
 
 /** The whitelisted users, described like the instance list describes a player. */

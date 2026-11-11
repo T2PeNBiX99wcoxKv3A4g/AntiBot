@@ -29,6 +29,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(AppInfoPayload))]
 [JsonSerializable(typeof(UpdateCheckPayload))]
 [JsonSerializable(typeof(SettingsPayload))]
+[JsonSerializable(typeof(RememberPasswordRequest))]
 [JsonSerializable(typeof(StartupRequest))]
 [JsonSerializable(typeof(StartupPayload))]
 [JsonSerializable(typeof(LogExportPayload))]

@@ -38,6 +38,9 @@ internal sealed record SettingsPayload(
     int OscPort,
     bool RememberPassword);
 
+/// <summary>Payload for <c>settings.rememberPassword</c>: the optional automatic sign-in switch.</summary>
+internal sealed record RememberPasswordRequest(bool Enabled);
+
 /// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
 internal sealed record StartupRequest(bool Enabled);
 

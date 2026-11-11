@@ -8,6 +8,7 @@ import type {InstanceUser} from "../api/instance";
 import {type AppInfo, checkForUpdates, getUpdateStatus, openLogsFolder, openReleasesPage, setStartup, startupStatus, type StartupStatus, type UpdateCheck} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
 import {FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
+import {Toggle} from "../components/Toggle";
 
 /* The licence texts are large, so the notices page is loaded only when it is opened. */
 const AttributionPage = lazy(() =>
@@ -29,7 +30,6 @@ const LOCALE_NAMES: Record<string, string> = {
 const SECTIONS = [
     {id: "settings-language", label: "Language"},
     {id: "settings-startup", label: "Start with the system"},
-    {id: "settings-signin", label: "Automatic sign-in"},
     {id: "settings-log-source", label: "Log source"},
     {id: "settings-avatar-lookups", label: "Avatar name lookups"},
     {id: "settings-osc", label: "OSC"},
@@ -64,7 +64,6 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [language, setLanguage] = useState(SYSTEM_LOCALE);
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
-    const [rememberPassword, setRememberPassword] = useState(false);
     const [oscPort, setOscPort] = useState(9000);
     const [oscState, setOscState] = useState<OscStatus | null>(null);
     const [oscResult, setOscResult] = useState("");
@@ -140,7 +139,6 @@ export function SettingsPage({info}: SettingsPageProps) {
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? SYSTEM_LOCALE);
             setStartHidden(settings.startHidden);
-            setRememberPassword(settings.rememberPassword);
             setOscPort(settings.oscPort || 9000);
 
             void loadPeople(0);
@@ -201,7 +199,6 @@ export function SettingsPage({info}: SettingsPageProps) {
         language,
         startHidden,
         oscPort,
-        rememberPassword,
         ...overrides,
     });
 
@@ -378,31 +375,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Start hidden")}
                         />
                     </ToggleRow>
-                </Card>
-            </Section>
-
-            <Section id="settings-signin">
-                <SectionHeader>
-                    <h2>{t("Automatic sign-in")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <ToggleRow>
-                        <Toggle
-                            checked={rememberPassword}
-                            hint={t("Saves the login name and password encrypted on this device, so AntiBot can sign in again when the session expires. VRChat may still ask for a two-factor code.")}
-                            onChange={(value) => {
-                                setRememberPassword(value);
-                                void persist({rememberPassword: value});
-                            }}
-                            title={t("Remember the VRChat password")}
-                        />
-                    </ToggleRow>
-                    <Hint>
-                        {t("The password is protected by the OS or the TPM, but any program running as you can ask it to decrypt. Turning this off deletes the saved password.")}
-                    </Hint>
-                    <Hint>{t("Signing in with a QR code cannot remember a password.")}</Hint>
-                    <Hint>{t("Takes effect from your next password sign-in.")}</Hint>
                 </Card>
             </Section>
 
@@ -819,32 +791,6 @@ function SecretInput({value, onChange, onBlur, placeholder, disabled}: {
     );
 }
 
-function Toggle({checked, onChange, title, hint, disabled = false, requires}: {
-    checked: boolean;
-    onChange: (value: boolean) => void;
-    title: string;
-    hint: string;
-    disabled?: boolean;
-    /** Shown next to the title when the action only works with something else turned on. */
-    requires?: string;
-}) {
-    return (
-        <ToggleItem>
-            <ToggleLabel>
-                <input
-                    checked={checked}
-                    disabled={disabled}
-                    onChange={(event) => onChange(event.target.checked)}
-                    type="checkbox"
-                />
-                <span>{title}</span>
-                {requires && <Requirement>{requires}</Requirement>}
-            </ToggleLabel>
-            <ToggleHint>{hint}</ToggleHint>
-        </ToggleItem>
-    );
-}
-
 const SettingsBody = styled.div`
     display: flex;
     align-items: flex-start;
@@ -1113,40 +1059,6 @@ const ToggleField = styled.div`
     flex-direction: column;
     gap: 6px;
     padding-left: 24px;
-`;
-
-const ToggleItem = styled.label`
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    cursor: pointer;
-`;
-
-const ToggleLabel = styled.span`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-
-    input {
-        accent-color: var(--accent-primary);
-    }
-`;
-
-const ToggleHint = styled.span`
-    padding-left: 24px;
-    font-size: 10.5px;
-    color: var(--text-muted);
-`;
-
-/** Marks an action that only works when VRChat's OSC is enabled. */
-const Requirement = styled.span`
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: rgba(96, 165, 250, 0.14);
-    color: #93c5fd;
-    font-family: var(--font-mono);
-    font-size: 9px;
 `;
 
 const WhitelistList = styled.div`

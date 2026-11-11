@@ -20,7 +20,9 @@ import {
     unlock,
     verify,
 } from "../api/auth";
+import {getSettings, saveRememberPassword} from "../api/settings";
 import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon} from "../components/Icons";
+import {Toggle} from "../components/Toggle";
 
 type Run = (action: () => Promise<AuthSnapshot>) => Promise<boolean>;
 
@@ -207,6 +209,7 @@ export function AccountPage({initial, ready = false, expired = false}: {
                     setAdding(true);
                 }} onRemove={(account) => void remove(account)} onSwitch={(account) => void switchTo(account)}
                              signedIn={signedIn}/>
+                <RememberPassword/>
                 {error && <ErrorText>{error}</ErrorText>}
             </>
         );
@@ -324,6 +327,71 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
             <Actions>
                 <Secondary disabled={busy} onClick={onAdd} type="button">{t("Add account")}</Secondary>
             </Actions>
+        </Card>
+    );
+}
+
+/** Optional remembered password; it lives on the account page because it is about signing in. */
+function RememberPassword() {
+    const t = useTranslation();
+    const [enabled, setEnabled] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+
+        void getSettings().then((settings) => {
+            if (!cancelled) setEnabled(settings.rememberPassword);
+        }, () => {
+            // The switch stays off; the next settings read shows the real value.
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const change = async (value: boolean) => {
+        setEnabled(value);
+        setBusy(true);
+        setError("");
+
+        try {
+            const settings = await saveRememberPassword(value);
+            setEnabled(settings.rememberPassword);
+        } catch (reason) {
+            setEnabled(!value);
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHead>
+                <KeyIcon size={20}/>
+                <div>
+                    <h2>{t("Automatic sign-in")}</h2>
+                    <p>
+                        {t("Saves the login name and password encrypted on this device, so AntiBot can sign in again when the session expires. VRChat may still ask for a two-factor code.")}
+                    </p>
+                </div>
+            </CardHead>
+
+            <Toggle
+                checked={enabled}
+                disabled={busy}
+                hint={t("The password is protected by the OS or the TPM, but any program running as you can ask it to decrypt. Turning this off deletes the saved password.")}
+                onChange={(value) => void change(value)}
+                title={t("Remember the VRChat password")}
+            />
+
+            <Note>{t("Signing in with a QR code cannot remember a password.")}</Note>
+            <Note>{t("Takes effect from your next password sign-in.")}</Note>
+
+            {error && <ErrorText>{error}</ErrorText>}
         </Card>
     );
 }
