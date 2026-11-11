@@ -176,6 +176,15 @@ export function BellIcon({size = 18}: IconProps) {
     );
 }
 
+export function BatchIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <path d="M4 6h2m3 0h11M4 12h2m3 0h11M4 18h2m3 0h7"/>
+            <path d="m14.5 17.5 1.5 1.5 3-3"/>
+        </svg>
+    );
+}
+
 export function AlertIcon({size = 12}: IconProps) {
     return (
         <svg {...base(size)}>

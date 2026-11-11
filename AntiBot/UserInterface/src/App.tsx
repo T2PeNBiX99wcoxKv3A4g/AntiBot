@@ -8,6 +8,7 @@ import {ContextMenu} from "./components/ContextMenu";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
+import {BatchPage} from "./pages/BatchPage";
 import {DebugPage} from "./pages/DebugPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
@@ -30,6 +31,10 @@ const pageIn = keyframes`
 
 const pageMeta: Record<Page, { title: string; subtitle: string }> = {    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
+    batch: {
+        title: "Batch actions",
+        subtitle: "Apply the configured API actions to a list of VRChat users.",
+    },
     requests: {
         title: "Friend requests",
         subtitle: "Every incoming request AntiBot has recorded, with the sender's profile.",
@@ -142,8 +147,10 @@ export default function App() {
                             ? <LogViewerPage log={log}/>
                             : page === "instance"
                                 ? <InstancePage signedIn={signedIn} onSignIn={() => setPage("account")}/>
-                                : page === "requests"
-                                    ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
+                                : page === "batch"
+                                    ? <BatchPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
+                                    : page === "requests"
+                                        ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
                                     : page === "operations"
                                         ? <OperationsPage/>
                                         : page === "account"

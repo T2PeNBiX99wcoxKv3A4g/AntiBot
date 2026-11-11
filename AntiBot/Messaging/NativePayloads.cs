@@ -159,6 +159,32 @@ internal sealed record OperationActionRequest(long Id);
 /// <summary>Body for <c>operations.undo</c>: whether it worked, and what to tell the user.</summary>
 internal sealed record OperationUndoPayload(bool Ok, string Message);
 
+/// <summary>Payload for <c>batch.parse</c>: the pasted links, one per line.</summary>
+internal sealed record BatchParseRequest(string Text);
+
+/// <summary>Body for <c>batch.parse</c>: the users the links point at, and the lines that had no id.</summary>
+internal sealed record BatchPreviewPayload(InstanceUser[] Users, string[] Invalid, string? Error = null);
+
+/// <summary>Payload for <c>batch.run</c>: the users to act on.</summary>
+internal sealed record BatchRunRequest(string[] UserIds);
+
+/// <summary>Body for <c>batch.run</c>: whether the batch started, and how many API calls it will make.</summary>
+internal sealed record BatchStartPayload(bool Started, int Total, string[] Actions, string? Error = null);
+
+/// <summary>One <c>batch.progress</c> event: how many calls are done, and which user is being handled.</summary>
+internal sealed record BatchProgressPayload(bool Running, int Done, int Total, int Failed, string? UserId);
+
+/// <summary>One user's result in a finished batch.</summary>
+internal sealed record BatchOutcomePayload(string UserId, bool Ok, string? Error);
+
+/// <summary>Body for <c>batch.finished</c> and <c>batch.state</c>: the last run and its outcome.</summary>
+internal sealed record BatchFinishedPayload(bool Cancelled, int Done, int Total, int Failed, string? Error,
+    BatchOutcomePayload[] Outcomes);
+
+/// <summary>Body for <c>batch.state</c>: the running batch, or the last one that finished.</summary>
+internal sealed record BatchStatePayload(bool Running, int Done, int Total, int Failed, bool Cancelled,
+    string? Error, BatchOutcomePayload[] Outcomes, string[] Actions);
+
 /// <summary>Payload for <c>user.describe</c>: the user to open in the details panel.</summary>
 internal sealed record UserDescribeRequest(string UserId, string DisplayName);
 

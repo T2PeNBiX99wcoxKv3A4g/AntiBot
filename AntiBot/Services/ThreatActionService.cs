@@ -13,16 +13,11 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed class ThreatActionService : Singleton<ThreatActionService>
 {
-    /// <summary>VRChat accepts about one moderation request every few seconds.</summary>
-    private const long ModerationGapMilliseconds = 3000;
-
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
-    private readonly SemaphoreSlim _actions = new(1, 1);
     private readonly Lock _gate = new();
     private readonly HashSet<string> _rejecting = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
-    private long _lastModerationAt;
 
     public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
 
@@ -95,32 +90,22 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
 
         try
         {
-            await _actions.WaitAsync(_stop.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
-
-        try
-        {
             // Block first: it is the action that actually removes the bot's avatar and interactions.
-            if (settings.AutoBlock && await ModerateAsync(user.UserId, "block"))
+            if (settings.AutoBlock &&
+                await ModerationQueue.Instance.ModerateAsync(user.UserId, "block", _stop.Token))
                 await OperationService.Instance.LogAsync("block", user.UserId, user.Name, detail, avatar);
 
-            if (settings.AutoDisableAvatarInteraction && await ModerateAsync(user.UserId, "interactOff"))
+            if (settings.AutoDisableAvatarInteraction &&
+                await ModerationQueue.Instance.ModerateAsync(user.UserId, "interactOff", _stop.Token))
                 await OperationService.Instance.LogAsync("avatarInteractionOff", user.UserId, user.Name, detail, avatar);
 
-            if (settings.AutoHideChatBox && await ModerateAsync(user.UserId, "muteChat"))
+            if (settings.AutoHideChatBox &&
+                await ModerationQueue.Instance.ModerateAsync(user.UserId, "muteChat", _stop.Token))
                 await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
         }
         catch (OperationCanceledException)
         {
             // Shutting down.
-        }
-        finally
-        {
-            _actions.Release();
         }
     }
 
@@ -150,23 +135,13 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         {
             try
             {
-                await _actions.WaitAsync(_stop.Token);
+                // Hiding the notification is an API call too, so it waits in the same queue.
+                await ModerationQueue.Instance.HideFriendRequestAsync(request.Id, _stop.Token);
+                await ApplyModerationAsync(request.User, settings);
             }
             catch (OperationCanceledException)
             {
                 return;
-            }
-
-            try
-            {
-                // Hiding the notification is an API call too, so it waits in the same queue.
-                await PaceAsync();
-                await AuthService.Instance.HideFriendRequestAsync(request.Id, _stop.Token);
-                await ApplyModerationAsync(request.User, settings);
-            }
-            finally
-            {
-                _actions.Release();
             }
 
             await Database.Instance.SetFriendRequestRejectedAsync(request.Id, true, _stop.Token);
@@ -183,9 +158,9 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     /// <summary>Undoes an automatic rejection, e.g. after a false positive.</summary>
     public async Task UndoAsync(FriendRequest request)
     {
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "block", _stop.Token);
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "interactOff", _stop.Token);
-        await AuthService.Instance.UnmoderateUserAsync(request.UserId, "muteChat", _stop.Token);
+        await ModerationQueue.Instance.UnmoderateAsync(request.UserId, "block", _stop.Token);
+        await ModerationQueue.Instance.UnmoderateAsync(request.UserId, "interactOff", _stop.Token);
+        await ModerationQueue.Instance.UnmoderateAsync(request.UserId, "muteChat", _stop.Token);
 
         await Database.Instance.SetFriendRequestRejectedAsync(request.Id, false, _stop.Token);
         await OperationService.Instance.LogAsync("undoReject", request.UserId, request.User.Name,
@@ -206,43 +181,13 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)
     {
         if (settings.AutoBlock)
-            await ModerateAsync(user.UserId, "block");
+            await ModerationQueue.Instance.ModerateAsync(user.UserId, "block", _stop.Token);
 
         if (settings.AutoDisableAvatarInteraction)
-            await ModerateAsync(user.UserId, "interactOff");
+            await ModerationQueue.Instance.ModerateAsync(user.UserId, "interactOff", _stop.Token);
 
         if (settings.AutoHideChatBox)
-            await ModerateAsync(user.UserId, "muteChat");
-    }
-
-    /// <summary>
-    ///     VRChat allows roughly one moderation request at a time, so calls are paced and a 429 is
-    ///     retried instead of silently dropping the action.
-    /// </summary>
-    private async Task<bool> ModerateAsync(string userId, string type)
-    {
-        for (var attempt = 0; attempt < 3; attempt++)
-        {
-            await PaceAsync();
-
-            if (await AuthService.Instance.ModerateUserAsync(userId, type, _stop.Token))
-                return true;
-
-            await Task.Delay(TimeSpan.FromSeconds(2), _stop.Token);
-        }
-
-        return false;
-    }
-
-    /// <summary>Waits until the server would accept another call, and marks the moment it was made.</summary>
-    private async Task PaceAsync()
-    {
-        var wait = Interlocked.Read(ref _lastModerationAt) + ModerationGapMilliseconds -
-                   Environment.TickCount64;
-        if (wait > 0)
-            await Task.Delay((int)wait, _stop.Token);
-
-        Interlocked.Exchange(ref _lastModerationAt, Environment.TickCount64);
+            await ModerationQueue.Instance.ModerateAsync(user.UserId, "muteChat", _stop.Token);
     }
 
     private static string Describe(InstanceUser user) =>

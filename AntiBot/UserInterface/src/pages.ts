@@ -1,1 +1,1 @@
-export type Page = "logs" | "instance" | "requests" | "operations" | "account" | "settings" | "debug";
+export type Page = "logs" | "instance" | "batch" | "requests" | "operations" | "account" | "settings" | "debug";

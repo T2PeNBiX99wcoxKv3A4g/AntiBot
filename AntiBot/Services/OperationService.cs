@@ -43,13 +43,13 @@ internal sealed class OperationService : Singleton<OperationService>
     }
 
     public async Task LogAsync(string kind, string userId, string displayName, string detail,
-        string? avatarUrl = null)
+        string? avatarUrl = null, bool notify = true)
     {
         await Database.Instance.AddOperationAsync(kind, userId, displayName, detail, avatarUrl);
         Log.Information("Operation {Kind} for {Name} ({Detail})", kind, displayName, detail);
 
         // Taking an action back is a user-initiated correction, not a new automatic action worth a toast.
-        if (!IsUndo(kind))
+        if (notify && !IsUndo(kind))
             NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
 
         Publish();
@@ -78,7 +78,7 @@ internal sealed class OperationService : Singleton<OperationService>
         if (type is null)
             return (false, "This action cannot be undone.");
 
-        if (!await AuthService.Instance.UnmoderateUserAsync(entry.UserId, type, CancellationToken.None))
+        if (!await ModerationQueue.Instance.UnmoderateAsync(entry.UserId, type, CancellationToken.None))
             return (false, "VRChat refused to undo it.");
 
         await Database.Instance.SetOperationUndoneAsync(id);

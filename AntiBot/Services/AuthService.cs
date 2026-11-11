@@ -146,11 +146,9 @@ internal sealed class AuthService : Singleton<AuthService>
     /// </summary>
     private void AnnounceStartup()
     {
+        // A working sign-in needs no announcement; only a missing or expired session does.
         if (IsLoggedIn)
-        {
-            NotifySignedIn();
             return;
-        }
 
         if (Volatile.Read(ref _expired) == 1)
         {
@@ -162,12 +160,6 @@ internal sealed class AuthService : Singleton<AuthService>
             Localization.Get("auth.startup.signedOutTitle"),
             Localization.Get("auth.startup.signedOutMessage"));
     }
-
-    private void NotifySignedIn() =>
-        NotificationService.Instance.Notify("auth.signedIn",
-            Localization.Get("auth.startup.signedInTitle"),
-            Localization.Get("auth.startup.signedInMessage")
-                .Replace("{name}", _account?.DisplayName ?? "VRChat"));
 
     private void OnSettingsSaved()
     {
@@ -1381,7 +1373,6 @@ internal sealed class AuthService : Singleton<AuthService>
             if (wasPassword && user.Id is { Length: > 0 } userId)
                 await KeepPasswordSessionAsync(userId, credential.Password);
 
-            NotifySignedIn();
             return true;
         }
         catch (Exception ex)

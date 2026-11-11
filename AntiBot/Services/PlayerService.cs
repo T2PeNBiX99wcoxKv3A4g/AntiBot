@@ -107,10 +107,31 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
     public PlayerProfile? Get(string userId) => _profiles.GetValueOrDefault(userId);
 
+    /// <summary>
+    ///     Fetches a profile now, for a caller that cannot wait for a later refresh (the batch page).
+    ///     The avatar name is resolved too, so the returned row matches the instance list.
+    /// </summary>
+    public async Task<PlayerProfile?> FetchNowAsync(string userId, CancellationToken token)
+    {
+        if (userId.Length == 0)
+            return null;
+
+        var profile = await FetchProfileAsync(userId, token);
+        var fileId = AvatarService.FileIdOf(profile?.AvatarUrl) ?? AvatarService.FileIdOf(profile?.AvatarImageUrl) ??
+            AvatarService.FileIdOf(profile?.IconUrl);
+
+        if (fileId is not null)
+            await AvatarService.Instance.ResolveAsync(fileId, token);
+
+        _loaded[userId] = 0;
+        Updated?.Invoke();
+        return profile;
+    }
+
 #if DEBUG
     /// <summary>Debug build only: fetches a profile now, so the scoring page can test any user id.</summary>
     public Task<PlayerProfile?> FetchAsync(string userId, CancellationToken token) =>
-        FetchProfileAsync(userId, token);
+        FetchNowAsync(userId, token);
 #endif
 
     /// <summary>Whether a lookup for this user has finished, successfully or not.</summary>

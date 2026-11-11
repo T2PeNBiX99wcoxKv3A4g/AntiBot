@@ -2,7 +2,7 @@ import styled, {css, keyframes} from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {AlertIcon, BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
+import {AlertIcon, BatchIcon, BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
@@ -15,6 +15,7 @@ interface SidebarProps {
 const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
     {id: "logs", label: "Log viewer", icon: LogIcon},
     {id: "instance", label: "Instance", icon: UsersIcon},
+    {id: "batch", label: "Batch actions", icon: BatchIcon},
     {id: "requests", label: "Friend requests", icon: BellIcon},
     {id: "operations", label: "Operations", icon: ShieldIcon},
     {id: "account", label: "Account", icon: UserIcon},

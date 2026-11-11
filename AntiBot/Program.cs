@@ -93,6 +93,7 @@ internal static class Program
             _ = FriendRequestService.Instance;
             _ = OperationService.Instance;
             _ = ThreatActionService.Instance;
+            _ = BatchService.Instance;
 
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;

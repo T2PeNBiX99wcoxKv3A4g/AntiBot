@@ -60,6 +60,8 @@ reason is shown with its own points, so you can see why a user was flagged.
   readable.
 - **Operation history** — every automatic action is recorded in SQLite, with the score and its
   reasons. Most actions can be undone.
+- **Batch actions** — paste a list of profile links and apply the enabled block, avatar-interaction
+  and chat-box actions to everyone in it, through a paced queue with a progress bar.
 - **Multiple accounts** — keep several VRChat accounts and switch between them. A session can be
   stored behind Windows Hello, the TPM, DPAPI, the system keyring or a password you choose.
 - **Automatic sign-in** — optionally keep the login name and password encrypted by the TPM or DPAPI,
