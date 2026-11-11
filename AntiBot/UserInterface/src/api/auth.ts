@@ -26,6 +26,16 @@ export interface AccountSummary {
     stored: boolean;
 }
 
+/** An account whose password is saved on this device; pressing it signs in. */
+export interface SavedAccount {
+    dir: string;
+    name: string;
+    /** A cached data URL, or the VRChat CDN link when nothing has been cached yet. */
+    avatar?: string;
+    /** Whether this account signs in by itself when the session expires. */
+    autoLogin: boolean;
+}
+
 export interface AuthSnapshot {
     state: AuthState;
     user?: Account;
@@ -46,8 +56,8 @@ export interface AuthSnapshot {
     storageChosen: boolean;
     /** Every account AntiBot can switch to, newest first. */
     accounts: AccountSummary[];
-    /** Whether a remembered password is available for the manual sign-in button. */
-    remembered: boolean;
+    /** Every account with a password saved on this device, newest first. */
+    saved: SavedAccount[];
 }
 
 export const signedOut: AuthSnapshot = {
@@ -61,7 +71,7 @@ export const signedOut: AuthSnapshot = {
     softwareStorage: false,
     storageChosen: false,
     accounts: [],
-    remembered: false,
+    saved: [],
 };
 
 export interface DeviceCode {
@@ -86,13 +96,24 @@ export async function getAuth(): Promise<AuthSnapshot> {
 }
 
 /** Signs in with the password; the reply asks for a second factor when VRChat wants one. */
-export async function login(username: string, password: string): Promise<AuthSnapshot> {
-    return await Native.request<AuthSnapshot>("auth.login", {username, password}, 30_000);
+export async function login(
+    username: string,
+    password: string,
+    rememberPassword = true,
+    autoLogin = true,
+): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.login", {username, password, rememberPassword, autoLogin},
+        30_000);
 }
 
-/** Uses the saved password for one sign-in attempt; the caller still presses the button. */
-export async function signInWithSavedPassword(): Promise<AuthSnapshot> {
-    return await Native.request<AuthSnapshot>("auth.login.saved", undefined, 60_000);
+/** Signs in with one saved account; omitting `dir` uses the most recently saved one. */
+export async function signInWithSavedPassword(dir?: string): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.login.saved", {dir}, 120_000);
+}
+
+/** Deletes one saved password, leaving the account and its session alone. */
+export async function forgetSavedPassword(dir: string): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.saved.forget", {dir}, 30_000);
 }
 
 /** `method` is `totp`, `emailOtp` or `otp` (a recovery code). */

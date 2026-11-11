@@ -15,9 +15,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     public SettingsService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
-    /// <summary>Raised after a save, so services that follow a setting can react at once.</summary>
-    public static event Action? Saved;
-
     public AppSettings Current { get; private set; } = AppSettings.Default;
 
     /// <summary>The log folder in use by the follower.</summary>
@@ -65,8 +62,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort,
-            Current.RememberPassword, Current.AutoLogin);
+            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
 
     /// <summary>
     ///     Older builds wrote the settings into the data folder, next to the session; move them once so
@@ -86,8 +82,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
     {
         "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result", Payload())),
         "settings.save" => SaveAsync(context),
-        "settings.rememberPassword" => SaveRememberPasswordAsync(context),
-        "settings.autoLogin" => SaveAutoLoginAsync(context),
         "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
         _ => Task.FromResult<NativeResponse?>(null)
     };
@@ -136,10 +130,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
             SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
             SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
-
-            // The account page owns these two switches; a general settings save must not reset them.
-            RememberPassword = Current.RememberPassword,
-            AutoLogin = Current.AutoLogin,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])
                 .Select(Ids.User)
@@ -163,42 +153,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
         var payload = Payload();
         WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
-        Saved?.Invoke();
         return context.Reply("settings.save.result", payload);
-    }
-
-    /// <summary>Changes only the automatic sign-in switch; the rest of the settings stay as they are.</summary>
-    private async Task<NativeResponse?> SaveRememberPasswordAsync(NativeContext context)
-    {
-        var enabled = context.Payload<RememberPasswordRequest>()?.Enabled ?? false;
-        Current = Current with { RememberPassword = enabled };
-
-        var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
-            JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));
-
-        attempt.OnFailure(ex => Log.Warning(ex, "Failed to write {File}", FilePath));
-
-        var payload = Payload();
-        WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
-        Saved?.Invoke();
-        return context.Reply("settings.rememberPassword.result", payload);
-    }
-
-    /// <summary>Changes only the automatic sign-in behaviour, leaving the remembered password alone.</summary>
-    private async Task<NativeResponse?> SaveAutoLoginAsync(NativeContext context)
-    {
-        var enabled = context.Payload<AutoLoginRequest>()?.Enabled ?? true;
-        Current = Current with { AutoLogin = enabled };
-
-        var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
-            JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));
-
-        attempt.OnFailure(ex => Log.Warning(ex, "Failed to write {File}", FilePath));
-
-        var payload = Payload();
-        WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
-        Saved?.Invoke();
-        return context.Reply("settings.autoLogin.result", payload);
     }
 
     private static bool IsHttpUrl(string value) =>

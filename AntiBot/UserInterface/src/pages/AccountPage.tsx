@@ -6,7 +6,9 @@ import {
     type AuthSnapshot,
     type AuthStorage,
     type DeviceCode,
+    type SavedAccount,
     cancelSignIn,
+    forgetSavedPassword,
     getAuth,
     login,
     logout,
@@ -21,7 +23,6 @@ import {
     unlock,
     verify,
 } from "../api/auth";
-import {getSettings, saveAutoLogin, saveRememberPassword} from "../api/settings";
 import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon} from "../components/Icons";
 import {Toggle} from "../components/Toggle";
 
@@ -91,7 +92,7 @@ export function AccountPage({initial, ready = false, expired = false}: {
         }
     };
 
-    const signInSaved = () => run(signInWithSavedPassword);
+    const signInSaved = (account: SavedAccount) => run(() => signInWithSavedPassword(account.dir));
 
     const hasAccounts = auth.accounts.length > 0;
     const showAdd = adding || !signedIn && auth.state === "loggedOut" && !hasAccounts;
@@ -179,6 +180,19 @@ export function AccountPage({initial, ready = false, expired = false}: {
         }
     };
 
+    const forgetSaved = async (account: SavedAccount) => {
+        setError("");
+        setBusy(true);
+
+        try {
+            setAuth(await forgetSavedPassword(account.dir));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(false);
+        }
+    };
+
     const cancelAdd = () => {
         setAdding(false);
         setError("");
@@ -193,28 +207,32 @@ export function AccountPage({initial, ready = false, expired = false}: {
 
     if (auth.state === "locked" && !browsing)
         content = <UnlockForm auth={auth} busy={busy} error={error} run={run}
-                              onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}
-                              onUseSaved={auth.remembered ? () => void signInSaved() : undefined}/>;
+                              onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}/>;
     else if (auth.state === "twoFactor")
         content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}
                                 onCancel={hasAccounts ? cancelAdd : undefined}/>;
     else if (showAdd)
-        content = <LoginForm busy={busy} error={error} onCancel={hasAccounts ? cancelAdd : undefined}
+        content = <LoginForm auth={auth} busy={busy} error={error} onCancel={hasAccounts ? cancelAdd : undefined}
+                             onForgetSaved={(account) => void forgetSaved(account)}
                              onSignedIn={(next) => {
                                  setAuth(next);
                                  setAdding(false);
-                             }} run={run}/>;
+                             }}
+                             onSignInSaved={(account) => void signInSaved(account)} run={run}/>;
     else
         content = (
             <>
                 {signedIn && <Profile auth={auth} busy={busy} error={error} run={run}/>}
+                {auth.saved.length > 0 && (
+                    <SavedAccounts accounts={auth.saved} busy={busy}
+                                   onForget={(account) => void forgetSaved(account)}
+                                   onSignIn={(account) => void signInSaved(account)}/>
+                )}
                 <AccountList accounts={auth.accounts} busy={busy} onAdd={() => {
                     setError("");
                     setAdding(true);
                 }} onRemove={(account) => void remove(account)} onSwitch={(account) => void switchTo(account)}
                              signedIn={signedIn}/>
-                <RememberPassword busy={busy} onSignInSaved={() => void signInSaved()}
-                                  remembered={auth.remembered}/>
                 {error && <ErrorText>{error}</ErrorText>}
             </>
         );
@@ -225,11 +243,6 @@ export function AccountPage({initial, ready = false, expired = false}: {
                 <SessionNotice role="alert">
                     <ShieldIcon size={16}/>
                     <span>{t("VRChat session expired. Sign in again.")}</span>
-                    {auth.remembered && (
-                        <NoticeSignIn disabled={busy} onClick={() => void signInSaved()} type="button">
-                            {t("Sign in with saved password")}
-                        </NoticeSignIn>
-                    )}
                     <NoticeSignIn disabled={busy} onClick={() => {
                         setError("");
                         setAdding(true);
@@ -341,106 +354,68 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
     );
 }
 
-/** Optional remembered password; it lives on the account page because it is about signing in. */
-function RememberPassword({remembered, busy, onSignInSaved}: {
-    remembered: boolean;
+/** Accounts with a password on this device; pressing a row signs in without typing anything. */
+function SavedAccounts({accounts, busy, onSignIn, onForget}: {
+    accounts: SavedAccount[];
     busy: boolean;
-    onSignInSaved: () => void;
+    onSignIn: (account: SavedAccount) => void;
+    onForget: (account: SavedAccount) => void;
 }) {
     const t = useTranslation();
-    const [enabled, setEnabled] = useState(false);
-    const [autoLogin, setAutoLogin] = useState(true);
-    const [settingsBusy, setSettingsBusy] = useState(false);
-    const [error, setError] = useState("");
-
-    useEffect(() => {
-        let cancelled = false;
-
-        void getSettings().then((settings) => {
-            if (cancelled) return;
-
-            setEnabled(settings.rememberPassword);
-            setAutoLogin(settings.autoLogin);
-        }, () => {
-            // The switches stay at their defaults; the next settings read shows the real values.
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    const changeRemember = async (value: boolean) => {
-        setEnabled(value);
-        setSettingsBusy(true);
-        setError("");
-
-        try {
-            const settings = await saveRememberPassword(value);
-            setEnabled(settings.rememberPassword);
-            setAutoLogin(settings.autoLogin);
-        } catch (reason) {
-            setEnabled(!value);
-            setError(reason instanceof Error ? reason.message : String(reason));
-        } finally {
-            setSettingsBusy(false);
-        }
-    };
-
-    const changeAuto = async (value: boolean) => {
-        setAutoLogin(value);
-        setSettingsBusy(true);
-        setError("");
-
-        try {
-            const settings = await saveAutoLogin(value);
-            setAutoLogin(settings.autoLogin);
-        } catch (reason) {
-            setAutoLogin(!value);
-            setError(reason instanceof Error ? reason.message : String(reason));
-        } finally {
-            setSettingsBusy(false);
-        }
-    };
 
     return (
         <Card>
             <CardHead>
                 <KeyIcon size={20}/>
                 <div>
-                    <h2>{t("Automatic sign-in")}</h2>
-                    <p>
-                        {t("Saves the login name and password encrypted on this device, so AntiBot can sign in again when the session expires. VRChat may still ask for a two-factor code.")}
-                    </p>
+                    <h2>{t("Saved accounts")}</h2>
+                    <p>{t("Press an account to sign in with its saved password.")}</p>
                 </div>
             </CardHead>
 
-            <Toggle
-                checked={enabled}
-                disabled={settingsBusy}
-                hint={t("The password is protected by the OS or the TPM, but any program running as you can ask it to decrypt. Turning this off deletes the saved password.")}
-                onChange={(value) => void changeRemember(value)}
-                title={t("Remember the VRChat password")}
-            />
+            <List>
+                {accounts.map((account) => (
+                    <AccountRow
+                        $active={false}
+                        $clickable={!busy}
+                        key={account.dir}
+                        onClick={() => {
+                            if (!busy) onSignIn(account);
+                        }}
+                        onKeyDown={(event) => {
+                            if (busy || (event.key !== "Enter" && event.key !== " "))
+                                return;
 
-            <Toggle
-                checked={autoLogin}
-                disabled={settingsBusy || !enabled}
-                hint={t("When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.")}
-                onChange={(value) => void changeAuto(value)}
-                title={t("Sign in automatically")}
-            />
-
-            <Note>{t("Signing in with a QR code cannot remember a password.")}</Note>
-            <Note>{t("Takes effect from your next password sign-in.")}</Note>
-
-            {remembered && (
-                <Secondary disabled={busy || settingsBusy} onClick={onSignInSaved} type="button">
-                    {busy ? t("Signing in…") : t("Sign in with saved password")}
-                </Secondary>
-            )}
-
-            {error && <ErrorText>{error}</ErrorText>}
+                            event.preventDefault();
+                            onSignIn(account);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                    >
+                        <AvatarSmall $src={account.avatar}>
+                            {account.avatar ? null : account.name.slice(0, 1).toUpperCase()}
+                        </AvatarSmall>
+                        <RowText>
+                            <strong>{account.name}</strong>
+                            <span>{account.autoLogin ? t("Signs in automatically") : t("Manual sign-in")}</span>
+                        </RowText>
+                        <RowActions>
+                            <IconButton
+                                aria-label={t("Forget saved password")}
+                                disabled={busy}
+                                onClick={(event) => {
+                                    // The row itself signs in.
+                                    event.stopPropagation();
+                                    onForget(account);
+                                }}
+                                title={t("Forget saved password")}
+                                type="button">
+                                <TrashIcon size={14}/>
+                            </IconButton>
+                        </RowActions>
+                    </AccountRow>
+                ))}
+            </List>
         </Card>
     );
 }
@@ -500,75 +475,108 @@ function UnlockPanel({account, busy, error, onUnlock, onCancel}: {
     );
 }
 
-function LoginForm({busy, error, run, onSignedIn, onCancel}: {
+function LoginForm({auth, busy, error, run, onSignedIn, onSignInSaved, onForgetSaved, onCancel}: {
+    auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
     onSignedIn: (auth: AuthSnapshot) => void;
+    onSignInSaved: (account: SavedAccount) => void;
+    onForgetSaved: (account: SavedAccount) => void;
     onCancel?: () => void;
 }) {
     const t = useTranslation();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [remember, setRemember] = useState(true);
+    const [autoLogin, setAutoLogin] = useState(true);
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        void run(() => login(username.trim(), password));
+        void run(() => login(username.trim(), password, remember, remember && autoLogin));
     };
 
     return (
         <AuthStage>
-            <LoginCard>
-                <LoginSide>
-                    <LoginHead>
-                        <Logo>
-                            <UserIcon size={22}/>
-                        </Logo>
-                        <h1>{t("Sign in to VRChat")}</h1>
-                        <p>{t("The password is used for this one request and is never stored.")}</p>
-                    </LoginHead>
+            <LoginWrap>
+                {auth.saved.length > 0 && (
+                    <SavedAccounts accounts={auth.saved} busy={busy} onForget={onForgetSaved}
+                                   onSignIn={onSignInSaved}/>
+                )}
 
-                    <Form onSubmit={submit}>
-                        <Field>
-                            <Label htmlFor="username">{t("Username or email")}</Label>
-                            <UsernameInput onChange={setUsername} value={username}/>
-                        </Field>
+                <LoginCard>
+                    <LoginSide>
+                        <LoginHead>
+                            <Logo>
+                                <UserIcon size={22}/>
+                            </Logo>
+                            <h1>{t("Sign in to VRChat")}</h1>
+                            <p>{t("Use your VRChat account, or scan the code instead.")}</p>
+                        </LoginHead>
 
-                        <Field>
-                            <Label htmlFor="password">{t("Password")}</Label>
-                            <PasswordInput
-                                autoComplete="current-password"
-                                id="password"
-                                onChange={setPassword}
-                                value={password}
-                            />
-                        </Field>
+                        <Form onSubmit={submit}>
+                            <Field>
+                                <Label htmlFor="username">{t("Username or email")}</Label>
+                                <UsernameInput onChange={setUsername} value={username}/>
+                            </Field>
 
-                        {error && <ErrorText>{error}</ErrorText>}
+                            <Field>
+                                <Label htmlFor="password">{t("Password")}</Label>
+                                <PasswordInput
+                                    autoComplete="current-password"
+                                    id="password"
+                                    onChange={setPassword}
+                                    value={password}
+                                />
+                            </Field>
 
-                        <Submit disabled={busy} type="submit">
-                            {busy ? t("Signing in…") : t("Sign in")}
-                        </Submit>
-                        {onCancel && (
-                            <SecondaryInline disabled={busy} onClick={onCancel} type="button">
-                                {t("Cancel")}
-                            </SecondaryInline>
-                        )}
-                    </Form>
+                            <LoginOptions>
+                                <Toggle
+                                    checked={remember}
+                                    disabled={busy}
+                                    hint={t("Keeps this account's password on this device, encrypted by the OS or the TPM.")}
+                                    onChange={(value) => {
+                                        setRemember(value);
+                                        if (!value) setAutoLogin(false);
+                                    }}
+                                    title={t("Remember password")}
+                                />
 
-                    <Note>
-                        {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable. The password is used for this one request and is never stored; the session is kept out of the settings folder.")}
-                    </Note>
-                </LoginSide>
+                                <Toggle
+                                    checked={autoLogin}
+                                    disabled={busy || !remember}
+                                    hint={t("Signs in with the saved password when the session expires. VRChat may still ask for a two-factor code.")}
+                                    onChange={setAutoLogin}
+                                    title={t("Sign in automatically")}
+                                />
+                            </LoginOptions>
 
-                <QrSide>
-                    <div>
-                        <h2>{t("Or scan to sign in")}</h2>
-                        <p>{t("Approve it in the VRChat app; the password never reaches AntiBot.")}</p>
-                    </div>
-                    <DeviceLogin onSignedIn={onSignedIn}/>
-                </QrSide>
-            </LoginCard>
+                            {error && <ErrorText>{error}</ErrorText>}
+
+                            <Submit disabled={busy} type="submit">
+                                {busy ? t("Signing in…") : t("Sign in")}
+                            </Submit>
+                            {onCancel && (
+                                <SecondaryInline disabled={busy} onClick={onCancel} type="button">
+                                    {t("Cancel")}
+                                </SecondaryInline>
+                            )}
+                        </Form>
+
+                        <Note>
+                            {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable.")}
+                        </Note>
+                    </LoginSide>
+
+                    <QrSide>
+                        <div>
+                            <h2>{t("Or scan to sign in")}</h2>
+                            <p>{t("Approve it in the VRChat app; the password never reaches AntiBot.")}</p>
+                        </div>
+                        <DeviceLogin onSignedIn={onSignedIn}/>
+                    </QrSide>
+                </LoginCard>
+            </LoginWrap>
         </AuthStage>
     );
 }
@@ -646,13 +654,12 @@ function TwoFactorForm({auth, busy, error, run, onCancel}: {
     );
 }
 
-function UnlockForm({auth, busy, error, run, onBrowse, onUseSaved}: {
+function UnlockForm({auth, busy, error, run, onBrowse}: {
     auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
     onBrowse?: () => void;
-    onUseSaved?: () => void;
 }) {
     const t = useTranslation();
     const [password, setPassword] = useState("");
@@ -705,11 +712,6 @@ function UnlockForm({auth, busy, error, run, onBrowse, onUseSaved}: {
                     {onBrowse && (
                         <SecondaryInline disabled={busy} onClick={onBrowse} type="button">
                             {t("Accounts")}
-                        </SecondaryInline>
-                    )}
-                    {onUseSaved && (
-                        <SecondaryInline disabled={busy} onClick={onUseSaved} type="button">
-                            {t("Use saved password")}
                         </SecondaryInline>
                     )}
                 </Form>
@@ -1241,12 +1243,22 @@ const NarrowCard = styled(Card)`
     margin: auto;
 `;
 
+/** Stacks the saved-account list above the sign-in card; the wrapper is what is centred. */
+const LoginWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 640px;
+    margin: auto;
+`;
+
 const LoginCard = styled.section`
     display: grid;
     grid-template-columns: minmax(0, 1fr) 272px;
     width: 100%;
     max-width: 640px;
-    margin: auto;
+    margin: 0;
     overflow: hidden;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -1411,6 +1423,17 @@ const Field = styled.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
+`;
+
+/** The two per-account sign-in options, between the password and the submit button. */
+const LoginOptions = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.015);
 `;
 
 const Label = styled.label`

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
@@ -13,7 +14,27 @@ namespace AntiBot.Services;
 ///     The VRChat login name, password and the non-session cookies that let a new sign-in skip the
 ///     2FA prompt when VRChat still remembers this device.
 /// </summary>
-internal sealed record RememberedLogin(string Username, string Password, CookieRecord[]? Cookies = null);
+internal sealed record RememberedLogin(
+    string Username,
+    string Password,
+    CookieRecord[]? Cookies = null,
+    string? DisplayName = null,
+    string? AvatarUrl = null,
+    bool? AutoLogin = null)
+{
+    /// <summary>A file written before the option existed was saved for exactly this purpose.</summary>
+    [JsonIgnore]
+    public bool AutoLoginEnabled => AutoLogin ?? true;
+}
+
+/// <summary>One saved credential as the account list needs it; the password never leaves the store.</summary>
+internal sealed record SavedCredential(
+    string Dir,
+    string Username,
+    string? DisplayName,
+    string? AvatarUrl,
+    bool AutoLogin,
+    DateTimeOffset SavedAt);
 
 /// <summary>
 ///     Stores the optional remembered VRChat password outside the account's session folder, encrypted
@@ -64,8 +85,6 @@ internal static class CredentialStore
 
     public static bool Exists(string dir) => File.Exists(PathOf(dir));
 
-    public static bool HasAny => Latest() is not null;
-
     /// <summary>The account folder hash with the most recently written credential, or null.</summary>
     public static string? Latest()
     {
@@ -78,6 +97,28 @@ internal static class CredentialStore
             .FirstOrDefault();
     }
 
+    /// <summary>Every saved credential, newest first; the password is dropped once the row is built.</summary>
+    public static async Task<SavedCredential[]> ListAsync(CancellationToken token = default)
+    {
+        if (!Directory.Exists(Root))
+            return [];
+
+        var saved = new List<SavedCredential>();
+
+        foreach (var file in Directory.EnumerateFiles(Root, "*.bin"))
+        {
+            var dir = Path.GetFileNameWithoutExtension(file);
+            if (await LoadAsync(dir, token) is not { } credential)
+                continue;
+
+            saved.Add(new SavedCredential(dir, credential.Username, credential.DisplayName,
+                credential.AvatarUrl, credential.AutoLoginEnabled,
+                new DateTimeOffset(File.GetLastWriteTimeUtc(file))));
+        }
+
+        return [.. saved.OrderByDescending(entry => entry.SavedAt)];
+    }
+
     /// <summary>How the session of this account was kept when the password was saved.</summary>
     public static AuthStorage StorageOf(string dir) =>
         Enum.TryParse<AuthStorage>(Try.Run(() => File.ReadAllText(ModePathOf(dir))).GetOrNull(), true,
@@ -86,11 +127,10 @@ internal static class CredentialStore
             : AuthStorage.None;
 
     /// <summary>Writes the credentials, choosing the strongest protection this machine offers.</summary>
-    public static async Task<bool> SaveAsync(string dir, string username, string password,
-        AuthStorage storage, CookieRecord[]? cookies = null, CancellationToken token = default)
+    public static async Task<bool> SaveAsync(string dir, RememberedLogin credential, AuthStorage storage,
+        CancellationToken token = default)
     {
-        var payload = JsonSerializer.SerializeToUtf8Bytes(new RememberedLogin(username, password, cookies),
-            AppJsonContext.Default.RememberedLogin);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(credential, AppJsonContext.Default.RememberedLogin);
 
         try
         {
@@ -167,26 +207,6 @@ internal static class CredentialStore
         Try.Run(() => File.Delete(KeyPathOf(dir)));
         Try.Run(() => File.Delete(ModePathOf(dir)));
         TpmStore.Delete(TpmScope(dir));
-    }
-
-    /// <summary>Deletes every saved password; used when the option is turned off.</summary>
-    public static void DeleteAll()
-    {
-        if (!Directory.Exists(Root))
-            return;
-
-        var dirs = Directory.EnumerateFiles(Root)
-            .Where(file => file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase) ||
-                           file.EndsWith(".key", StringComparison.OrdinalIgnoreCase))
-            .Select(Path.GetFileNameWithoutExtension)
-            .OfType<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        foreach (var dir in dirs)
-            Delete(dir);
-
-        Try.Run(() => Directory.Delete(Root, true));
     }
 
     private static (byte Mode, byte[] Body) Protect(string dir, byte[] payload)

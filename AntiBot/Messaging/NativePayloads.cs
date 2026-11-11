@@ -29,15 +29,7 @@ internal sealed record SettingsPayload(
     string[] Whitelist,
     string Language,
     bool StartHidden,
-    int OscPort,
-    bool RememberPassword,
-    bool AutoLogin);
-
-/// <summary>Payload for <c>settings.rememberPassword</c>: the optional saved-password switch.</summary>
-internal sealed record RememberPasswordRequest(bool Enabled);
-
-/// <summary>Payload for <c>settings.autoLogin</c>: whether the saved password signs in automatically.</summary>
-internal sealed record AutoLoginRequest(bool Enabled);
+    int OscPort);
 
 /// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
 internal sealed record StartupRequest(bool Enabled);
@@ -63,6 +55,9 @@ internal sealed record AccountSummaryPayload(
     bool Active,
     bool Stored);
 
+/// <summary>One account with a saved password; pressing it signs in with that password.</summary>
+internal sealed record SavedAccountPayload(string Dir, string Name, string? Avatar, bool AutoLogin);
+
 /// <summary>Body for <c>auth.state</c> and for the <c>auth.changed</c> event.</summary>
 internal sealed record AuthPayload(
     string State,
@@ -77,13 +72,23 @@ internal sealed record AuthPayload(
     string? ExpiresAt,
     bool StorageChosen,
     AccountSummaryPayload[] Accounts,
-    bool Remembered);
+    SavedAccountPayload[] Saved);
 
 /// <summary>Body for the <c>auth.expired</c> event: the saved VRChat session stopped working.</summary>
 internal sealed record AuthExpiredPayload(string Reason);
 
-/// <summary>Payload for <c>auth.login</c>.</summary>
-internal sealed record AuthLoginRequest(string Username, string Password);
+/// <summary>
+///     Payload for <c>auth.login</c>. The two options decide whether this account keeps its
+///     password, and whether that password signs in on its own.
+/// </summary>
+internal sealed record AuthLoginRequest(
+    string Username,
+    string Password,
+    bool RememberPassword = true,
+    bool AutoLogin = true);
+
+/// <summary>Payload for <c>auth.login.saved</c>: the saved account to sign in, or null for the newest.</summary>
+internal sealed record SavedLoginRequest(string? Dir);
 
 /// <summary>Payload for <c>auth.verify</c>; <c>method</c> is <c>totp</c>, <c>emailOtp</c> or <c>otp</c>.</summary>
 internal sealed record AuthVerifyRequest(string Method, string Code);
@@ -94,7 +99,7 @@ internal sealed record AuthUnlockRequest(string Password, string? Dir);
 /// <summary>Payload for <c>auth.switch</c>: the account folder to become active.</summary>
 internal sealed record AuthSwitchRequest(string Dir);
 
-/// <summary>Payload for <c>auth.remove</c>: the account folder to forget.</summary>
+/// <summary>Payload for <c>auth.remove</c> and <c>auth.saved.forget</c>: the account folder.</summary>
 internal sealed record AuthAccountRequest(string Dir);
 
 /// <summary>
