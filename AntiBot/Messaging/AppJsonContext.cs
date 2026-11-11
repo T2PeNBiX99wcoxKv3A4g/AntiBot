@@ -76,4 +76,5 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(VrchatLogSnapshot))]
 [JsonSerializable(typeof(VrchatLogBatch))]
 [JsonSerializable(typeof(AppSettings))]
+[JsonSerializable(typeof(RememberedLogin))]
 internal sealed partial class AppJsonContext : JsonSerializerContext;

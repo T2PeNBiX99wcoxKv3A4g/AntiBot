@@ -62,6 +62,8 @@ reason is shown with its own points, so you can see why a user was flagged.
   reasons. Most actions can be undone.
 - **Multiple accounts** — keep several VRChat accounts and switch between them. A session can be
   stored behind Windows Hello, the TPM, DPAPI, the system keyring or a password you choose.
+- **Automatic sign-in** — optionally keep the login name and password encrypted by the TPM or DPAPI,
+  so an expired session can sign in again without asking. VRChat may still ask for a two-factor code.
 - **Stays local** — the log, the database and the settings stay on your PC. Network calls go only to
   the VRChat API and the avatar-name providers you have configured.
 
@@ -125,7 +127,8 @@ To find the package that owns a missing soname, ask your package manager — for
 ## First run
 
 1. **Sign in** with the VRChat account you play with. AntiBot asks for the email and two-factor codes
-   when VRChat does. The password is only used for that one request and is never stored.
+   when VRChat does. The password is used for that request and is only kept, encrypted, if you turn
+   on automatic sign-in.
 2. **Point it at the log folder.** The default is VRChat's own folder:
    `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat` on Windows; on Linux the Proton prefix is found
    automatically. AntiBot tails the newest `output_log_*.txt` there.

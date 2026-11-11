@@ -50,6 +50,12 @@ public sealed record AppSettings
     /// <summary>Hide friend requests from high-threat users.</summary>
     public bool AutoRejectFriendRequests { get; init; } = true;
 
+    /// <summary>
+    ///     Keep the VRChat login name and password, encrypted by the OS or the TPM, so an expired
+    ///     session can sign in again without asking. Off by default.
+    /// </summary>
+    public bool RememberPassword { get; init; }
+
     /// <summary>0-100; at or above this the automatic actions run.</summary>
     public int ThreatThreshold { get; init; } = 50;
 

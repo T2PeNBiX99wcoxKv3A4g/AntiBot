@@ -12,7 +12,7 @@ AntiBot reads the log VRChat already writes, shows who is in your instance, and 
 
 Use the same VRChat account you play with. AntiBot asks for the email code and the two-factor code when VRChat does, and can remember the session behind Windows Hello or a password you choose.
 
-The account is only used to call the VRChat API for profiles and moderation. Your password is never stored.
+The account is only used to call the VRChat API for profiles and moderation. The password is used for the sign-in request; if you turn on automatic sign-in, it is kept encrypted with the TPM or DPAPI so an expired session can be restored.
 
 ## 2. Point it at the log folder
 

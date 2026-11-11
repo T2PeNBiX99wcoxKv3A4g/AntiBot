@@ -45,8 +45,11 @@ internal sealed class AuthService : Singleton<AuthService>
     private int _expired;
     private CancellationTokenSource? _expiryReminder;
     private int _generation;
+    private int _autoLogin;
     private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
+    private string? _pendingPassword;
+    private string? _pendingUsername;
     private volatile bool _ready;
     private VrchatApi? _signIn;
     private string _state = "loggedOut";
@@ -59,6 +62,7 @@ internal sealed class AuthService : Singleton<AuthService>
         _api.Unauthorized += Expire;
 
         NativeBridge.MessageReceived += HandleMessageAsync;
+        SettingsService.Saved += OnSettingsSaved;
 
         // The pipeline updates the account's presence within seconds; the account page reads it from here.
         PresenceService.Instance.Updated += OnPresenceUpdated;
@@ -122,8 +126,53 @@ internal sealed class AuthService : Singleton<AuthService>
                 _state = "loggedIn";
             }
 
+        // The option may have been turned off by editing the file, not through the settings page.
+        if (!SettingsService.Instance.Current.RememberPassword)
+            CredentialStore.DeleteAll();
+
         Notify();
-        _ = RestoreAsync();
+        _ = RestoreAndAnnounceAsync();
+    }
+
+    private async Task RestoreAndAnnounceAsync()
+    {
+        await RestoreAsync();
+        AnnounceStartup();
+    }
+
+    /// <summary>
+    ///     Says, once per launch, whether automatic protection is actually working. A session that
+    ///     expires while AntiBot runs is announced by <see cref="Expire" /> instead.
+    /// </summary>
+    private void AnnounceStartup()
+    {
+        if (IsLoggedIn)
+        {
+            NotifySignedIn();
+            return;
+        }
+
+        if (Volatile.Read(ref _expired) == 1)
+        {
+            NotifySessionExpired();
+            return;
+        }
+
+        NotificationService.Instance.Notify("auth.startup",
+            Localization.Get("auth.startup.signedOutTitle"),
+            Localization.Get("auth.startup.signedOutMessage"));
+    }
+
+    private void NotifySignedIn() =>
+        NotificationService.Instance.Notify("auth.signedIn",
+            Localization.Get("auth.startup.signedInTitle"),
+            Localization.Get("auth.startup.signedInMessage")
+                .Replace("{name}", _account?.DisplayName ?? "VRChat"));
+
+    private void OnSettingsSaved()
+    {
+        if (!SettingsService.Instance.Current.RememberPassword)
+            CredentialStore.DeleteAll();
     }
 
     /// <summary>
@@ -309,9 +358,17 @@ internal sealed class AuthService : Singleton<AuthService>
 
         var api = SignInApi();
 
+        // Kept until the sign-in (or its second factor) finishes, so the option can store it.
+        if (SettingsService.Instance.Current.RememberPassword)
+        {
+            _pendingUsername = username;
+            _pendingPassword = password;
+        }
+
         var (user, error) = await api.LoginAsync(username, password, CancellationToken.None);
         if (error is not null)
         {
+            ClearPending();
             Log.Warning("VRChat sign-in failed: {Error}", error);
             return context.Fail("auth.login.result", error);
         }
@@ -489,6 +546,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private Task<NativeResponse?> CancelSignInAsync(NativeContext context)
     {
         DiscardSignIn();
+        ClearPending();
 
         lock (_gate)
             if (_state == "twoFactor")
@@ -562,6 +620,7 @@ internal sealed class AuthService : Singleton<AuthService>
         account.Storage = mode;
         account.Stored = mode != AuthStorage.None;
         account.ChoiceMade = true;
+        CredentialStore.UpdateStorage(account.Dir, mode);
 
         // "Do not remember" keeps the session only for this run, so switching back still works.
         account.Cookies = mode == AuthStorage.None ? _api.ExportCookies() : null;
@@ -773,6 +832,7 @@ internal sealed class AuthService : Singleton<AuthService>
         }
 
         StopExpiryReminder();
+        _ = SavePendingCredentialsAsync(account);
 
         Log.Information("Signed in as {Name}", account.Name);
 
@@ -843,10 +903,18 @@ internal sealed class AuthService : Singleton<AuthService>
 
         var active = _active;
         if (active is not { Stored: true })
+        {
+            // There is no session to restore, but a remembered password can still sign in.
+            await TryAutoLoginAsync(null);
             return;
+        }
 
         if (active.Storage == AuthStorage.Password)
         {
+            // A remembered password is exactly what this mode is holding for; skip the prompt.
+            if (await TryAutoLoginAsync(active.Dir))
+                return;
+
             lock (_gate)
                 _state = "locked";
 
@@ -869,6 +937,7 @@ internal sealed class AuthService : Singleton<AuthService>
         if (status == SessionLoadStatus.None || payload is null)
         {
             DropSession(active);
+            await TryAutoLoginAsync(active.Dir);
             return;
         }
 
@@ -883,9 +952,13 @@ internal sealed class AuthService : Singleton<AuthService>
 
             DropSession(active);
 
-            // The session died while AntiBot was closed; say so instead of silently starting signed out.
-            if (dead)
-                NotifySessionExpired();
+            if (!dead)
+                return;
+
+            // The session died while AntiBot was closed. Remember it as expired so the startup
+            // announcement repeats the warning, and try the remembered password before giving up.
+            Interlocked.Exchange(ref _expired, 1);
+            await TryAutoLoginAsync(active.Dir);
         }
         finally
         {
@@ -1078,6 +1151,7 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>Deletes one account's folder and drops it from the list.</summary>
     private void RemoveAccount(Account account)
     {
+        CredentialStore.Delete(account.Dir);
         AuthStore.Delete(AccountStore.PathOf(account.Dir));
         AccountStore.Delete(account.Dir);
         _accounts.Remove(account);
@@ -1127,6 +1201,7 @@ internal sealed class AuthService : Singleton<AuthService>
         _pipeline.Stop();
         PresenceService.Instance.Clear();
         Database.Instance.ClearAccount();
+        ClearPending();
 
         lock (_gate)
         {
@@ -1155,9 +1230,13 @@ internal sealed class AuthService : Singleton<AuthService>
         _pipeline.Stop();
         PresenceService.Instance.Clear();
         Database.Instance.ClearAccount();
+        ClearPending();
+
+        string? directory;
 
         lock (_gate)
         {
+            directory = _active?.Dir;
             _active = null;
             _account = null;
             _location = "";
@@ -1169,9 +1248,18 @@ internal sealed class AuthService : Singleton<AuthService>
 
         Log.Warning("The VRChat session expired");
         WindowManager.Instance.NotifyMainWindow("auth.expired", new AuthExpiredPayload("expired"));
-        NotifySessionExpired();
+        _ = HandleExpiryAsync(directory);
         PersistIndex();
         Notify();
+    }
+
+    /// <summary>Tries the remembered password before falling back to the repeating warning.</summary>
+    private async Task HandleExpiryAsync(string? directory)
+    {
+        if (await TryAutoLoginAsync(directory))
+            return;
+
+        NotifySessionExpired();
     }
 
     /// <summary>
@@ -1214,6 +1302,149 @@ internal sealed class AuthService : Singleton<AuthService>
     }
 
     private void StopExpiryReminder() => Interlocked.Exchange(ref _expiryReminder, null)?.Cancel();
+
+    /// <summary>
+    ///     Signs in again with the remembered password, either for one account folder or for the most
+    ///     recently used one. Returns true when a usable session is in place.
+    /// </summary>
+    private async Task<bool> TryAutoLoginAsync(string? directory)
+    {
+        if (!SettingsService.Instance.Current.RememberPassword || IsReady || State == "twoFactor")
+            return IsReady;
+
+        if (Interlocked.Exchange(ref _autoLogin, 1) == 1)
+            return false;
+
+        try
+        {
+            var target = directory is { Length: > 0 } ? directory : CredentialStore.Latest();
+            if (target is null)
+                return false;
+
+            var credential = await CredentialStore.LoadAsync(target);
+            if (credential is null)
+                return false;
+
+            Log.Information("Signing in again with the remembered VRChat password");
+
+            // A new attempt must not inherit the cookies of an abandoned one.
+            lock (_gate)
+            {
+                _signIn?.Dispose();
+                _signIn = null;
+            }
+
+            var api = SignInApi();
+            var (user, error) = await api.LoginAsync(credential.Username, credential.Password,
+                CancellationToken.None);
+
+            if (error is not null || user is null)
+            {
+                Log.Warning("Automatic sign-in failed: {Error}", error ?? "no user");
+                return false;
+            }
+
+            if (user.RequiresTwoFactorAuth is { Length: > 0 } methods)
+            {
+                lock (_gate)
+                {
+                    _state = "twoFactor";
+                    _twoFactorMethods = methods;
+                }
+
+                Notify();
+                NotificationService.Instance.Notify("auth.twoFactor",
+                    Localization.Get("auth.autoLogin.twoFactorTitle"),
+                    Localization.Get("auth.autoLogin.twoFactorMessage"));
+                return false;
+            }
+
+            // The account may have been dropped from the index when the session died; put its chosen
+            // storage back so the fresh session is written the same way as before.
+            var storage = CredentialStore.StorageOf(target);
+            var account = user.Id is { Length: > 0 } id ? FindOrAdd(id, user.DisplayName) : null;
+
+            if (account is not null && account.Storage == AuthStorage.None && storage != AuthStorage.None)
+            {
+                account.Storage = storage;
+                account.Stored = true;
+                account.ChoiceMade = true;
+            }
+
+            var wasPassword = account?.Storage == AuthStorage.Password;
+
+            if (!await CompleteSignInAsync(api, user))
+                return false;
+
+            // A password-protected session was dropped during a fresh sign-in; store the new cookie
+            // with the password that is already in memory, so the next launch still unlocks it.
+            if (wasPassword && user.Id is { Length: > 0 } userId)
+                await KeepPasswordSessionAsync(userId, credential.Password);
+
+            NotifySignedIn();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Automatic sign-in failed");
+            return false;
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _autoLogin, 0);
+        }
+    }
+
+    private async Task KeepPasswordSessionAsync(string userId, string password)
+    {
+        var dir = AccountStore.Hash(userId);
+        var account = _accounts.FirstOrDefault(entry => entry.Dir == dir);
+        if (account is null)
+            return;
+
+        var cookies = JsonSerializer.SerializeToUtf8Bytes(_api.ExportCookies(),
+            VrchatJsonContext.Default.CookieRecordArray);
+
+        try
+        {
+            var directory = AccountStore.PathOf(dir);
+            if (!await AuthStore.SaveAsync(directory, cookies, AuthStorage.Password, password))
+                return;
+
+            AuthStore.MarkChoiceMade(directory);
+            CredentialStore.UpdateStorage(dir, AuthStorage.Password);
+            account.Storage = AuthStorage.Password;
+            account.Stored = true;
+            account.ChoiceMade = true;
+            PersistIndex();
+            Notify();
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(cookies);
+        }
+    }
+
+    /// <summary>Stores the login the user just typed, when the option is on.</summary>
+    private async Task SavePendingCredentialsAsync(Account account)
+    {
+        var username = _pendingUsername;
+        var password = _pendingPassword;
+        ClearPending();
+
+        if (!SettingsService.Instance.Current.RememberPassword ||
+            username is not { Length: > 0 } || password is not { Length: > 0 })
+            return;
+
+        if (await CredentialStore.SaveAsync(account.Dir, username, password, account.Storage))
+            Log.Information("Remembered the VRChat password for {Name}", account.Name);
+    }
+
+    private void ClearPending()
+    {
+        _pendingUsername = null;
+        _pendingPassword = null;
+    }
 
     private VrchatApi SignInApi()
     {

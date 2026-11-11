@@ -35,7 +35,8 @@ internal sealed record SettingsPayload(
     string[] Whitelist,
     string Language,
     bool StartHidden,
-    int OscPort);
+    int OscPort,
+    bool RememberPassword);
 
 /// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
 internal sealed record StartupRequest(bool Enabled);

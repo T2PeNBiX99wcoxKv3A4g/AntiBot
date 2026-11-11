@@ -15,6 +15,9 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     public SettingsService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
+    /// <summary>Raised after a save, so services that follow a setting can react at once.</summary>
+    public static event Action? Saved;
+
     public AppSettings Current { get; private set; } = AppSettings.Default;
 
     /// <summary>The log folder in use by the follower.</summary>
@@ -62,7 +65,8 @@ internal sealed class SettingsService : Singleton<SettingsService>
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
+            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort,
+            Current.RememberPassword);
 
     /// <summary>
     ///     Older builds wrote the settings into the data folder, next to the session; move them once so
@@ -130,6 +134,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
             SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
+            RememberPassword = settings.RememberPassword,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist = (settings.Whitelist ?? [])
                 .Select(Ids.User)
@@ -153,6 +158,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
         var payload = Payload();
         WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
+        Saved?.Invoke();
         return context.Reply("settings.save.result", payload);
     }
 

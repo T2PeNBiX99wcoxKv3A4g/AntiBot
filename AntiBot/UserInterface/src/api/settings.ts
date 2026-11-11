@@ -21,6 +21,7 @@ export interface SettingsView {
     startHidden: boolean;
     /** 0 uses the port VRChat reports. */
     oscPort: number;
+    rememberPassword: boolean;
 }
 
 export interface AppSettings {
@@ -40,6 +41,7 @@ export interface AppSettings {
     language: string;
     startHidden: boolean;
     oscPort: number;
+    rememberPassword: boolean;
 }
 
 const empty: SettingsView = {
@@ -60,6 +62,7 @@ const empty: SettingsView = {
     language: "system",
     startHidden: false,
     oscPort: 0,
+    rememberPassword: false,
 };
 
 /** Reads the log folder, the avatar databases and the protection settings. */

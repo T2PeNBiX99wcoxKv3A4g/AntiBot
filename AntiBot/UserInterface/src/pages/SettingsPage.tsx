@@ -29,6 +29,7 @@ const LOCALE_NAMES: Record<string, string> = {
 const SECTIONS = [
     {id: "settings-language", label: "Language"},
     {id: "settings-startup", label: "Start with the system"},
+    {id: "settings-signin", label: "Automatic sign-in"},
     {id: "settings-log-source", label: "Log source"},
     {id: "settings-avatar-lookups", label: "Avatar name lookups"},
     {id: "settings-osc", label: "OSC"},
@@ -63,6 +64,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [language, setLanguage] = useState(SYSTEM_LOCALE);
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
+    const [rememberPassword, setRememberPassword] = useState(false);
     const [oscPort, setOscPort] = useState(9000);
     const [oscState, setOscState] = useState<OscStatus | null>(null);
     const [oscResult, setOscResult] = useState("");
@@ -138,6 +140,7 @@ export function SettingsPage({info}: SettingsPageProps) {
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? SYSTEM_LOCALE);
             setStartHidden(settings.startHidden);
+            setRememberPassword(settings.rememberPassword);
             setOscPort(settings.oscPort || 9000);
 
             void loadPeople(0);
@@ -198,6 +201,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         language,
         startHidden,
         oscPort,
+        rememberPassword,
         ...overrides,
     });
 
@@ -374,6 +378,31 @@ export function SettingsPage({info}: SettingsPageProps) {
                             title={t("Start hidden")}
                         />
                     </ToggleRow>
+                </Card>
+            </Section>
+
+            <Section id="settings-signin">
+                <SectionHeader>
+                    <h2>{t("Automatic sign-in")}</h2>
+                </SectionHeader>
+
+                <Card>
+                    <ToggleRow>
+                        <Toggle
+                            checked={rememberPassword}
+                            hint={t("Saves the login name and password encrypted on this device, so AntiBot can sign in again when the session expires. VRChat may still ask for a two-factor code.")}
+                            onChange={(value) => {
+                                setRememberPassword(value);
+                                void persist({rememberPassword: value});
+                            }}
+                            title={t("Remember the VRChat password")}
+                        />
+                    </ToggleRow>
+                    <Hint>
+                        {t("The password is protected by the OS or the TPM, but any program running as you can ask it to decrypt. Turning this off deletes the saved password.")}
+                    </Hint>
+                    <Hint>{t("Signing in with a QR code cannot remember a password.")}</Hint>
+                    <Hint>{t("Takes effect from your next password sign-in.")}</Hint>
                 </Card>
             </Section>
 

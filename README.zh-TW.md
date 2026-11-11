@@ -57,6 +57,8 @@ AntiBot 會監看 VRChat 原本就會寫入的日誌，顯示目前實例中有�
 - **操作紀錄** — 每個自動操作都會連同分數和原因記錄在 SQLite 中。大多數操作可以復原。
 - **多個帳號** — 保留多個 VRChat 帳號並在其間切換。工作階段可以存放在 Windows Hello、TPM、
   DPAPI、系統鑰匙圈或你選擇的密碼之後。
+- **自動登入** — 可選擇用 TPM 或 DPAPI 加密儲存登入名稱與密碼，工作階段過期時無需詢問即可
+  重新登入。VRChat 仍可能要求二步驟驗證。
 - **資料留在本機** — 日誌、資料庫和設定都留在你的電腦上。網路連線只會前往 VRChat API，以及你設定
   的頭像名稱提供者。
 
@@ -120,7 +122,7 @@ libayatana-appindicator3.so.1   （或較舊的 libappindicator3.so.1）
 ## 首次使用
 
 1. **登入**你遊玩用的 VRChat 帳號。VRChat 要求時，AntiBot 會詢問電子郵件代碼與雙重驗證代碼。
-   密碼只用於那一次請求，絕不會被儲存。
+   密碼只用於該次請求；只有開啟自動登入時，才會加密儲存。
 2. **指向日誌資料夾。** 預設是 VRChat 自己的資料夾：
    Windows 上為 `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat`；Linux 上會自動尋找 Proton
    前綴。AntiBot 會跟隨該資料夾中最新的 `output_log_*.txt`。
