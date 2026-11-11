@@ -79,6 +79,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(VrchatLogBatch))]
 [JsonSerializable(typeof(AppSettings))]
 [JsonSerializable(typeof(RememberedLogin))]
+[JsonSerializable(typeof(CookieRecord))]
 [JsonSerializable(typeof(BatchParseRequest))]
 [JsonSerializable(typeof(BatchPreviewPayload))]
 [JsonSerializable(typeof(BatchRunRequest))]

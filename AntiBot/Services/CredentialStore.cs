@@ -9,8 +9,11 @@ using Serilog;
 
 namespace AntiBot.Services;
 
-/// <summary>The VRChat login name and password, kept only when the user asked for automatic sign-in.</summary>
-internal sealed record RememberedLogin(string Username, string Password);
+/// <summary>
+///     The VRChat login name, password and the non-session cookies that let a new sign-in skip the
+///     2FA prompt when VRChat still remembers this device.
+/// </summary>
+internal sealed record RememberedLogin(string Username, string Password, CookieRecord[]? Cookies = null);
 
 /// <summary>
 ///     Stores the optional remembered VRChat password outside the account's session folder, encrypted
@@ -84,9 +87,9 @@ internal static class CredentialStore
 
     /// <summary>Writes the credentials, choosing the strongest protection this machine offers.</summary>
     public static async Task<bool> SaveAsync(string dir, string username, string password,
-        AuthStorage storage, CancellationToken token = default)
+        AuthStorage storage, CookieRecord[]? cookies = null, CancellationToken token = default)
     {
-        var payload = JsonSerializer.SerializeToUtf8Bytes(new RememberedLogin(username, password),
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new RememberedLogin(username, password, cookies),
             AppJsonContext.Default.RememberedLogin);
 
         try

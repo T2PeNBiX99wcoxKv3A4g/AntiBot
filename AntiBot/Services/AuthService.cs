@@ -1348,6 +1348,12 @@ internal sealed class AuthService : Singleton<AuthService>
             }
 
             var api = SignInApi();
+
+            // Start from the saved cookies so a still-valid "remember this device" cookie can skip
+            // the 2FA prompt, the same way VRCX reuses the saved session before signing in again.
+            if (credential.Cookies is { Length: > 0 })
+                api.ImportCookies(credential.Cookies);
+
             var (user, error) = await api.LoginAsync(credential.Username, credential.Password,
                 CancellationToken.None);
 
@@ -1393,6 +1399,10 @@ internal sealed class AuthService : Singleton<AuthService>
             // with the password that is already in memory, so the next launch still unlocks it.
             if (wasPassword && user.Id is { Length: > 0 } userId)
                 await KeepPasswordSessionAsync(userId, credential.Password);
+
+            // Keep the cookies of this successful sign-in, including any refreshed 2FA cookie.
+            await CredentialStore.SaveAsync(target, credential.Username, credential.Password,
+                CredentialStore.StorageOf(target), _api.ExportCookies());
 
             return true;
         }
@@ -1448,7 +1458,8 @@ internal sealed class AuthService : Singleton<AuthService>
             username is not { Length: > 0 } || password is not { Length: > 0 })
             return;
 
-        if (!await CredentialStore.SaveAsync(account.Dir, username, password, account.Storage))
+        if (!await CredentialStore.SaveAsync(account.Dir, username, password, account.Storage,
+                _api.ExportCookies()))
             return;
 
         Log.Information("Remembered the VRChat password for {Name}", account.Name);
