@@ -7,7 +7,7 @@ namespace AntiBot.Services;
 
 /// <summary>
 ///     Scores how likely a user is a bot. Each signal adds to the total, except the ranks above
-///     <c>User</c> and accounts older than a year, which subtract. The name is capped at 40 and the age
+///     <c>User</c> and accounts older than a year, which subtract. The name is capped at 20 and the age
 ///     at 40 on the positive side, and the total is clamped at 0 but deliberately not capped at 100, so
 ///     a profile matching several strong signals can exceed it. The threshold in the settings decides
 ///     when the automatic actions run.
@@ -124,7 +124,7 @@ internal static partial class ThreatScoring
     /// <summary>
     ///     How new the account is. A fresh account is a strong signal; from a year old the age adds
     ///     nothing, and each further year subtracts, down to a floor of -40 at five years. The positive
-    ///     side is capped at 40, the same as the name.
+    ///     side is capped at 40.
     /// </summary>
     private static (int Score, string Text, string? Detail) AgeScore(string? dateJoined)
     {
@@ -170,8 +170,9 @@ internal static partial class ThreatScoring
     }
 
     /// <summary>
-    ///     The generated-name signals. Each feature adds its own weight, capped at 40 so a name alone
-    ///     can never reach the default threshold.
+    ///     The generated-name signals. A name scores at most 20, so it can never reach the default
+    ///     threshold on its own. The two digit shapes are alternatives: a name gets one +5 shape bonus,
+    ///     not both.
     /// </summary>
     private static (int Score, ThreatReason[] Reasons) NameScore(string name)
     {
@@ -183,25 +184,27 @@ internal static partial class ThreatScoring
         var hexSuffix = HexSuffixPattern().IsMatch(name);
         var body = hexSuffix ? name[..^5] : name;
 
+        // The real bot names are a pronounceable word with a digit plus a four-character hex suffix,
+        // for example "Nisarth0alraisth b991" or "Blackfir3 ed36". Those should reach 20.
         if (hexSuffix)
         {
-            score += 10;
-            reasons.Add(new("four-character hex suffix", 10));
+            score += 15;
+            reasons.Add(new("four-character hex suffix", 15));
         }
 
-        if (LetterDigitPattern().IsMatch(body))
+        // A long run is the stronger clue of the two; do not also add the generic digit mix for it.
+        if (MixedPattern().IsMatch(body))
         {
-            score += 10;
-            reasons.Add(new("digits mixed into the name", 10));
+            score += 5;
+            reasons.Add(new("long letter-digit-letter pattern", 5));
         }
-
-        if (MixedPattern().IsMatch(name))
+        else if (LetterDigitPattern().IsMatch(body))
         {
-            score += 20;
-            reasons.Add(new("long letter-digit-letter pattern", 20));
+            score += 5;
+            reasons.Add(new("digits mixed into the name", 5));
         }
 
-        return (Math.Min(score, 40), [.. reasons]);
+        return (Math.Min(score, 20), [.. reasons]);
     }
 
     /// <summary>The custom status, pronouns and bio, matched after punctuation is normalised.</summary>

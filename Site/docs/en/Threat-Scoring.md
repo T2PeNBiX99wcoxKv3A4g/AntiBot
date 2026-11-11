@@ -46,11 +46,11 @@ The score is the sum of the reasons shown next to it, and each reason carries it
 
 | Pattern | Points |
 | --- | --- |
-| a four-character hex suffix (`Blackfir3 ed36`) | +10 |
-| digits mixed into the name (`rokun0304`) | +10 |
-| a long letter-digit-letter run (`katou230791jp`) | +20 |
+| a four-character hex suffix (`Blackfir3 ed36`, `Nisarth0alraisth b991`) | +15 |
+| digits mixed into the name (`rokun0304`) | +5 |
+| a long letter-digit-letter run (`katou230791jp`) | +5 |
 
-The name signals are capped at 40 in total, so a name alone cannot reach the default threshold.
+The two digit patterns are alternatives, so a name gets one +5 shape bonus. The common bot shape (a pronounceable word with a digit plus a hex suffix) reaches 20. Name signals are capped at 20 in total, so a name alone cannot reach the default threshold.
 
 ## Profile text
 
