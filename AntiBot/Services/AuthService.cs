@@ -30,6 +30,9 @@ internal sealed class AuthService : Singleton<AuthService>
 {
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
 
+    /// <summary>How often the signed-out reminder repeats while automatic protection cannot run.</summary>
+    private static readonly TimeSpan ExpiryReminderInterval = TimeSpan.FromMinutes(5);
+
     private readonly VrchatApi _api = new();
     private readonly List<Account> _accounts = [];
 
@@ -40,6 +43,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private Account? _active;
     private VrchatApi? _device;
     private int _expired;
+    private CancellationTokenSource? _expiryReminder;
     private int _generation;
     private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
@@ -768,6 +772,8 @@ internal sealed class AuthService : Singleton<AuthService>
             Interlocked.Exchange(ref _expired, 0);
         }
 
+        StopExpiryReminder();
+
         Log.Information("Signed in as {Name}", account.Name);
 
         if (_account is { } current)
@@ -868,11 +874,18 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            var (error, _) = await ActivateAsync(active, payload, null, false);
+            var (error, dead) = await ActivateAsync(active, payload, null, false);
             if (error is null)
+            {
                 Log.Information("Restored the stored VRChat session");
-            else
-                DropSession(active);
+                return;
+            }
+
+            DropSession(active);
+
+            // The session died while AntiBot was closed; say so instead of silently starting signed out.
+            if (dead)
+                NotifySessionExpired();
         }
         finally
         {
@@ -1128,6 +1141,7 @@ internal sealed class AuthService : Singleton<AuthService>
             Interlocked.Exchange(ref _expired, 0);
         }
 
+        StopExpiryReminder();
         Notify();
     }
 
@@ -1155,9 +1169,51 @@ internal sealed class AuthService : Singleton<AuthService>
 
         Log.Warning("The VRChat session expired");
         WindowManager.Instance.NotifyMainWindow("auth.expired", new AuthExpiredPayload("expired"));
+        NotifySessionExpired();
         PersistIndex();
         Notify();
     }
+
+    /// <summary>
+    ///     Tells the user, loudly, that automatic protection is off: once now, then every few minutes
+    ///     until a sign-in succeeds. Without the session VRChat refuses every moderation request, so a
+    ///     bot can join and nothing can be done about it.
+    /// </summary>
+    private void NotifySessionExpired()
+    {
+        NotificationService.Instance.Notify("auth.expired",
+            Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
+
+        var cancellation = new CancellationTokenSource();
+        if (Interlocked.CompareExchange(ref _expiryReminder, cancellation, null) is not null)
+        {
+            cancellation.Dispose();
+            return;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(ExpiryReminderInterval);
+
+            try
+            {
+                while (await timer.WaitForNextTickAsync(cancellation.Token))
+                    NotificationService.Instance.Notify("auth.expired",
+                        Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
+            }
+            catch (OperationCanceledException)
+            {
+                // A sign-in succeeded, or the account was signed out on purpose.
+            }
+            finally
+            {
+                Interlocked.CompareExchange(ref _expiryReminder, null, cancellation);
+                cancellation.Dispose();
+            }
+        });
+    }
+
+    private void StopExpiryReminder() => Interlocked.Exchange(ref _expiryReminder, null)?.Cancel();
 
     private VrchatApi SignInApi()
     {

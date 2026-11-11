@@ -27,6 +27,7 @@
   "Sign in to VRChat so the instance comes from the API, not the log.": "VRChat にサインインすると、ログではなく API からインスタンスを取得します。",
   "Where the log comes from, and what AntiBot does with it.": "ログの場所と、AntiBot が行う処理を設定します。",
   "Not signed in · only the log is available": "未サインイン · ログのみ利用可能",
+  "Session expired · automatic protection is off": "セッション切れ · 自動保護は無効",
   "browser preview": "ブラウザプレビュー",
 
   "Debug": "デバッグ",
@@ -198,6 +199,10 @@
   "Signed in to VRChat": "VRChat にサインイン済み",
   "Session expires {date}": "セッション有効期限 {date}",
   "VRChat session expired. Sign in again.": "VRChat のセッションが切れました。もう一度サインインしてください。",
+  "auth.expired.title": "VRChat のセッションが切れました",
+  "auth.expired.message": "サインアウトしています。再度サインインするまで、自動保護はユーザーをブロックしたりミュートできません。AntiBot を開き、「アカウント」からサインインしてください。",
+  "auth.expired.detectedTitle": "自動保護を実行できませんでした",
+  "auth.expired.detectedMessage": "{name} を検出しましたが、サインアウトしているため実行できませんでした。「アカウント」ページから再びサインインしてください。",
   "Sign out": "サインアウト",
   "Keep the session between launches": "起動間でセッションを保持",
   "Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.": "保存されるのは VRChat のセッション Cookie のみで、パスワードは保存されません。「記憶しない」以外は暗号化され、解除方法だけが異なります。",

@@ -129,7 +129,9 @@ export default function App() {
                         <HeaderMeta>
                             {!signedIn && (
                                 <SignInPill onClick={() => setPage("account")} type="button">
-                                    {t("Not signed in · only the log is available")}
+                                    {authExpired
+                                        ? t("Session expired · automatic protection is off")
+                                        : t("Not signed in · only the log is available")}
                                 </SignInPill>
                             )}
                         </HeaderMeta>

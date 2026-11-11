@@ -1,5 +1,6 @@
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -49,8 +50,26 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
                 if (!_acted.Add(user.UserId))
                     continue;
 
+            WarnSignedOut(user, settings);
             _ = ActAsync(user, settings);
         }
+    }
+
+    /// <summary>
+    ///     A high-threat user was caught while the app is signed out, so the API actions cannot run.
+    ///     This is the moment the user needs to know, not just when the session died.
+    /// </summary>
+    private static void WarnSignedOut(InstanceUser user, AppSettings settings)
+    {
+        if (AuthService.Instance.IsReady)
+            return;
+
+        if (!settings.AutoBlock && !settings.AutoDisableAvatarInteraction && !settings.AutoHideChatBox)
+            return;
+
+        NotificationService.Instance.Notify("auth.signedOut",
+            Localization.Get("auth.expired.detectedTitle"),
+            Localization.Get("auth.expired.detectedMessage").Replace("{name}", user.Name));
     }
 
     private async Task ActAsync(InstanceUser user, AppSettings settings)

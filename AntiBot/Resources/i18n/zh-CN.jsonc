@@ -27,6 +27,7 @@
   "Sign in to VRChat so the instance comes from the API, not the log.": "登录 VRChat 后，实例信息将来自 API 而不是日志。",
   "Where the log comes from, and what AntiBot does with it.": "日志来源以及 AntiBot 的处理方式。",
   "Not signed in · only the log is available": "未登录 · 仅可使用日志",
+  "Session expired · automatic protection is off": "登录已过期 · 自动防护已停用",
   "browser preview": "浏览器预览",
 
   "Debug": "调试",
@@ -198,6 +199,10 @@
   "Signed in to VRChat": "已登录 VRChat",
   "Session expires {date}": "会话到期 {date}",
   "VRChat session expired. Sign in again.": "VRChat 会话已过期，请重新登录。",
+  "auth.expired.title": "VRChat 登录已过期",
+  "auth.expired.message": "当前已登出，自动防护无法封锁或禁言任何人。请打开 AntiBot 并前往“账户”重新登录。",
+  "auth.expired.detectedTitle": "自动防护未能执行",
+  "auth.expired.detectedMessage": "检测到 {name}，但当前未登录，无法执行自动防护。请前往“账户”页面重新登录。",
   "Sign out": "退出登录",
   "Keep the session between launches": "在启动之间保留会话",
   "Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.": "只保存 VRChat 会话 Cookie，绝不保存密码。除“不记住”外，所有模式都会加密保存，区别在于解锁方式。",

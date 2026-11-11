@@ -28,6 +28,7 @@
   "Sign in to VRChat so the instance comes from the API, not the log.": "Sign in to VRChat so the instance comes from the API, not the log.",
   "Where the log comes from, and what AntiBot does with it.": "Where the log comes from, and what AntiBot does with it.",
   "Not signed in · only the log is available": "Not signed in · only the log is available",
+  "Session expired · automatic protection is off": "Session expired · automatic protection is off",
   "browser preview": "browser preview",
 
   "Debug": "Debug",
@@ -200,6 +201,10 @@
   "Signed in to VRChat": "Signed in to VRChat",
   "Session expires {date}": "Session expires {date}",
   "VRChat session expired. Sign in again.": "VRChat session expired. Sign in again.",
+  "auth.expired.title": "VRChat session expired",
+  "auth.expired.message": "You are signed out, so automatic protection cannot block or mute anyone. Open AntiBot and sign in again from the Account page.",
+  "auth.expired.detectedTitle": "Automatic protection did not run",
+  "auth.expired.detectedMessage": "{name} was flagged, but AntiBot is signed out and could not act. Sign in again from the Account page.",
   "Sign out": "Sign out",
   "Keep the session between launches": "Keep the session between launches",
   "Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.": "Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.",
