@@ -201,6 +201,30 @@ internal static class CredentialStore
             WriteStorage(dir, storage);
     }
 
+    /// <summary>Fills in a name or picture that a file written before they were stored does not have.</summary>
+    public static async Task UpdateProfileAsync(string dir, string? displayName, string? avatarUrl,
+        CancellationToken token = default)
+    {
+        if (await LoadAsync(dir, token) is not { } credential)
+            return;
+
+        if (displayName == credential.DisplayName && avatarUrl == credential.AvatarUrl)
+            return;
+
+        var path = PathOf(dir);
+        var written = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.UtcNow;
+
+        if (!await SaveAsync(dir, credential with
+            {
+                DisplayName = displayName ?? credential.DisplayName,
+                AvatarUrl = avatarUrl ?? credential.AvatarUrl
+            }, StorageOf(dir), token))
+            return;
+
+        // The list is ordered by when a credential was last written; a backfill must not reorder it.
+        Try.Run(() => File.SetLastWriteTimeUtc(path, written));
+    }
+
     public static void Delete(string dir)
     {
         Try.Run(() => File.Delete(PathOf(dir)));

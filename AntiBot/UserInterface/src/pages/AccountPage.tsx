@@ -223,11 +223,6 @@ export function AccountPage({initial, ready = false, expired = false}: {
         content = (
             <>
                 {signedIn && <Profile auth={auth} busy={busy} error={error} run={run}/>}
-                {auth.saved.length > 0 && (
-                    <SavedAccounts accounts={auth.saved} busy={busy}
-                                   onForget={(account) => void forgetSaved(account)}
-                                   onSignIn={(account) => void signInSaved(account)}/>
-                )}
                 <AccountList accounts={auth.accounts} busy={busy} onAdd={() => {
                     setError("");
                     setAdding(true);

@@ -1618,26 +1618,40 @@ internal sealed class AuthService : Singleton<AuthService>
         await RefreshSavedAsync();
     }
 
-    /// <summary>Rebuilds the saved-password list the account page shows, then tells the interface.</summary>
+    /// <summary>Rebuilds the saved-password list the login page shows, then tells the interface.</summary>
     private async Task RefreshSavedAsync()
     {
         var saved = await CredentialStore.ListAsync();
+        var payload = new List<SavedAccountPayload>(saved.Length);
 
-        var payload = saved
-            .Select(entry => new SavedAccountPayload(
-                entry.Dir,
-                entry.DisplayName is { Length: > 0 } name
-                    ? name
-                    : _accounts.FirstOrDefault(account => account.Dir == entry.Dir)?.Name ?? entry.Username,
-                AccountStore.Avatar(entry.Dir) ?? entry.AvatarUrl,
-                entry.AutoLogin))
-            .ToArray();
+        foreach (var entry in saved)
+        {
+            var account = _accounts.FirstOrDefault(candidate => candidate.Dir == entry.Dir);
+
+            var name = entry.DisplayName is { Length: > 0 } display
+                ? display
+                : account?.Name is { Length: > 0 } known
+                    ? known
+                    : MaskedAccountName(entry.Username);
+
+            // A file written before display names were stored gets the one the account list knows,
+            // so it still survives the account folder being removed or the session not being kept.
+            if (entry.DisplayName is not { Length: > 0 } && account?.Name is { Length: > 0 })
+                await CredentialStore.UpdateProfileAsync(entry.Dir, account.Name, entry.AvatarUrl);
+
+            payload.Add(new SavedAccountPayload(entry.Dir, name,
+                AccountStore.Avatar(entry.Dir) ?? entry.AvatarUrl, entry.AutoLogin));
+        }
 
         lock (_gate)
-            _saved = payload;
+            _saved = [.. payload];
 
         Notify();
     }
+
+    /// <summary>A saved account with no stored display name never shows its login name.</summary>
+    private static string MaskedAccountName(string username) =>
+        username is { Length: > 0 } value ? $"{char.ToUpperInvariant(value[0])}•••" : "•••";
 
     private void ClearPending()
     {
