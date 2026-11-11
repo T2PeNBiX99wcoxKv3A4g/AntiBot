@@ -14,13 +14,14 @@ import {
     pollDevice,
     removeAccount,
     saveStorage,
+    signInWithSavedPassword,
     signedOut,
     startDevice,
     switchAccount,
     unlock,
     verify,
 } from "../api/auth";
-import {getSettings, saveRememberPassword} from "../api/settings";
+import {getSettings, saveAutoLogin, saveRememberPassword} from "../api/settings";
 import {EyeIcon, EyeOffIcon, KeyIcon, ShieldIcon, TrashIcon, UserIcon, UsersIcon} from "../components/Icons";
 import {Toggle} from "../components/Toggle";
 
@@ -89,6 +90,8 @@ export function AccountPage({initial, ready = false, expired = false}: {
             setBusy(false);
         }
     };
+
+    const signInSaved = () => run(signInWithSavedPassword);
 
     const hasAccounts = auth.accounts.length > 0;
     const showAdd = adding || !signedIn && auth.state === "loggedOut" && !hasAccounts;
@@ -190,7 +193,8 @@ export function AccountPage({initial, ready = false, expired = false}: {
 
     if (auth.state === "locked" && !browsing)
         content = <UnlockForm auth={auth} busy={busy} error={error} run={run}
-                              onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}/>;
+                              onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}
+                              onUseSaved={auth.remembered ? () => void signInSaved() : undefined}/>;
     else if (auth.state === "twoFactor")
         content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}
                                 onCancel={hasAccounts ? cancelAdd : undefined}/>;
@@ -209,7 +213,8 @@ export function AccountPage({initial, ready = false, expired = false}: {
                     setAdding(true);
                 }} onRemove={(account) => void remove(account)} onSwitch={(account) => void switchTo(account)}
                              signedIn={signedIn}/>
-                <RememberPassword/>
+                <RememberPassword busy={busy} onSignInSaved={() => void signInSaved()}
+                                  remembered={auth.remembered}/>
                 {error && <ErrorText>{error}</ErrorText>}
             </>
         );
@@ -220,6 +225,11 @@ export function AccountPage({initial, ready = false, expired = false}: {
                 <SessionNotice role="alert">
                     <ShieldIcon size={16}/>
                     <span>{t("VRChat session expired. Sign in again.")}</span>
+                    {auth.remembered && (
+                        <NoticeSignIn disabled={busy} onClick={() => void signInSaved()} type="button">
+                            {t("Sign in with saved password")}
+                        </NoticeSignIn>
+                    )}
                     <NoticeSignIn disabled={busy} onClick={() => {
                         setError("");
                         setAdding(true);
@@ -332,19 +342,27 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
 }
 
 /** Optional remembered password; it lives on the account page because it is about signing in. */
-function RememberPassword() {
+function RememberPassword({remembered, busy, onSignInSaved}: {
+    remembered: boolean;
+    busy: boolean;
+    onSignInSaved: () => void;
+}) {
     const t = useTranslation();
     const [enabled, setEnabled] = useState(false);
-    const [busy, setBusy] = useState(false);
+    const [autoLogin, setAutoLogin] = useState(true);
+    const [settingsBusy, setSettingsBusy] = useState(false);
     const [error, setError] = useState("");
 
     useEffect(() => {
         let cancelled = false;
 
         void getSettings().then((settings) => {
-            if (!cancelled) setEnabled(settings.rememberPassword);
+            if (cancelled) return;
+
+            setEnabled(settings.rememberPassword);
+            setAutoLogin(settings.autoLogin);
         }, () => {
-            // The switch stays off; the next settings read shows the real value.
+            // The switches stay at their defaults; the next settings read shows the real values.
         });
 
         return () => {
@@ -352,19 +370,36 @@ function RememberPassword() {
         };
     }, []);
 
-    const change = async (value: boolean) => {
+    const changeRemember = async (value: boolean) => {
         setEnabled(value);
-        setBusy(true);
+        setSettingsBusy(true);
         setError("");
 
         try {
             const settings = await saveRememberPassword(value);
             setEnabled(settings.rememberPassword);
+            setAutoLogin(settings.autoLogin);
         } catch (reason) {
             setEnabled(!value);
             setError(reason instanceof Error ? reason.message : String(reason));
         } finally {
-            setBusy(false);
+            setSettingsBusy(false);
+        }
+    };
+
+    const changeAuto = async (value: boolean) => {
+        setAutoLogin(value);
+        setSettingsBusy(true);
+        setError("");
+
+        try {
+            const settings = await saveAutoLogin(value);
+            setAutoLogin(settings.autoLogin);
+        } catch (reason) {
+            setAutoLogin(!value);
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setSettingsBusy(false);
         }
     };
 
@@ -382,14 +417,28 @@ function RememberPassword() {
 
             <Toggle
                 checked={enabled}
-                disabled={busy}
+                disabled={settingsBusy}
                 hint={t("The password is protected by the OS or the TPM, but any program running as you can ask it to decrypt. Turning this off deletes the saved password.")}
-                onChange={(value) => void change(value)}
+                onChange={(value) => void changeRemember(value)}
                 title={t("Remember the VRChat password")}
+            />
+
+            <Toggle
+                checked={autoLogin}
+                disabled={settingsBusy || !enabled}
+                hint={t("When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.")}
+                onChange={(value) => void changeAuto(value)}
+                title={t("Sign in automatically")}
             />
 
             <Note>{t("Signing in with a QR code cannot remember a password.")}</Note>
             <Note>{t("Takes effect from your next password sign-in.")}</Note>
+
+            {remembered && (
+                <Secondary disabled={busy || settingsBusy} onClick={onSignInSaved} type="button">
+                    {busy ? t("Signing in…") : t("Sign in with saved password")}
+                </Secondary>
+            )}
 
             {error && <ErrorText>{error}</ErrorText>}
         </Card>
@@ -597,12 +646,13 @@ function TwoFactorForm({auth, busy, error, run, onCancel}: {
     );
 }
 
-function UnlockForm({auth, busy, error, run, onBrowse}: {
+function UnlockForm({auth, busy, error, run, onBrowse, onUseSaved}: {
     auth: AuthSnapshot;
     busy: boolean;
     error: string;
     run: Run;
     onBrowse?: () => void;
+    onUseSaved?: () => void;
 }) {
     const t = useTranslation();
     const [password, setPassword] = useState("");
@@ -655,6 +705,11 @@ function UnlockForm({auth, busy, error, run, onBrowse}: {
                     {onBrowse && (
                         <SecondaryInline disabled={busy} onClick={onBrowse} type="button">
                             {t("Accounts")}
+                        </SecondaryInline>
+                    )}
+                    {onUseSaved && (
+                        <SecondaryInline disabled={busy} onClick={onUseSaved} type="button">
+                            {t("Use saved password")}
                         </SecondaryInline>
                     )}
                 </Form>

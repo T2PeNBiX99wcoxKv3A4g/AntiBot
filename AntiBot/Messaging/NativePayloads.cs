@@ -36,10 +36,14 @@ internal sealed record SettingsPayload(
     string Language,
     bool StartHidden,
     int OscPort,
-    bool RememberPassword);
+    bool RememberPassword,
+    bool AutoLogin);
 
-/// <summary>Payload for <c>settings.rememberPassword</c>: the optional automatic sign-in switch.</summary>
+/// <summary>Payload for <c>settings.rememberPassword</c>: the optional saved-password switch.</summary>
 internal sealed record RememberPasswordRequest(bool Enabled);
+
+/// <summary>Payload for <c>settings.autoLogin</c>: whether the saved password signs in automatically.</summary>
+internal sealed record AutoLoginRequest(bool Enabled);
 
 /// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
 internal sealed record StartupRequest(bool Enabled);
@@ -78,7 +82,8 @@ internal sealed record AuthPayload(
     bool SoftwareStorage,
     string? ExpiresAt,
     bool StorageChosen,
-    AccountSummaryPayload[] Accounts);
+    AccountSummaryPayload[] Accounts,
+    bool Remembered);
 
 /// <summary>Body for the <c>auth.expired</c> event: the saved VRChat session stopped working.</summary>
 internal sealed record AuthExpiredPayload(string Reason);

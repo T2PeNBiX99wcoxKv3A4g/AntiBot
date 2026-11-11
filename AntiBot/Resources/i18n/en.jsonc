@@ -449,6 +449,13 @@
   "error.openReleasesFailed": "Could not open the release page.",
   "error.updateCheckFailed": "Could not read the published version.",
 
+  "Sign in automatically": "Sign in automatically",
+  "When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.": "When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.",
+  "Sign in with saved password": "Sign in with saved password",
+  "Use saved password": "Use saved password",
+  "error.authNoSavedPassword": "No saved password is available. Sign in with your password first.",
+  "error.authSavedLoginFailed": "The saved password could not sign in. VRChat may have sent a confirmation email for a new location; sign in manually.",
+
   "Batch actions": "Batch actions",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.",
   "Paste VRChat user links, one per line.": "Paste VRChat user links, one per line.",

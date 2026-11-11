@@ -163,8 +163,13 @@ internal sealed class AuthService : Singleton<AuthService>
 
     private void OnSettingsSaved()
     {
-        if (!SettingsService.Instance.Current.RememberPassword)
-            CredentialStore.DeleteAll();
+        if (SettingsService.Instance.Current.RememberPassword)
+            return;
+
+        CredentialStore.DeleteAll();
+
+        // The manual button follows the snapshot; tell the page the saved password is gone.
+        Notify();
     }
 
     /// <summary>
@@ -315,6 +320,7 @@ internal sealed class AuthService : Singleton<AuthService>
     {
         "auth.state" => Task.FromResult<NativeResponse?>(context.Reply("auth.state.result", Snapshot())),
         "auth.login" => LoginAsync(context),
+        "auth.login.saved" => SignInWithSavedAsync(context),
         "auth.verify" => VerifyAsync(context),
         "auth.unlock" => UnlockAsync(context),
         "auth.switch" => SwitchAsync(context),
@@ -380,6 +386,18 @@ internal sealed class AuthService : Singleton<AuthService>
         return await CompleteSignInAsync(api, user)
             ? context.Reply("auth.login.result", Snapshot())
             : context.Fail("auth.login.result", Localization.Get("error.authNoAccount"));
+    }
+
+    /// <summary>Signs in with the saved password after the user pressed the manual button.</summary>
+    private async Task<NativeResponse?> SignInWithSavedAsync(NativeContext context)
+    {
+        if (!SettingsService.Instance.Current.RememberPassword || !CredentialStore.HasAny)
+            return context.Fail("auth.login.saved.result", Localization.Get("error.authNoSavedPassword"));
+
+        if (await TryAutoLoginAsync(null, true) || State == "twoFactor")
+            return context.Reply("auth.login.saved.result", Snapshot());
+
+        return context.Fail("auth.login.saved.result", Localization.Get("error.authSavedLoginFailed"));
     }
 
     private async Task<NativeResponse?> VerifyAsync(NativeContext context)
@@ -1299,9 +1317,12 @@ internal sealed class AuthService : Singleton<AuthService>
     ///     Signs in again with the remembered password, either for one account folder or for the most
     ///     recently used one. Returns true when a usable session is in place.
     /// </summary>
-    private async Task<bool> TryAutoLoginAsync(string? directory)
+    private async Task<bool> TryAutoLoginAsync(string? directory, bool manual = false)
     {
-        if (!SettingsService.Instance.Current.RememberPassword || IsReady || State == "twoFactor")
+        var settings = SettingsService.Instance.Current;
+
+        if (!settings.RememberPassword || (!manual && !settings.AutoLogin) || IsReady ||
+            State == "twoFactor")
             return IsReady;
 
         if (Interlocked.Exchange(ref _autoLogin, 1) == 1)
@@ -1427,8 +1448,13 @@ internal sealed class AuthService : Singleton<AuthService>
             username is not { Length: > 0 } || password is not { Length: > 0 })
             return;
 
-        if (await CredentialStore.SaveAsync(account.Dir, username, password, account.Storage))
-            Log.Information("Remembered the VRChat password for {Name}", account.Name);
+        if (!await CredentialStore.SaveAsync(account.Dir, username, password, account.Storage))
+            return;
+
+        Log.Information("Remembered the VRChat password for {Name}", account.Name);
+
+        // The account page shows the manual button only when the snapshot says a password exists.
+        Notify();
     }
 
     private void ClearPending()
@@ -1525,10 +1551,14 @@ internal sealed class AuthService : Singleton<AuthService>
                     account.Stored))
                 .ToArray();
 
+            var remembered = _active is { } activeAccount
+                ? CredentialStore.Exists(activeAccount.Dir)
+                : CredentialStore.HasAny;
+
             return new(_state, _account, StorageName(storage), _twoFactorMethods,
                 AuthStore.IsSystemStorageAvailable, AuthStore.SystemStorageName,
                 AuthStore.IsTpmAvailable, AuthStore.IsHelloAvailable, AuthStore.IsSoftwareAvailable, expiresAt,
-                _active?.ChoiceMade ?? false, accounts);
+                _active?.ChoiceMade ?? false, accounts, remembered);
         }
     }
 

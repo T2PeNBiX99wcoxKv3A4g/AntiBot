@@ -46,6 +46,8 @@ export interface AuthSnapshot {
     storageChosen: boolean;
     /** Every account AntiBot can switch to, newest first. */
     accounts: AccountSummary[];
+    /** Whether a remembered password is available for the manual sign-in button. */
+    remembered: boolean;
 }
 
 export const signedOut: AuthSnapshot = {
@@ -59,6 +61,7 @@ export const signedOut: AuthSnapshot = {
     softwareStorage: false,
     storageChosen: false,
     accounts: [],
+    remembered: false,
 };
 
 export interface DeviceCode {
@@ -85,6 +88,11 @@ export async function getAuth(): Promise<AuthSnapshot> {
 /** Signs in with the password; the reply asks for a second factor when VRChat wants one. */
 export async function login(username: string, password: string): Promise<AuthSnapshot> {
     return await Native.request<AuthSnapshot>("auth.login", {username, password}, 30_000);
+}
+
+/** Uses the saved password for one sign-in attempt; the caller still presses the button. */
+export async function signInWithSavedPassword(): Promise<AuthSnapshot> {
+    return await Native.request<AuthSnapshot>("auth.login.saved", undefined, 60_000);
 }
 
 /** `method` is `totp`, `emailOtp` or `otp` (a recovery code). */

@@ -61,6 +61,8 @@ internal static class CredentialStore
 
     public static bool Exists(string dir) => File.Exists(PathOf(dir));
 
+    public static bool HasAny => Latest() is not null;
+
     /// <summary>The account folder hash with the most recently written credential, or null.</summary>
     public static string? Latest()
     {

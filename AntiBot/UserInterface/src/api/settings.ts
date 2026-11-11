@@ -22,6 +22,7 @@ export interface SettingsView {
     /** 0 uses the port VRChat reports. */
     oscPort: number;
     rememberPassword: boolean;
+    autoLogin: boolean;
 }
 
 export interface AppSettings {
@@ -62,6 +63,7 @@ const empty: SettingsView = {
     startHidden: false,
     oscPort: 0,
     rememberPassword: false,
+    autoLogin: true,
 };
 
 /** Reads the log folder, the avatar databases and the protection settings. */
@@ -83,6 +85,13 @@ export async function saveRememberPassword(enabled: boolean): Promise<SettingsVi
     if (!Native.available) return {...empty, rememberPassword: enabled};
 
     return await Native.request<SettingsView>("settings.rememberPassword", {enabled}, 60_000);
+}
+
+/** Chooses whether the saved password signs in automatically or only from the manual button. */
+export async function saveAutoLogin(enabled: boolean): Promise<SettingsView> {
+    if (!Native.available) return {...empty, autoLogin: enabled};
+
+    return await Native.request<SettingsView>("settings.autoLogin", {enabled}, 60_000);
 }
 
 /** The whitelisted users, described like the instance list describes a player. */

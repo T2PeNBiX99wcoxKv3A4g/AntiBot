@@ -447,6 +447,13 @@
   "error.openReleasesFailed": "无法打开发布页面。",
   "error.updateCheckFailed": "无法读取已发布的版本。",
 
+  "Sign in automatically": "自动登录",
+  "When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.": "关闭时，只有按下“使用已保存的密码登录”才会使用保存的密码。适用于 VPN 或新地点导致 VRChat 要求邮件确认的情况。",
+  "Sign in with saved password": "使用已保存的密码登录",
+  "Use saved password": "使用已保存的密码",
+  "error.authNoSavedPassword": "没有可用的已保存密码。请先用密码登录。",
+  "error.authSavedLoginFailed": "无法使用已保存的密码登录。VRChat 可能因为新地点发送了确认邮件，请手动登录。",
+
   "Batch actions": "批量操作",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "将“自动防护”中启用的管理操作应用到一组 VRChat 用户。",
   "Paste VRChat user links, one per line.": "每行粘贴一个 VRChat 用户链接。",

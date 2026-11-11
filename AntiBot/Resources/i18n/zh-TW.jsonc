@@ -447,6 +447,13 @@
   "error.openReleasesFailed": "無法開啟發行頁面。",
   "error.updateCheckFailed": "無法讀取已發佈的版本。",
 
+  "Sign in automatically": "自動登入",
+  "When off, the saved password is only used when you press Sign in with saved password. Use this when a VPN or a new location makes VRChat ask for email confirmation.": "關閉時，只有按下「使用已儲存的密碼登入」才會使用已儲存的密碼。適用於 VPN 或新地點導致 VRChat 要求電子郵件確認的情況。",
+  "Sign in with saved password": "使用已儲存的密碼登入",
+  "Use saved password": "使用已儲存的密碼",
+  "error.authNoSavedPassword": "沒有可用的已儲存密碼。請先使用密碼登入。",
+  "error.authSavedLoginFailed": "無法使用已儲存的密碼登入。VRChat 可能因為新地點寄出確認郵件，請手動登入。",
+
   "Batch actions": "批次操作",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "將「自動防護」中啟用的管理操作套用到一組 VRChat 使用者。",
   "Paste VRChat user links, one per line.": "每行貼上一個 VRChat 使用者連結。",
