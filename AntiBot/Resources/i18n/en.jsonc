@@ -455,6 +455,9 @@
   "Use saved password": "Use saved password",
   "error.authNoSavedPassword": "No saved password is available. Sign in with your password first.",
   "error.authSavedLoginFailed": "The saved password could not sign in. VRChat may have sent a confirmation email for a new location; sign in manually.",
+  "error.authCheckEmail": "VRChat sent a login code to your email. Check your inbox and try again.",
+  "auth.savedInvalidTitle": "Saved password rejected",
+  "auth.savedInvalidMessage": "VRChat rejected the saved password, so AntiBot deleted it. Sign in again from the Account page.",
 
   "Batch actions": "Batch actions",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.",

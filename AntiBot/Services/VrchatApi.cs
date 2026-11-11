@@ -10,6 +10,15 @@ using Serilog;
 
 namespace AntiBot.Services;
 
+/// <summary>Why a password sign-in failed, when VRChat said enough to tell.</summary>
+internal enum LoginFailure
+{
+    None,
+    WrongPassword,
+    EmailConfirmation,
+    Other
+}
+
 /// <summary>
 ///     The VRChat web API, as far as AntiBot needs it: sign-in, the session cookie, and the instance
 ///     the signed-in account is in.
@@ -38,8 +47,8 @@ internal sealed class VrchatApi : IDisposable
     public void Dispose() => _http.Dispose();
 
     /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
-    public async Task<(ApiAuthUser? User, string? Error)> LoginAsync(string username, string password,
-        CancellationToken token)
+    public async Task<(ApiAuthUser? User, string? Error, LoginFailure Failure)> LoginAsync(string username,
+        string password, CancellationToken token)
     {
         // VRChat expects both halves percent-encoded, the way its own clients send them.
         var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes(
@@ -52,9 +61,16 @@ internal sealed class VrchatApi : IDisposable
         var body = await response.Content.ReadAsStringAsync(token);
 
         if (!response.IsSuccessStatusCode)
-            return (null, Describe(response.StatusCode, body));
+        {
+            var failure = Classify(body);
+            var error = failure == LoginFailure.EmailConfirmation
+                ? Localization.Get("error.authCheckEmail")
+                : Describe(response.StatusCode, body);
 
-        return (Deserialize(body, VrchatJsonContext.Default.ApiAuthUser), null);
+            return (null, error, failure);
+        }
+
+        return (Deserialize(body, VrchatJsonContext.Default.ApiAuthUser), null, LoginFailure.None);
     }
 
     public Task<bool> VerifyTotpAsync(string code, CancellationToken token) =>
@@ -420,6 +436,27 @@ internal sealed class VrchatApi : IDisposable
 
     private static T? Deserialize<T>(string body, JsonTypeInfo<T> type) =>
         Try.Run(() => JsonSerializer.Deserialize(body, type)).GetOrNull();
+
+    /// <summary>Reads VRChat's own message, because a wrong password and an email challenge both use 401.</summary>
+    private static LoginFailure Classify(string body)
+    {
+        var message = Try.Run(() =>
+                JsonSerializer.Deserialize(body, VrchatJsonContext.Default.ApiErrorBody)?.Error?.Message)
+            .GetOrNull();
+
+        if (message is not { Length: > 0 })
+            return LoginFailure.Other;
+
+        if (message.Contains("Invalid Username/Email or Password", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("Invalid Credentials", StringComparison.OrdinalIgnoreCase))
+            return LoginFailure.WrongPassword;
+
+        if (message.Contains("Check your email", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("login code", StringComparison.OrdinalIgnoreCase))
+            return LoginFailure.EmailConfirmation;
+
+        return LoginFailure.Other;
+    }
 
     /// <summary>Turns an error response into something the account page can show.</summary>
     private static string Describe(HttpStatusCode status, string body)

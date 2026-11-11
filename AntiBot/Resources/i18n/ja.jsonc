@@ -453,6 +453,9 @@
   "Use saved password": "保存したパスワードを使う",
   "error.authNoSavedPassword": "保存されたパスワードがありません。先にパスワードでサインインしてください。",
   "error.authSavedLoginFailed": "保存したパスワードでサインインできませんでした。新しい場所のため VRChat が確認メールを送っている可能性があります。手動でサインインしてください。",
+  "error.authCheckEmail": "VRChat がログインコードをメールで送信しました。受信トレイを確認して再試行してください。",
+  "auth.savedInvalidTitle": "保存したパスワードが拒否されました",
+  "auth.savedInvalidMessage": "VRChat が保存したパスワードを拒否したため、AntiBot は削除しました。アカウントページからもう一度サインインしてください。",
 
   "Batch actions": "一括操作",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "「自動保護」で有効にしたモデレーション操作を、VRChat ユーザーの一覧に適用します。",

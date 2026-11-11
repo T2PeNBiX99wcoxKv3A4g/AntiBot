@@ -453,6 +453,9 @@
   "Use saved password": "使用已儲存的密碼",
   "error.authNoSavedPassword": "沒有可用的已儲存密碼。請先使用密碼登入。",
   "error.authSavedLoginFailed": "無法使用已儲存的密碼登入。VRChat 可能因為新地點寄出確認郵件，請手動登入。",
+  "error.authCheckEmail": "VRChat 已寄出登入驗證碼到你的電子郵件，請查收後再試。",
+  "auth.savedInvalidTitle": "已儲存的密碼被拒絕",
+  "auth.savedInvalidMessage": "VRChat 拒絕了已儲存的密碼，AntiBot 已將其刪除。請前往帳號頁面重新登入。",
 
   "Batch actions": "批次操作",
   "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": "將「自動防護」中啟用的管理操作套用到一組 VRChat 使用者。",

@@ -33,8 +33,15 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>How often the signed-out reminder repeats while automatic protection cannot run.</summary>
     private static readonly TimeSpan ExpiryReminderInterval = TimeSpan.FromMinutes(5);
 
+    /// <summary>VRCX's limit: after three automatic attempts in an hour, wait for a manual sign-in.</summary>
+    private const int AutoLoginLimit = 3;
+
+    private const long AutoLoginWindowMilliseconds = 60 * 60 * 1000;
+
     private readonly VrchatApi _api = new();
     private readonly List<Account> _accounts = [];
+    private readonly List<long> _autoLoginAttempts = [];
+    private readonly Lock _attemptGate = new();
 
     private readonly Lock _gate = new();
     private readonly VrchatPipeline _pipeline = new();
@@ -46,6 +53,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private CancellationTokenSource? _expiryReminder;
     private int _generation;
     private int _autoLogin;
+    private string? _lastAutoLoginError;
     private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
     private string? _pendingPassword;
@@ -363,7 +371,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _pendingPassword = password;
         }
 
-        var (user, error) = await api.LoginAsync(username, password, CancellationToken.None);
+        var (user, error, _) = await api.LoginAsync(username, password, CancellationToken.None);
         if (error is not null)
         {
             ClearPending();
@@ -394,10 +402,13 @@ internal sealed class AuthService : Singleton<AuthService>
         if (!SettingsService.Instance.Current.RememberPassword || !CredentialStore.HasAny)
             return context.Fail("auth.login.saved.result", Localization.Get("error.authNoSavedPassword"));
 
+        _lastAutoLoginError = null;
+
         if (await TryAutoLoginAsync(null, true) || State == "twoFactor")
             return context.Reply("auth.login.saved.result", Snapshot());
 
-        return context.Fail("auth.login.saved.result", Localization.Get("error.authSavedLoginFailed"));
+        return context.Fail("auth.login.saved.result",
+            _lastAutoLoginError ?? Localization.Get("error.authSavedLoginFailed"));
     }
 
     private async Task<NativeResponse?> VerifyAsync(NativeContext context)
@@ -1338,6 +1349,13 @@ internal sealed class AuthService : Singleton<AuthService>
             if (credential is null)
                 return false;
 
+            if (!manual && !ReserveAutoLoginAttempt())
+            {
+                Log.Information("Automatic sign-in is paused after {Limit} attempts in the last hour",
+                    AutoLoginLimit);
+                return false;
+            }
+
             Log.Information("Signing in again with the remembered VRChat password");
 
             // A new attempt must not inherit the cookies of an abandoned one.
@@ -1354,11 +1372,28 @@ internal sealed class AuthService : Singleton<AuthService>
             if (credential.Cookies is { Length: > 0 })
                 api.ImportCookies(credential.Cookies);
 
-            var (user, error) = await api.LoginAsync(credential.Username, credential.Password,
+            var (user, error, failure) = await api.LoginAsync(credential.Username, credential.Password,
                 CancellationToken.None);
+
+            // Only an explicit rejection of the password removes it; an email challenge or a network
+            // error leaves the credential in place.
+            if (failure == LoginFailure.WrongPassword)
+            {
+                CredentialStore.Delete(target);
+                _lastAutoLoginError = Localization.Get("error.authUnauthorized");
+                Log.Warning("VRChat rejected the saved password; the credential was deleted");
+
+                NotificationService.Instance.Notify("auth.savedInvalid",
+                    Localization.Get("auth.savedInvalidTitle"),
+                    Localization.Get("auth.savedInvalidMessage"));
+
+                Notify();
+                return false;
+            }
 
             if (error is not null || user is null)
             {
+                _lastAutoLoginError = error ?? Localization.Get("error.authSavedLoginFailed");
                 Log.Warning("Automatic sign-in failed: {Error}", error ?? "no user");
                 return false;
             }
@@ -1404,6 +1439,7 @@ internal sealed class AuthService : Singleton<AuthService>
             await CredentialStore.SaveAsync(target, credential.Username, credential.Password,
                 CredentialStore.StorageOf(target), _api.ExportCookies());
 
+            _lastAutoLoginError = null;
             return true;
         }
         catch (Exception ex)
@@ -1414,6 +1450,22 @@ internal sealed class AuthService : Singleton<AuthService>
         finally
         {
             Interlocked.Exchange(ref _autoLogin, 0);
+        }
+    }
+
+    /// <summary>Records one automatic attempt, or returns false when the hourly limit is already used.</summary>
+    private bool ReserveAutoLoginAttempt()
+    {
+        lock (_attemptGate)
+        {
+            var now = Environment.TickCount64;
+            _autoLoginAttempts.RemoveAll(at => now - at > AutoLoginWindowMilliseconds);
+
+            if (_autoLoginAttempts.Count >= AutoLoginLimit)
+                return false;
+
+            _autoLoginAttempts.Add(now);
+            return true;
         }
     }
 
