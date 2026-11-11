@@ -10,7 +10,7 @@
         <!-- Generate embedded file manifest when the shared static server serves Resources/wwwroot -->
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
         <RootNamespace>AntiBot</RootNamespace>
-        <Version>0.7.5</Version>
+        <Version>0.8.0</Version>
         <Description>VRChat anti-bot tooling with a live VRChat log viewer.</Description>
         <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
     </PropertyGroup>

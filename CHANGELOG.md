@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.5..v0.8.0) - 2026-11-11
+
+### ⛰️  Features
+
+- *(auth)* Add optional automatic sign-in and louder session alerts - ([2a35c5b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2a35c5bd00648a7866228780f7f9f72249476644))
+- *(auth)* Remind the user with toasts when the session expires - ([acf15bb](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/acf15bb315c6a261e8e6458a120e1305bd601fd9))
+
+### 🐛 Bug Fixes
+
+- *(deps)* Keep Babel 7 for vite-plugin-svgr - ([46ec4b4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/46ec4b4b798f8b83a8d0c1ab61ac1074b1200dbd))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([f1320d1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f1320d1aa6cf5ad1d46a9074e7d5e44170dd8056))
+
+
 ## [0.7.5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.4..v0.7.5) - 2026-11-10
 
 ### ⚙️ Miscellaneous Tasks
