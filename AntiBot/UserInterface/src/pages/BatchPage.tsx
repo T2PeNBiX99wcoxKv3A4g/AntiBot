@@ -86,6 +86,10 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
         setFinished(null);
         setUsers([]);
         setInvalid([]);
+        setDone(0);
+        setTotal(0);
+        setFailed(0);
+        setActions([]);
 
         try {
             const preview = await parseLinks(text);
