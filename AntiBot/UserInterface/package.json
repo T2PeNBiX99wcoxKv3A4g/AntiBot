@@ -17,7 +17,7 @@
     "styled-components": "^6.6.0"
   },
   "devDependencies": {
-    "@babel/plugin-transform-runtime": "^8.0.6",
+    "@babel/plugin-transform-runtime": "^7.29.0",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@types/node": "^26.6.6",

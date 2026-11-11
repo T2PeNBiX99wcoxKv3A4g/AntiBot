@@ -24,6 +24,10 @@ updates:
     commit-message:
       prefix: "chore"
       include: "scope"
+    # Babel 8 needs @babel/core 8, which vite-plugin-svgr does not support yet.
+    ignore:
+      - dependency-name: "@babel/plugin-transform-runtime"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
