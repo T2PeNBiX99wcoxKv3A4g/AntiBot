@@ -32,7 +32,9 @@ internal static partial class ThreatScoring
     private static readonly string[] FuzzyTerms =
     [
         "hexed", "check bio", "hexed.cc", "reuploader", "bypass", "avatar database",
-        "voice data", "banned", "collect avatars", "player locations", "buy now"
+        "voice data", "banned", "collect avatars", "player locations", "buy now",
+        "oversee", "quality cheats", "user stalking", "stalking and tracking", "tracking",
+        "all avatars", "4 free", "for free"
     ];
 
     public static (int Score, ThreatReason[] Reasons) Assess(PlayerProfile? profile, string? displayName,
@@ -237,6 +239,18 @@ internal static partial class ThreatScoring
         {
             score += 100;
             reasons.Add(new("known bot site (hexed.cc)", 100));
+        }
+
+        if (text.Contains("oversee", StringComparison.Ordinal))
+        {
+            score += 10;
+            reasons.Add(new("known bot site (oversee)", 10));
+        }
+
+        if (text.Contains("oversee.lol", StringComparison.Ordinal))
+        {
+            score += 100;
+            reasons.Add(new("known bot site (oversee.lol)", 100));
         }
 
         return (score, [.. reasons]);

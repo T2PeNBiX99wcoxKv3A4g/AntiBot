@@ -21,6 +21,13 @@ internal sealed class PlayerService : Singleton<PlayerService>
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);
 
+    /// <summary>The public bio is worth another lookup, but not on every instance refresh.</summary>
+    private static readonly TimeSpan BioLifetime = TimeSpan.FromMinutes(10);
+
+    /// <summary>A profile with these points already deserves the extra public-profile lookup.</summary>
+    private const int BioScoreThreshold = 20;
+
+    private readonly ConcurrentDictionary<string, DateTimeOffset> _bioFetchedAt = new();
     private readonly ConcurrentDictionary<string, DateTimeOffset> _fetchedAt = new();
     private readonly ConcurrentDictionary<string, byte> _inFlight = new();
     private readonly ConcurrentDictionary<string, byte> _loaded = new();
@@ -117,6 +124,15 @@ internal sealed class PlayerService : Singleton<PlayerService>
             return null;
 
         var profile = await FetchProfileAsync(userId, token);
+
+        // The batch page and the debug check expect the full profile, including the bio that the
+        // normal user endpoint may omit.
+        if (profile is not null)
+        {
+            await FetchBioAsync(userId, token);
+            profile = Get(userId) ?? profile;
+        }
+
         var fileId = AvatarService.FileIdOf(profile?.AvatarUrl) ?? AvatarService.FileIdOf(profile?.AvatarImageUrl) ??
             AvatarService.FileIdOf(profile?.IconUrl);
 
@@ -184,6 +200,14 @@ internal sealed class PlayerService : Singleton<PlayerService>
                 // All six fields the list shows come from the profile, so they are published together;
                 // the avatar's name is extra and arrives separately.
                 Updated?.Invoke();
+
+                // The bio is a strong signal but needs a second endpoint. Fetch it for accounts that
+                // already look suspicious, so a clean-looking profile does not cause one call per user.
+                if (profile is not null && NeedsBio(profile) && BioIsStale(userId))
+                {
+                    _bioFetchedAt[userId] = DateTimeOffset.UtcNow;
+                    await FetchBioAsync(userId, token);
+                }
             }
 
             var fileId = hintId ?? AvatarService.FileIdOf(profile?.AvatarUrl) ??
@@ -239,6 +263,14 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
         return profile;
     }
+
+    /// <summary>Whether this profile already scores enough to justify the extra public-profile call.</summary>
+    private static bool NeedsBio(PlayerProfile profile) =>
+        ThreatScoring.Assess(profile, profile.DisplayName, null, false, profile.Platform).Score >=
+        BioScoreThreshold;
+
+    private bool BioIsStale(string userId) =>
+        !_bioFetchedAt.TryGetValue(userId, out var at) || DateTimeOffset.UtcNow - at > BioLifetime;
 
     /// <summary>Whether the profile has any of the fields the list and the details panel show.</summary>
     private static bool IsEmpty(PlayerProfile profile) =>

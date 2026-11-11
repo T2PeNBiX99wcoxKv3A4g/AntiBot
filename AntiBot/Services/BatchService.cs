@@ -130,7 +130,7 @@ internal sealed class BatchService : Singleton<BatchService>
             _done = 0;
             _failed = 0;
             total = _total = ids.Length * actions.Length;
-            kinds = _actions = actions.Select(action => action.Kind).ToArray();
+            kinds = _actions = actions.Select(action => action.Label).ToArray();
             _outcomes.Clear();
             _cancellation = new();
             token = _cancellation.Token;
@@ -148,7 +148,8 @@ internal sealed class BatchService : Singleton<BatchService>
         return Task.FromResult<NativeResponse?>(context.Reply("batch.stop.result", new OkPayload()));
     }
 
-    private async Task ExecuteAsync(string[] ids, (string Api, string Kind)[] actions, CancellationToken token)
+    private async Task ExecuteAsync(string[] ids, (string Api, string Kind, string Label)[] actions,
+        CancellationToken token)
     {
         var outcomes = new List<BatchOutcomePayload>();
         var cancelled = false;
@@ -164,7 +165,7 @@ internal sealed class BatchService : Singleton<BatchService>
                 var ok = true;
                 string? userError = null;
 
-                foreach (var (api, kind) in actions)
+                foreach (var (api, kind, _) in actions)
                 {
                     token.ThrowIfCancellationRequested();
 
@@ -271,19 +272,20 @@ internal sealed class BatchService : Singleton<BatchService>
             return new(_running, _done, _total, _failed, _cancelled, _error, [.. _outcomes], _actions);
     }
 
-    private static (string Api, string Kind)[] ConfiguredActions()
+    private static (string Api, string Kind, string Label)[] ConfiguredActions()
     {
         var settings = SettingsService.Instance.Current;
-        var actions = new List<(string Api, string Kind)>();
+        var actions = new List<(string Api, string Kind, string Label)>();
 
+        // The label is what the page shows; the kind is what the operation history stores and undoes.
         if (settings.AutoBlock)
-            actions.Add(("block", "Blocked"));
+            actions.Add(("block", "block", "Blocked"));
 
         if (settings.AutoDisableAvatarInteraction)
-            actions.Add(("interactOff", "Avatar interactions off"));
+            actions.Add(("interactOff", "avatarInteractionOff", "Avatar interactions off"));
 
         if (settings.AutoHideChatBox)
-            actions.Add(("muteChat", "Chat box hidden"));
+            actions.Add(("muteChat", "chatBoxHidden", "Chat box hidden"));
 
         return [.. actions];
     }

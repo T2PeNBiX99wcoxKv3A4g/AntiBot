@@ -55,12 +55,16 @@
 
 自訂狀態、代名詞和簡介會先把標點正規化再比對，用相似的字元也繞不過去。
 
+簡介來自公開資料。其他訊號已經可疑的帳號會自動取得簡介，批次操作頁面和詳細面板則一律取得。
+
 | 文字 | 分數 |
 | --- | --- |
-| 可疑措辭（`hexed`、`banned`、`collect avatars` 等） | +5 |
+| 可疑措辭（`hexed`、`oversee`、`quality cheats`、`user stalking`、`tracking`、`4 free` 等） | +5 |
 | `hexed` | +10 |
 | `check bio` | +5 |
 | `hexed.cc` | +100 |
+| `oversee` | +10 |
+| `oversee.lol` | +100 |
 
 ## 頭像
 

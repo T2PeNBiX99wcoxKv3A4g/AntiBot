@@ -55,12 +55,16 @@
 
 自定义状态、代词和简介会先把标点归一化再匹配，用相似的字符也绕不过去。
 
+简介来自公开资料。其他信号已经可疑的账户会自动获取简介，批量操作页面和详情面板则始终获取。
+
 | 文字 | 分数 |
 | --- | --- |
-| 可疑措辞（`hexed`、`banned`、`collect avatars` 等） | +5 |
+| 可疑措辞（`hexed`、`oversee`、`quality cheats`、`user stalking`、`tracking`、`4 free` 等） | +5 |
 | `hexed` | +10 |
 | `check bio` | +5 |
 | `hexed.cc` | +100 |
+| `oversee` | +10 |
+| `oversee.lol` | +100 |
 
 ## 头像
 

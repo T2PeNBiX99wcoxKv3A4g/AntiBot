@@ -56,12 +56,16 @@ The name signals are capped at 40 in total, so a name alone cannot reach the def
 
 The custom status, pronouns and bio are matched after punctuation is normalised, so lookalike characters do not dodge the check.
 
+The bio comes from the public profile. AntiBot fetches it for accounts whose other signals already look suspicious, and always for the batch page and the details panel.
+
 | Text | Points |
 | --- | --- |
-| suspicious wording (`hexed`, `banned`, `collect avatars`, …) | +5 |
+| suspicious wording (`hexed`, `oversee`, `quality cheats`, `user stalking`, `tracking`, `4 free`, …) | +5 |
 | `hexed` | +10 |
 | `check bio` | +5 |
 | `hexed.cc` | +100 |
+| `oversee` | +10 |
+| `oversee.lol` | +100 |
 
 ## Avatar
 
