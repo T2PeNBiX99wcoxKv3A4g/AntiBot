@@ -7,6 +7,7 @@ using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Services;
+using PhotinoNetUtils.Updates;
 using Serilog;
 #if !DEBUG
 using PhotinoNetUtils.Hosting;
@@ -71,7 +72,16 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
-            _ = UpdateService.Instance;
+            using var updates = new UpdateService(new UpdateOptions(
+                "T2PeNBiX99wcoxKv3A4g",
+                "AntiBot",
+                Constants.Name,
+                AppInfoService.Version,
+                "AntiBot-{version}-win-x64.msi",
+                Constants.ReleasesUrl,
+                Constants.LogDirectory,
+                () => WindowManager.Instance.Exit(),
+                (type, data) => WindowManager.Instance.NotifyMainWindow(type, data)));
             _ = StartupService.Instance;
             _ = VrchatLogService.Instance;
 

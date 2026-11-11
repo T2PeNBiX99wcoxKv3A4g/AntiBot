@@ -5,9 +5,9 @@ import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
-import {type AppInfo, checkForUpdates, getUpdateStatus, openLogsFolder, openReleasesPage, setStartup, startupStatus, type StartupStatus, type UpdateCheck} from "../api/system";
+import {type AppInfo, cancelUpdateDownload, checkForUpdates, getUpdateStatus, installUpdate, onUpdateChangelog, onUpdateProgress, openLogsFolder, openReleasesPage, setStartup, startUpdateDownload, startupStatus, type StartupStatus, type UpdateCheck, type UpdateProgress} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
-import {FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
+import {DownloadIcon, FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
 import {Toggle} from "../components/Toggle";
 
 /* The licence texts are large, so the notices page is loaded only when it is opened. */
@@ -42,6 +42,17 @@ interface SettingsPageProps {
     info: AppInfo | null;
 }
 
+type UpdateDialogPhase = UpdateProgress["phase"] | "installing";
+
+interface UpdateDialogState {
+    phase: UpdateDialogPhase;
+    changelog: string;
+    downloaded: number;
+    total: number;
+    percent: number;
+    error?: string;
+}
+
 export function SettingsPage({info}: SettingsPageProps) {
     const t = useTranslation();
     const [directory, setDirectory] = useState("");
@@ -72,6 +83,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [startupBusy, setStartupBusy] = useState(false);
     const [updateResult, setUpdateResult] = useState<UpdateCheck | null>(null);
     const [updateBusy, setUpdateBusy] = useState(false);
+    const [updateDialog, setUpdateDialog] = useState<UpdateDialogState | null>(null);
     const [attributionOpen, setAttributionOpen] = useState(false);
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
@@ -156,6 +168,30 @@ export function SettingsPage({info}: SettingsPageProps) {
 
     useEffect(() => {
         void getUpdateStatus().then(setUpdateResult, () => undefined);
+    }, []);
+
+    useEffect(() => {
+        const offProgress = onUpdateProgress((progress) => {
+            setUpdateDialog((current) => current
+                ? {
+                    ...current,
+                    phase: progress.phase,
+                    downloaded: progress.downloaded,
+                    total: progress.total,
+                    percent: progress.percent,
+                    error: progress.error ?? (progress.phase === "error" ? current.error : undefined),
+                }
+                : current);
+        });
+
+        const offChangelog = onUpdateChangelog((payload) => {
+            setUpdateDialog((current) => current ? {...current, changelog: payload.text} : current);
+        });
+
+        return () => {
+            offProgress();
+            offChangelog();
+        };
     }, []);
 
     /* Marks the section being read, so the jump list also shows where the page is. */
@@ -281,6 +317,50 @@ export function SettingsPage({info}: SettingsPageProps) {
             await openReleasesPage();
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
+        }
+    };
+
+    /** Opens the floating download panel; the host sends progress and the changelog from there. */
+    const startUpdate = async () => {
+        setError(null);
+        setUpdateDialog({phase: "changelog", changelog: "", downloaded: 0, total: 0, percent: 0});
+
+        try {
+            const ack = await startUpdateDownload();
+            if (!ack.ok)
+                setUpdateDialog((current) => current
+                    ? {...current, phase: "error", error: ack.error ?? ""}
+                    : current);
+        } catch (reason) {
+            setUpdateDialog((current) => current
+                ? {...current, phase: "error", error: reason instanceof Error ? reason.message : String(reason)}
+                : current);
+        }
+    };
+
+    const cancelUpdate = async () => {
+        try {
+            await cancelUpdateDownload();
+        } catch (reason) {
+            setUpdateDialog((current) => current
+                ? {...current, phase: "error", error: reason instanceof Error ? reason.message : String(reason)}
+                : current);
+        }
+    };
+
+    const installNow = async () => {
+        setUpdateDialog((current) => current ? {...current, phase: "installing"} : current);
+
+        try {
+            const ack = await installUpdate();
+            if (!ack.ok)
+                setUpdateDialog((current) => current
+                    ? {...current, phase: "error", error: ack.error ?? ""}
+                    : current);
+        } catch (reason) {
+            setUpdateDialog((current) => current
+                ? {...current, phase: "error", error: reason instanceof Error ? reason.message : String(reason)}
+                : current);
         }
     };
 
@@ -711,6 +791,11 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 {t("Open release page")}
                             </Button>
                         )}
+                        {updateResult?.available && info?.platform === "windows" && (
+                            <Button onClick={() => void startUpdate()} type="button">
+                                <DownloadIcon/>{t("Download and install")}
+                            </Button>
+                        )}
                         <Button onClick={() => void revealLogs()} type="button">
                             <FolderIcon/>{t("Open log folder")}
                         </Button>
@@ -754,8 +839,108 @@ export function SettingsPage({info}: SettingsPageProps) {
                     </NavItem>
                 ))}
             </SettingsNav>
+
+            {updateDialog && (
+                <UpdateOverlay>
+                    <UpdatePanel aria-modal="true" role="dialog">
+                        <UpdateHead>
+                            <DownloadIcon size={20}/>
+                            <div>
+                                <h2>{t("Updating AntiBot")}</h2>
+                                <p>
+                                    {updateResult?.latest
+                                        ? t("Version {version}", {version: updateResult.latest})
+                                        : t("Preparing the update…")}
+                                </p>
+                            </div>
+                        </UpdateHead>
+
+                        <ChangelogTitle>{t("Changelog")}</ChangelogTitle>
+                        <Changelog>
+                            {updateDialog.changelog || (updateDialog.phase === "changelog"
+                                ? t("Loading the changelog…")
+                                : t("The changelog could not be loaded."))}
+                        </Changelog>
+
+                        <ProgressRow>
+                            <span>{updatePhaseLabel(updateDialog.phase, t)}</span>
+                            <span>{updateSizeLabel(updateDialog)}</span>
+                        </ProgressRow>
+
+                        <UpdateBar>
+                            <UpdateFill $percent={Math.max(0, Math.min(100, updateDialog.percent))}/>
+                        </UpdateBar>
+
+                        {updateDialog.error && <ErrorText>{updateDialog.error}</ErrorText>}
+
+                        <UpdateActions>
+                            {(updateDialog.phase === "changelog" || updateDialog.phase === "downloading") && (
+                                <Button onClick={() => void cancelUpdate()} type="button">
+                                    {t("Cancel")}
+                                </Button>
+                            )}
+                            {updateDialog.phase === "ready" && (
+                                <Button onClick={() => void installNow()} type="button">
+                                    {t("Install update")}
+                                </Button>
+                            )}
+                            {updateDialog.phase === "installing" && (
+                                <Button disabled type="button">{t("Installing…")}</Button>
+                            )}
+                            {(updateDialog.phase === "ready" || updateDialog.phase === "error" ||
+                                updateDialog.phase === "cancelled") && (
+                                <Button onClick={() => setUpdateDialog(null)} type="button">
+                                    {t("Close")}
+                                </Button>
+                            )}
+                        </UpdateActions>
+                    </UpdatePanel>
+                </UpdateOverlay>
+            )}
         </SettingsBody>
     );
+}
+
+function updatePhaseLabel(phase: UpdateDialogPhase, t: (key: string) => string): string {
+    switch (phase) {
+        case "changelog":
+            return t("Preparing the update…");
+        case "downloading":
+            return t("Downloading the update…");
+        case "ready":
+            return t("Download complete.");
+        case "cancelled":
+            return t("Update cancelled.");
+        case "error":
+            return t("The update failed.");
+        case "installing":
+            return t("Installing…");
+        default:
+            return "";
+    }
+}
+
+function updateSizeLabel(state: UpdateDialogState): string {
+    if (state.total > 0)
+        return `${formatBytes(state.downloaded)} / ${formatBytes(state.total)}`;
+
+    return state.downloaded > 0 ? formatBytes(state.downloaded) : "";
+}
+
+function formatBytes(bytes: number): string {
+    if (bytes <= 0)
+        return "0 B";
+
+    const units = ["B", "KB", "MB", "GB"];
+    var value = bytes;
+    var unit = 0;
+
+    while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit++;
+    }
+
+    return `${value.toFixed(unit === 0 || value >= 10 ? 0 : 1)} ${units[unit]}`;
 }
 
 /** A text field whose value is hidden until the eye is used, for ids that should not be on screen. */
@@ -1015,6 +1200,108 @@ const ErrorText = styled.span`
 const UpdateAvailable = styled.span`
     font-size: 11px;
     color: var(--accent-primary);
+`;
+
+const UpdateOverlay = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(4, 3, 10, 0.72);
+    backdrop-filter: blur(6px);
+`;
+
+const UpdatePanel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(760px, 94vw);
+    max-height: 88vh;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+`;
+
+const UpdateHead = styled.div`
+    display: flex;
+    gap: 12px;
+
+    svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: var(--accent-primary);
+    }
+
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    p {
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+`;
+
+const ChangelogTitle = styled.span`
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+`;
+
+const Changelog = styled.pre`
+    min-height: 130px;
+    max-height: 42vh;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+`;
+
+const ProgressRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-secondary);
+`;
+
+const UpdateBar = styled.div`
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+`;
+
+const UpdateFill = styled.div<{ $percent: number }>`
+    width: ${({$percent}) => `${$percent}%`};
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(167, 139, 250, 0.7), var(--accent-primary));
+    transition: width 180ms ease;
+`;
+
+const UpdateActions = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
 `;
 
 /** A quiet line at the very bottom that opens the notices page. */

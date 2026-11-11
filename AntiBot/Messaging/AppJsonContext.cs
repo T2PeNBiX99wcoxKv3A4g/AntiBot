@@ -4,6 +4,7 @@ using AntiBot.Models;
 using AntiBot.Services;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Updates;
 
 namespace AntiBot.Messaging;
 
@@ -28,6 +29,9 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(OkPayload))]
 [JsonSerializable(typeof(AppInfoPayload))]
 [JsonSerializable(typeof(UpdateCheckPayload))]
+[JsonSerializable(typeof(UpdateAckPayload))]
+[JsonSerializable(typeof(UpdateProgressPayload))]
+[JsonSerializable(typeof(UpdateChangelogPayload))]
 [JsonSerializable(typeof(SettingsPayload))]
 [JsonSerializable(typeof(RememberPasswordRequest))]
 [JsonSerializable(typeof(AutoLoginRequest))]

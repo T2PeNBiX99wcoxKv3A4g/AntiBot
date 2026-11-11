@@ -103,7 +103,7 @@ export default function App() {
                 return;
             }
 
-            if (message.type === "app.update") {
+            if (message.type === "app.update" || message.type === "update.checked") {
                 setUpdate((message.data as UpdateCheck | undefined) ?? null);
                 return;
             }

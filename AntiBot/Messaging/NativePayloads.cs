@@ -11,12 +11,6 @@ internal sealed record OkPayload(bool Ok = true);
 /// <summary>Body for <c>app.info</c>: the build, the platform, and where the app writes its logs.</summary>
 internal sealed record AppInfoPayload(string Version, string Platform, string LogDirectory, bool Rounded, bool Debug);
 
-/// <summary>
-///     Body for <c>app.checkUpdate</c>: the running version, the published one, and whether the
-///     published one is actually newer.
-/// </summary>
-internal sealed record UpdateCheckPayload(string Current, string Latest, bool Available);
-
 /// <summary>Body for <c>settings.get</c>.</summary>
 internal sealed record SettingsPayload(
     string LogDirectory,

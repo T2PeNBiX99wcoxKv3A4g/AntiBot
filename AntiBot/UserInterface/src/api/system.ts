@@ -51,7 +51,7 @@ export async function openUrl(url: string): Promise<void> {
 export async function openLogsFolder(): Promise<void> {
     if (!Native.available) return;
 
-    await Native.request("app.openLogs");
+    await requireAck("update.openLogs");
 }
 
 /** Where the newest release can be downloaded from. */
@@ -64,7 +64,7 @@ export async function openReleasesPage(): Promise<void> {
         return;
     }
 
-    await Native.request("app.openReleases");
+    await requireAck("update.openRelease");
 }
 
 /** Body of `app.checkUpdate`: the running version, the published one, and whether it is newer. */
@@ -81,12 +81,71 @@ export interface UpdateCheck {
 export async function getUpdateStatus(): Promise<UpdateCheck | null> {
     if (!Native.available) return null;
 
-    return (await Native.request<UpdateCheck | null>("app.updateStatus")) ?? null;
+    return (await Native.request<UpdateCheck | null>("update.status")) ?? null;
 }
 
 /** Compares this build with the published `.version`, ignoring the backend cache. */
 export async function checkForUpdates(): Promise<UpdateCheck> {
     if (!Native.available) return {current: "dev", latest: "dev", available: false};
 
-    return await Native.request<UpdateCheck>("app.checkUpdate");
+    return await Native.request<UpdateCheck>("update.check");
+}
+
+/** Body of an update action: whether it started, and why it did not. */
+export interface UpdateAck {
+    ok: boolean;
+    error?: string;
+}
+
+export type UpdatePhase = "changelog" | "downloading" | "ready" | "cancelled" | "error";
+
+/** One `update.progress` event from the host. */
+export interface UpdateProgress {
+    phase: UpdatePhase;
+    downloaded: number;
+    total: number;
+    percent: number;
+    error?: string;
+}
+
+/** The release changelog, fetched while the update downloads. */
+export interface UpdateChangelog {
+    text: string;
+}
+
+async function requireAck(type: string, payload?: unknown, timeout = 30_000): Promise<void> {
+    const ack = await Native.request<UpdateAck>(type, payload, timeout);
+    if (!ack.ok)
+        throw new Error(ack.error ?? "The update action failed.");
+}
+
+/** Starts the MSI download; progress arrives through {@link onUpdateProgress}. */
+export async function startUpdateDownload(): Promise<UpdateAck> {
+    if (!Native.available) return {ok: false, error: "The desktop host is not available."};
+
+    return await Native.request<UpdateAck>("update.download", undefined, 30_000);
+}
+
+/** Stops a download that is still running and removes the partial file. */
+export async function cancelUpdateDownload(): Promise<void> {
+    await requireAck("update.cancel");
+}
+
+/** Runs the downloaded MSI; the host closes after the installer starts. */
+export async function installUpdate(): Promise<UpdateAck> {
+    if (!Native.available) return {ok: false, error: "The desktop host is not available."};
+
+    return await Native.request<UpdateAck>("update.install", undefined, 30_000);
+}
+
+export function onUpdateProgress(handler: (progress: UpdateProgress) => void): () => void {
+    return Native.on((message) => {
+        if (message.type === "update.progress") handler(message.data as UpdateProgress);
+    });
+}
+
+export function onUpdateChangelog(handler: (changelog: UpdateChangelog) => void): () => void {
+    return Native.on((message) => {
+        if (message.type === "update.changelog") handler(message.data as UpdateChangelog);
+    });
 }
