@@ -65,6 +65,12 @@
         <Analyzer Include="Libs\PhotinoNETUtils.Generators.dll" />
     </ItemGroup>
 
+    <Target Name="GenerateSettingsTypes"
+            BeforeTargets="BeforeBuild"
+            Condition="Exists('Libs\CodeGen\PhotinoNETUtils.CodeGen.dll')">
+        <Exec Command="dotnet &quot;$(MSBuildProjectDirectory)\Libs\CodeGen\PhotinoNETUtils.CodeGen.dll&quot; --model &quot;$(MSBuildProjectDirectory)\Models\AppSettings.cs&quot; --out &quot;$(MSBuildProjectDirectory)\UserInterface\src\api\settings.generated.ts&quot; --schema &quot;$(MSBuildProjectDirectory)\UserInterface\src\api\settings.schema.json&quot;"/>
+    </Target>
+
     <ItemGroup>
         <Reference Include="PhotinoNETUtils">
             <HintPath>Libs\PhotinoNETUtils.dll</HintPath>
