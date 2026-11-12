@@ -30,10 +30,10 @@ internal static class Program
         // The bridge serializes through this context; it has to know it before the interface speaks.
         NativeBridge.Initialize(AppJsonContext.Default);
 
-        // The language lives in the settings; load them before anything asks for a string.
-        SettingsService.Instance.Load();
+        // Discover the locales first; the selected language is read lazily from the settings.
         Localization.Initialize(typeof(Program).Assembly, "AntiBot.Resources.i18n.",
             () => SettingsService.Instance.Language);
+        SettingsService.Instance.Load();
 
         if (OperatingSystem.IsLinux())
         {

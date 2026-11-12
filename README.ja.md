@@ -192,7 +192,7 @@ Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net11.0/<r
 
 |                    | Windows                                | Linux                                  |
 |--------------------|----------------------------------------|----------------------------------------|
-| 設定               | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| 設定               | `%APPDATA%\AntiBot\settings.toml`      | `~/.config/AntiBot/settings.toml`      |
 | データベース       | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
 | アカウント         | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
 | WebView            | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |

@@ -176,7 +176,7 @@ Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net11.0/<rid>/pu
 
 |            | Windows                                | Linux                                  |
 |------------|----------------------------------------|----------------------------------------|
-| 設定       | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| 設定       | `%APPDATA%\AntiBot\settings.toml`      | `~/.config/AntiBot/settings.toml`      |
 | 資料庫     | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
 | 帳號       | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
 | WebView    | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |

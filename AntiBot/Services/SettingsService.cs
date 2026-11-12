@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
@@ -9,9 +10,22 @@ namespace AntiBot.Services;
 /// <summary>Loads and stores the settings file. The defaults apply until the user saves something.</summary>
 internal sealed class SettingsService : Singleton<SettingsService>
 {
-    private readonly JsonSettingsStore<AppSettings> _store = JsonSettingsStore<AppSettings>.ForApp(
-        Constants.Name, AppSettings.Default, AppJsonContext.Default.AppSettings,
-        Path.Combine(Constants.DataDirectory, "settings.json"));
+    private const string Header =
+        "# AntiBot settings. Rewritten when settings are saved; comments are not preserved.";
+
+    private static readonly string? LegacySettingsPath = new[]
+    {
+        Path.Combine(Constants.SettingsDirectory, "settings.json"),
+        Path.Combine(Constants.DataDirectory, "settings.json")
+    }.FirstOrDefault(File.Exists);
+
+    private readonly ISettingsStore<AppSettings> _store = new TomlSettingsStore<AppSettings>(
+        Path.Combine(Constants.SettingsDirectory, "settings.toml"),
+        AppSettings.Default,
+        AppTomlContext.Default.AppSettings,
+        json => JsonSerializer.Deserialize(json, AppJsonContext.Default.AppSettings),
+        LegacySettingsPath,
+        Header);
 
     public SettingsService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
@@ -32,7 +46,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
             LogDirectory = stored.LogDirectory is { Length: > 0 } directory
                 ? directory
                 : Current.LogDirectory,
-            Language = NormalizeLanguage(stored.Language),
+            Language = Localization.Normalize(stored.Language),
 
             // An empty list is a real choice: it turns the external lookups off.
             AvatarApiProviders = stored.AvatarApiProviders ?? [],
@@ -47,9 +61,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
             ]
         };
     }
-
-    private static string NormalizeLanguage(string? language) =>
-        language is "system" or "ja" or "zh-CN" or "zh-TW" ? language : "en";
 
     private SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
@@ -90,14 +101,14 @@ internal sealed class SettingsService : Singleton<SettingsService>
         // Only absolute http(s) providers are kept; an empty list turns the lookups off.
         var providers = (settings.AvatarApiProviders ?? [])
             .Select(provider => provider.Trim())
-            .Where(IsHttpUrl)
+            .Where(provider => provider.IsHttpUrl())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         Current = new()
         {
             LogDirectory = directory,
-            Language = NormalizeLanguage(settings.Language),
+            Language = Localization.Normalize(settings.Language),
             StartHidden = settings.StartHidden,
             OscPort = settings.OscPort is > 0 and <= 65535 ? settings.OscPort : 9000,
             AvatarApiProviders = providers,
@@ -134,8 +145,4 @@ internal sealed class SettingsService : Singleton<SettingsService>
         WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
         return context.Reply("settings.save.result", payload);
     }
-
-    private static bool IsHttpUrl(string value) =>
-        Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
-        (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
 }

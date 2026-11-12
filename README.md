@@ -186,7 +186,7 @@ Use `-r linux-x64` for Linux. That produces a single self-contained executable u
 
 |                | Windows                                | Linux                                  |
 |----------------|----------------------------------------|----------------------------------------|
-| Settings       | `%APPDATA%\AntiBot\settings.json`      | `~/.config/AntiBot/settings.json`      |
+| Settings       | `%APPDATA%\AntiBot\settings.toml`      | `~/.config/AntiBot/settings.toml`      |
 | Database       | `%APPDATA%\AntiBot\antibot.db`         | `~/.config/AntiBot/antibot.db`         |
 | Accounts       | `%LOCALAPPDATA%\AntiBot\accounts`      | `~/.local/share/AntiBot/accounts`      |
 | Web view       | `%LOCALAPPDATA%\AntiBot\webview`       | `~/.local/share/AntiBot/webview`       |
