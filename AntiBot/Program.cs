@@ -30,10 +30,6 @@ internal static class Program
         // The bridge serializes through this context; it has to know it before the interface speaks.
         NativeBridge.Initialize(AppJsonContext.Default);
 
-        // The generator collected every [NativeMessage] class in this assembly; one call connects
-        // them all, so no service needs a constructor subscription. Library services wire themselves.
-        NativeMessages.Initialize();
-
         // Discover the locales first; the selected language is read lazily from the settings.
         Localization.Initialize(typeof(Program).Assembly, "AntiBot.Resources.i18n.",
             () => SettingsService.Instance.Language);
@@ -75,11 +71,12 @@ internal static class Program
 
             Log.Information("Serving React app at {AppUrl}", appUrl);
 
-            // Touching each singleton constructs it; NativeMessages.Initialize already connected the
-            // message handlers, and the library services subscribe in their constructors.
+            // Touching each singleton constructs it; a singleton that answers native messages
+            // subscribes itself in Singleton<T>'s constructor.
             using var appInfo = new AppInfoService(new AppInfoOptions(
                 typeof(Program).Assembly, Constants.LogDirectory, Constants.IsDebugMode,
                 () => WindowManager.Instance.DrawsWindowCorners));
+            _ = AppLinkService.Instance;
             using var updates = new UpdateService(new(
                 "T2PeNBiX99wcoxKv3A4g",
                 "AntiBot",
