@@ -59,6 +59,7 @@ internal sealed class AuthService : Singleton<AuthService>
     private CancellationTokenSource? _expiryReminder;
     private int _generation;
     private int _autoLogin;
+    private string? _lastAccount;
     private string? _lastAutoLoginError;
     private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
@@ -858,6 +859,7 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
         {
             _active = account;
+            _lastAccount = account.Dir;
             _account = new(id, account.Name, account.Avatar ?? ProfileIcon(user), user.Status,
                 user.StatusDescription);
             _location = user.Location ?? "";
@@ -1162,14 +1164,17 @@ internal sealed class AuthService : Singleton<AuthService>
             });
         }
 
-        _active = index.Active is { Length: > 0 } active
+        // The index keeps the last account that signed in, even when its session was not stored.
+        // Automatic sign-in always prefers that account over any other saved password.
+        _lastAccount = index.Active;
+        _active = _lastAccount is { Length: > 0 } active
             ? _accounts.FirstOrDefault(account => account.Dir == active)
             : null;
     }
 
     private void PersistIndex() =>
         AccountStore.Save(new AccountIndex(
-            _active is { Stored: true } ? _active.Dir : null,
+            _active?.Dir ?? _lastAccount,
             [.. _accounts
                 .Where(account => account.Stored)
                 .OrderByDescending(account => account.LastUsed)
@@ -1376,7 +1381,14 @@ internal sealed class AuthService : Singleton<AuthService>
 
         try
         {
-            var target = directory is { Length: > 0 } ? directory : CredentialStore.Latest();
+            // The account that signed in last wins; only a legacy index with no recorded account
+            // falls back to the most recently written credential.
+            var target = directory is { Length: > 0 } requested
+                ? requested
+                : _lastAccount is { Length: > 0 } last
+                    ? last
+                    : CredentialStore.Latest();
+
             if (target is null)
                 return false;
 
