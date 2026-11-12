@@ -8,7 +8,7 @@ namespace AntiBot.Services;
 
 /// <summary>Records every automatic action, lets it be undone, and hands the history to the interface.</summary>
 [Singleton]
-internal sealed partial class OperationService
+internal partial class OperationService
 {
     private readonly Lock _gate = new();
     private string _pushed = "";

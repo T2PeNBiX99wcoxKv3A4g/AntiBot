@@ -15,7 +15,7 @@ namespace AntiBot.Services;
 ///     back.
 /// </summary>
 [Singleton]
-internal sealed partial class WindowManager
+internal partial class WindowManager
 {
     private bool _allowClose;
     private bool _hideWhenRendered;

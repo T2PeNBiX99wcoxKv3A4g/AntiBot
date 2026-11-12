@@ -12,7 +12,7 @@ namespace AntiBot.Services;
 ///     treated like whitelisted users.
 /// </summary>
 [Singleton]
-internal sealed partial class ThreatActionService
+internal partial class ThreatActionService
 {
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _gate = new();

@@ -14,7 +14,7 @@ namespace AntiBot.Services;
 ///     server-side and the client does not re-evaluate at once.
 /// </summary>
 [Singleton]
-internal sealed partial class VrchatOscService
+internal partial class VrchatOscService
 {
     /// <summary>VRChat sends its own OSC here; that is how the current avatar becomes known.</summary>
     private const int DefaultOutPort = 9001;

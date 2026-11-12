@@ -17,7 +17,7 @@ namespace AntiBot.Services;
 ///     the next refresh retries.
 /// </remarks>
 [Singleton]
-internal sealed partial class PlayerService
+internal partial class PlayerService
 {
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);

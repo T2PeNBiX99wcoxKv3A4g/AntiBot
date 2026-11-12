@@ -12,7 +12,7 @@ namespace AntiBot.Services;
 ///     goes through <see cref="ModerationQueue" />, which keeps VRChat's rate limit.
 /// </summary>
 [Singleton]
-internal sealed partial class BatchService
+internal partial class BatchService
 {
     /// <summary>A small gap between profile lookups; the instance page has no queue, this page does.</summary>
     private static readonly TimeSpan ProfileGap = TimeSpan.FromMilliseconds(250);

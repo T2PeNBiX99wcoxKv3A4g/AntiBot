@@ -17,7 +17,7 @@ namespace AntiBot.Services;
 ///     everyone else. A name is only remembered when one was really found.
 /// </remarks>
 [Singleton]
-internal sealed partial class AvatarService
+internal partial class AvatarService
 {
     /// <summary>The image file VRChat uses for its default Robot avatar.</summary>
     private const string RobotFileId = "file_0e8c4e32-7444-44ea-ade4-313c010d4bae";

@@ -8,7 +8,7 @@ namespace AntiBot.Services;
 
 /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
 [Singleton]
-internal sealed partial class AppLinkService
+internal partial class AppLinkService
 {
     [NativeMessage("system.openUrl")]
     private static NativeResponse Open(NativeContext context)

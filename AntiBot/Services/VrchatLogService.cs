@@ -15,7 +15,7 @@ namespace AntiBot.Services;
 ///     reading with full sharing so VRChat keeps writing to it.
 /// </summary>
 [Singleton]
-internal sealed partial class VrchatLogService
+internal partial class VrchatLogService
 {
     /// <summary>How many lines stay available for a page that mounts later.</summary>
     private const int BufferLimit = 5000;

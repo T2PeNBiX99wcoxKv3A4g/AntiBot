@@ -15,7 +15,7 @@ namespace AntiBot.Services;
 ///     rebuilt on the next launch instead of starting empty.
 /// </remarks>
 [Singleton]
-internal sealed partial class InstanceService
+internal partial class InstanceService
 {
     private static readonly TimeSpan ApiInterval = TimeSpan.FromSeconds(10);
 

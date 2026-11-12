@@ -27,7 +27,7 @@ namespace AntiBot.Services;
 ///     </para>
 /// </remarks>
 [Singleton]
-internal sealed partial class AuthService
+internal partial class AuthService
 {
     /// <summary>VRCX's limit: after three automatic attempts in an hour, wait for a manual sign-in.</summary>
     private const int AutoLoginLimit = 3;

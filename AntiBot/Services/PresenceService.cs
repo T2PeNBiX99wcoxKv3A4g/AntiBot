@@ -31,7 +31,7 @@ internal sealed record Presence(string? Status, string? StatusDescription, Prese
 ///     even when the user has one set.
 /// </remarks>
 [Singleton]
-internal sealed partial class PresenceService
+internal partial class PresenceService
 {
     /// <summary>How long a stronger source keeps its value against a weaker one.</summary>
     private static readonly TimeSpan Hold = TimeSpan.FromSeconds(30);

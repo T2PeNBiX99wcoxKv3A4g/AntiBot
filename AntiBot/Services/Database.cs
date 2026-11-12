@@ -16,7 +16,7 @@ namespace AntiBot.Services;
 ///     <see cref="RetentionDays" /> are pruned on startup.
 /// </remarks>
 [Singleton]
-internal sealed partial class Database
+internal partial class Database
 {
     private const int RetentionDays = 30;
 

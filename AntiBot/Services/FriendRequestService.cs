@@ -10,7 +10,7 @@ namespace AntiBot.Services;
 ///     which exposes the avatar and user id; AntiBot only records them and never accepts or declines.
 /// </summary>
 [Singleton]
-internal sealed partial class FriendRequestService
+internal partial class FriendRequestService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan NotificationDebounce = TimeSpan.FromSeconds(3);
