@@ -1,15 +1,17 @@
-using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Services;
 
 namespace AntiBot.Services;
 
 /// <summary>Loads and stores the settings file. The defaults apply until the user saves something.</summary>
 internal sealed class SettingsService : Singleton<SettingsService>
 {
-    private static readonly string FilePath = Path.Combine(Constants.SettingsDirectory, "settings.json");
+    private readonly JsonSettingsStore<AppSettings> _store = JsonSettingsStore<AppSettings>.ForApp(
+        Constants.Name, AppSettings.Default, AppJsonContext.Default.AppSettings,
+        Path.Combine(Constants.DataDirectory, "settings.json"));
 
     public SettingsService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
@@ -23,33 +25,24 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
     public void Load()
     {
-        MoveFromTheDataFolder();
+        var stored = _store.Load();
 
-        if (!File.Exists(FilePath))
-            return;
+        Current = stored with
+        {
+            LogDirectory = stored.LogDirectory is { Length: > 0 } directory
+                ? directory
+                : Current.LogDirectory,
+            Language = NormalizeLanguage(stored.Language),
 
-        var stored = Try.Run(() => JsonSerializer.Deserialize(File.ReadAllText(FilePath),
-                AppJsonContext.Default.AppSettings))
-            .OnFailure(ex => Log.Warning(ex, "Failed to read {File}", FilePath))
-            .GetOrNull();
+            // An empty list is a real choice: it turns the external lookups off.
+            AvatarApiProviders = stored.AvatarApiProviders ?? [],
+            OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000,
 
-        if (stored is not null)
-            Current = stored with
-            {
-                LogDirectory = stored.LogDirectory is { Length: > 0 } directory
-                    ? directory
-                    : Current.LogDirectory,
-                Language = NormalizeLanguage(stored.Language),
-
-                // An empty list is a real choice: it turns the external lookups off.
-                AvatarApiProviders = stored.AvatarApiProviders ?? [],
-                OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000,
-
-                // The fields accept a link as well as an id; keep only the id it points at.
-                SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
-                Whitelist = (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
+            // The fields accept a link as well as an id; keep only the id it points at.
+            SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
+            Whitelist = (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
                 .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
-            };
+        };
     }
 
     private static string NormalizeLanguage(string? language) =>
@@ -61,20 +54,6 @@ internal sealed class SettingsService : Singleton<SettingsService>
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
             Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
-
-    /// <summary>
-    ///     Older builds wrote the settings into the data folder, next to the session; move them once so
-    ///     the settings and the key no longer share a directory.
-    /// </summary>
-    private void MoveFromTheDataFolder()
-    {
-        var legacy = Path.Combine(Constants.DataDirectory, "settings.json");
-        if (!File.Exists(legacy) || File.Exists(FilePath))
-            return;
-
-        Try.Run(() => File.Move(legacy, FilePath, true))
-            .OnFailure(ex => Log.Warning(ex, "Could not move the settings next to the other settings files"));
-    }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
@@ -138,10 +117,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
         Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory,
             Current.AvatarApiProviders.Length);
 
-        var attempt = await Try.Run(() => File.WriteAllTextAsync(FilePath,
-            JsonSerializer.Serialize(Current, AppJsonContext.Default.AppSettings)));
-
-        attempt.OnFailure(ex => Log.Warning(ex, "Failed to write {File}", FilePath));
+        await _store.SaveAsync(Current);
 
         // A new provider list is a chance to resolve names that failed before.
         AvatarService.Instance.ResetUnknown();
