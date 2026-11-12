@@ -565,11 +565,12 @@ internal sealed class AuthService : Singleton<AuthService>
             return context.Fail("auth.remove.result", Localization.Get("error.authAccountMissing"));
 
         // Signing out already forgets the account, so it must not be removed twice. The trash button
-        // is an explicit removal, though, so it also drops the saved password.
+        // is an explicit removal, though, so it also drops the saved password and its storage choice.
         if (ReferenceEquals(account, _active))
         {
             await SignOutAsync();
             CredentialStore.Delete(account.Dir);
+            CredentialStore.ForgetChoice(account.Dir);
             await RefreshSavedAsync();
             return context.Reply("auth.remove.result", Snapshot());
         }
@@ -837,17 +838,32 @@ internal sealed class AuthService : Singleton<AuthService>
         account.Name = user.DisplayName ?? id;
         account.AvatarUrl = ProfileIcon(user);
         account.LastUsed = DateTimeOffset.UtcNow;
+        _lastAccount = account.Dir;
+
+        // A later sign-in keeps the mode this account chose last, even when the session file is
+        // gone; only an account that never chose one should see the panel again.
+        if (fresh && !account.ChoiceMade && CredentialStore.ChoiceOf(account.Dir) is { } chosen)
+        {
+            account.Storage = chosen;
+            account.ChoiceMade = true;
+            account.Stored = chosen != AuthStorage.None;
+        }
 
         if (fresh)
         {
-            // A new cookie cannot be written into a password-protected file, because the password is not
-            // kept; the session is dropped and the account page asks for a storage mode again.
             if (account.Storage == AuthStorage.Password)
             {
-                AuthStore.Delete(AccountStore.PathOf(account.Dir));
-                account.Storage = AuthStorage.None;
-                account.Stored = false;
-                account.ChoiceMade = false;
+                // The session file needs the password again. A manual sign-in still has it in hand;
+                // the QR flow does not, so it asks for a storage mode instead.
+                if (applyLoginOptions && _pendingPassword is { Length: > 0 } password)
+                    await KeepPasswordSessionAsync(id, password);
+                else
+                {
+                    AuthStore.Delete(AccountStore.PathOf(account.Dir));
+                    account.Storage = AuthStorage.None;
+                    account.Stored = false;
+                    account.ChoiceMade = false;
+                }
             }
             else if (account.Storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello
                      or AuthStorage.Software)
@@ -859,7 +875,6 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
         {
             _active = account;
-            _lastAccount = account.Dir;
             _account = new(id, account.Name, account.Avatar ?? ProfileIcon(user), user.Status,
                 user.StatusDescription);
             _location = user.Location ?? "";
@@ -1201,7 +1216,10 @@ internal sealed class AuthService : Singleton<AuthService>
     private void RemoveAccount(Account account, bool forgetCredential = true)
     {
         if (forgetCredential)
+        {
             CredentialStore.Delete(account.Dir);
+            CredentialStore.ForgetChoice(account.Dir);
+        }
 
         AuthStore.Delete(AccountStore.PathOf(account.Dir));
         AccountStore.Delete(account.Dir);

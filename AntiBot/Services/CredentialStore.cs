@@ -120,11 +120,22 @@ internal static class CredentialStore
     }
 
     /// <summary>How the session of this account was kept when the password was saved.</summary>
-    public static AuthStorage StorageOf(string dir) =>
-        Enum.TryParse<AuthStorage>(Try.Run(() => File.ReadAllText(ModePathOf(dir))).GetOrNull(), true,
-            out var mode)
+    public static AuthStorage StorageOf(string dir) => ChoiceOf(dir) ?? AuthStorage.None;
+
+    /// <summary>
+    ///     The storage mode this account chose last, or null when it never chose one. The note
+    ///     outlives the session file, so a later sign-in keeps the same mode without asking again.
+    /// </summary>
+    public static AuthStorage? ChoiceOf(string dir)
+    {
+        if (!File.Exists(ModePathOf(dir)))
+            return null;
+
+        return Enum.TryParse<AuthStorage>(Try.Run(() => File.ReadAllText(ModePathOf(dir))).GetOrNull(),
+            true, out var mode)
             ? mode
             : AuthStorage.None;
+    }
 
     /// <summary>Writes the credentials, choosing the strongest protection this machine offers.</summary>
     public static async Task<bool> SaveAsync(string dir, RememberedLogin credential, AuthStorage storage,
@@ -194,12 +205,11 @@ internal static class CredentialStore
         }
     }
 
-    /// <summary>The session storage can change after the password was saved; keep the note in step.</summary>
-    public static void UpdateStorage(string dir, AuthStorage storage)
-    {
-        if (Exists(dir))
-            WriteStorage(dir, storage);
-    }
+    /// <summary>
+    ///     Records the mode this account chose, even when no password is saved, so the next sign-in
+    ///     reuses it instead of falling back to "do not remember".
+    /// </summary>
+    public static void UpdateStorage(string dir, AuthStorage storage) => WriteStorage(dir, storage);
 
     /// <summary>Fills in a name or picture that a file written before they were stored does not have.</summary>
     public static async Task UpdateProfileAsync(string dir, string? displayName, string? avatarUrl,
@@ -225,13 +235,16 @@ internal static class CredentialStore
         Try.Run(() => File.SetLastWriteTimeUtc(path, written));
     }
 
+    /// <summary>Deletes the saved password, keeping the account's storage choice.</summary>
     public static void Delete(string dir)
     {
         Try.Run(() => File.Delete(PathOf(dir)));
         Try.Run(() => File.Delete(KeyPathOf(dir)));
-        Try.Run(() => File.Delete(ModePathOf(dir)));
         TpmStore.Delete(TpmScope(dir));
     }
+
+    /// <summary>Forgets the storage mode as well, which an explicit account removal wants.</summary>
+    public static void ForgetChoice(string dir) => Try.Run(() => File.Delete(ModePathOf(dir)));
 
     private static (byte Mode, byte[] Body) Protect(string dir, byte[] payload)
     {
