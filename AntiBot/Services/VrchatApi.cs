@@ -415,7 +415,7 @@ internal sealed class VrchatApi : IDisposable
         };
 
         _http.DefaultRequestHeaders.UserAgent.ParseAdd(
-            $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
+            $"AntiBot/{AppIdentity.Version} ({AppIdentity.Platform})");
         _http.DefaultRequestHeaders.Accept.Add(new("application/json"));
     }
 

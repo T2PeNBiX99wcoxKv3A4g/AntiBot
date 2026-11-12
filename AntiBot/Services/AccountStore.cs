@@ -38,7 +38,7 @@ internal static class AccountStore
             Timeout = TimeSpan.FromSeconds(15)
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(
-            $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
+            $"AntiBot/{AppIdentity.Version} ({AppIdentity.Platform})");
         return client;
     }
 

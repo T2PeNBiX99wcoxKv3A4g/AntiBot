@@ -62,7 +62,7 @@ internal static class Program
 #if !DEBUG
             // Kestrel binds to an OS-assigned port, so several Photino apps can run side by side.
             using var staticServer = StaticServer.Start(Constants.DataDirectory);
-            var appUrl = $"{staticServer.BaseUrl}/index.html?v={AppInfoService.BuildToken}";
+            var appUrl = $"{staticServer.BaseUrl}/index.html?v={AppIdentity.BuildToken}";
 #else
             // A Debug build always talks to the Vite dev server, which is where hot reload lives.
             const string appUrl = "http://127.0.0.1:3200";
@@ -71,18 +71,22 @@ internal static class Program
             Log.Information("Serving React app at {AppUrl}", appUrl);
 
             // Touching each singleton constructs it, which is what registers its message handlers.
-            _ = AppInfoService.Instance;
+            using var appInfo = new AppInfoService(new AppInfoOptions(
+                typeof(Program).Assembly, Constants.LogDirectory, Constants.IsDebugMode,
+                () => WindowManager.Instance.DrawsWindowCorners));
+            _ = AppLinkService.Instance;
             using var updates = new UpdateService(new(
                 "T2PeNBiX99wcoxKv3A4g",
                 "AntiBot",
                 Constants.Name,
-                AppInfoService.Version,
+                AppIdentity.Version,
                 "AntiBot-{version}-win-x64.msi",
                 Constants.ReleasesUrl,
                 Constants.LogDirectory,
                 () => WindowManager.Instance.Exit(),
                 (type, data) => WindowManager.Instance.NotifyMainWindow(type, data)));
-            _ = StartupService.Instance;
+            using var startup = new StartupService(new StartupRegistration(
+                typeof(Program).Assembly, Constants.Name, "antibot"));
             _ = VrchatLogService.Instance;
 
             // Reads the log for the OSC port and the shield level, so Safe Mode can be requested.

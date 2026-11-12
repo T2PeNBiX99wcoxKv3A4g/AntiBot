@@ -8,9 +8,6 @@ namespace AntiBot.Messaging;
 /// <summary>Body for a bare <c>{ "ok": true }</c> acknowledgement.</summary>
 internal sealed record OkPayload(bool Ok = true);
 
-/// <summary>Body for <c>app.info</c>: the build, the platform, and where the app writes its logs.</summary>
-internal sealed record AppInfoPayload(string Version, string Platform, string LogDirectory, bool Rounded, bool Debug);
-
 /// <summary>Body for <c>settings.get</c>.</summary>
 internal sealed record SettingsPayload(
     string LogDirectory,
@@ -30,12 +27,6 @@ internal sealed record SettingsPayload(
     string Language,
     bool StartHidden,
     int OscPort);
-
-/// <summary>Payload for <c>app.setStartup</c>: whether the startup entry should exist.</summary>
-internal sealed record StartupRequest(bool Enabled);
-
-/// <summary>Body for the <c>app.startup</c> messages; the entry's presence is the state.</summary>
-internal sealed record StartupPayload(bool Supported, bool Enabled);
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);

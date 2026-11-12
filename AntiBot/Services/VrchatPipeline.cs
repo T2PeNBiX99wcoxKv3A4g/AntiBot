@@ -76,7 +76,7 @@ internal sealed class VrchatPipeline : IDisposable
 
             // VRChat refuses requests without a user agent, the websocket handshake included.
             socket.Options.SetRequestHeader("User-Agent",
-                $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
+                $"AntiBot/{AppIdentity.Version} ({AppIdentity.Platform})");
 
             lock (_gate)
             {

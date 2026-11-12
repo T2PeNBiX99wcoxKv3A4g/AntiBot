@@ -47,7 +47,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     public void CreateMainWindow()
     {
-        var webViewData = WebViewCache.Prepare(Constants.DataDirectory, AppInfoService.BuildToken);
+        var webViewData = WebViewCache.Prepare(Constants.DataDirectory, AppIdentity.BuildToken);
 
         var window = new PhotinoWindow()
             // The native layer prints every property setter and message it handles. That is useful
