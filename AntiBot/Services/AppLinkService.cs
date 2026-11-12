@@ -9,7 +9,7 @@ namespace AntiBot.Services;
 /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
 internal sealed partial class AppLinkService : Singleton<AppLinkService>
 {
-    public AppLinkService() => NativeBridge.MessageReceived += __HandleGeneratedMessageAsync;
+    public AppLinkService() => NativeBridge.Subscribe(this);
 
     [NativeMessage("system.openUrl")]
     private static NativeResponse Open(NativeContext context)
