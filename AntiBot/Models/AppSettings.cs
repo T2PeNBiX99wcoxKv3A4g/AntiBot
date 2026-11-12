@@ -3,6 +3,7 @@ using PhotinoNetUtils.Settings;
 namespace AntiBot.Models;
 
 /// <summary>Persisted settings. The log folder defaults to VRChat's own folder.</summary>
+[SettingsModel]
 public sealed record AppSettings
 {
     /// <summary>The avatar databases VRCX uses, in the same request format.</summary>

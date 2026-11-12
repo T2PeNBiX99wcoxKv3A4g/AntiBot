@@ -7,15 +7,11 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
-internal sealed class AppLinkService : Singleton<AppLinkService>
+internal sealed partial class AppLinkService : Singleton<AppLinkService>
 {
-    public AppLinkService() => NativeBridge.MessageReceived += HandleMessageAsync;
+    public AppLinkService() => NativeBridge.MessageReceived += __HandleGeneratedMessageAsync;
 
-    private static Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
-        context.Request.Type == "system.openUrl"
-            ? Task.FromResult<NativeResponse?>(Open(context))
-            : Task.FromResult<NativeResponse?>(null);
-
+    [NativeMessage("system.openUrl")]
     private static NativeResponse Open(NativeContext context)
     {
         var url = context.Payload<OpenUrlRequest>()?.Url;
