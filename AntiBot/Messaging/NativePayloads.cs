@@ -40,12 +40,6 @@ internal sealed record StartupPayload(bool Supported, bool Enabled);
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);
 
-/// <summary>Body for the <c>window.state</c> event.</summary>
-internal sealed record WindowStatePayload(bool Maximized);
-
-/// <summary>Payload for <c>window.resize</c>: the edge being dragged.</summary>
-internal sealed record WindowResizeRequest(string Direction);
-
 /// <summary>One row of the account list; the avatar is a data URL so it shows while locked.</summary>
 internal sealed record AccountSummaryPayload(
     string Dir,

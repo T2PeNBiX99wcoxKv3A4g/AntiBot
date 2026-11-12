@@ -1,10 +1,12 @@
 using AntiBot.Messaging;
 using Photino.NET;
+using PhotinoNetUtils.Hosting;
 using PhotinoNetUtils.Interop;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Services;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -14,27 +16,10 @@ namespace AntiBot.Services;
 /// </summary>
 internal sealed class WindowManager : Singleton<WindowManager>
 {
-    /// <summary>
-    ///     Per-app web view data folder. On Windows, Photino defaults to a WebView2 folder shared by
-    ///     every Photino app, which breaks when another app holds it, so keep ours separate.
-    /// </summary>
-    private static readonly string WebViewDataPath = Path.Combine(Constants.DataDirectory, "webview");
-
-    private readonly Lock _gate = new();
-
-    /// <summary>The newest event of each type, held until the page reports in.</summary>
-    private readonly Dictionary<string, string> _pending = new();
-
     private bool _allowClose;
     private bool _hideWhenRendered;
     private PhotinoWindow? _mainWindow;
-
-    /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
-    private bool _mainWindowReady;
-
     private WebViewRecovery? _webViewRecovery;
-
-    public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     /// <summary>
     ///     Whether the interface has to paint the window's rounded corners, because the platform leaves
@@ -62,7 +47,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     public void CreateMainWindow()
     {
-        PrepareWebViewData();
+        var webViewData = WebViewCache.Prepare(Constants.DataDirectory, AppInfoService.BuildToken);
 
         var window = new PhotinoWindow()
             // The native layer prints every property setter and message it handles. That is useful
@@ -71,7 +56,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
             .SetTitle(Constants.WindowTitle)
             // The id Windows attributes a toast to; the Start Menu shortcut carries it too.
             .SetNotificationRegistrationId(Constants.Name)
-            .SetTemporaryFilesPath(WebViewDataPath)
+            .SetTemporaryFilesPath(webViewData)
             .SetUseOsDefaultSize(false)
             .SetSize(new(1280, 800))
             .SetMinSize(900, 560)
@@ -138,6 +123,10 @@ internal sealed class WindowManager : Singleton<WindowManager>
         _webViewRecovery = WebViewRecovery.Attach(window, AppUrl);
         window.Load(AppUrl);
         _mainWindow = window;
+
+        // The shared gate holds events raised before the page reports ready, then sends them.
+        WebViewEvents.Ready += HideWhenRendered;
+        WebViewEvents.Attach(window);
     }
 
     /// <summary>Starts the message loop; blocks until the window is closed for good.</summary>
@@ -162,32 +151,8 @@ internal sealed class WindowManager : Singleton<WindowManager>
     /// <summary>Runs an action on the UI thread, once the message loop is running.</summary>
     public void RunOnMainWindow(Action action) => _mainWindow?.Invoke(action);
 
-    /// <summary>
-    ///     Pushes an event to the interface. Anything sent while the web view is still loading would
-    ///     abort the process, so the newest event of each type waits and is sent once the page is ready.
-    /// </summary>
-    public void NotifyMainWindow(string type, object? data)
-    {
-        var message = Try.Run(() => NativeBridge.SerializeEvent(type, data)).GetOrNull();
-        if (message is null)
-            return;
-
-        if (!_mainWindowReady)
-        {
-            // A restore can finish before the page reports in; dropping the event would leave the
-            // header showing the state from before it.
-            lock (_gate)
-                _pending[type] = message;
-
-            return;
-        }
-
-        Send(message, type);
-    }
-
-    private void Send(string message, string type) =>
-        Try.Run(() => _mainWindow?.SendWebMessage(message))
-            .OnFailure(ex => Log.Warning(ex, "Failed to push {Type} to the interface", type));
+    /// <summary>Pushes an event to the interface; the shared gate queues it until the page is ready.</summary>
+    public void NotifyMainWindow(string type, object? data) => WebViewEvents.Notify(type, data);
 
     private void HideWhenRendered()
     {
@@ -198,104 +163,10 @@ internal sealed class WindowManager : Singleton<WindowManager>
         RunOnMainWindow(() => Hide(window));
     }
 
-    private void FlushPending()
-    {
-        KeyValuePair<string, string>[] pending;
-
-        lock (_gate)
-        {
-            pending = _pending.ToArray();
-            _pending.Clear();
-        }
-
-        foreach (var (type, message) in pending)
-            Send(message, type);
-    }
-
-    private Task<NativeResponse?> HandleMessageAsync(NativeContext context)
-    {
-        switch (context.Request.Type)
-        {
-            case "app.ready":
-                _mainWindowReady = true;
-                FlushPending();
-                HideWhenRendered();
-                break;
-
-            case "window.minimize":
-                RunOnMainWindow(() => _mainWindow?.SetMinimized(true));
-                break;
-
-            case "window.toggleMaximize":
-                RunOnMainWindow(ToggleMaximize);
-                break;
-
-            case "window.close":
-                RunOnMainWindow(() => _mainWindow?.Close());
-                break;
-
-            case "window.drag":
-                RunOnMainWindow(() =>
-                {
-                    if (_mainWindow is not { } window)
-                        return;
-
-                    if (OperatingSystem.IsWindows())
-                        WindowDrag.Begin(window.WindowHandle);
-                    else if (OperatingSystem.IsLinux())
-                        LinuxWindow.BeginDrag(window.Title);
-                });
-                break;
-
-            case "window.resize":
-                RunOnMainWindow(() =>
-                {
-                    if (_mainWindow is not { } window)
-                        return;
-
-                    var direction = context.Payload<WindowResizeRequest>()?.Direction ?? "";
-
-                    if (OperatingSystem.IsWindows())
-                        WindowResize.Begin(window.WindowHandle, direction);
-                    else if (OperatingSystem.IsLinux())
-                        LinuxWindow.BeginResize(window.Title, direction);
-                });
-                break;
-        }
-
-        return Task.FromResult<NativeResponse?>(null);
-    }
-
-    private void NotifyWindowState(bool maximized) =>
-        NotifyMainWindow("window.state", new WindowStatePayload(maximized));
-
-    private void ToggleMaximize()
-    {
-        if (_mainWindow is not { } window)
-            return;
-
-        if (OperatingSystem.IsWindows())
-        {
-            if (window.WindowHandle != IntPtr.Zero)
-                NotifyWindowState(WindowZoom.Toggle(window.WindowHandle));
-
-            return;
-        }
-
-        if (OperatingSystem.IsLinux())
-        {
-            NotifyWindowState(LinuxWindow.ToggleMaximize(window.Title));
-            return;
-        }
-
-        var maximized = !window.Maximized;
-        window.SetMaximized(maximized);
-        NotifyWindowState(maximized);
-    }
-
     public void Exit()
     {
         NotificationService.Detach();
+        WebViewEvents.Detach();
         _allowClose = true;
         _webViewRecovery?.Dispose();
         RunOnMainWindow(() => _mainWindow?.Close());
@@ -340,25 +211,5 @@ internal sealed class WindowManager : Singleton<WindowManager>
         // Minimising leaves the window in the taskbar; hiding it outright does not.
         if (OperatingSystem.IsLinux() && !LinuxGtk.Hide(window.Title))
             window.SetMinimized(true);
-    }
-
-    /// <summary>
-    ///     Drops the web view's data folder when this build is not the one that filled it, so an
-    ///     upgrade never keeps serving the previous interface from the web view cache.
-    /// </summary>
-    private void PrepareWebViewData()
-    {
-        var marker = Path.Combine(Path.GetDirectoryName(WebViewDataPath)!, "webview.build");
-
-        Try.Run(() =>
-        {
-            if (File.Exists(marker) && File.ReadAllText(marker) != AppInfoService.BuildToken)
-            {
-                Log.Information("This is a different build; clearing the web view's cache");
-                Directory.Delete(WebViewDataPath, true);
-            }
-
-            File.WriteAllText(marker, AppInfoService.BuildToken);
-        }).OnFailure(ex => Log.Warning(ex, "Failed to prepare the web view's data folder"));
     }
 }
