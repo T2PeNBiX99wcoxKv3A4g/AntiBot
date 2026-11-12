@@ -66,7 +66,7 @@ AntiBot 會監看 VRChat 原本就會寫入的日誌，顯示目前實例中有�
 
 ## 技術組成
 
-- **以 .NET 10 上的 C# 撰寫** — 所有邏輯：讀取日誌、與 VRChat API 通訊、評分、處置操作、OSC
+- **以 .NET 11 上的 C# 撰寫** — 所有邏輯：讀取日誌、與 VRChat API 通訊、評分、處置操作、OSC
   與本機資料庫。
 - **React 19 + TypeScript**，由 **Vite** 打包並以 **styled-components** 設計樣式 — 介面。它與
   C# 端交換 JSON 訊息，本身不執行任何工作。
@@ -136,7 +136,7 @@ libayatana-appindicator3.so.1   （或較舊的 libappindicator3.so.1）
 
 ## 建置
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) 20 或更新版本，用於建置介面
 - `AntiBot/Libs` 中的共用 DLL 與前端 bridge 套件，從獨立的
   [PhotinoNETUtils](../PhotinoNETUtils) 專案以 `build-and-copy.ps1` 複製而來
@@ -169,7 +169,7 @@ cd AntiBot/UserInterface && npm run build
 cd ../.. && dotnet publish AntiBot/AntiBot.csproj -c Release -r win-x64
 ```
 
-Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net10.0/<rid>/publish/` 下產生一個
+Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net11.0/<rid>/publish/` 下產生一個
 自包含的單一執行檔。
 
 ## 資料存放位置

@@ -73,7 +73,7 @@ reason is shown with its own points, so you can see why a user was flagged.
 
 ## Built with
 
-- **C# on .NET 10** — all of the logic: reading the log, talking to the VRChat API, scoring,
+- **C# on .NET 11** — all of the logic: reading the log, talking to the VRChat API, scoring,
   moderation, OSC and the local database.
 - **React 19 + TypeScript**, bundled by **Vite** and styled with **styled-components** — the
   interface. It exchanges JSON messages with the C# side and does no work of its own.
@@ -145,7 +145,7 @@ The full guide is in the [documentation](https://t2penbix99wcoxkv3a4g.github.io/
 
 ## Building
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) 20 or newer, to build the interface
 - The shared DLL and front-end bridge package in `AntiBot/Libs`, copied from the separate
   [PhotinoNETUtils](../PhotinoNETUtils) project with its `build-and-copy.ps1`
@@ -180,7 +180,7 @@ cd ../.. && dotnet publish AntiBot/AntiBot.csproj -c Release -r win-x64
 ```
 
 Use `-r linux-x64` for Linux. That produces a single self-contained executable under
-`AntiBot/bin/Release/net10.0/<rid>/publish/`.
+`AntiBot/bin/Release/net11.0/<rid>/publish/`.
 
 ## Where things are stored
 

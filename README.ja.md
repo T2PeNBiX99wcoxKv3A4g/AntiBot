@@ -77,7 +77,7 @@ MOD、プラグイン、改造した VRChat クライアントは不要です。
 
 ## 使用技術
 
-- **.NET 10 上の C#** — ログの読み取り、VRChat API との通信、採点、モデレーション、OSC、
+- **.NET 11 上の C#** — ログの読み取り、VRChat API との通信、採点、モデレーション、OSC、
   ローカルデータベースなど、すべてのロジック。
 - **React 19 + TypeScript**、 **Vite** でバンドルし **styled-components** でスタイルを適用 —
   インターフェース。C# 側と JSON メッセージを交換するだけで、自身では処理を行いません。
@@ -151,7 +151,7 @@ WebView ライブラリがない場合、起動時に `Unable to load shared lib
 
 ## ビルド
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) 20 以降（インターフェースのビルド用）
 - `AntiBot/Libs` の共有 DLL とフロントエンド bridge パッケージ。別プロジェクトの
   [PhotinoNETUtils](../PhotinoNETUtils) から `build-and-copy.ps1` でコピーします
@@ -185,7 +185,7 @@ cd AntiBot/UserInterface && npm run build
 cd ../.. && dotnet publish AntiBot/AntiBot.csproj -c Release -r win-x64
 ```
 
-Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net10.0/<rid>/publish/` に、
+Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net11.0/<rid>/publish/` に、
 プラットフォームごとの自己完結型実行ファイルが 1 つ生成されます。
 
 ## データの保存場所
