@@ -1,5 +1,8 @@
 {
   // The key is the English text, so a missing translation still reads naturally.
+  // Keys are case-insensitive and must be unique inside one file. A second spelling of the same
+  // key is a build error (PNU2102); fix it by renaming or removing that key - never by deleting
+  // or disabling the check, because the loader would otherwise read only the first one.
   "AntiBot": "AntiBot",
   "Minimize": "Minimize",
   "Maximize": "Maximize",
@@ -124,7 +127,6 @@
   "you": "you",
   "whitelisted": "whitelisted",
   "Profile": "Profile",
-  "Open on vrchat.com": "Open on vrchat.com",
   "Threat": "Threat",
   "In this instance": "In this instance",
   "Avatar": "Avatar",
@@ -141,7 +143,6 @@
   "Group Public": "Group Public",
   "Group+": "Group+",
   "Group Members": "Group Members",
-  "Instance": "Instance",
   "Japan": "Japan",
   "United States": "United States",
   "Europe": "Europe",
@@ -281,7 +282,6 @@
   "password-encrypted": "password-encrypted",
   "system-protected": "system-protected",
   "TPM-protected": "TPM-protected",
-  "software key": "software key",
   "not stored": "not stored",
   "Hide the username": "Hide the username",
   "Show the username": "Show the username",
@@ -401,7 +401,6 @@
   "Open source attribution": "Open source attribution",
   "Open source licenses for the libraries AntiBot uses.": "Open source licenses for the libraries AntiBot uses.",
   "Select a library to read its license.": "Select a library to read its license.",
-  "version": "version",
   "license": "license",
   "enabled": "enabled",
   "disabled": "disabled",
