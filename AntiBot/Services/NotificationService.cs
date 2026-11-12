@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Utils;
 #if WINDOWS_DESKTOP
@@ -40,6 +41,7 @@ internal sealed class NotificationService : Singleton<NotificationService>
             NotifyLinux(title, message);
     }
 
+    [SupportedOSPlatform("windows")]
     private void NotifyWindows(string title, string message)
     {
 #if WINDOWS_DESKTOP
@@ -55,6 +57,7 @@ internal sealed class NotificationService : Singleton<NotificationService>
 #endif
     }
 
+    [SupportedOSPlatform("linux")]
     private void NotifyLinux(string title, string message) =>
         Try.Run(() =>
         {
