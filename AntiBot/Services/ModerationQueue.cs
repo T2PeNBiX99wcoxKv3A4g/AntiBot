@@ -1,5 +1,3 @@
-using PhotinoNetUtils.Utils;
-
 namespace AntiBot.Services;
 
 /// <summary>

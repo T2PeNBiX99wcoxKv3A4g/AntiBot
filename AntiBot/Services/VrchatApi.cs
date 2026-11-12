@@ -3,9 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
-using PhotinoNetUtils.Utils;
 using Serilog;
 
 namespace AntiBot.Services;
@@ -41,10 +39,10 @@ internal sealed class VrchatApi : IDisposable
     /// <summary>The value of the <c>auth</c> cookie, which the pipeline websocket accepts.</summary>
     public string? AuthToken => _cookies.GetCookies(BaseUri)["auth"]?.Value;
 
+    public void Dispose() => _http.Dispose();
+
     /// <summary>Raised when the active session is rejected with HTTP 401.</summary>
     public event Action? Unauthorized;
-
-    public void Dispose() => _http.Dispose();
 
     /// <summary>Signs in with a password. The reply says whether a second factor is still needed.</summary>
     public async Task<(ApiAuthUser? User, string? Error, LoginFailure Failure)> LoginAsync(string username,
@@ -160,10 +158,16 @@ internal sealed class VrchatApi : IDisposable
                 requests[id] = notification;
 
         // The hidden and v2 lists only add history; a failure there must not stop the poll.
-        foreach (var path in new[] { "auth/user/notifications?hidden=true", "notifications" })
-            foreach (var notification in await FetchAllAsync(path, token))
-                if (FriendRequestId(notification) is { } id)
-                    requests.TryAdd(id, notification with { Hidden = true });
+        foreach (var path in new[]
+                 {
+                     "auth/user/notifications?hidden=true", "notifications"
+                 })
+        foreach (var notification in await FetchAllAsync(path, token))
+            if (FriendRequestId(notification) is { } id)
+                requests.TryAdd(id, notification with
+                {
+                    Hidden = true
+                });
 
         return [.. requests.Values];
     }
@@ -262,7 +266,10 @@ internal sealed class VrchatApi : IDisposable
     public async Task<string?> CreateInstanceAsync(string worldId, string ownerId, CancellationToken token)
     {
         // The home instance type is a client setting, not part of the API; try the common ones.
-        foreach (var type in new[] { "hidden", "private", "friends" })
+        foreach (var type in new[]
+                 {
+                     "hidden", "private", "friends"
+                 })
             if (await CreateInstanceAsync(worldId, ownerId, type, token) is { Length: > 0 } location)
                 return location;
 

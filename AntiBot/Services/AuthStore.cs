@@ -2,8 +2,6 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 using Serilog;
 
 namespace AntiBot.Services;
@@ -85,16 +83,9 @@ internal static class AuthStore
     /// <summary>The key-file mode is offered on Linux, where the other options depend on extra packages.</summary>
     public static bool IsSoftwareAvailable => OperatingSystem.IsLinux();
 
-    /// <summary>The scope the platform stores use for an account, so their entries cannot collide.</summary>
-    public static string Scope(string directory) => Path.GetFileName(directory);
-
-    public static string SessionPath(string directory) => Path.Combine(directory, "session.bin");
-
-    private static string KeyPath(string directory) => Path.Combine(directory, "session.key");
-    private static string ChoicePath(string directory) => Path.Combine(directory, "chosen");
-
     /// <summary>The single session file written before accounts had their own folders.</summary>
     private static string LegacySessionPath => Path.Combine(Constants.DataDirectory, "auth.bin");
+
     private static string LegacyKeyPath => Path.Combine(Constants.DataDirectory, "auth.key");
     private static string LegacyChoicePath => Path.Combine(Constants.DataDirectory, "auth.chosen");
 
@@ -103,6 +94,22 @@ internal static class AuthStore
         File.Exists(LegacySessionPath) || OperatingSystem.IsLinux() && Keyring.LegacyHasEntry();
 
     public static bool LegacyChoiceMade => File.Exists(LegacyChoicePath);
+
+    /// <summary>The mode of the pre-account session, if there is one.</summary>
+    public static AuthStorage LegacyMode =>
+        File.Exists(LegacySessionPath) ? ModeOf(LegacySlot) :
+        OperatingSystem.IsLinux() && Keyring.LegacyHasEntry() ? AuthStorage.System :
+        AuthStorage.None;
+
+    private static Slot LegacySlot => new(LegacySessionPath, LegacyKeyPath, null);
+
+    /// <summary>The scope the platform stores use for an account, so their entries cannot collide.</summary>
+    public static string Scope(string directory) => Path.GetFileName(directory);
+
+    public static string SessionPath(string directory) => Path.Combine(directory, "session.bin");
+
+    private static string KeyPath(string directory) => Path.Combine(directory, "session.key");
+    private static string ChoicePath(string directory) => Path.Combine(directory, "chosen");
 
     public static bool Exists(string directory) =>
         File.Exists(SessionPath(directory)) ||
@@ -129,12 +136,6 @@ internal static class AuthStore
 
         return AuthStorage.None;
     }
-
-    /// <summary>The mode of the pre-account session, if there is one.</summary>
-    public static AuthStorage LegacyMode =>
-        File.Exists(LegacySessionPath) ? ModeOf(LegacySlot) :
-        OperatingSystem.IsLinux() && Keyring.LegacyHasEntry() ? AuthStorage.System :
-        AuthStorage.None;
 
     /// <summary>
     ///     Writes the payload in <paramref name="mode" />. Returns false when that mode needs a password
@@ -249,8 +250,6 @@ internal static class AuthStore
 
     private static Slot SlotOf(string directory) =>
         new(SessionPath(directory), KeyPath(directory), Scope(directory));
-
-    private static Slot LegacySlot => new(LegacySessionPath, LegacyKeyPath, null);
 
     /// <summary>Extra DPAPI entropy, so another app's blob cannot be swapped in.</summary>
     private static byte[] Entropy(string scope) => [.. "AntiBot/auth/v1/"u8, .. Encoding.UTF8.GetBytes(scope)];

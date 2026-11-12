@@ -12,7 +12,7 @@ import {
 } from "../api/batch";
 import type {InstanceUser} from "../api/instance";
 import {AlertIcon, BatchIcon} from "../components/Icons";
-import {PlayerDialog, UserRow, userGridColumns} from "./InstancePage";
+import {PlayerDialog, userGridColumns, UserRow} from "./InstancePage";
 
 /** Apply the configured moderation actions to a pasted list of VRChat links. */
 export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: () => void }) {

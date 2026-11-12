@@ -147,7 +147,7 @@ export function InstancePage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                 <EmptyRow>{t("No players in this instance yet.")}</EmptyRow>
                             ) : users.map((user) => (
                                 <UserRow key={user.userId} user={user} now={now}
-                                     onSelect={(next) => setSelectedId(next.userId)}/>
+                                         onSelect={(next) => setSelectedId(next.userId)}/>
                             ))}
                         </Rows>
                     </ListCard>
@@ -206,10 +206,13 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
                     </span>
                     {threat > 0 && (
                         <ThreatBadge $score={threat}
-                                      title={(user.threatReasons ?? [])
-                                          .map((reason) =>
-                                              `${t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
-                                          .join(" · ")}>
+                                     title={(user.threatReasons ?? [])
+                                         .map((reason) =>
+                                             `${t(reason.text, reason.detail ? {
+                                                 days: reason.detail,
+                                                 years: Math.floor(Number(reason.detail) / 365)
+                                             } : undefined)} ${reason.weight > 0 ? "+" : ""}${reason.weight}`)
+                                         .join(" · ")}>
                             <AlertIcon size={10}/>
                             {threat}
                         </ThreatBadge>
@@ -231,7 +234,8 @@ export function UserRow({user, now, onSelect, showTime = true, timeLabel, dim = 
             <StatusCell title={user.statusDescription || undefined}>
                 {loaded
                     ? status
-                        ? <><StatusDot $color={status.color}/><span>{user.statusDescription || t(status.labelKey)}</span></>
+                        ? <><StatusDot
+                            $color={status.color}/><span>{user.statusDescription || t(status.labelKey)}</span></>
                         : <Dash>{t("—")}</Dash>
                     : <SkeletonBar/>}
             </StatusCell>
@@ -324,7 +328,10 @@ export function PlayerDialog({user, now, onClose}: {
                                     <ThreatReasons>
                                         {(user.threatReasons ?? []).map((reason) => (
                                             <ThreatReasonChip $up={reason.weight > 0} key={reason.text}>
-                                                {t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)}
+                                                {t(reason.text, reason.detail ? {
+                                                    days: reason.detail,
+                                                    years: Math.floor(Number(reason.detail) / 365)
+                                                } : undefined)}
                                                 <b>{reason.weight > 0 ? `+${reason.weight}` : reason.weight}</b>
                                             </ThreatReasonChip>
                                         ))}
@@ -424,14 +431,14 @@ function statusInfo(status?: string): { labelKey: string; color: string } | null
 
 /** VRChat does not say whether a PC user is in VR; the tooltip explains the limitation. */
 function platformTitle(platform: string | undefined,
-    t: (key: string, params?: Record<string, string | number>) => string): string | undefined {
+                       t: (key: string, params?: Record<string, string | number>) => string): string | undefined {
     return platform === "standalonewindows"
         ? t("PC includes both desktop and PCVR users; VRChat does not report which one.")
         : undefined;
 }
 
 function platformLabel(platform: string | undefined,
-    t: (key: string, params?: Record<string, string | number>) => string): string {
+                       t: (key: string, params?: Record<string, string | number>) => string): string {
     switch (platform) {
         case "standalonewindows":
             return t("PC/VR");
@@ -446,7 +453,7 @@ function platformLabel(platform: string | undefined,
 
 /** How long the player has been in the instance, from the log's join time. */
 function durationLabel(joinedAt: string, now: number,
-    t: (key: string, params?: Record<string, string | number>) => string): string {
+                       t: (key: string, params?: Record<string, string | number>) => string): string {
     if (!joinedAt) return t("—");
 
     const [hours, minutes, seconds] = joinedAt.split(":").map(Number);
@@ -521,7 +528,7 @@ function RegionFlag({region, t}: {
 }
 
 function instanceTypeLabel(type: string | undefined,
-    t: (key: string, params?: Record<string, string | number>) => string): string {
+                           t: (key: string, params?: Record<string, string | number>) => string): string {
     switch (type) {
         case "public":
             return t("Public");
@@ -630,6 +637,7 @@ const World = styled.div<{ $src?: string }>`
     overflow: hidden;
 
     /* The thumbnail is the card's backdrop: full on the left, fading out before the middle. */
+
     &::before {
         content: "";
         position: absolute;
@@ -644,6 +652,7 @@ const World = styled.div<{ $src?: string }>`
     }
 
     /* Keeps the text readable over the picture. */
+
     &::after {
         content: "";
         position: absolute;
@@ -875,7 +884,7 @@ const Row = styled.div<{ $tone: RowTone; $threat: number; $showTime: boolean; $d
 
     &:hover {
         background: ${({$tone, $threat}) =>
-            $tone === "threat" ? threatBackground($threat, true) : toneBackground($tone, true)};
+                $tone === "threat" ? threatBackground($threat, true) : toneBackground($tone, true)};
     }
 `;
 

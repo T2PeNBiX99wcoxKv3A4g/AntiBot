@@ -5,9 +5,25 @@ import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
-import {type AppInfo, cancelUpdateDownload, checkForUpdates, getUpdateStatus, installUpdate, onUpdateChangelog, onUpdateProgress, openLogsFolder, openReleasesPage, setStartup, startUpdateDownload, startupStatus, type StartupStatus, type UpdateCheck, type UpdateProgress} from "../api/system";
+import {
+    type AppInfo,
+    cancelUpdateDownload,
+    checkForUpdates,
+    getUpdateStatus,
+    installUpdate,
+    onUpdateChangelog,
+    onUpdateProgress,
+    openLogsFolder,
+    openReleasesPage,
+    setStartup,
+    startUpdateDownload,
+    startupStatus,
+    type StartupStatus,
+    type UpdateCheck,
+    type UpdateProgress
+} from "../api/system";
 import {Dropdown} from "../components/Dropdown";
-import {DownloadIcon, FolderIcon, EyeIcon, EyeOffIcon, TrashIcon} from "../components/Icons";
+import {DownloadIcon, EyeIcon, EyeOffIcon, FolderIcon, TrashIcon} from "../components/Icons";
 import {Toggle} from "../components/Toggle";
 
 /* The licence texts are large, so the notices page is loaded only when it is opened. */
@@ -406,425 +422,427 @@ export function SettingsPage({info}: SettingsPageProps) {
     return (
         <SettingsBody>
             <Stack>
-            <Section id="settings-language">
-                <SectionHeader>
-                    <h2>{t("Language")}</h2>
-                </SectionHeader>
+                <Section id="settings-language">
+                    <SectionHeader>
+                        <h2>{t("Language")}</h2>
+                    </SectionHeader>
 
-                <Card>
-                    <Field>
-                        <Label>{t("Language")}</Label>
-                        <Dropdown
-                            onChange={(value) => void changeLanguage(value)}
-                            options={[
-                                {value: SYSTEM_LOCALE, label: t("System default")},
-                                ...locales.map((locale) => ({
-                                    value: locale,
-                                    label: LOCALE_NAMES[locale] ?? locale,
-                                })),
-                            ]}
-                            value={language}
-                        />
-                        <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
-                    </Field>
-
-                </Card>
-            </Section>
-
-            <Section id="settings-startup">
-                <SectionHeader>
-                    <h2>{t("Start with the system")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <ToggleRow>
-                        <Toggle
-                            checked={startup?.enabled ?? false}
-                            disabled={startupBusy || !startup?.supported}
-                            hint={t("Create an autostart entry for this user.")}
-                            onChange={(value) => void changeStartup(value)}
-                            title={t("Start with the system")}
-                        />
-                        <Toggle
-                            checked={startHidden}
-                            hint={t("Open in the tray instead of showing the window.")}
-                            onChange={(value) => {
-                                setStartHidden(value);
-                                void persist({startHidden: value});
-                            }}
-                            title={t("Start hidden")}
-                        />
-                    </ToggleRow>
-                </Card>
-            </Section>
-
-            <Section id="settings-log-source">
-                <SectionHeader>
-                    <h2>{t("Log source")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("VRChat log folder")}</Label>
-                        <Row>
-                            <Input
-                                aria-label={t("VRChat log folder")}
-                                onBlur={() => void persist()}
-                                onChange={(event) => setDirectory(event.target.value)}
-                                placeholder={t("VRChat's log folder")}
-                                spellCheck={false}
-                                value={directory}
-                            />
-                        </Row>
-                        <Hint>
-                            {t("The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.")}
-                        </Hint>
-                    </Field>
-
-                    <Actions>
-                        <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
-                            <FolderIcon/>{t("Open folder")}
-                        </Button>
-                        <Button
-                            disabled={!defaultDirectory || trimmed === defaultDirectory}
-                            onClick={() => {
-                                setDirectory(defaultDirectory);
-                                void persist({logDirectory: defaultDirectory});
-                            }}
-                            type="button"
-                        >
-                            {t("Use VRChat's folder")}
-                        </Button>
-                    </Actions>
-                </Card>
-            </Section>
-
-            <Section id="settings-avatar-lookups">
-                <SectionHeader>
-                    <h2>{t("Avatar name lookups")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("API endpoints")}</Label>
-                        <Hint>
-                            {t("Tried in order; the first name wins. Each is called as")}
-                            <code> ?fileId=file_…</code> {t("and must answer with JSON containing a")}
-                            <code> name</code>.
-                        </Hint>
-
-                        <Providers>
-                            {providers.length === 0 && <EmptyHint>{t("No endpoint; avatar names stay unknown.")}</EmptyHint>}
-                            {providers.map((provider, index) => (
-                                <Row key={`${provider}-${index}`}>
-                                    <Input
-                                        aria-label={t("Avatar API endpoint")}
-                                        onBlur={() => void persist()}
-                                        onChange={(event) => {
-                                            const next = [...providers];
-                                            next[index] = event.target.value;
-                                            setProviders(next);
-                                        }}
-                                        spellCheck={false}
-                                        value={provider}
-                                    />
-                                    <Button
-                                        aria-label={t("Remove endpoint")}
-                                        onClick={() => removeProvider(index)}
-                                        type="button"
-                                    >
-                                        <TrashIcon/>
-                                    </Button>
-                                </Row>
-                            ))}
-                        </Providers>
-
-                        <Row>
-                            <Input
-                                aria-label={t("New avatar API endpoint")}
-                                onChange={(event) => setNewProvider(event.target.value)}
-                                placeholder="https://example.com/avatars"
-                                spellCheck={false}
-                                value={newProvider}
-                            />
-                            <Button disabled={newProvider.trim().length === 0} onClick={addProvider} type="button">
-                                {t("Add")}
-                            </Button>
-                        </Row>
-                    </Field>
-                </Card>
-            </Section>
-
-            <Section id="settings-osc">
-                <SectionHeader>
-                    <h2>{t("OSC")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("OSC port")}</Label>
-                        <Row>
-                            <Input
-                                aria-label={t("OSC port")}
-                                max={65535}
-                                min={1}
-                                onChange={(event) => changeOscPort(Number(event.target.value) || 9000)}
-                                type="number"
-                                value={oscPort}
-                            />
-                        </Row>
-                        <Hint>
-                            {t("VRChat listens on 9000 unless it was started with a custom --osc port.")}
-                        </Hint>
-                    </Field>
-
-                    <Field>
-                        <Row>
-                            <Button disabled={oscBusy} onClick={() => void runOscTest()} type="button">
-                                {oscBusy ? t("Testing…") : t("Test connection")}
-                            </Button>
-                            <Hint>{t("Opens VRChat's Quick Menu when OSC is working.")}</Hint>
-                        </Row>
-
-                        <Hint>
-                            {oscState?.listening
-                                ? oscState.detected > 0 && oscState.detected !== oscPort
-                                    ? t("VRChat reports port {detected}; AntiBot sends to {port}.",
-                                        {detected: oscState.detected, port: oscPort})
-                                    : t("VRChat is advertising OSC on port {port}.", {port: oscPort})
-                                : t("VRChat is not advertising OSC. Enable it in the Action Menu.")}
-                        </Hint>
-
-                        {oscResult && <Hint>{oscResult}</Hint>}
-                    </Field>
-                </Card>
-            </Section>
-
-            <Section id="settings-protection">
-                <SectionHeader>
-                    <h2>{t("Automatic protection")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("Threat threshold")}</Label>
-                        <Row>
-                            <Range
-                                max={100}
-                                min={0}
-                                onChange={(event) => changeThreshold(Number(event.target.value))}
-                                step={5}
-                                type="range"
-                                value={threshold}
-                            />
-                            <ThresholdValue>{threshold}</ThresholdValue>
-                        </Row>
-                        <Hint>
-                            {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
-                        </Hint>
-                    </Field>
-
-                    <ToggleRow>
-                        <Toggle
-                            checked={autoBlock}
-                            hint={t("Block the user. VRChat may then refuse to send them your avatar if it checks blocks on the server; it may also have no effect.")}
-                            onChange={(value) => {
-                                setAutoBlock(value);
-                                void persist({autoBlock: value});
-                            }}
-                            title={t("Block the user")}
-                        />
-                        <Toggle
-                            checked={autoAvatar}
-                            hint={t("Turn the user's avatar interactions off, so their avatar cannot trigger anything on yours.")}
-                            onChange={(value) => {
-                                setAutoAvatar(value);
-                                void persist({autoDisableAvatarInteraction: value});
-                            }}
-                            title={t("Disable avatar interactions")}
-                        />
-                        <Toggle
-                            checked={autoChat}
-                            hint={t("Hide the user's chat box, so they cannot flood or harass through it.")}
-                            onChange={(value) => {
-                                setAutoChat(value);
-                                void persist({autoHideChatBox: value});
-                            }}
-                            title={t("Hide the chat box")}
-                        />
-                        <Toggle
-                            checked={autoSafeMode}
-                            hint={t("Turn on VRChat's Safe Mode over OSC when a user reaches the threshold, so every non-friend avatar is replaced at once. It needs OSC enabled in VRChat and stays on until you turn it off.")}
-                            onChange={(value) => {
-                                setAutoSafeMode(value);
-                                void persist({autoSafeMode: value});
-                            }}
-                            requires={t("Requires OSC")}
-                            title={t("Safe Mode (OSC)")}
-                        />
-                        <Toggle
-                            checked={autoSafeAvatar}
-                            hint={t("Switch to another avatar over OSC when a user reaches the threshold. It is not switched back.")}
-                            onChange={(value) => {
-                                setAutoSafeAvatar(value);
-                                void persist({autoSafeAvatar: value});
-                            }}
-                            requires={t("Requires OSC")}
-                            title={t("Switch avatar (OSC)")}
-                        />
-                        <ToggleField>
-                            <Label>{t("Safe avatar id")}</Label>
-                            <SecretInput
-                                disabled={!autoSafeAvatar}
-                                onBlur={() => void persist()}
-                                onChange={setSafeAvatarId}
-                                placeholder="avtr_… or https://vrchat.com/home/avatar/avtr_…"
-                                value={safeAvatarId}
-                            />
-                            <Hint>
-                                {t("Only avatars in your favourites, your recents or your own uploads can be used. Paste the avatar's link or its id (avtr_…).")}
-                            </Hint>
-                        </ToggleField>
-                        <Toggle
-                            checked={autoClose}
-                            hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.") + " " +
-                                  t("When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.")}
-                            onChange={(value) => {
-                                setAutoClose(value);
-                                void persist({autoCloseVrchat: value});
-                            }}
-                            title={t("Close VRChat")}
-                        />
-                        <Toggle
-                            checked={skipCloseVr}
-                            disabled={!autoClose}
-                            hint={t("Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.")}
-                            onChange={(value) => {
-                                setSkipCloseVr(value);
-                                void persist({skipCloseInVr: value});
-                            }}
-                            title={t("Skip while in VR")}
-                        />
-                        <Toggle
-                            checked={autoReject}
-                            hint={t("Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and only the block, avatar interaction and chat box actions are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.")}
-                            onChange={(value) => {
-                                setAutoReject(value);
-                                void persist({autoRejectFriendRequests: value});
-                            }}
-                            title={t("Reject friend requests")}
-                        />
-                    </ToggleRow>
-                </Card>
-            </Section>
-
-            <Section id="settings-whitelist">
-                <SectionHeader>
-                    <h2>{t("Whitelist")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("Add a user")}</Label>
-                        <Row>
-                            <Input
-                                aria-label={t("Whitelisted user id")}
-                                onChange={(event) => setNewWhitelist(event.target.value)}
-                                placeholder="usr_… or https://vrchat.com/home/user/usr_…"
-                                spellCheck={false}
-                                value={newWhitelist}
-                            />
-                            <Button disabled={newWhitelist.trim().length === 0} onClick={addWhitelist} type="button">
-                                {t("Add")}
-                            </Button>
-                        </Row>
-                        <Hint>
-                            {t("Paste a VRChat user id or profile link. Whitelisted users get a white row and no automatic action.")}
-                        </Hint>
-                    </Field>
-
-                    <WhitelistList>
-                        {whitelist.length === 0 && <EmptyHint>{t("Nobody is whitelisted.")}</EmptyHint>}
-                        {whitelist.map((id) => {
-                            const person = people.find((item) => item.userId === id);
-                            return (
-                                <WhitelistRow key={id}>
-                                    <WhitelistAvatar $src={person?.iconUrl ?? person?.avatarUrl}/>
-                                    <WhitelistName>
-                                        <strong>{person?.name ?? id}</strong>
-                                        <span>{person?.trust ?? id}</span>
-                                    </WhitelistName>
-                                    <Button
-                                        aria-label={t("Remove from whitelist")}
-                                        onClick={() => removeWhitelist(id)}
-                                        type="button"
-                                    >
-                                        <TrashIcon/>
-                                    </Button>
-                                </WhitelistRow>
-                            );
-                        })}
-                    </WhitelistList>
-                </Card>
-            </Section>
-
-            {error && <ErrorText>{error}</ErrorText>}
-
-            <Section id="settings-build">
-                <SectionHeader>
-                    <h2>{t("Build")}</h2>
-                </SectionHeader>
-
-                <Card>
-                    <Field>
-                        <Label>{t("Version")}</Label>
-                        <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</Value>
-                        <Hint>{t("Read from the executable the interface is running in.")}</Hint>
-                    </Field>
-
-                    <Actions>
-                        <Button disabled={updateBusy} onClick={() => void checkUpdates()} type="button">
-                            {updateBusy ? t("Checking…") : t("Check for updates")}
-                        </Button>
-                        {updateResult?.available && (
-                            <Button onClick={() => void openReleasePage()} type="button">
-                                {t("Open release page")}
-                            </Button>
-                        )}
-                        {updateResult?.available && info?.platform === "windows" && (
-                            <Button onClick={() => void startUpdate()} type="button">
-                                <DownloadIcon/>{t("Download and install")}
-                            </Button>
-                        )}
-                        <Button onClick={() => void revealLogs()} type="button">
-                            <FolderIcon/>{t("Open log folder")}
-                        </Button>
-                    </Actions>
-
-                    {updateResult && (updateResult.available
-                        ? <UpdateAvailable>
-                            {t("Version {version} is available.", {version: updateResult.latest})}
-                        </UpdateAvailable>
-                        : <Hint>
-                            {t("Up to date: {version} is the newest version.", {version: updateResult.current})}
-                        </Hint>)}
-
-                    {info?.logDirectory && (
+                    <Card>
                         <Field>
-                            <Label>{t("Log files are written to:")}</Label>
-                            <Value $mono>{info.logDirectory}</Value>
+                            <Label>{t("Language")}</Label>
+                            <Dropdown
+                                onChange={(value) => void changeLanguage(value)}
+                                options={[
+                                    {value: SYSTEM_LOCALE, label: t("System default")},
+                                    ...locales.map((locale) => ({
+                                        value: locale,
+                                        label: LOCALE_NAMES[locale] ?? locale,
+                                    })),
+                                ]}
+                                value={language}
+                            />
+                            <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
                         </Field>
-                    )}
-                </Card>
-            </Section>
 
-            <AttributionLink onClick={() => setAttributionOpen(true)} type="button">
-                {t("Open source attribution")}
-            </AttributionLink>
+                    </Card>
+                </Section>
 
-            <Suspense fallback={null}>
-                {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
-            </Suspense>
+                <Section id="settings-startup">
+                    <SectionHeader>
+                        <h2>{t("Start with the system")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <ToggleRow>
+                            <Toggle
+                                checked={startup?.enabled ?? false}
+                                disabled={startupBusy || !startup?.supported}
+                                hint={t("Create an autostart entry for this user.")}
+                                onChange={(value) => void changeStartup(value)}
+                                title={t("Start with the system")}
+                            />
+                            <Toggle
+                                checked={startHidden}
+                                hint={t("Open in the tray instead of showing the window.")}
+                                onChange={(value) => {
+                                    setStartHidden(value);
+                                    void persist({startHidden: value});
+                                }}
+                                title={t("Start hidden")}
+                            />
+                        </ToggleRow>
+                    </Card>
+                </Section>
+
+                <Section id="settings-log-source">
+                    <SectionHeader>
+                        <h2>{t("Log source")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("VRChat log folder")}</Label>
+                            <Row>
+                                <Input
+                                    aria-label={t("VRChat log folder")}
+                                    onBlur={() => void persist()}
+                                    onChange={(event) => setDirectory(event.target.value)}
+                                    placeholder={t("VRChat's log folder")}
+                                    spellCheck={false}
+                                    value={directory}
+                                />
+                            </Row>
+                            <Hint>
+                                {t("The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.")}
+                            </Hint>
+                        </Field>
+
+                        <Actions>
+                            <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
+                                <FolderIcon/>{t("Open folder")}
+                            </Button>
+                            <Button
+                                disabled={!defaultDirectory || trimmed === defaultDirectory}
+                                onClick={() => {
+                                    setDirectory(defaultDirectory);
+                                    void persist({logDirectory: defaultDirectory});
+                                }}
+                                type="button"
+                            >
+                                {t("Use VRChat's folder")}
+                            </Button>
+                        </Actions>
+                    </Card>
+                </Section>
+
+                <Section id="settings-avatar-lookups">
+                    <SectionHeader>
+                        <h2>{t("Avatar name lookups")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("API endpoints")}</Label>
+                            <Hint>
+                                {t("Tried in order; the first name wins. Each is called as")}
+                                <code> ?fileId=file_…</code> {t("and must answer with JSON containing a")}
+                                <code> name</code>.
+                            </Hint>
+
+                            <Providers>
+                                {providers.length === 0 &&
+                                    <EmptyHint>{t("No endpoint; avatar names stay unknown.")}</EmptyHint>}
+                                {providers.map((provider, index) => (
+                                    <Row key={`${provider}-${index}`}>
+                                        <Input
+                                            aria-label={t("Avatar API endpoint")}
+                                            onBlur={() => void persist()}
+                                            onChange={(event) => {
+                                                const next = [...providers];
+                                                next[index] = event.target.value;
+                                                setProviders(next);
+                                            }}
+                                            spellCheck={false}
+                                            value={provider}
+                                        />
+                                        <Button
+                                            aria-label={t("Remove endpoint")}
+                                            onClick={() => removeProvider(index)}
+                                            type="button"
+                                        >
+                                            <TrashIcon/>
+                                        </Button>
+                                    </Row>
+                                ))}
+                            </Providers>
+
+                            <Row>
+                                <Input
+                                    aria-label={t("New avatar API endpoint")}
+                                    onChange={(event) => setNewProvider(event.target.value)}
+                                    placeholder="https://example.com/avatars"
+                                    spellCheck={false}
+                                    value={newProvider}
+                                />
+                                <Button disabled={newProvider.trim().length === 0} onClick={addProvider} type="button">
+                                    {t("Add")}
+                                </Button>
+                            </Row>
+                        </Field>
+                    </Card>
+                </Section>
+
+                <Section id="settings-osc">
+                    <SectionHeader>
+                        <h2>{t("OSC")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("OSC port")}</Label>
+                            <Row>
+                                <Input
+                                    aria-label={t("OSC port")}
+                                    max={65535}
+                                    min={1}
+                                    onChange={(event) => changeOscPort(Number(event.target.value) || 9000)}
+                                    type="number"
+                                    value={oscPort}
+                                />
+                            </Row>
+                            <Hint>
+                                {t("VRChat listens on 9000 unless it was started with a custom --osc port.")}
+                            </Hint>
+                        </Field>
+
+                        <Field>
+                            <Row>
+                                <Button disabled={oscBusy} onClick={() => void runOscTest()} type="button">
+                                    {oscBusy ? t("Testing…") : t("Test connection")}
+                                </Button>
+                                <Hint>{t("Opens VRChat's Quick Menu when OSC is working.")}</Hint>
+                            </Row>
+
+                            <Hint>
+                                {oscState?.listening
+                                    ? oscState.detected > 0 && oscState.detected !== oscPort
+                                        ? t("VRChat reports port {detected}; AntiBot sends to {port}.",
+                                            {detected: oscState.detected, port: oscPort})
+                                        : t("VRChat is advertising OSC on port {port}.", {port: oscPort})
+                                    : t("VRChat is not advertising OSC. Enable it in the Action Menu.")}
+                            </Hint>
+
+                            {oscResult && <Hint>{oscResult}</Hint>}
+                        </Field>
+                    </Card>
+                </Section>
+
+                <Section id="settings-protection">
+                    <SectionHeader>
+                        <h2>{t("Automatic protection")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("Threat threshold")}</Label>
+                            <Row>
+                                <Range
+                                    max={100}
+                                    min={0}
+                                    onChange={(event) => changeThreshold(Number(event.target.value))}
+                                    step={5}
+                                    type="range"
+                                    value={threshold}
+                                />
+                                <ThresholdValue>{threshold}</ThresholdValue>
+                            </Row>
+                            <Hint>
+                                {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
+                            </Hint>
+                        </Field>
+
+                        <ToggleRow>
+                            <Toggle
+                                checked={autoBlock}
+                                hint={t("Block the user. VRChat may then refuse to send them your avatar if it checks blocks on the server; it may also have no effect.")}
+                                onChange={(value) => {
+                                    setAutoBlock(value);
+                                    void persist({autoBlock: value});
+                                }}
+                                title={t("Block the user")}
+                            />
+                            <Toggle
+                                checked={autoAvatar}
+                                hint={t("Turn the user's avatar interactions off, so their avatar cannot trigger anything on yours.")}
+                                onChange={(value) => {
+                                    setAutoAvatar(value);
+                                    void persist({autoDisableAvatarInteraction: value});
+                                }}
+                                title={t("Disable avatar interactions")}
+                            />
+                            <Toggle
+                                checked={autoChat}
+                                hint={t("Hide the user's chat box, so they cannot flood or harass through it.")}
+                                onChange={(value) => {
+                                    setAutoChat(value);
+                                    void persist({autoHideChatBox: value});
+                                }}
+                                title={t("Hide the chat box")}
+                            />
+                            <Toggle
+                                checked={autoSafeMode}
+                                hint={t("Turn on VRChat's Safe Mode over OSC when a user reaches the threshold, so every non-friend avatar is replaced at once. It needs OSC enabled in VRChat and stays on until you turn it off.")}
+                                onChange={(value) => {
+                                    setAutoSafeMode(value);
+                                    void persist({autoSafeMode: value});
+                                }}
+                                requires={t("Requires OSC")}
+                                title={t("Safe Mode (OSC)")}
+                            />
+                            <Toggle
+                                checked={autoSafeAvatar}
+                                hint={t("Switch to another avatar over OSC when a user reaches the threshold. It is not switched back.")}
+                                onChange={(value) => {
+                                    setAutoSafeAvatar(value);
+                                    void persist({autoSafeAvatar: value});
+                                }}
+                                requires={t("Requires OSC")}
+                                title={t("Switch avatar (OSC)")}
+                            />
+                            <ToggleField>
+                                <Label>{t("Safe avatar id")}</Label>
+                                <SecretInput
+                                    disabled={!autoSafeAvatar}
+                                    onBlur={() => void persist()}
+                                    onChange={setSafeAvatarId}
+                                    placeholder="avtr_… or https://vrchat.com/home/avatar/avtr_…"
+                                    value={safeAvatarId}
+                                />
+                                <Hint>
+                                    {t("Only avatars in your favourites, your recents or your own uploads can be used. Paste the avatar's link or its id (avtr_…).")}
+                                </Hint>
+                            </ToggleField>
+                            <Toggle
+                                checked={autoClose}
+                                hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.") + " " +
+                                    t("When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.")}
+                                onChange={(value) => {
+                                    setAutoClose(value);
+                                    void persist({autoCloseVrchat: value});
+                                }}
+                                title={t("Close VRChat")}
+                            />
+                            <Toggle
+                                checked={skipCloseVr}
+                                disabled={!autoClose}
+                                hint={t("Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.")}
+                                onChange={(value) => {
+                                    setSkipCloseVr(value);
+                                    void persist({skipCloseInVr: value});
+                                }}
+                                title={t("Skip while in VR")}
+                            />
+                            <Toggle
+                                checked={autoReject}
+                                hint={t("Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and only the block, avatar interaction and chat box actions are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.")}
+                                onChange={(value) => {
+                                    setAutoReject(value);
+                                    void persist({autoRejectFriendRequests: value});
+                                }}
+                                title={t("Reject friend requests")}
+                            />
+                        </ToggleRow>
+                    </Card>
+                </Section>
+
+                <Section id="settings-whitelist">
+                    <SectionHeader>
+                        <h2>{t("Whitelist")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("Add a user")}</Label>
+                            <Row>
+                                <Input
+                                    aria-label={t("Whitelisted user id")}
+                                    onChange={(event) => setNewWhitelist(event.target.value)}
+                                    placeholder="usr_… or https://vrchat.com/home/user/usr_…"
+                                    spellCheck={false}
+                                    value={newWhitelist}
+                                />
+                                <Button disabled={newWhitelist.trim().length === 0} onClick={addWhitelist}
+                                        type="button">
+                                    {t("Add")}
+                                </Button>
+                            </Row>
+                            <Hint>
+                                {t("Paste a VRChat user id or profile link. Whitelisted users get a white row and no automatic action.")}
+                            </Hint>
+                        </Field>
+
+                        <WhitelistList>
+                            {whitelist.length === 0 && <EmptyHint>{t("Nobody is whitelisted.")}</EmptyHint>}
+                            {whitelist.map((id) => {
+                                const person = people.find((item) => item.userId === id);
+                                return (
+                                    <WhitelistRow key={id}>
+                                        <WhitelistAvatar $src={person?.iconUrl ?? person?.avatarUrl}/>
+                                        <WhitelistName>
+                                            <strong>{person?.name ?? id}</strong>
+                                            <span>{person?.trust ?? id}</span>
+                                        </WhitelistName>
+                                        <Button
+                                            aria-label={t("Remove from whitelist")}
+                                            onClick={() => removeWhitelist(id)}
+                                            type="button"
+                                        >
+                                            <TrashIcon/>
+                                        </Button>
+                                    </WhitelistRow>
+                                );
+                            })}
+                        </WhitelistList>
+                    </Card>
+                </Section>
+
+                {error && <ErrorText>{error}</ErrorText>}
+
+                <Section id="settings-build">
+                    <SectionHeader>
+                        <h2>{t("Build")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("Version")}</Label>
+                            <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</Value>
+                            <Hint>{t("Read from the executable the interface is running in.")}</Hint>
+                        </Field>
+
+                        <Actions>
+                            <Button disabled={updateBusy} onClick={() => void checkUpdates()} type="button">
+                                {updateBusy ? t("Checking…") : t("Check for updates")}
+                            </Button>
+                            {updateResult?.available && (
+                                <Button onClick={() => void openReleasePage()} type="button">
+                                    {t("Open release page")}
+                                </Button>
+                            )}
+                            {updateResult?.available && info?.platform === "windows" && (
+                                <Button onClick={() => void startUpdate()} type="button">
+                                    <DownloadIcon/>{t("Download and install")}
+                                </Button>
+                            )}
+                            <Button onClick={() => void revealLogs()} type="button">
+                                <FolderIcon/>{t("Open log folder")}
+                            </Button>
+                        </Actions>
+
+                        {updateResult && (updateResult.available
+                            ? <UpdateAvailable>
+                                {t("Version {version} is available.", {version: updateResult.latest})}
+                            </UpdateAvailable>
+                            : <Hint>
+                                {t("Up to date: {version} is the newest version.", {version: updateResult.current})}
+                            </Hint>)}
+
+                        {info?.logDirectory && (
+                            <Field>
+                                <Label>{t("Log files are written to:")}</Label>
+                                <Value $mono>{info.logDirectory}</Value>
+                            </Field>
+                        )}
+                    </Card>
+                </Section>
+
+                <AttributionLink onClick={() => setAttributionOpen(true)} type="button">
+                    {t("Open source attribution")}
+                </AttributionLink>
+
+                <Suspense fallback={null}>
+                    {attributionOpen && <AttributionPage onClose={() => setAttributionOpen(false)}/>}
+                </Suspense>
             </Stack>
 
             <SettingsNav>

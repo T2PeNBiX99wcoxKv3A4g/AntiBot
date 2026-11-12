@@ -106,7 +106,11 @@ internal sealed record AuthAccountRequest(string Dir);
 ///     Body for <c>auth.switch</c>. A password-protected session is not opened here; the interface asks
 ///     for the password first, so a cancelled switch leaves the current account untouched.
 /// </summary>
-internal sealed record SwitchPayload(bool Ok, bool NeedsPassword, string? Error, AuthPayload? Auth,
+internal sealed record SwitchPayload(
+    bool Ok,
+    bool NeedsPassword,
+    string? Error,
+    AuthPayload? Auth,
     bool NeedsLogin = false);
 
 /// <summary>Payload for <c>auth.storage.save</c>; <c>mode</c> is <c>none</c>, <c>password</c> or <c>system</c>.</summary>
@@ -185,12 +189,24 @@ internal sealed record BatchProgressPayload(bool Running, int Done, int Total, i
 internal sealed record BatchOutcomePayload(string UserId, bool Ok, string? Error);
 
 /// <summary>Body for <c>batch.finished</c> and <c>batch.state</c>: the last run and its outcome.</summary>
-internal sealed record BatchFinishedPayload(bool Cancelled, int Done, int Total, int Failed, string? Error,
+internal sealed record BatchFinishedPayload(
+    bool Cancelled,
+    int Done,
+    int Total,
+    int Failed,
+    string? Error,
     BatchOutcomePayload[] Outcomes);
 
 /// <summary>Body for <c>batch.state</c>: the running batch, or the last one that finished.</summary>
-internal sealed record BatchStatePayload(bool Running, int Done, int Total, int Failed, bool Cancelled,
-    string? Error, BatchOutcomePayload[] Outcomes, string[] Actions);
+internal sealed record BatchStatePayload(
+    bool Running,
+    int Done,
+    int Total,
+    int Failed,
+    bool Cancelled,
+    string? Error,
+    BatchOutcomePayload[] Outcomes,
+    string[] Actions);
 
 /// <summary>Payload for <c>user.describe</c>: the user to open in the details panel.</summary>
 internal sealed record UserDescribeRequest(string UserId, string DisplayName);

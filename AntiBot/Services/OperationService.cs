@@ -2,7 +2,6 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -12,10 +11,7 @@ internal sealed class OperationService : Singleton<OperationService>
     private readonly Lock _gate = new();
     private string _pushed = "";
 
-    public OperationService()
-    {
-        NativeBridge.MessageReceived += HandleMessageAsync;
-    }
+    public OperationService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     private async Task<NativeResponse?> HandleMessageAsync(NativeContext context)
     {
@@ -73,7 +69,7 @@ internal sealed class OperationService : Singleton<OperationService>
             "block" => ("block", "unblock"),
             "avatarInteractionOff" => ("interactOff", "avatarInteractionOn"),
             "chatBoxHidden" => ("muteChat", "chatBoxShown"),
-            _ => ((string?)null, (string?)null)
+            _ => (null, null)
         };
 
         if (type is null)
@@ -98,7 +94,10 @@ internal sealed class OperationService : Singleton<OperationService>
         [
             .. entries.Select(entry => entry.AvatarUrl is { Length: > 0 }
                 ? entry
-                : entry with { AvatarUrl = AvatarOf(entry.UserId) })
+                : entry with
+                {
+                    AvatarUrl = AvatarOf(entry.UserId)
+                })
         ];
     }
 

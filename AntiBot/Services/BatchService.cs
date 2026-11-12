@@ -2,7 +2,6 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -180,10 +179,8 @@ internal sealed class BatchService : Singleton<BatchService>
                     var success = await ModerationQueue.Instance.ModerateAsync(id, api, token);
 
                     if (success)
-                    {
                         await OperationService.Instance.LogAsync(kind, id, user.Name,
                             $"batch · {user.Threat}", user.IconUrl ?? user.AvatarUrl, false);
-                    }
                     else
                     {
                         ok = false;

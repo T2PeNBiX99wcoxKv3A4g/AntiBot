@@ -4,8 +4,6 @@ using System.Text;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
-using PhotinoNetUtils.Utils;
-using Serilog;
 
 namespace AntiBot.Services;
 
@@ -21,12 +19,9 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
     private const string OscLine = "of type OSC on ";
     private const string AvatarChange = "/avatar/change";
+    private readonly UdpClient? _receive;
 
     private readonly UdpClient _udp = new();
-    private readonly UdpClient? _receive;
-    private string? _currentAvatar;
-    private int _detectedPort;
-    private bool _oscListening;
 
     public VrchatOscService()
     {
@@ -41,16 +36,16 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     }
 
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
-    public bool IsListening => _oscListening;
+    public bool IsListening { get; private set; }
 
     /// <summary>The avatar VRChat last reported wearing, or null while it has not said.</summary>
-    public string? CurrentAvatar => _currentAvatar;
+    public string? CurrentAvatar { get; private set; }
 
     /// <summary>The port messages are sent to, as configured; VRChat listens on 9000 by default.</summary>
     public int Port => SettingsService.Instance.Current.OscPort;
 
     /// <summary>The port VRChat itself advertised in its log, or 0 when it has not said.</summary>
-    public int DetectedPort => _detectedPort;
+    public int DetectedPort { get; private set; }
 
     /// <summary>Whether VRChat's own OSC output is being received, which tells the current avatar.</summary>
     public bool IsReceiving => _receive is not null;
@@ -95,7 +90,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// </summary>
     public bool EnableSafeMode()
     {
-        if (!_oscListening)
+        if (!IsListening)
             return false;
 
         try
@@ -118,11 +113,11 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     /// </summary>
     public bool ChangeAvatar(string? avatarId)
     {
-        if (!_oscListening || avatarId is not { Length: > 0 } || !avatarId.StartsWith("avtr_", StringComparison.Ordinal))
+        if (!IsListening || avatarId is not { Length: > 0 } || !avatarId.StartsWith("avtr_", StringComparison.Ordinal))
             return false;
 
         // VRChat reports the avatar it loads, so asking for the one already worn would only reload it.
-        if (string.Equals(_currentAvatar, avatarId, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(CurrentAvatar, avatarId, StringComparison.OrdinalIgnoreCase))
             return false;
 
         try
@@ -155,7 +150,6 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private async Task ReceiveAsync()
     {
         while (_receive is not null)
-        {
             try
             {
                 var packet = await _receive.ReceiveAsync();
@@ -166,7 +160,6 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
                 Log.Debug(ex, "Stopped reading VRChat's OSC output");
                 return;
             }
-        }
     }
 
     private void Read(byte[] data)
@@ -177,7 +170,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
         var tags = Text(data, offset, out offset);
         if (tags.StartsWith(",s", StringComparison.Ordinal))
-            _currentAvatar = Text(data, offset, out _);
+            CurrentAvatar = Text(data, offset, out _);
     }
 
     /// <summary>Reads one OSC string: null-terminated ASCII, padded to a multiple of four.</summary>
@@ -190,7 +183,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             return "";
         }
 
-        next = (end + 4) & ~3;
+        next = end + 4 & ~3;
         return Encoding.ASCII.GetString(data, offset, end - offset);
     }
 
@@ -211,7 +204,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     private static byte[] Padded(string value)
     {
         var bytes = Encoding.ASCII.GetBytes(value);
-        var padded = new byte[(bytes.Length + 4) & ~3];
+        var padded = new byte[bytes.Length + 4 & ~3];
         bytes.CopyTo(padded, 0);
         return padded;
     }
@@ -227,8 +220,8 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
                 var port = message[(message.IndexOf(OscLine, StringComparison.Ordinal) + OscLine.Length)..].Trim();
                 if (int.TryParse(port, out var value))
                 {
-                    _detectedPort = value;
-                    _oscListening = true;
+                    DetectedPort = value;
+                    IsListening = true;
                 }
             }
         }

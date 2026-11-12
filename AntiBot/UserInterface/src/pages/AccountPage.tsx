@@ -5,9 +5,8 @@ import {
     type AccountSummary,
     type AuthSnapshot,
     type AuthStorage,
-    type DeviceCode,
-    type SavedAccount,
     cancelSignIn,
+    type DeviceCode,
     forgetSavedPassword,
     getAuth,
     login,
@@ -15,9 +14,10 @@ import {
     onAuthChanged,
     pollDevice,
     removeAccount,
+    type SavedAccount,
     saveStorage,
-    signInWithSavedPassword,
     signedOut,
+    signInWithSavedPassword,
     startDevice,
     switchAccount,
     unlock,
@@ -196,7 +196,8 @@ export function AccountPage({initial, ready = false, expired = false}: {
     const cancelAdd = () => {
         setAdding(false);
         setError("");
-        void cancelSignIn().then(setAuth, () => {});
+        void cancelSignIn().then(setAuth, () => {
+        });
     };
 
     // Until the host answers, drawing the signed-out page would flash it over a signed-in account.
@@ -210,7 +211,7 @@ export function AccountPage({initial, ready = false, expired = false}: {
                               onBrowse={hasAccounts ? () => setBrowsing(true) : undefined}/>;
     else if (auth.state === "twoFactor")
         content = <TwoFactorForm auth={auth} busy={busy} error={error} run={run}
-                                onCancel={hasAccounts ? cancelAdd : undefined}/>;
+                                 onCancel={hasAccounts ? cancelAdd : undefined}/>;
     else if (showAdd)
         content = <LoginForm auth={auth} busy={busy} error={error} onCancel={hasAccounts ? cancelAdd : undefined}
                              onForgetSaved={(account) => void forgetSaved(account)}
@@ -918,130 +919,130 @@ function StorageChoice({auth, busy, error, run}: {
     return (
         <StorageOverlay>
             <StoragePanel aria-modal="true" role="dialog">
-            <CardHead>
-                <ShieldIcon size={20}/>
-                <div>
-                    <h2>{t("Keep the session between launches")}</h2>
-                    <p>
-                        {t("Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.")}
-                    </p>
-                </div>
-            </CardHead>
+                <CardHead>
+                    <ShieldIcon size={20}/>
+                    <div>
+                        <h2>{t("Keep the session between launches")}</h2>
+                        <p>
+                            {t("Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.")}
+                        </p>
+                    </div>
+                </CardHead>
 
-            <Options>
-                <Option
-                    $active={mode === "software"}
-                    $disabled={!softwareAvailable}
-                    onClick={() => softwareAvailable && setMode("software")}
-                    type="button"
-                >
-                    <OptionHead>
-                        <strong>{t("Software key")}</strong>
-                        <Tag>{t("obfuscation")}</Tag>
-                        <Safety $tone="weak">{t("weak")}</Safety>
-                        <Platforms>{t("Linux")}</Platforms>
-                    </OptionHead>
-                    <p>{t("AES-256-GCM with a key file next to the session; obfuscation only, not real protection.")}</p>
-                </Option>
+                <Options>
+                    <Option
+                        $active={mode === "software"}
+                        $disabled={!softwareAvailable}
+                        onClick={() => softwareAvailable && setMode("software")}
+                        type="button"
+                    >
+                        <OptionHead>
+                            <strong>{t("Software key")}</strong>
+                            <Tag>{t("obfuscation")}</Tag>
+                            <Safety $tone="weak">{t("weak")}</Safety>
+                            <Platforms>{t("Linux")}</Platforms>
+                        </OptionHead>
+                        <p>{t("AES-256-GCM with a key file next to the session; obfuscation only, not real protection.")}</p>
+                    </Option>
 
-                <Option
-                    $active={mode === "system"}
-                    $disabled={!systemAvailable}
-                    onClick={() => systemAvailable && setMode("system")}
-                    type="button"
-                >
-                    <OptionHead>
-                        <strong>{systemName}</strong>
-                        <Tag>{t("encrypted")}</Tag>
-                        <Safety $tone="fair">{t("fair")}</Safety>
-                        <Platforms>
-                            {systemName === "Windows DPAPI" ? t("Windows") :
-                                systemName === "System keyring" ? t("Linux") : t("Windows · Linux")}
-                        </Platforms>
-                    </OptionHead>
-                    <p>
-                        {systemName === "Windows DPAPI"
-                            ? t("Encrypted with Windows DPAPI for your account; unlocks automatically.")
-                            : t("Held in the desktop keyring; unlocks with your login session.")}
-                    </p>
-                </Option>
+                    <Option
+                        $active={mode === "system"}
+                        $disabled={!systemAvailable}
+                        onClick={() => systemAvailable && setMode("system")}
+                        type="button"
+                    >
+                        <OptionHead>
+                            <strong>{systemName}</strong>
+                            <Tag>{t("encrypted")}</Tag>
+                            <Safety $tone="fair">{t("fair")}</Safety>
+                            <Platforms>
+                                {systemName === "Windows DPAPI" ? t("Windows") :
+                                    systemName === "System keyring" ? t("Linux") : t("Windows · Linux")}
+                            </Platforms>
+                        </OptionHead>
+                        <p>
+                            {systemName === "Windows DPAPI"
+                                ? t("Encrypted with Windows DPAPI for your account; unlocks automatically.")
+                                : t("Held in the desktop keyring; unlocks with your login session.")}
+                        </p>
+                    </Option>
 
-                <Option
-                    $active={mode === "tpm"}
-                    $disabled={!tpmAvailable}
-                    onClick={() => tpmAvailable && setMode("tpm")}
-                    type="button"
-                >
-                    <OptionHead>
-                        <strong>{t("TPM")}</strong>
-                        <Tag>{t("no prompt")}</Tag>
-                        <Safety $tone="good">{t("good")}</Safety>
-                        <Platforms>{t("Windows · Linux")}</Platforms>
-                    </OptionHead>
-                    <p>{t("AES key wrapped by this machine's TPM; unlocks automatically.")}</p>
-                </Option>
+                    <Option
+                        $active={mode === "tpm"}
+                        $disabled={!tpmAvailable}
+                        onClick={() => tpmAvailable && setMode("tpm")}
+                        type="button"
+                    >
+                        <OptionHead>
+                            <strong>{t("TPM")}</strong>
+                            <Tag>{t("no prompt")}</Tag>
+                            <Safety $tone="good">{t("good")}</Safety>
+                            <Platforms>{t("Windows · Linux")}</Platforms>
+                        </OptionHead>
+                        <p>{t("AES key wrapped by this machine's TPM; unlocks automatically.")}</p>
+                    </Option>
 
-                <Option
-                    $active={mode === "hello"}
-                    $disabled={!helloAvailable}
-                    onClick={() => helloAvailable && setMode("hello")}
-                    type="button"
-                >
-                    <OptionHead>
-                        <strong>{t("Windows Hello")}</strong>
-                        <Tag>{t("PIN / biometrics")}</Tag>
-                        <Safety $tone="strong">{t("strong")}</Safety>
-                        <Platforms>{t("Windows")}</Platforms>
-                    </OptionHead>
-                    <p>{t("Windows Hello confirms it is you before unlocking.")}</p>
-                </Option>
+                    <Option
+                        $active={mode === "hello"}
+                        $disabled={!helloAvailable}
+                        onClick={() => helloAvailable && setMode("hello")}
+                        type="button"
+                    >
+                        <OptionHead>
+                            <strong>{t("Windows Hello")}</strong>
+                            <Tag>{t("PIN / biometrics")}</Tag>
+                            <Safety $tone="strong">{t("strong")}</Safety>
+                            <Platforms>{t("Windows")}</Platforms>
+                        </OptionHead>
+                        <p>{t("Windows Hello confirms it is you before unlocking.")}</p>
+                    </Option>
 
-                <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
-                    <OptionHead>
-                        <strong>{t("Password")}</strong>
-                        <Tag>{t("asks every launch")}</Tag>
-                        <Safety $tone="strong">{t("strong")}</Safety>
-                        <Platforms>{t("Windows · Linux")}</Platforms>
-                    </OptionHead>
-                    <p>{t("AES-256-GCM with a key derived from your password; asked each launch.")}</p>
-                </Option>
+                    <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
+                        <OptionHead>
+                            <strong>{t("Password")}</strong>
+                            <Tag>{t("asks every launch")}</Tag>
+                            <Safety $tone="strong">{t("strong")}</Safety>
+                            <Platforms>{t("Windows · Linux")}</Platforms>
+                        </OptionHead>
+                        <p>{t("AES-256-GCM with a key derived from your password; asked each launch.")}</p>
+                    </Option>
 
-                <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
-                    <OptionHead>
-                        <strong>{t("Do not remember")}</strong>
-                        <Tag>{t("nothing on disk")}</Tag>
-                        <Safety $tone="safest">{t("safest")}</Safety>
-                        <Platforms>{t("Windows · Linux")}</Platforms>
-                    </OptionHead>
-                    <p>{t("Nothing is written; the next launch signs in again.")}</p>
-                </Option>
-            </Options>
+                    <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
+                        <OptionHead>
+                            <strong>{t("Do not remember")}</strong>
+                            <Tag>{t("nothing on disk")}</Tag>
+                            <Safety $tone="safest">{t("safest")}</Safety>
+                            <Platforms>{t("Windows · Linux")}</Platforms>
+                        </OptionHead>
+                        <p>{t("Nothing is written; the next launch signs in again.")}</p>
+                    </Option>
+                </Options>
 
-            {mode === "password" && (
-                <Field>
-                    <Label htmlFor="storage-password">{t("Password for this session")}</Label>
-                    <PasswordInput
-                        autoComplete="current-password"
-                        id="storage-password"
-                        onChange={setPassword}
-                        value={password}
-                    />
-                    <PasswordInput
-                        autoComplete="current-password"
-                        onChange={setConfirm}
-                        placeholder={t("repeat the password")}
-                        value={confirm}
-                    />
-                </Field>
-            )}
+                {mode === "password" && (
+                    <Field>
+                        <Label htmlFor="storage-password">{t("Password for this session")}</Label>
+                        <PasswordInput
+                            autoComplete="current-password"
+                            id="storage-password"
+                            onChange={setPassword}
+                            value={password}
+                        />
+                        <PasswordInput
+                            autoComplete="current-password"
+                            onChange={setConfirm}
+                            placeholder={t("repeat the password")}
+                            value={confirm}
+                        />
+                    </Field>
+                )}
 
-            {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
+                {(localError || error) && <ErrorText>{localError || error}</ErrorText>}
 
-            <Actions>
-                <Primary disabled={busy || !signedIn} onClick={save} type="button">
-                    {busy ? t("Saving…") : t("Save")}
-                </Primary>
-            </Actions>
+                <Actions>
+                    <Primary disabled={busy || !signedIn} onClick={save} type="button">
+                        {busy ? t("Saving…") : t("Save")}
+                    </Primary>
+                </Actions>
             </StoragePanel>
         </StorageOverlay>
     );
@@ -1644,7 +1645,6 @@ const AccountRow = styled.div<{ $active: boolean; $clickable: boolean }>`
             background: var(--bg-card-hover);
         }
     `}
-
     &:focus-visible {
         outline: 2px solid var(--border-color-focus);
         outline-offset: 1px;

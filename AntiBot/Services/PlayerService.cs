@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -90,7 +89,10 @@ internal sealed class PlayerService : Singleton<PlayerService>
             // the next full lookup overwrites this minimal row.
             var updated = current is null
                 ? new(userId, "", null, null, null, null, null, null, bio, null, [], null, null, null)
-                : current with { Bio = bio };
+                : current with
+                {
+                    Bio = bio
+                };
 
             _profiles[userId] = updated;
             await Database.Instance.SavePlayerAsync(updated, token);
@@ -183,7 +185,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
 
         try
         {
-            PlayerProfile? profile = skipProfile ? Get(userId) : null;
+            var profile = skipProfile ? Get(userId) : null;
 
             // The roster already carries the avatar image, so that lookup starts now; the profile
             // supplies the other five fields (and the avatar too when the roster has no image).

@@ -20,6 +20,7 @@ internal static partial class ThreatScoring
     ///     further year subtracts, down to a floor at five years.
     /// </summary>
     private const int AgeMaxDays = 7;
+
     private const int AgeMonthDays = 30;
     private const int AgeQuarterDays = 90;
     private const int AgeHalfYearDays = 180;
@@ -28,6 +29,7 @@ internal static partial class ThreatScoring
     private const int AgeThreeYearsDays = 1095;
     private const int AgeFourYearsDays = 1460;
     private const int AgeFiveYearsDays = 1825;
+
     /// <summary>Wording that only adds the small "something is off" weight.</summary>
     private static readonly string[] FuzzyTerms =
     [
@@ -211,7 +213,10 @@ internal static partial class ThreatScoring
     private static (int Score, ThreatReason[] Reasons) TextScore(PlayerProfile? profile)
     {
         var text = Normalize(string.Join('\n',
-            new[] { profile?.StatusDescription, profile?.Pronouns, profile?.Bio }
+            new[]
+                {
+                    profile?.StatusDescription, profile?.Pronouns, profile?.Bio
+                }
                 .Where(value => !string.IsNullOrWhiteSpace(value))));
 
         if (text.Length == 0)

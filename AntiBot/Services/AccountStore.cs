@@ -3,8 +3,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using AntiBot.Messaging;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 using Serilog;
 
 namespace AntiBot.Services;
@@ -29,17 +27,20 @@ internal static class AccountStore
     private static readonly HttpClient Http = CreateHttp();
     private static readonly ConcurrentDictionary<string, string?> Avatars = new();
 
+    public static string Root => Path.Combine(Constants.DataDirectory, "accounts");
+
+    private static string IndexPath => Path.Combine(Root, "index.json");
+
     private static HttpClient CreateHttp()
     {
-        var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+        var client = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(15)
+        };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"AntiBot/{AppInfoService.Version} ({AppInfoService.Platform})");
         return client;
     }
-
-    public static string Root => Path.Combine(Constants.DataDirectory, "accounts");
-
-    private static string IndexPath => Path.Combine(Root, "index.json");
 
     /// <summary>A stable folder name for an account id, without writing the id itself.</summary>
     public static string Hash(string userId) =>

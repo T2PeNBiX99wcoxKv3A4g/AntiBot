@@ -1,8 +1,6 @@
 using System.Text.RegularExpressions;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Messaging;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -27,8 +25,8 @@ internal sealed partial class InstanceService : Singleton<InstanceService>
     private string _apiLocation = "";
     private string _instance = "";
     private string _localName = "";
-    private string _pushed = "";
     private int _publishScheduled;
+    private string _pushed = "";
     private bool _running;
     private string _world = "";
 

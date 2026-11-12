@@ -29,7 +29,8 @@ const pageIn = keyframes`
     }
 `;
 
-const pageMeta: Record<Page, { title: string; subtitle: string }> = {    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
+const pageMeta: Record<Page, { title: string; subtitle: string }> = {
+    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
     batch: {
         title: "Batch actions",
@@ -151,13 +152,13 @@ export default function App() {
                                     ? <BatchPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
                                     : page === "requests"
                                         ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
-                                    : page === "operations"
-                                        ? <OperationsPage/>
-                                        : page === "account"
-                                            ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
-                                            : page === "debug"
-                                                ? <DebugPage/>
-                                                : <SettingsPage info={info}/>}
+                                        : page === "operations"
+                                            ? <OperationsPage/>
+                                            : page === "account"
+                                                ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
+                                                : page === "debug"
+                                                    ? <DebugPage/>
+                                                    : <SettingsPage info={info}/>}
                     </Content>
 
                     <Footer>

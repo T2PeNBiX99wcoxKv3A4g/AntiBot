@@ -1,8 +1,6 @@
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Notifications;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -80,14 +78,10 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
             : null;
 
         if (close is not null && await close)
-        {
             await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
-        }
         else if (VrchatClient.IsRunning())
-        {
             // OSC is local and instant, so it goes out now, before the rate-limited API queue.
             await ApplyOscAsync(user, settings, detail);
-        }
 
         try
         {

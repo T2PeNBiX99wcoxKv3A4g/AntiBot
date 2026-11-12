@@ -1,10 +1,8 @@
 using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -50,7 +48,7 @@ internal sealed class SettingsService : Singleton<SettingsService>
                 // The fields accept a link as well as an id; keep only the id it points at.
                 SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
                 Whitelist = (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
-                    .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
             };
     }
 

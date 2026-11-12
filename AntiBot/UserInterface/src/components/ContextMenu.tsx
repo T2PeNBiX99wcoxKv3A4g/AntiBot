@@ -80,7 +80,8 @@ export function ContextMenu() {
     useEffect(() => {
         if (!menu?.userId) return;
 
-        void getSettings().then((settings) => setWhitelist(new Set(settings.whitelist)), () => {});
+        void getSettings().then((settings) => setWhitelist(new Set(settings.whitelist)), () => {
+        });
     }, [menu]);
 
     useEffect(() => {

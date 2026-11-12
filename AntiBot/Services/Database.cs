@@ -2,8 +2,6 @@ using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using Microsoft.Data.Sqlite;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -534,7 +532,8 @@ internal sealed class Database : Singleton<Database>
         attempt.OnFailure(ex => Log.Warning(ex, "Could not update the operation"));
     }
 
-    public async Task ClearOperationsAsync(CancellationToken token = default)    {
+    public async Task ClearOperationsAsync(CancellationToken token = default)
+    {
         var attempt = await Try.Run(async () =>
         {
             await using var connection = await OpenAsync(token);

@@ -1,7 +1,13 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {useLocale, useTranslation} from "@photino-net-utils/bridge";
-import {type FriendRequest, clearFriendRequests, getFriendRequests, onFriendRequestsChanged, undoFriendRequest} from "../api/friendRequests";
+import {
+    clearFriendRequests,
+    type FriendRequest,
+    getFriendRequests,
+    onFriendRequestsChanged,
+    undoFriendRequest
+} from "../api/friendRequests";
 import type {InstanceUser} from "../api/instance";
 import {PlayerDialog, userGridColumns, UserRow} from "./InstancePage";
 
@@ -142,8 +148,8 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 }
 
 function groupByDay(requests: FriendRequest[],
-    t: (key: string, params?: Record<string, string | number>) => string,
-    locale: string): { day: string; items: FriendRequest[] }[] {
+                    t: (key: string, params?: Record<string, string | number>) => string,
+                    locale: string): { day: string; items: FriendRequest[] }[] {
     const groups = new Map<string, FriendRequest[]>();
 
     for (const request of requests) {
@@ -157,8 +163,8 @@ function groupByDay(requests: FriendRequest[],
 }
 
 function dayLabel(ms: number,
-    t: (key: string, params?: Record<string, string | number>) => string,
-    locale: string): string {
+                  t: (key: string, params?: Record<string, string | number>) => string,
+                  locale: string): string {
     const date = new Date(ms);
 
     return date.toDateString() === new Date().toDateString()

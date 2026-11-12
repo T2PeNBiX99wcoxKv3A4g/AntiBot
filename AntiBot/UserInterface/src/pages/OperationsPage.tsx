@@ -1,8 +1,14 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {useLocale, useTranslation} from "@photino-net-utils/bridge";
-import {type OperationEntry, clearOperations, getOperations, onOperationsChanged, undoOperation} from "../api/operations";
-import {type InstanceUser, describeUser} from "../api/instance";
+import {
+    clearOperations,
+    getOperations,
+    onOperationsChanged,
+    type OperationEntry,
+    undoOperation
+} from "../api/operations";
+import {describeUser, type InstanceUser} from "../api/instance";
 import {openUrl} from "../api/system";
 import {ExternalIcon} from "../components/Icons";
 import {PlayerDialog} from "./InstancePage";

@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {type DebugUserResult, closeVrchat, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
+import {closeVrchat, type DebugUserResult, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
 import {type OscStatus, oscStatus} from "../api/osc";
 
 /** Debug builds only: the actions that are hard to trigger for real. */
@@ -227,7 +227,10 @@ function UserCheck() {
                         {result.reasons.length > 0
                             ? result.reasons.map((reason) => (
                                 <li key={reason.text}>
-                                    {t(reason.text, reason.detail ? {days: reason.detail, years: Math.floor(Number(reason.detail) / 365)} : undefined)}
+                                    {t(reason.text, reason.detail ? {
+                                        days: reason.detail,
+                                        years: Math.floor(Number(reason.detail) / 365)
+                                    } : undefined)}
                                     <Weight $up={reason.weight > 0}>
                                         {reason.weight > 0 ? `+${reason.weight}` : reason.weight}
                                     </Weight>

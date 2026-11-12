@@ -3,11 +3,9 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -29,6 +27,13 @@ namespace AntiBot.Services;
 /// </remarks>
 internal sealed class AuthService : Singleton<AuthService>
 {
+    /// <summary>VRCX's limit: after three automatic attempts in an hour, wait for a manual sign-in.</summary>
+    private const int AutoLoginLimit = 3;
+
+    /// <summary>How many times an expired session is retried before the user is asked to sign in.</summary>
+    private const int AutoLoginRetries = 3;
+
+    private const long AutoLoginWindowMilliseconds = 60 * 60 * 1000;
     private static readonly TimeSpan LocationRefreshInterval = TimeSpan.FromSeconds(20);
 
     /// <summary>How often the signed-out reminder repeats while automatic protection cannot run.</summary>
@@ -37,36 +42,29 @@ internal sealed class AuthService : Singleton<AuthService>
     /// <summary>How long to wait before a failed automatic sign-in is tried again.</summary>
     private static readonly TimeSpan AutoLoginRetryDelay = TimeSpan.FromSeconds(15);
 
-    /// <summary>VRCX's limit: after three automatic attempts in an hour, wait for a manual sign-in.</summary>
-    private const int AutoLoginLimit = 3;
-
-    /// <summary>How many times an expired session is retried before the user is asked to sign in.</summary>
-    private const int AutoLoginRetries = 3;
-
-    private const long AutoLoginWindowMilliseconds = 60 * 60 * 1000;
+    private readonly List<Account> _accounts = [];
 
     private readonly VrchatApi _api = new();
-    private readonly List<Account> _accounts = [];
-    private readonly List<long> _autoLoginAttempts = [];
     private readonly Lock _attemptGate = new();
+    private readonly List<long> _autoLoginAttempts = [];
 
     private readonly Lock _gate = new();
     private readonly VrchatPipeline _pipeline = new();
 
     private VrchatAccount? _account;
     private Account? _active;
+    private int _autoLogin;
     private VrchatApi? _device;
     private int _expired;
     private CancellationTokenSource? _expiryReminder;
     private int _generation;
-    private int _autoLogin;
     private string? _lastAccount;
     private string? _lastAutoLoginError;
-    private string _location = "";
     private AuthStorage _legacyStorage = AuthStorage.None;
+    private string _location = "";
     private bool? _pendingAutoLogin;
-    private bool? _pendingRemember;
     private string? _pendingPassword;
+    private bool? _pendingRemember;
     private string? _pendingUsername;
     private volatile bool _ready;
     private SavedAccountPayload[] _saved = [];
@@ -126,6 +124,7 @@ internal sealed class AuthService : Singleton<AuthService>
 
     /// <summary>Raised after the session state changed, so the instance list can react to a sign-in.</summary>
     public event Action? Changed;
+
     /// <summary>Raised when VRChat pushes a notification over the pipeline.</summary>
     public event Action? Notification;
 
@@ -245,80 +244,6 @@ internal sealed class AuthService : Singleton<AuthService>
 
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);
-
-#if DEBUG
-    /// <summary>Debug build only: asks the local client to quit, the same way the automatic action does.</summary>
-    private Task<NativeResponse?> DebugCloseVrchatAsync(NativeContext context)
-    {
-        var closed = VrchatClient.Close();
-        Log.Information("Debug close VRChat: {Closed}", closed);
-        return Task.FromResult<NativeResponse?>(context.Reply("debug.closeVrchat.result", new OkPayload(closed)));
-    }
-
-    /// <summary>
-    ///     Debug build only: presses the OSC panic button the same way the automatic action does.
-    /// </summary>
-    private Task<NativeResponse?> DebugSafeModeAsync(NativeContext context)
-    {
-        var osc = VrchatOscService.Instance;
-        var sent = osc.EnableSafeMode();
-
-        Log.Information("Debug Safe Mode: {Sent} (listening: {Listening})", sent, osc.IsListening);
-
-        return Task.FromResult<NativeResponse?>(context.Reply("debug.safeMode.result",
-            new DebugSafeModePayload(sent, osc.IsListening)));
-    }
-
-    /// <summary>Debug build only: switches to the avatar configured in the settings.</summary>
-    private Task<NativeResponse?> DebugAvatarAsync(NativeContext context)
-    {
-        var osc = VrchatOscService.Instance;
-        var avatarId = SettingsService.Instance.Current.SafeAvatarId;
-        var configured = avatarId.Length > 0;
-        var already = configured && string.Equals(osc.CurrentAvatar, avatarId, StringComparison.OrdinalIgnoreCase);
-        var sent = osc.ChangeAvatar(avatarId);
-
-        Log.Information("Debug avatar switch: {Sent} (configured: {Configured}, already: {Already})",
-            sent, configured, already);
-
-        return Task.FromResult<NativeResponse?>(context.Reply("debug.avatar.result",
-            new DebugAvatarPayload(sent, osc.IsListening, already, configured)));
-    }
-
-    /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
-    private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
-    {
-        var input = context.Payload<DebugUserRequest>()?.UserId ?? "";
-        var userId = Ids.User(input);
-
-        if (userId is null)
-            return context.Fail("debug.user.result", Localization.Get("error.debugUserMissing"));
-
-        if (!IsLoggedIn)
-            return context.Fail("debug.user.result", Localization.Get("error.authSignInFirst"));
-
-        var profile = await PlayerService.Instance.FetchAsync(userId, CancellationToken.None);
-        if (profile is null)
-            return context.Fail("debug.user.result", Localization.Get("error.debugUserNotFound"));
-
-        var fileId = AvatarService.FileIdOf(profile.AvatarUrl)
-                     ?? AvatarService.FileIdOf(profile.AvatarImageUrl)
-                     ?? AvatarService.FileIdOf(profile.IconUrl);
-        var avatarName = fileId is null ? null : AvatarService.Instance.NameFor(fileId);
-        var isRobot = AvatarService.IsRobot(fileId);
-        var platform = profile.Platform is { Length: > 0 } value && value != "offline"
-            ? value
-            : profile.LastPlatform;
-        var threat = ThreatScoring.Assess(profile, profile.DisplayName, avatarName, isRobot, platform);
-
-        Log.Information("Debug score for {UserId}: {Score}", userId, threat.Score);
-
-        return context.Reply("debug.user.result", new DebugUserPayload(
-            profile.Id, profile.DisplayName, profile.DateJoined, InstanceService.TrustLevel(profile.Tags),
-            platform, avatarName, isRobot, threat.Score, threat.Reasons));
-    }
-
-#endif
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
@@ -868,9 +793,7 @@ internal sealed class AuthService : Singleton<AuthService>
             }
             else if (account.Storage is AuthStorage.System or AuthStorage.Tpm or AuthStorage.Hello
                      or AuthStorage.Software)
-            {
                 await PersistAsync(account);
-            }
         }
 
         lock (_gate)
@@ -946,7 +869,10 @@ internal sealed class AuthService : Singleton<AuthService>
 
         lock (_gate)
             if (ReferenceEquals(account, _active) && _account is { } current)
-                _account = current with { AvatarUrl = avatar };
+                _account = current with
+                {
+                    AvatarUrl = avatar
+                };
 
         Notify();
     }
@@ -1191,10 +1117,12 @@ internal sealed class AuthService : Singleton<AuthService>
     private void PersistIndex() =>
         AccountStore.Save(new(
             _active?.Dir ?? _lastAccount,
-            [.. _accounts
-                .Where(account => account.Stored)
-                .OrderByDescending(account => account.LastUsed)
-                .Select(account => new StoredAccount(account.Dir, account.Name, account.LastUsed))]));
+            [
+                .. _accounts
+                    .Where(account => account.Stored)
+                    .OrderByDescending(account => account.LastUsed)
+                    .Select(account => new StoredAccount(account.Dir, account.Name, account.LastUsed))
+            ]));
 
     private Account FindOrAdd(string userId, string? displayName)
     {
@@ -1204,7 +1132,10 @@ internal sealed class AuthService : Singleton<AuthService>
         if (account is null)
         {
             account = new()
-                { Dir = dir, Name = displayName ?? userId };
+            {
+                Dir = dir,
+                Name = displayName ?? userId
+            };
             _accounts.Add(account);
         }
 
@@ -1847,4 +1778,78 @@ internal sealed class AuthService : Singleton<AuthService>
         /// <summary>Cookies of a "do not remember" account, kept for this run only.</summary>
         public CookieRecord[]? Cookies { get; set; }
     }
+
+#if DEBUG
+    /// <summary>Debug build only: asks the local client to quit, the same way the automatic action does.</summary>
+    private Task<NativeResponse?> DebugCloseVrchatAsync(NativeContext context)
+    {
+        var closed = VrchatClient.Close();
+        Log.Information("Debug close VRChat: {Closed}", closed);
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.closeVrchat.result", new OkPayload(closed)));
+    }
+
+    /// <summary>
+    ///     Debug build only: presses the OSC panic button the same way the automatic action does.
+    /// </summary>
+    private Task<NativeResponse?> DebugSafeModeAsync(NativeContext context)
+    {
+        var osc = VrchatOscService.Instance;
+        var sent = osc.EnableSafeMode();
+
+        Log.Information("Debug Safe Mode: {Sent} (listening: {Listening})", sent, osc.IsListening);
+
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.safeMode.result",
+            new DebugSafeModePayload(sent, osc.IsListening)));
+    }
+
+    /// <summary>Debug build only: switches to the avatar configured in the settings.</summary>
+    private Task<NativeResponse?> DebugAvatarAsync(NativeContext context)
+    {
+        var osc = VrchatOscService.Instance;
+        var avatarId = SettingsService.Instance.Current.SafeAvatarId;
+        var configured = avatarId.Length > 0;
+        var already = configured && string.Equals(osc.CurrentAvatar, avatarId, StringComparison.OrdinalIgnoreCase);
+        var sent = osc.ChangeAvatar(avatarId);
+
+        Log.Information("Debug avatar switch: {Sent} (configured: {Configured}, already: {Already})",
+            sent, configured, already);
+
+        return Task.FromResult<NativeResponse?>(context.Reply("debug.avatar.result",
+            new DebugAvatarPayload(sent, osc.IsListening, already, configured)));
+    }
+
+    /// <summary>Debug build only: scores any user id or profile link, without waiting for them to join.</summary>
+    private async Task<NativeResponse?> DebugUserAsync(NativeContext context)
+    {
+        var input = context.Payload<DebugUserRequest>()?.UserId ?? "";
+        var userId = Ids.User(input);
+
+        if (userId is null)
+            return context.Fail("debug.user.result", Localization.Get("error.debugUserMissing"));
+
+        if (!IsLoggedIn)
+            return context.Fail("debug.user.result", Localization.Get("error.authSignInFirst"));
+
+        var profile = await PlayerService.Instance.FetchAsync(userId, CancellationToken.None);
+        if (profile is null)
+            return context.Fail("debug.user.result", Localization.Get("error.debugUserNotFound"));
+
+        var fileId = AvatarService.FileIdOf(profile.AvatarUrl)
+                     ?? AvatarService.FileIdOf(profile.AvatarImageUrl)
+                     ?? AvatarService.FileIdOf(profile.IconUrl);
+        var avatarName = fileId is null ? null : AvatarService.Instance.NameFor(fileId);
+        var isRobot = AvatarService.IsRobot(fileId);
+        var platform = profile.Platform is { Length: > 0 } value && value != "offline"
+            ? value
+            : profile.LastPlatform;
+        var threat = ThreatScoring.Assess(profile, profile.DisplayName, avatarName, isRobot, platform);
+
+        Log.Information("Debug score for {UserId}: {Score}", userId, threat.Score);
+
+        return context.Reply("debug.user.result", new DebugUserPayload(
+            profile.Id, profile.DisplayName, profile.DateJoined, InstanceService.TrustLevel(profile.Tags),
+            platform, avatarName, isRobot, threat.Score, threat.Reasons));
+    }
+
+#endif
 }

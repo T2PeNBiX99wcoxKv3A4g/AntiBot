@@ -1,5 +1,3 @@
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 using QRCoder;
 using Serilog;
 

@@ -3,8 +3,6 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AntiBot.Models;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -139,9 +137,7 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
                 return fileName;
         }
         else if (status is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
-        {
             return null;
-        }
 
         // Then the external databases, all at once.
         var lookups = SettingsService.Instance.Current.AvatarApiProviders

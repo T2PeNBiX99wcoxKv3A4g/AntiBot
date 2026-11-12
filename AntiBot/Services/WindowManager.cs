@@ -1,11 +1,10 @@
 using AntiBot.Messaging;
 using Photino.NET;
-using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Interop;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Platform;
-using PhotinoNetUtils.Utils;
+using PhotinoNetUtils.Services;
 
 namespace AntiBot.Services;
 
@@ -21,17 +20,19 @@ internal sealed class WindowManager : Singleton<WindowManager>
     /// </summary>
     private static readonly string WebViewDataPath = Path.Combine(Constants.DataDirectory, "webview");
 
-    private bool _allowClose;
     private readonly Lock _gate = new();
-    private PhotinoWindow? _mainWindow;
-    private PhotinoNetUtils.Services.WebViewRecovery? _webViewRecovery;
-    private bool _hideWhenRendered;
 
     /// <summary>The newest event of each type, held until the page reports in.</summary>
     private readonly Dictionary<string, string> _pending = new();
 
+    private bool _allowClose;
+    private bool _hideWhenRendered;
+    private PhotinoWindow? _mainWindow;
+
     /// <summary>Whether the interface has reported in; before that, pushing an event to it crashes.</summary>
     private bool _mainWindowReady;
+
+    private WebViewRecovery? _webViewRecovery;
 
     public WindowManager() => NativeBridge.MessageReceived += HandleMessageAsync;
 
@@ -134,7 +135,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
             MainWindowCreated?.Invoke();
         });
 
-        _webViewRecovery = PhotinoNetUtils.Services.WebViewRecovery.Attach(window, AppUrl);
+        _webViewRecovery = WebViewRecovery.Attach(window, AppUrl);
         window.Load(AppUrl);
         _mainWindow = window;
     }

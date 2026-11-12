@@ -2,8 +2,6 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using PhotinoNetUtils.Extensions;
-using PhotinoNetUtils.Utils;
 using Serilog;
 
 namespace AntiBot.Services;
@@ -26,10 +24,10 @@ internal sealed class VrchatPipeline : IDisposable
     private CancellationTokenSource? _cancellation;
     private ClientWebSocket? _socket;
 
+    public void Dispose() => Stop();
+
     /// <summary>Raised when VRChat pushes a notification, so the request list can refresh at once.</summary>
     public event Action? NotificationReceived;
-
-    public void Dispose() => Stop();
 
     public void Start(string token)
     {

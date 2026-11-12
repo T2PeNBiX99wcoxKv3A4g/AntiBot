@@ -107,11 +107,14 @@ internal sealed record ApiInstance(
 
 /// <summary>Body for <c>POST instances</c>, used to open the home world when going home.</summary>
 internal sealed record ApiCreateInstanceRequest(
-    [property: JsonPropertyName("worldId")] string WorldId,
+    [property: JsonPropertyName("worldId")]
+    string WorldId,
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("region")] string Region,
-    [property: JsonPropertyName("ownerId")] string OwnerId,
-    [property: JsonPropertyName("canRequestInvite")] bool CanRequestInvite);
+    [property: JsonPropertyName("ownerId")]
+    string OwnerId,
+    [property: JsonPropertyName("canRequestInvite")]
+    bool CanRequestInvite);
 
 internal sealed record ApiErrorBody(ApiError? Error);
 
@@ -133,7 +136,8 @@ internal sealed record ApiDeviceStatusRequest(string DeviceCode);
 
 /// <summary>One player moderation, e.g. <c>block</c>, <c>interactOff</c> or <c>muteChat</c>.</summary>
 internal sealed record ApiModerationRequest(
-    [property: JsonPropertyName("moderated")] string Moderated,
+    [property: JsonPropertyName("moderated")]
+    string Moderated,
     [property: JsonPropertyName("type")] string Type);
 
 /// <summary>One avatar from an external avatar database, looked up by its image file id.</summary>

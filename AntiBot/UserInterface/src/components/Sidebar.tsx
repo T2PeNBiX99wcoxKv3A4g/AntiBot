@@ -95,6 +95,7 @@ const Item = styled.button<{ $active: boolean }>`
     transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 
     /* A small bar grows beside the active item instead of the row jumping into place. */
+
     &::before {
         content: "";
         position: absolute;
@@ -113,7 +114,6 @@ const Item = styled.button<{ $active: boolean }>`
             height: 55%;
         }
     `}
-
     svg {
         color: ${({$active}) => $active ? "var(--accent-primary)" : "var(--text-muted)"};
         transition: color 120ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
