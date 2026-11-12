@@ -38,7 +38,7 @@
     },
     "autoHideChatBox": {
       "type": "boolean",
-      "description": "Hide a high-threat user\u0027s chat box."
+      "description": "Hide a high-threat user's chat box."
     },
     "autoCloseVrchat": {
       "type": "boolean",
@@ -46,7 +46,7 @@
     },
     "autoSafeMode": {
       "type": "boolean",
-      "description": "Turn VRChat\u0027s Safe Mode on over OSC."
+      "description": "Turn VRChat's Safe Mode on over OSC."
     },
     "autoSafeAvatar": {
       "type": "boolean",
