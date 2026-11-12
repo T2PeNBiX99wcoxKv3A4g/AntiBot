@@ -223,6 +223,7 @@ export function AccountPage({initial, ready = false, expired = false}: {
         content = (
             <>
                 {signedIn && <Profile auth={auth} busy={busy} error={error} run={run}/>}
+                {signedIn && <StorageChoice key={auth.user?.id} auth={auth} busy={busy} error={error} run={run}/>}
                 <AccountList accounts={auth.accounts} busy={busy} onAdd={() => {
                     setError("");
                     setAdding(true);
@@ -247,7 +248,6 @@ export function AccountPage({initial, ready = false, expired = false}: {
                 </SessionNotice>
             )}
             {content}
-            {signedIn && <StorageChoice key={auth.user?.id} auth={auth} busy={busy} error={error} run={run}/>}
             {unlocking && (
                 <UnlockPanel account={unlocking} busy={busy} error={unlockError}
                              onCancel={() => {
@@ -846,13 +846,14 @@ function StorageChoice({auth, busy, error, run}: {
     const saved = auth.storage !== "none";
     const signedIn = auth.state === "loggedIn";
 
-    const [open, setOpen] = useState(!saved && !auth.storageChosen);
+    // The panel only opens when the user asks for it; signing in must not pop a settings dialog.
+    const [open, setOpen] = useState(false);
     const [mode, setMode] = useState<AuthStorage>(saved ? auth.storage : "none");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [localError, setLocalError] = useState("");
 
-    // If the host answers after mount with a stored choice, do not pop the panel.
+    // A save from somewhere else closes the stale panel instead of leaving it over the new state.
     useEffect(() => {
         if (saved || auth.storageChosen)
             setOpen(false);
