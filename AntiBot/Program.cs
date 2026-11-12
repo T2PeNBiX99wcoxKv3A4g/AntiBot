@@ -72,7 +72,7 @@ internal static class Program
 
             // Touching each singleton constructs it, which is what registers its message handlers.
             _ = AppInfoService.Instance;
-            using var updates = new UpdateService(new UpdateOptions(
+            using var updates = new UpdateService(new(
                 "T2PeNBiX99wcoxKv3A4g",
                 "AntiBot",
                 Constants.Name,

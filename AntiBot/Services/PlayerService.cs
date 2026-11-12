@@ -89,7 +89,7 @@ internal sealed class PlayerService : Singleton<PlayerService>
             // The bio is text worth keeping even when the rest of the profile has not arrived yet;
             // the next full lookup overwrites this minimal row.
             var updated = current is null
-                ? new PlayerProfile(userId, "", null, null, null, null, null, null, bio, null, [], null, null, null)
+                ? new(userId, "", null, null, null, null, null, null, bio, null, [], null, null, null)
                 : current with { Bio = bio };
 
             _profiles[userId] = updated;

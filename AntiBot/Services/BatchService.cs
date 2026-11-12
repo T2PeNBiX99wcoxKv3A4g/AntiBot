@@ -201,7 +201,7 @@ internal sealed class BatchService : Singleton<BatchService>
                     PublishProgress(id);
                 }
 
-                outcomes.Add(new BatchOutcomePayload(id, ok, userError));
+                outcomes.Add(new(id, ok, userError));
 
                 if (error is not null)
                     break;
@@ -230,7 +230,7 @@ internal sealed class BatchService : Singleton<BatchService>
                 _cancellation?.Dispose();
                 _cancellation = null;
 
-                payload = new BatchFinishedPayload(cancelled, _done, _total, _failed, error, [.. outcomes]);
+                payload = new(cancelled, _done, _total, _failed, error, [.. outcomes]);
             }
 
             WindowManager.Instance.NotifyMainWindow("batch.finished", payload);
@@ -261,7 +261,7 @@ internal sealed class BatchService : Singleton<BatchService>
         BatchProgressPayload payload;
 
         lock (_gate)
-            payload = new BatchProgressPayload(_running, _done, _total, _failed, userId);
+            payload = new(_running, _done, _total, _failed, userId);
 
         WindowManager.Instance.NotifyMainWindow("batch.progress", payload);
     }

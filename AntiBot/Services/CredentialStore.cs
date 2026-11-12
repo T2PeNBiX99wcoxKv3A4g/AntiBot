@@ -111,9 +111,9 @@ internal static class CredentialStore
             if (await LoadAsync(dir, token) is not { } credential)
                 continue;
 
-            saved.Add(new SavedCredential(dir, credential.Username, credential.DisplayName,
+            saved.Add(new(dir, credential.Username, credential.DisplayName,
                 credential.AvatarUrl, credential.AutoLoginEnabled,
-                new DateTimeOffset(File.GetLastWriteTimeUtc(file))));
+                new(File.GetLastWriteTimeUtc(file))));
         }
 
         return [.. saved.OrderByDescending(entry => entry.SavedAt)];

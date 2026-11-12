@@ -85,7 +85,7 @@ internal sealed partial class AvatarService : Singleton<AvatarService>
             return null;
 
         var lazy = _inFlight.GetOrAdd(fileId,
-            id => new Lazy<Task<string?>>(() => LookupAsync(id, token), LazyThreadSafetyMode.ExecutionAndPublication));
+            id => new(() => LookupAsync(id, token), LazyThreadSafetyMode.ExecutionAndPublication));
 
         return await lazy.Value;
     }

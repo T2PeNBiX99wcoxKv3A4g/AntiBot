@@ -143,7 +143,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
     {
         try
         {
-            return new UdpClient(new IPEndPoint(IPAddress.Loopback, DefaultOutPort));
+            return new(new IPEndPoint(IPAddress.Loopback, DefaultOutPort));
         }
         catch (Exception ex)
         {
@@ -204,7 +204,7 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
             message.AddRange(Padded(argument));
 
         var target = port ?? Port;
-        _udp.Send([.. message], new IPEndPoint(IPAddress.Loopback, target));
+        _udp.Send([.. message], new(IPAddress.Loopback, target));
         Log.Debug("OSC {Address} sent to port {Port} ({Bytes} bytes)", address, target, message.Count);
     }
 

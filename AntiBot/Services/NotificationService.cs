@@ -52,7 +52,7 @@ internal sealed class NotificationService : Singleton<NotificationService>
             text[0].AppendChild(xml.CreateTextNode(title));
             text[1].AppendChild(xml.CreateTextNode(message));
 
-            ToastNotificationManager.CreateToastNotifier(Constants.Name).Show(new ToastNotification(xml));
+            ToastNotificationManager.CreateToastNotifier(Constants.Name).Show(new(xml));
         }).OnFailure(ex => Log.Warning(ex, "Could not show a Windows toast"));
 #endif
     }

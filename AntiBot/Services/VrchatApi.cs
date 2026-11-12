@@ -234,7 +234,7 @@ internal sealed class VrchatApi : IDisposable
     /// <summary>Adds a player moderation: <c>block</c>, <c>interactOff</c> or <c>muteChat</c>.</summary>
     public async Task<bool> ModerateUserAsync(string userId, string type, CancellationToken token)
     {
-        using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
+        using var content = Json(JsonSerializer.Serialize(new(userId, type),
             VrchatJsonContext.Default.ApiModerationRequest));
         using var response = await _http.PostAsync("auth/user/playermoderations", content, token);
         ReportUnauthorized(response);
@@ -248,7 +248,7 @@ internal sealed class VrchatApi : IDisposable
     /// <summary>Removes a player moderation: <c>unblock</c>, <c>interactOn</c> or <c>unmuteChat</c>.</summary>
     public async Task<bool> UnmoderateUserAsync(string userId, string type, CancellationToken token)
     {
-        using var content = Json(JsonSerializer.Serialize(new ApiModerationRequest(userId, type),
+        using var content = Json(JsonSerializer.Serialize(new(userId, type),
             VrchatJsonContext.Default.ApiModerationRequest));
         using var response = await _http.PutAsync("auth/user/unplayermoderate", content, token);
         ReportUnauthorized(response);
@@ -273,7 +273,7 @@ internal sealed class VrchatApi : IDisposable
         CancellationToken token)
     {
         using var content = Json(JsonSerializer.Serialize(
-            new ApiCreateInstanceRequest(worldId, type, "us", ownerId, false),
+            new(worldId, type, "us", ownerId, false),
             VrchatJsonContext.Default.ApiCreateInstanceRequest));
         using var response = await _http.PostAsync("instances", content, token);
         ReportUnauthorized(response);

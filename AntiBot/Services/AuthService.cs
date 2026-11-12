@@ -1167,7 +1167,7 @@ internal sealed class AuthService : Singleton<AuthService>
             var directory = AccountStore.PathOf(stored.Dir);
             var storage = AuthStore.StoredMode(directory);
 
-            _accounts.Add(new Account
+            _accounts.Add(new()
             {
                 Dir = stored.Dir,
                 Name = stored.Name,
@@ -1188,7 +1188,7 @@ internal sealed class AuthService : Singleton<AuthService>
     }
 
     private void PersistIndex() =>
-        AccountStore.Save(new AccountIndex(
+        AccountStore.Save(new(
             _active?.Dir ?? _lastAccount,
             [.. _accounts
                 .Where(account => account.Stored)
@@ -1202,7 +1202,8 @@ internal sealed class AuthService : Singleton<AuthService>
 
         if (account is null)
         {
-            account = new Account { Dir = dir, Name = displayName ?? userId };
+            account = new()
+                { Dir = dir, Name = displayName ?? userId };
             _accounts.Add(account);
         }
 
@@ -1638,7 +1639,7 @@ internal sealed class AuthService : Singleton<AuthService>
             return;
 
         var saved = await CredentialStore.SaveAsync(account.Dir,
-            new RememberedLogin(username, password, _api.ExportCookies(), account.Name, account.AvatarUrl,
+            new(username, password, _api.ExportCookies(), account.Name, account.AvatarUrl,
                 autoLogin),
             account.Storage);
 
@@ -1669,7 +1670,7 @@ internal sealed class AuthService : Singleton<AuthService>
             if (entry.DisplayName is not { Length: > 0 } && account?.Name is { Length: > 0 })
                 await CredentialStore.UpdateProfileAsync(entry.Dir, account.Name, entry.AvatarUrl);
 
-            payload.Add(new SavedAccountPayload(entry.Dir, name,
+            payload.Add(new(entry.Dir, name,
                 AccountStore.Avatar(entry.Dir) ?? entry.AvatarUrl, entry.AutoLogin));
         }
 
@@ -1694,14 +1695,14 @@ internal sealed class AuthService : Singleton<AuthService>
     private VrchatApi SignInApi()
     {
         lock (_gate)
-            return _signIn ??= new VrchatApi();
+            return _signIn ??= new();
     }
 
     /// <summary>The client of the QR flow, which runs beside the password form.</summary>
     private VrchatApi DeviceApi()
     {
         lock (_gate)
-            return _device ??= new VrchatApi();
+            return _device ??= new();
     }
 
     /// <summary>Each new code reuses the client, so a request in flight is not cut off.</summary>
@@ -1710,7 +1711,7 @@ internal sealed class AuthService : Singleton<AuthService>
         lock (_gate)
         {
             if (_device is null)
-                return _device = new VrchatApi();
+                return _device = new();
 
             _device.ResetCookies();
             return _device;

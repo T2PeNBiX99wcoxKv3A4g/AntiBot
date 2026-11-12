@@ -490,7 +490,7 @@ internal sealed class Database : Singleton<Database>
 
         return attempt
             .OnFailure(ex => Log.Warning(ex, "Could not read the operations"))
-            .GetOrElse(_ => new List<OperationEntry>());
+            .GetOrElse(_ => new());
     }
 
     /// <summary>One recorded action, for the undo button.</summary>
@@ -572,7 +572,7 @@ internal sealed class Database : Singleton<Database>
 
         return attempt
             .OnFailure(ex => Log.Warning(ex, "Could not read the stored friend requests"))
-            .GetOrElse(_ => new List<FriendRequestRow>());
+            .GetOrElse(_ => new());
     }
 
     /// <summary>
