@@ -13,7 +13,7 @@ internal sealed partial class OperationService
     private readonly Lock _gate = new();
     private string _pushed = "";
 
-    public OperationService() => NativeBridge.MessageReceived += HandleMessageAsync;
+    private OperationService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     private async Task<NativeResponse?> HandleMessageAsync(NativeContext context)
     {

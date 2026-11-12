@@ -75,7 +75,7 @@ internal sealed partial class AuthService
     private string[] _twoFactorMethods = [];
     private DateTimeOffset _userRefreshedAt = DateTimeOffset.MinValue;
 
-    public AuthService()
+    private AuthService()
     {
         // Any request made with the active session can notice that the cookie was rejected.
         _api.Unauthorized += Expire;

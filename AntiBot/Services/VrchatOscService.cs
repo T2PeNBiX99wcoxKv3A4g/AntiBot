@@ -25,7 +25,7 @@ internal sealed partial class VrchatOscService
 
     private readonly UdpClient _udp = new();
 
-    public VrchatOscService()
+    private VrchatOscService()
     {
         // The log says which port VRChat listens on; nothing else reports it.
         VrchatLogService.Instance.LinesRead += OnLinesRead;

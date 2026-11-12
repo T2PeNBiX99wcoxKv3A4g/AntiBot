@@ -21,7 +21,7 @@ internal sealed partial class FriendRequestService
     private string _pushed = "";
     private FriendRequestRow[] _rows;
 
-    public FriendRequestService()
+    private FriendRequestService()
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
         AuthService.Instance.Changed += OnAuthChanged;

@@ -20,7 +20,7 @@ internal sealed partial class ThreatActionService
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
 
-    public ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
+    private ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
 
     private void OnSnapshot(InstanceSnapshot snapshot)
     {

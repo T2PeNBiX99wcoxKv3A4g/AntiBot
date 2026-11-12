@@ -28,7 +28,7 @@ internal sealed partial class BatchService
     private bool _running;
     private int _total;
 
-    public BatchService() => NativeBridge.MessageReceived += HandleMessageAsync;
+    private BatchService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {

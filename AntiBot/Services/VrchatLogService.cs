@@ -54,7 +54,7 @@ internal sealed partial class VrchatLogService
     private bool _started;
     private FileStream? _stream;
 
-    public VrchatLogService() => NativeBridge.MessageReceived += HandleMessageAsync;
+    private VrchatLogService() => NativeBridge.MessageReceived += HandleMessageAsync;
 
     /// <summary>
     ///     Raised for every batch, including state-only ones, so local parsers see the same stream the

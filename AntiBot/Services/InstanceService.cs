@@ -32,7 +32,7 @@ internal sealed partial class InstanceService
     private bool _running;
     private string _world = "";
 
-    public InstanceService()
+    private InstanceService()
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
         VrchatLogService.Instance.LinesRead += OnLinesRead;
