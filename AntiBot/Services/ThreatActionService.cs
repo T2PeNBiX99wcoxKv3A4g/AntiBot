@@ -1,6 +1,7 @@
 using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
+using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -62,7 +63,7 @@ internal sealed class ThreatActionService : Singleton<ThreatActionService>
         if (!settings.AutoBlock && !settings.AutoDisableAvatarInteraction && !settings.AutoHideChatBox)
             return;
 
-        NotificationService.Instance.Notify("auth.signedOut",
+        NotificationService.Notify("auth.signedOut",
             Localization.Get("auth.expired.detectedTitle"),
             Localization.Get("auth.expired.detectedMessage").Replace("{name}", user.Name));
     }

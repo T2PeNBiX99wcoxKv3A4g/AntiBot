@@ -3,6 +3,7 @@ using Photino.NET;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Interop;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Utils;
 
@@ -67,6 +68,8 @@ internal sealed class WindowManager : Singleton<WindowManager>
             // while debugging, but it floods the log with JSON payloads in a release build.
             .SetLogVerbosity(Constants.IsDebugMode ? 3 : 0)
             .SetTitle(Constants.WindowTitle)
+            // The id Windows attributes a toast to; the Start Menu shortcut carries it too.
+            .SetNotificationRegistrationId(Constants.Name)
             .SetTemporaryFilesPath(WebViewDataPath)
             .SetUseOsDefaultSize(false)
             .SetSize(new(1280, 800))
@@ -101,6 +104,10 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
         window.RegisterWindowCreatedHandler((_, _) =>
         {
+            // The native window now exists, so Photino can hand notifications to the OS. Anything
+            // raised while it was starting (an auto sign-in failure, for example) is sent here.
+            NotificationService.Attach(window);
+
             if (OperatingSystem.IsWindows())
             {
                 WindowFrame.RemoveTitleBar(window.WindowHandle);
@@ -287,6 +294,7 @@ internal sealed class WindowManager : Singleton<WindowManager>
 
     public void Exit()
     {
+        NotificationService.Detach();
         _allowClose = true;
         _webViewRecovery?.Dispose();
         RunOnMainWindow(() => _mainWindow?.Close());

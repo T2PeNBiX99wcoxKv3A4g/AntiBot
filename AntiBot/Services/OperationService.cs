@@ -1,6 +1,7 @@
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -50,7 +51,7 @@ internal sealed class OperationService : Singleton<OperationService>
 
         // Taking an action back is a user-initiated correction, not a new automatic action worth a toast.
         if (notify && !IsUndo(kind))
-            NotificationService.Instance.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
+            NotificationService.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
 
         Publish();
     }

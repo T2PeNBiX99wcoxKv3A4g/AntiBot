@@ -6,6 +6,7 @@ using AntiBot.Models;
 using PhotinoNetUtils.Extensions;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
@@ -170,7 +171,7 @@ internal sealed class AuthService : Singleton<AuthService>
             return;
         }
 
-        NotificationService.Instance.Notify("auth.startup",
+        NotificationService.Notify("auth.startup",
             Localization.Get("auth.startup.signedOutTitle"),
             Localization.Get("auth.startup.signedOutMessage"));
     }
@@ -1344,7 +1345,7 @@ internal sealed class AuthService : Singleton<AuthService>
     /// </summary>
     private void NotifySessionExpired(string? directory = null)
     {
-        NotificationService.Instance.Notify("auth.expired",
+        NotificationService.Notify("auth.expired",
             Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
 
         var cancellation = new CancellationTokenSource();
@@ -1367,7 +1368,7 @@ internal sealed class AuthService : Singleton<AuthService>
                     if (await TryAutoLoginAsync(directory))
                         return;
 
-                    NotificationService.Instance.Notify("auth.expired",
+                    NotificationService.Notify("auth.expired",
                         Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
                 }
             }
@@ -1498,7 +1499,7 @@ internal sealed class AuthService : Singleton<AuthService>
             _lastAutoLoginError = Localization.Get("error.authUnauthorized");
             Log.Warning("VRChat rejected the saved password; the credential was deleted");
 
-            NotificationService.Instance.Notify("auth.savedInvalid",
+            NotificationService.Notify("auth.savedInvalid",
                 Localization.Get("auth.savedInvalidTitle"),
                 Localization.Get("auth.savedInvalidMessage"));
 
@@ -1524,7 +1525,7 @@ internal sealed class AuthService : Singleton<AuthService>
             }
 
             Notify();
-            NotificationService.Instance.Notify("auth.twoFactor",
+            NotificationService.Notify("auth.twoFactor",
                 Localization.Get("auth.autoLogin.twoFactorTitle"),
                 Localization.Get("auth.autoLogin.twoFactorMessage"));
             return (false, false);
