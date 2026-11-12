@@ -189,9 +189,11 @@ internal sealed class VrchatOscService : Singleton<VrchatOscService>
 
     private void Send(string address, string tags, string? argument = null, int? port = null)
     {
-        var message = new List<byte>();
-        message.AddRange(Padded(address));
-        message.AddRange(Padded(tags));
+        List<byte> message =
+        [
+            .. Padded(address),
+            .. Padded(tags)
+        ];
 
         if (argument is not null)
             message.AddRange(Padded(argument));

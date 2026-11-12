@@ -129,7 +129,7 @@ internal sealed class BatchService : Singleton<BatchService>
             _done = 0;
             _failed = 0;
             total = _total = ids.Length * actions.Length;
-            kinds = _actions = actions.Select(action => action.Label).ToArray();
+            kinds = _actions = [.. actions.Select(action => action.Label)];
             _outcomes.Clear();
             _cancellation = new();
             token = _cancellation.Token;

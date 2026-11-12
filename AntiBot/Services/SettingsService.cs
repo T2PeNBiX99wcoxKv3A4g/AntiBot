@@ -40,8 +40,11 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
             // The fields accept a link as well as an id; keep only the id it points at.
             SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
-            Whitelist = (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
+            Whitelist =
+            [
+                .. (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+            ]
         };
     }
 
@@ -108,11 +111,13 @@ internal sealed class SettingsService : Singleton<SettingsService>
             SkipCloseInVr = settings.SkipCloseInVr,
             AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
             ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
-            Whitelist = (settings.Whitelist ?? [])
+            Whitelist =
+            [
+                .. (settings.Whitelist ?? [])
                 .Select(Ids.User)
                 .OfType<string>()
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray()
+            ]
         };
         Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory,
             Current.AvatarApiProviders.Length);
