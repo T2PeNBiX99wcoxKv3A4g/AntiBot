@@ -528,7 +528,6 @@ function LoginForm({auth, busy, error, run, onSignedIn, onSignInSaved, onForgetS
                             <LoginOptions>
                                 <Toggle
                                     checked={remember}
-                                    disabled={busy}
                                     hint={t("Keeps this account's password on this device, encrypted by the OS or the TPM.")}
                                     onChange={(value) => {
                                         setRemember(value);
@@ -539,7 +538,7 @@ function LoginForm({auth, busy, error, run, onSignedIn, onSignInSaved, onForgetS
 
                                 <Toggle
                                     checked={autoLogin}
-                                    disabled={busy || !remember}
+                                    disabled={!remember}
                                     hint={t("Signs in with the saved password when the session expires. VRChat may still ask for a two-factor code.")}
                                     onChange={setAutoLogin}
                                     title={t("Sign in automatically")}
@@ -846,8 +845,9 @@ function StorageChoice({auth, busy, error, run}: {
     const saved = auth.storage !== "none";
     const signedIn = auth.state === "loggedIn";
 
-    // The panel only opens when the user asks for it; signing in must not pop a settings dialog.
-    const [open, setOpen] = useState(false);
+    // The panel opens for a fresh account as soon as the account page appears; it must not be
+    // suppressed by the automatic sign-in option.
+    const [open, setOpen] = useState(!saved && !auth.storageChosen);
     const [mode, setMode] = useState<AuthStorage>(saved ? auth.storage : "none");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");

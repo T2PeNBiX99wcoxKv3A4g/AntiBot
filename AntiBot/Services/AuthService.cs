@@ -770,7 +770,7 @@ internal sealed class AuthService : Singleton<AuthService>
         finally
         {
             CryptographicOperations.ZeroMemory(payload);
-            DiscardSignIn();
+            DiscardSignIn(api);
         }
     }
 
@@ -1699,15 +1699,26 @@ internal sealed class AuthService : Singleton<AuthService>
         }
     }
 
-    private void DiscardSignIn()
+    /// <summary>
+    ///     Drops a finished sign-in client. The password form and the QR code are on screen at the
+    ///     same time, so finishing one must not dispose the client the other is still waiting on.
+    ///     Passing null drops both, which is what cancelling the sign-in wants.
+    /// </summary>
+    private void DiscardSignIn(VrchatApi? used = null)
     {
         lock (_gate)
         {
-            _signIn?.Dispose();
-            _signIn = null;
+            if (used is null || ReferenceEquals(used, _signIn))
+            {
+                _signIn?.Dispose();
+                _signIn = null;
+            }
 
-            _device?.Dispose();
-            _device = null;
+            if (used is null || ReferenceEquals(used, _device))
+            {
+                _device?.Dispose();
+                _device = null;
+            }
         }
     }
 
