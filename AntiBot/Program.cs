@@ -33,7 +33,8 @@ internal static class Program
         // Discover the locales first; the selected language is read lazily from the settings.
         Localization.Initialize(typeof(Program).Assembly, "AntiBot.Resources.i18n.",
             () => SettingsService.Instance.Language);
-        SettingsService.Instance.Load();
+        // Main must stay synchronous for WebView2's STA thread; the read itself is asynchronous.
+        SettingsService.Instance.LoadAsync().GetAwaiter().GetResult();
 
         if (OperatingSystem.IsLinux())
         {

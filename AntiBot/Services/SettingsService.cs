@@ -4,11 +4,12 @@ using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Services;
+using Serilog;
 
 namespace AntiBot.Services;
 
-/// <summary>Loads and stores the settings file. The defaults apply until the user saves something.</summary>
-internal sealed class SettingsService : Singleton<SettingsService>
+/// <summary>Owns the settings model and its file; the shared base handles the standard messages.</summary>
+internal sealed class SettingsService : SettingsServiceBase<AppSettings, SettingsPayload>
 {
     private const string Header =
         "# AntiBot settings. Rewritten when settings are saved; comments are not preserved.";
@@ -19,17 +20,17 @@ internal sealed class SettingsService : Singleton<SettingsService>
         Path.Combine(Constants.DataDirectory, "settings.json")
     }.FirstOrDefault(File.Exists);
 
-    private readonly ISettingsStore<AppSettings> _store = new TomlSettingsStore<AppSettings>(
+    public static readonly SettingsService Instance = new();
+
+    private SettingsService() : base(new TomlSettingsStore<AppSettings>(
         Path.Combine(Constants.SettingsDirectory, "settings.toml"),
         AppSettings.Default,
         AppTomlContext.Default.AppSettings,
         json => JsonSerializer.Deserialize(json, AppJsonContext.Default.AppSettings),
         LegacySettingsPath,
-        Header);
-
-    public SettingsService() => NativeBridge.MessageReceived += HandleMessageAsync;
-
-    public AppSettings Current { get; private set; } = AppSettings.Default;
+        Header))
+    {
+    }
 
     /// <summary>The log folder in use by the follower.</summary>
     public string LogDirectory => Current.LogDirectory;
@@ -37,45 +38,59 @@ internal sealed class SettingsService : Singleton<SettingsService>
     /// <summary>The language both the backend and the interface use.</summary>
     public string Language => Current.Language;
 
-    public void Load()
-    {
-        var stored = _store.Load();
-
-        Current = stored with
-        {
-            LogDirectory = stored.LogDirectory is { Length: > 0 } directory
-                ? directory
-                : Current.LogDirectory,
-            Language = Localization.Normalize(stored.Language),
-
-            // An empty list is a real choice: it turns the external lookups off.
-            AvatarApiProviders = stored.AvatarApiProviders ?? [],
-            OscPort = stored.OscPort is > 0 and <= 65535 ? stored.OscPort : 9000,
-
-            // The fields accept a link as well as an id; keep only the id it points at.
-            SafeAvatarId = Ids.Avatar(stored.SafeAvatarId) ?? "",
-            Whitelist =
-            [
-                .. (stored.Whitelist ?? []).Select(Ids.User).OfType<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-            ]
-        };
-    }
-
-    private SettingsPayload Payload() =>
+    protected override SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
             Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
 
-    private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
+    protected override string? Validate(AppSettings settings) =>
+        string.IsNullOrWhiteSpace(settings.LogDirectory)
+            ? Localization.Get("error.invalidLogDirectory")
+            : null;
+
+    protected override AppSettings Normalize(AppSettings settings)
     {
-        "settings.get" => Task.FromResult<NativeResponse?>(context.Reply("settings.get.result", Payload())),
-        "settings.save" => SaveAsync(context),
-        "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
-        _ => Task.FromResult<NativeResponse?>(null)
-    };
+        // Only absolute http(s) providers are kept; an empty list turns the lookups off.
+        var providers = (settings.AvatarApiProviders ?? [])
+            .Select(provider => provider.Trim())
+            .Where(provider => provider.IsHttpUrl())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        return settings with
+        {
+            LogDirectory = settings.LogDirectory.Trim(),
+            Language = Localization.Normalize(settings.Language),
+            OscPort = settings.OscPort is > 0 and <= 65535 ? settings.OscPort : 9000,
+            AvatarApiProviders = providers,
+            SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
+            ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
+            Whitelist =
+            [
+                .. (settings.Whitelist ?? []).Select(Ids.User).OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+            ]
+        };
+    }
+
+    protected override void OnSaved(AppSettings settings)
+    {
+        Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", settings.LogDirectory,
+            settings.AvatarApiProviders.Length);
+
+        // A new provider list is a chance to resolve names that failed before.
+        AvatarService.Instance.ResetUnknown();
+
+        foreach (var id in settings.Whitelist)
+            PlayerService.Instance.Request(id);
+    }
+
+    protected override Task<NativeResponse?> HandleExtraAsync(NativeContext context) =>
+        context.Request.Type == "whitelist.people"
+            ? Task.FromResult<NativeResponse?>(WhitelistPeople(context))
+            : base.HandleExtraAsync(context);
 
     /// <summary>
     ///     Describes every whitelisted user and starts the profile lookups, so a newly added id turns
@@ -88,61 +103,5 @@ internal sealed class SettingsService : Singleton<SettingsService>
 
         return context.Reply("whitelist.people.result",
             Current.Whitelist.Select(id => InstanceService.Instance.Describe(id, "")).ToArray());
-    }
-
-    private async Task<NativeResponse?> SaveAsync(NativeContext context)
-    {
-        if (context.Payload<AppSettings>() is not { } settings)
-            return context.Fail("settings.save.result", Localization.Get("error.invalidSettings"));
-
-        if (settings.LogDirectory.Trim() is not { Length: > 0 } directory)
-            return context.Fail("settings.save.result", Localization.Get("error.invalidLogDirectory"));
-
-        // Only absolute http(s) providers are kept; an empty list turns the lookups off.
-        var providers = (settings.AvatarApiProviders ?? [])
-            .Select(provider => provider.Trim())
-            .Where(provider => provider.IsHttpUrl())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        Current = new()
-        {
-            LogDirectory = directory,
-            Language = Localization.Normalize(settings.Language),
-            StartHidden = settings.StartHidden,
-            OscPort = settings.OscPort is > 0 and <= 65535 ? settings.OscPort : 9000,
-            AvatarApiProviders = providers,
-            AutoBlock = settings.AutoBlock,
-            AutoDisableAvatarInteraction = settings.AutoDisableAvatarInteraction,
-            AutoHideChatBox = settings.AutoHideChatBox,
-            AutoCloseVrchat = settings.AutoCloseVrchat,
-            AutoSafeMode = settings.AutoSafeMode,
-            AutoSafeAvatar = settings.AutoSafeAvatar,
-            SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
-            SkipCloseInVr = settings.SkipCloseInVr,
-            AutoRejectFriendRequests = settings.AutoRejectFriendRequests,
-            ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
-            Whitelist =
-            [
-                .. (settings.Whitelist ?? [])
-                .Select(Ids.User)
-                .OfType<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-            ]
-        };
-        Log.Information("Log folder set to {Directory}; {Count} avatar provider(s)", directory,
-            Current.AvatarApiProviders.Length);
-
-        await _store.SaveAsync(Current);
-
-        // A new provider list is a chance to resolve names that failed before.
-        AvatarService.Instance.ResetUnknown();
-
-        foreach (var id in Current.Whitelist)
-            PlayerService.Instance.Request(id);
-
-        var payload = Payload();
-        WindowManager.Instance.NotifyMainWindow("settings.changed", payload);
-        return context.Reply("settings.save.result", payload);
     }
 }
