@@ -18,9 +18,6 @@ public static class Constants
     public const string Name = "AntiBot";
     public const string WindowTitle = Name;
 
-    /// <summary>Where a newer release can be downloaded.</summary>
-    public const string ReleasesUrl = "https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/releases/latest";
-
     /// <summary>
     ///     The shared "Core" logger. Resolved from the configured <see cref="Log.Logger" /> on every
     ///     access, so it must not be captured before <see cref="Logging.Initialize" /> has run.

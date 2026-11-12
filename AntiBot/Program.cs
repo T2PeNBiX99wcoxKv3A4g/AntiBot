@@ -81,10 +81,9 @@ internal static class Program
                 Constants.Name,
                 AppIdentity.Version,
                 "AntiBot-{version}-win-x64.msi",
-                Constants.ReleasesUrl,
-                Constants.LogDirectory,
-                () => WindowManager.Instance.Exit(),
-                (type, data) => WindowManager.Instance.NotifyMainWindow(type, data)));
+                LogDirectory: Constants.LogDirectory,
+                Shutdown: () => WindowManager.Instance.Exit(),
+                Notify: (type, data) => WindowManager.Instance.NotifyMainWindow(type, data)));
             using var startup = new StartupService(new StartupRegistration(
                 typeof(Program).Assembly, Constants.Name, "antibot"));
             _ = VrchatLogService.Instance;
