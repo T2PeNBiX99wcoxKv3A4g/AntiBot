@@ -71,8 +71,8 @@ internal static class Program
 
             Log.Information("Serving React app at {AppUrl}", appUrl);
 
-            // Touching each singleton constructs it; a singleton that answers native messages
-            // subscribes itself in Singleton<T>'s constructor.
+            // Touching each singleton constructs it; the generator registers it and subscribes its
+            // native message handlers when the instance is created.
             using var appInfo = new AppInfoService(new AppInfoOptions(
                 typeof(Program).Assembly, Constants.LogDirectory, Constants.IsDebugMode,
                 () => WindowManager.Instance.DrawsWindowCorners));

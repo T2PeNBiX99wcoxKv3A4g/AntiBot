@@ -7,7 +7,8 @@ using PhotinoNetUtils.Utils;
 namespace AntiBot.Services;
 
 /// <summary>Hands a VRChat link to the default browser; nothing else is allowed through.</summary>
-internal sealed partial class AppLinkService : Singleton<AppLinkService>
+[Singleton]
+internal sealed partial class AppLinkService
 {
     [NativeMessage("system.openUrl")]
     private static NativeResponse Open(NativeContext context)

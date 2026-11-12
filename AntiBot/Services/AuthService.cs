@@ -6,6 +6,7 @@ using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -25,7 +26,8 @@ namespace AntiBot.Services;
 ///         this class can do is not keep it: it lives in the message payload and is released with it.
 ///     </para>
 /// </remarks>
-internal sealed class AuthService : Singleton<AuthService>
+[Singleton]
+internal sealed partial class AuthService
 {
     /// <summary>VRCX's limit: after three automatic attempts in an hour, wait for a manual sign-in.</summary>
     private const int AutoLoginLimit = 3;

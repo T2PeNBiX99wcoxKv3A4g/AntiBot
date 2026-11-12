@@ -2,11 +2,13 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
 /// <summary>Records every automatic action, lets it be undone, and hands the history to the interface.</summary>
-internal sealed class OperationService : Singleton<OperationService>
+[Singleton]
+internal sealed partial class OperationService
 {
     private readonly Lock _gate = new();
     private string _pushed = "";

@@ -1,6 +1,7 @@
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Notifications;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -10,7 +11,8 @@ namespace AntiBot.Services;
 ///     behind each other because VRChat rate-limits them. Disabled actions are skipped and friends are
 ///     treated like whitelisted users.
 /// </summary>
-internal sealed class ThreatActionService : Singleton<ThreatActionService>
+[Singleton]
+internal sealed partial class ThreatActionService
 {
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _gate = new();

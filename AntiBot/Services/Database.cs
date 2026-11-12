@@ -2,6 +2,7 @@ using System.Text.Json;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using Microsoft.Data.Sqlite;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -14,7 +15,8 @@ namespace AntiBot.Services;
 ///     are only joins, leaves and location changes, and a profile is one row per user. Events older than
 ///     <see cref="RetentionDays" /> are pruned on startup.
 /// </remarks>
-internal sealed class Database : Singleton<Database>
+[Singleton]
+internal sealed partial class Database
 {
     private const int RetentionDays = 30;
 

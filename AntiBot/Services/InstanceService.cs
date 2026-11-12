@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -13,7 +14,8 @@ namespace AntiBot.Services;
 ///     What the log says is also written to the database as a small stream of events, so the list is
 ///     rebuilt on the next launch instead of starting empty.
 /// </remarks>
-internal sealed partial class InstanceService : Singleton<InstanceService>
+[Singleton]
+internal sealed partial class InstanceService
 {
     private static readonly TimeSpan ApiInterval = TimeSpan.FromSeconds(10);
 

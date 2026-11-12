@@ -4,6 +4,7 @@ using System.Text;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -12,7 +13,8 @@ namespace AntiBot.Services;
 ///     Mode is the only way to replace a user's avatar without leaving the instance: blocking is
 ///     server-side and the client does not re-evaluate at once.
 /// </summary>
-internal sealed class VrchatOscService : Singleton<VrchatOscService>
+[Singleton]
+internal sealed partial class VrchatOscService
 {
     /// <summary>VRChat sends its own OSC here; that is how the current avatar becomes known.</summary>
     private const int DefaultOutPort = 9001;

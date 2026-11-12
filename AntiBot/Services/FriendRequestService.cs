@@ -1,6 +1,7 @@
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -8,7 +9,8 @@ namespace AntiBot.Services;
 ///     Incoming VRChat friend requests, kept as history. Bots send them to get onto the friend list,
 ///     which exposes the avatar and user id; AntiBot only records them and never accepts or declines.
 /// </summary>
-internal sealed class FriendRequestService : Singleton<FriendRequestService>
+[Singleton]
+internal sealed partial class FriendRequestService
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan NotificationDebounce = TimeSpan.FromSeconds(3);

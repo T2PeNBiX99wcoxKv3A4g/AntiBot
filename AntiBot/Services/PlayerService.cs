@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -15,7 +16,8 @@ namespace AntiBot.Services;
 ///     one and left the rest of the row as placeholders; if VRChat does answer 429, that is logged and
 ///     the next refresh retries.
 /// </remarks>
-internal sealed class PlayerService : Singleton<PlayerService>
+[Singleton]
+internal sealed partial class PlayerService
 {
     /// <summary>How long a cached profile is considered good enough to skip a lookup.</summary>
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(2);

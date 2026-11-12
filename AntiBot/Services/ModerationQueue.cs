@@ -5,7 +5,8 @@ namespace AntiBot.Services;
 ///     request, the batch page or an undo. VRChat accepts roughly one such request every few seconds,
 ///     so one queue keeps the whole app inside that pace instead of several callers racing.
 /// </summary>
-internal sealed class ModerationQueue : Singleton<ModerationQueue>
+[Singleton]
+internal sealed partial class ModerationQueue
 {
     /// <summary>VRChat accepts about one moderation request every few seconds.</summary>
     private const long GapMilliseconds = 3000;

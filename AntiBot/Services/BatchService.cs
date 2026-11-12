@@ -2,6 +2,7 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -10,7 +11,8 @@ namespace AntiBot.Services;
 ///     paced a little so a large list does not trip the profile endpoint, and every moderation call
 ///     goes through <see cref="ModerationQueue" />, which keeps VRChat's rate limit.
 /// </summary>
-internal sealed class BatchService : Singleton<BatchService>
+[Singleton]
+internal sealed partial class BatchService
 {
     /// <summary>A small gap between profile lookups; the instance page has no queue, this page does.</summary>
     private static readonly TimeSpan ProfileGap = TimeSpan.FromMilliseconds(250);

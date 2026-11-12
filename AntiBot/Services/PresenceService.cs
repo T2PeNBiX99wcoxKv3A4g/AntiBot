@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -29,7 +30,8 @@ internal sealed record Presence(string? Status, string? StatusDescription, Prese
 ///     while that one is fresh, because VRChat's instance roster reports an empty custom status text
 ///     even when the user has one set.
 /// </remarks>
-internal sealed class PresenceService : Singleton<PresenceService>
+[Singleton]
+internal sealed partial class PresenceService
 {
     /// <summary>How long a stronger source keeps its value against a weaker one.</summary>
     private static readonly TimeSpan Hold = TimeSpan.FromSeconds(30);

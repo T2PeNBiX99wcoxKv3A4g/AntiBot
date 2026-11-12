@@ -5,6 +5,7 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -13,7 +14,8 @@ namespace AntiBot.Services;
 ///     not running; once it starts, the newest log in the configured folder is followed, opened for
 ///     reading with full sharing so VRChat keeps writing to it.
 /// </summary>
-internal sealed partial class VrchatLogService : Singleton<VrchatLogService>
+[Singleton]
+internal sealed partial class VrchatLogService
 {
     /// <summary>How many lines stay available for a page that mounts later.</summary>
     private const int BufferLimit = 5000;

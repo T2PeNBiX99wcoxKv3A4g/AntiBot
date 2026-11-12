@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AntiBot.Models;
+using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 
@@ -15,7 +16,8 @@ namespace AntiBot.Services;
 ///     and the providers are asked in parallel. That keeps a joining player's row from waiting behind
 ///     everyone else. A name is only remembered when one was really found.
 /// </remarks>
-internal sealed partial class AvatarService : Singleton<AvatarService>
+[Singleton]
+internal sealed partial class AvatarService
 {
     /// <summary>The image file VRChat uses for its default Robot avatar.</summary>
     private const string RobotFileId = "file_0e8c4e32-7444-44ea-ade4-313c010d4bae";

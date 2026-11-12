@@ -14,7 +14,8 @@ namespace AntiBot.Services;
 ///     Owns the Photino window and the message loop: creation, hiding to the tray and bringing it
 ///     back.
 /// </summary>
-internal sealed class WindowManager : Singleton<WindowManager>
+[Singleton]
+internal sealed partial class WindowManager
 {
     private bool _allowClose;
     private bool _hideWhenRendered;
