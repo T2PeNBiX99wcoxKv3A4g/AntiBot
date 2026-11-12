@@ -76,6 +76,9 @@ internal static class Program
             using var appInfo = new AppInfoService(new AppInfoOptions(
                 typeof(Program).Assembly, Constants.LogDirectory, Constants.IsDebugMode,
                 () => WindowManager.Instance.DrawsWindowCorners));
+
+            // A property access is not a statement on its own, so `_ =` is how this line says
+            // "construct it now" when nothing else on the next lines uses the instance.
             _ = AppLinkService.Instance;
             using var updates = new UpdateService(new(
                 "T2PeNBiX99wcoxKv3A4g",
@@ -95,13 +98,10 @@ internal static class Program
 
             // The instance events and the player cache live in the local database.
             Database.Instance.Initialize();
-            _ = PlayerService.Instance;
             PlayerService.Instance.Start();
-            _ = AvatarService.Instance;
             AvatarService.Instance.Start();
 
             // Construct the auth service before the instance list, which subscribes to it.
-            _ = AuthService.Instance;
             AuthService.Instance.Initialize();
 
             _ = InstanceService.Instance;
