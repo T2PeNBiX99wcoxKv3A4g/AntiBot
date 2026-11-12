@@ -1,4 +1,5 @@
 using AntiBot.Models;
+using PhotinoNetUtils.Settings;
 
 namespace AntiBot.Messaging;
 
@@ -9,6 +10,7 @@ namespace AntiBot.Messaging;
 internal sealed record OkPayload(bool Ok = true);
 
 /// <summary>Body for <c>settings.get</c>.</summary>
+[SettingsPayload(typeof(AppSettings))]
 internal sealed record SettingsPayload(
     string LogDirectory,
     string DefaultLogDirectory,

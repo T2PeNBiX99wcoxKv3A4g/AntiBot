@@ -13,7 +13,9 @@
     },
     "oscPort": {
       "type": "integer",
-      "description": "Port VRChat listens on for OSC."
+      "description": "Port VRChat listens on for OSC.",
+      "minimum": 1,
+      "maximum": 65535
     },
     "startHidden": {
       "type": "boolean",
@@ -64,7 +66,9 @@
     },
     "threatThreshold": {
       "type": "integer",
-      "description": "0-100; at or above this the automatic actions run."
+      "description": "0-100; at or above this the automatic actions run.",
+      "minimum": 0,
+      "maximum": 100
     },
     "whitelist": {
       "type": "array",

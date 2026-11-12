@@ -21,7 +21,7 @@ public sealed record AppSettings
     public string Language { get; init; } = "system";
 
     /// <summary>The port VRChat listens on for OSC.</summary>
-    [Setting(Comment = "Port VRChat listens on for OSC.")]
+    [Setting(Comment = "Port VRChat listens on for OSC.", Min = 1, Max = 65535)]
     public int OscPort { get; init; } = 9000;
 
     /// <summary>Start with the window hidden in the tray.</summary>
@@ -68,7 +68,7 @@ public sealed record AppSettings
     public bool AutoRejectFriendRequests { get; init; } = true;
 
     /// <summary>0-100; at or above this the automatic actions run.</summary>
-    [Setting(Comment = "0-100; at or above this the automatic actions run.")]
+    [Setting(Comment = "0-100; at or above this the automatic actions run.", Min = 0, Max = 100)]
     public int ThreatThreshold { get; init; } = 50;
 
     /// <summary>Users that are never acted on, whatever their score.</summary>

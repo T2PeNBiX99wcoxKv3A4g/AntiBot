@@ -63,10 +63,8 @@ internal sealed class SettingsService : SettingsServiceBase<AppSettings, Setting
         {
             LogDirectory = settings.LogDirectory.Trim(),
             Language = Localization.Normalize(settings.Language),
-            OscPort = settings.OscPort is > 0 and <= 65535 ? settings.OscPort : 9000,
             AvatarApiProviders = providers,
             SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
-            ThreatThreshold = Math.Clamp(settings.ThreatThreshold, 0, 100),
             Whitelist =
             [
                 .. (settings.Whitelist ?? []).Select(Ids.User).OfType<string>()
