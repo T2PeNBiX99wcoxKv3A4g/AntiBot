@@ -110,6 +110,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
     const [error, setError] = useState<string | null>(null);
     const thresholdTimer = useRef(0);
+    const autoInstalled = useRef(false);
     const oscTimer = useRef(0);
 
     /** A profile is fetched the first time it is asked for, so the names arrive a moment later. */
@@ -304,6 +305,15 @@ export function SettingsPage({info}: SettingsPageProps) {
         }
     };
 
+    // A finished download installs itself; the panel is only a progress report, no second click.
+    useEffect(() => {
+        if (updateDialog?.phase !== "ready" || autoInstalled.current)
+            return;
+
+        autoInstalled.current = true;
+        void installNow();
+    }, [updateDialog?.phase]);
+
     const revealFolder = async () => {
         setError(null);
 
@@ -353,6 +363,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     /** Opens the floating download panel; the host sends progress and the changelog from there. */
     const startUpdate = async () => {
         setError(null);
+        autoInstalled.current = false;
         setUpdateDialog({phase: "changelog", changelog: "", downloaded: 0, total: 0, percent: 0});
 
         try {
@@ -931,16 +942,10 @@ export function SettingsPage({info}: SettingsPageProps) {
                                     {t("Cancel")}
                                 </Button>
                             )}
-                            {updateDialog.phase === "ready" && (
-                                <Button onClick={() => void installNow()} type="button">
-                                    {t("Install update")}
-                                </Button>
-                            )}
                             {updateDialog.phase === "installing" && (
                                 <Button disabled type="button">{t("Installing…")}</Button>
                             )}
-                            {(updateDialog.phase === "ready" || updateDialog.phase === "error" ||
-                                updateDialog.phase === "cancelled") && (
+                            {(updateDialog.phase === "error" || updateDialog.phase === "cancelled") && (
                                 <Button onClick={() => setUpdateDialog(null)} type="button">
                                     {t("Close")}
                                 </Button>
