@@ -9,7 +9,14 @@ using Serilog;
 namespace AntiBot.Services;
 
 /// <summary>Owns the settings model and its file; the shared base handles the standard messages.</summary>
-internal sealed class SettingsService : SettingsServiceBase<SettingsService, AppSettings, SettingsPayload>
+internal sealed class SettingsService() : SettingsServiceBase<SettingsService, AppSettings, SettingsPayload>(
+    new TomlSettingsStore<AppSettings>(
+        Path.Combine(Constants.SettingsDirectory, "settings.toml"),
+        AppSettings.Default,
+        AppTomlContext.Default.AppSettings,
+        json => JsonSerializer.Deserialize(json, AppJsonContext.Default.AppSettings),
+        LegacySettingsPath,
+        Header))
 {
     private const string Header =
         "# AntiBot settings. Rewritten when settings are saved; comments are not preserved.";
@@ -19,16 +26,6 @@ internal sealed class SettingsService : SettingsServiceBase<SettingsService, App
         Path.Combine(Constants.SettingsDirectory, "settings.json"),
         Path.Combine(Constants.DataDirectory, "settings.json")
     }.FirstOrDefault(File.Exists);
-
-    public SettingsService() : base(new TomlSettingsStore<AppSettings>(
-        Path.Combine(Constants.SettingsDirectory, "settings.toml"),
-        AppSettings.Default,
-        AppTomlContext.Default.AppSettings,
-        json => JsonSerializer.Deserialize(json, AppJsonContext.Default.AppSettings),
-        LegacySettingsPath,
-        Header))
-    {
-    }
 
     /// <summary>The log folder in use by the follower.</summary>
     public string LogDirectory => Current.LogDirectory;
