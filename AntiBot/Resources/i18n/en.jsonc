@@ -117,10 +117,10 @@
   "capacity_users": "/ {capacity} users",
   "online": "Online",
   // The access and status labels follow VRChat's own localization: ja uses パブリック / インバイト
-  // and だれでもおいで / きいてみてね for the two legacy statuses.
+  // and だれでもおいで / きいてみてね, zh uses 加入我 / 詢問我 and the translated instance types.
   "join_me": "Join Me",
   "ask_me": "Ask Me",
-  "busy": "Busy",
+  "busy": "Do Not Disturb",
   "offline": "Offline",
   "pc_vr": "PC/VR",
   "quest": "Quest",
