@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {useLocale} from "@photino-net-utils/bridge";
-import {useTranslation} from "../api/i18n";
+import {useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {
     clearOperations,

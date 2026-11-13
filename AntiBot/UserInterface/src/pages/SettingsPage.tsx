@@ -1,7 +1,7 @@
 import {lazy, Suspense, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {loadStrings} from "@photino-net-utils/bridge";
-import {type Translate, useTranslation} from "../api/i18n";
+import {type Translate, useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";

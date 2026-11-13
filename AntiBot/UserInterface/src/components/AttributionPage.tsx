@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import {useTranslation} from "../api/i18n";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {AttributionBrowser} from "./AttributionBrowser";
 
 /** The open-source notices, shown as a page over the settings rather than in the settings flow. */

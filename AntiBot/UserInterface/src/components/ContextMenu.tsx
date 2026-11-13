@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "../api/i18n";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {getSettings, setWhitelisted} from "../api/settings";
 
 /** Inputs where pasting text makes no sense. */

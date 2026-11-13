@@ -1,6 +1,6 @@
 import {type ReactNode, useEffect, useRef, useState} from "react";
 import styled, {keyframes} from "styled-components";
-import {type Translate, useTranslation} from "../api/i18n";
+import {type Translate, useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {
     emptyInstance,
