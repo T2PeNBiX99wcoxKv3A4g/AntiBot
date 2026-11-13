@@ -166,6 +166,7 @@ export default function App() {
                             <VersionText>
                                 {info ? `v${info.version} · ${info.platform}` : t("browser preview")}
                             </VersionText>
+                            {info?.debug && <DebugBadge title={t("Debug")}>{t("Debug")}</DebugBadge>}
                             {update?.available && (
                                 <UpdateDot
                                     aria-label={t("Version {version} is available.", {version: update.latest})}
@@ -308,6 +309,20 @@ const VersionText = styled.span`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+`;
+
+/** Marks a build that was compiled with Debug, which is the only one with the debug page. */
+const DebugBadge = styled.span`
+    flex-shrink: 0;
+    padding: 1px 5px;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.14);
 `;
 
 /** Shown next to the version only when the published build is newer than this one. */
