@@ -17,6 +17,7 @@ import {
     onUpdateProgress,
     openLogsFolder,
     openReleasesPage,
+    RELEASES_URL,
     setStartup,
     startUpdateDownload,
     startupStatus,
@@ -332,7 +333,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         setError(null);
 
         try {
-            await openReleasesPage();
+            await openReleasesPage(RELEASES_URL);
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
         }

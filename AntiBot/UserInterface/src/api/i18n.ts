@@ -1,13 +1,11 @@
-import {useTranslation as useBridgeTranslation} from "@photino-net-utils/bridge";
+import {
+    type Translate as BridgeTranslate,
+    useTranslation as useBridgeTranslation
+} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "./i18n.generated";
 
-/** The bridge translator with its keys narrowed to the generated union. */
-export type Translate = (key: LocalizationKey, params?: Record<string, string | number>) => string;
+/** The bridge translator with its keys narrowed to the app's generated union. */
+export type Translate = BridgeTranslate<LocalizationKey>;
 
-/**
- * `useTranslation` for the app: the key has to exist in the embedded translation files, so a typo
- * fails the TypeScript build instead of showing the raw key in the interface.
- */
-export function useTranslation(): Translate {
-    return useBridgeTranslation();
-}
+/** Every key in this app, so a typo fails the TypeScript build instead of rendering the raw key. */
+export const useTranslation = (): Translate => useBridgeTranslation<LocalizationKey>();
