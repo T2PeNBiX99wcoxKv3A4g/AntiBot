@@ -1,5 +1,113 @@
 # Changelog
 
+## [0.9.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.8.0..v0.9.0) - 2026-11-13
+
+### ⛰️  Features
+
+- *(auth)* Save passwords and automatic sign-in per account - ([eb0e2e4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/eb0e2e47c97a3a095f1f392b2269971c656d43ce))
+- *(auth)* Delete rejected saved passwords and cap auto sign-in - ([61bc79d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/61bc79d606183436dc3ce61aab7a1f2ad5dfc5eb))
+- *(auth)* Reuse saved cookies for saved-password sign-in - ([09689f4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/09689f40cda514895171d25c6a7b9d10f05fc321))
+- *(auth)* Add a manual saved-password sign-in mode - ([03d928b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/03d928b7fd5fb682070c9476c7ff0ec1f70a782c))
+- *(batch)* Add batch actions with a shared moderation queue - ([9b3949c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9b3949c77f13c697daf173ed61add45d134d3c0f))
+- *(threat)* Fetch every bio and move automatic sign-in to the account page - ([9ebc4b1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9ebc4b11b2acfe635fc2ab1c011689c38d7d6484))
+- *(threat)* Add oversee bio signals and keep batch actions undoable - ([377201d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/377201dde0298d8b704d9bcdf96782bff6964731))
+- Install the update when the download finishes - ([ca79502](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ca79502df730ae23a13e82407dc55c2af140baa1))
+- Score joins and leaves on their own loop - ([5438623](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/5438623ddfaa4699df5d6382e6a7eea4b6d4ac88))
+- Add a light and dark theme setting - ([1e0a019](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1e0a0197f0b93e5f9a43a950f8250457e5031d14))
+- Mark debug builds in the footer - ([a8df5e5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a8df5e5d703d369226d831120a427b3cd6b2d221))
+- Generate localization keys and clamp settings ranges - ([6aa7c15](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6aa7c15573a9dff8b5786b48268c2f2ae5a8aceb))
+- Generate the settings TypeScript types - ([cddbb74](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/cddbb74864024c79902f52eab671653875255049))
+- Add Windows update download and install flow - ([ade73f4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ade73f4ed8ac11eb3da60681f7d47d398cf7626a))
+
+### 🐛 Bug Fixes
+
+- *(account)* Keep the session save method on the account page - ([6f6b068](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6f6b0686ae532b30ed05da5a371b0d02c005d822))
+- *(auth)* Reuse each account's last session storage choice - ([a0c807f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a0c807f953e9a8b8c596c546e70c4aab3fa12ee8))
+- *(auth)* Show the save panel after login and keep the login options visible - ([9b86cb2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9b86cb23a08f4e732626ccc09f9d9d715ba5fec4))
+- *(auth)* Prefer the last signed-in account for automatic sign-in - ([bc899ac](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/bc899acce5ab1834aebe4ab68247ef2f196680f1))
+- *(auth)* Keep saved accounts on the sign-in page and hide login names - ([146d183](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/146d1830455dc102e67e5f187867861a83b64d9b))
+- *(batch)* Reset the previous progress when parsing a new list - ([d860f9c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d860f9cf474474218fa07dda16d8981e5ff33ed4))
+- *(i18n)* Follow VRChat's Chinese wording as well - ([89f12ec](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/89f12ecc953df149b8c8b39fae7ebfccc5375358))
+- *(i18n)* Follow VRChat's Japanese wording for the instance labels - ([8ce39e9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/8ce39e9d66af4d06e99feff456f0272937bc12dd))
+- *(i18n)* Translate the remaining Japanese entries - ([da45ef6](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/da45ef6e1804d1544dd37a4334a60825386b085c))
+- *(threat)* Score bot-style generated names at 20 - ([331c9f9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/331c9f994a95b6bbfe469be31618dcfb64e46504))
+- Retry Safe Mode when VRChat does not confirm it - ([cb988e8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/cb988e87307e24a4b5db02efd272d58c9bc61fb4))
+- Remove duplicate translation keys - ([0d0291d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0d0291d81c5904fce3b7a34b37031e286f778fd8))
+
+### 🚜 Refactor
+
+- *(i18n)* Use path-shaped keys - ([4e5d760](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4e5d760ddff043de945cd9cb9a22801261efbec3))
+- Streamline formatting and organize imports - ([7e7e6f0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7e7e6f0bb180736e9931d0cdb5de9eafee0d2649))
+- Read the typed translator straight from the bridge - ([6652b45](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6652b45cf05e91bccee4d3ea6d492698a1e9468c))
+- Augment the bridge with this app keys - ([689dd8d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/689dd8d4a00a639f159b8577863039c9b74cf3a3))
+- Take the app and update client from the bridge - ([8181efd](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/8181efdee1814ae48961e4bcf559fc7dd4a2e1c5))
+- Type translation keys from the generated union - ([2714874](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/271487437cb19124e14bd606caf7d03c172fb474))
+- Type the settings from the generated model - ([9a49613](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9a496138a00a1dcd70a6de988905a648e524af88))
+- Remove unused using directives and use target-typed new - ([a18d398](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a18d3988009b3754ac0005d2a179f62e3ae2c56d))
+- Use primary constructor in settings service - ([9900e56](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9900e56164350c9e74cfc9ed88e6312506c8e6f1))
+- Let the settings base own Instance - ([2733c40](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2733c401c4f9960b9c807e9a1bd3ae9cfebe0e2a))
+- Drop sealed from the singleton declarations - ([36039c5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/36039c5b231ee0271f34b67ac67487006d6e7015))
+- Drop redundant singleton touches - ([2521b97](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2521b9778fb41b2a5e1dd2f7a8cc3c041a097b00))
+- Make the singleton constructors private - ([58e28eb](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/58e28eb243d06c8bdaaf0206d815cb7144fbd997))
+- Mark services with [Singleton] - ([1451a09](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1451a098887f69005936c09f8b36b5286d5b27d2))
+- Initialize the message handlers from Program - ([1be0ffc](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1be0ffc3b0deff1690ee985999e00fe1616fa507))
+- Drop the AppLinkService wiring - ([16a667e](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/16a667e6b1b300eaec086671203ea3a9e7fa1e44))
+- Subscribe AppLinkService through NativeBridge - ([0cdb230](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0cdb23094a12fbab6dbd6268a7a688e7b6a84f8d))
+- Adopt the shared source generators - ([c4a3922](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c4a39229c46e42db1db2c544df0c4332e4ca8b44))
+- Use the shared settings service base - ([ab214d0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ab214d001b7de137160c87447e0a522355c4e0f6))
+- Store settings as TOML - ([90e5cd3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/90e5cd36ddef2e20a9cfdc809fc2186bc22ade63))
+- Use collection expressions - ([8ed7dcb](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/8ed7dcbbe496572cbdc76ce9998c97a5a28d8374))
+- Move settings file handling into the shared store - ([4b72261](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4b7226196a955d4970df1de47367a28d4fbb0940))
+- Let UpdateOptions derive the release page URL - ([3cd9147](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3cd9147a9cca8a6d147c9ce3e2669819aa6c3ac9))
+- Use the shared app info and startup services - ([c31dfba](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c31dfba67336fef0a3ebdd5a56ab2fc49defbb5d))
+- Use the shared web view cache and event queue - ([10ce89a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/10ce89ad7c6cc78c9a0ae42445b5d5d1bcbcad83))
+- Streamline formatting and organize imports and member declarations - ([717bfba](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/717bfbae1eb358a98a9a2fd1be2345e5a5423a59))
+- Send notifications through the shared service - ([1f8f7d3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1f8f7d3c16eb68b1eb4719d4e68fccf89586e8c5))
+- Use target-typed new expressions - ([eed677f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/eed677fd089432e98756e8e2310d0a5ca33ca697))
+
+### 📚 Documentation
+
+- *(i18n)* Keep VRChat's wording for Join Me and Ask Me - ([d836505](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d836505d31d5767a7daaebde509bda2037839f60))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update photino-net-utils-bridge to v0.25.0 - ([3d61c0b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3d61c0be6111cdb0354de546bea6a451beb5feb4))
+- Sync the settings generator - ([37a8b35](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/37a8b356f87c198e5616a3d0ab688ca8da1dc6fa))
+- Sync the settings generator - ([12aa732](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/12aa7327a25f5da5f88c7fdb1941c45756d0e6c2))
+- Sync the shared settings generator - ([2bd527a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/2bd527ac7063fc81c46529b11b0b130c3f605ffb))
+- Sync the shared settings generator - ([d098012](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d098012c0d3343632a267809311e43cbce69fef9))
+- Update photino-net-utils-bridge to v0.23.0 - ([908916d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/908916d4307584e23719777e453e157a876887f8))
+- Update photino-net-utils-bridge to v0.21.0 - ([ea49e6f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ea49e6f15e4af5afb7977e6f981ccb1232028b5a))
+- Update PhotinoNetUtils bridge to version 0.20.2 - ([f3d6499](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f3d64990e5ccc9141200f6de896fce6a304f06d8))
+- Update photino-net-utils-bridge to v0.20.0 - ([a5a22be](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a5a22be9b3e8addff99b9272e214e92a6f6abd5a))
+- Refresh the code generator binaries - ([7712275](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/771227529fb79c76f455a0d8ccd1aaa31bf174f0))
+- Update photino-net-utils-bridge to v0.19.0 - ([f0f51f0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f0f51f04921668959dd9161720108c0564f40045))
+- Update the settings generator - ([3f792fc](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3f792fc41af74455c19f126c5d607c95eecad0b4))
+- Update the shared generator - ([5a3e817](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/5a3e817f4f5366a0a98919b589d3492c34778a13))
+- Update the shared generator - ([5f09e69](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/5f09e69d6c9af00b8f174d9f9b47a7ff46056fca))
+- Update the shared library - ([d1762e2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d1762e26c0dcad80e3f5035a65016b0382513734))
+- Update the shared library - ([98f95db](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/98f95db665e9366840ad73d4810b8a87a9a4d48f))
+- Update the shared library - ([126b556](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/126b55680a8efa41d11c95d73ba85b6311eaefc2))
+- Target .NET 11 - ([731b401](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/731b4019c4754aaf7a149e3cf860e627fabc8525))
+- Add OS platform annotations to notification service - ([c9ea41a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c9ea41aebbb2330de87d18c2b315243bae6115d0))
+- Update PhotinoNETUtils to 0.16.1 - ([9b7e81d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9b7e81d67d8301a138091cc916d51868b6eee364))
+- Update photino-net-utils-bridge to v0.16.0 - ([d673e84](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d673e84a1ba20d74638bd502da2b8d8a5080844b))
+
+### ◀️ Revert
+
+- Touch the singleton instead of the bootstrap - ([400c821](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/400c821d2f2b007e5e1bf7bf13fac23114bca886))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([fd565e9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fd565e9e1c0d3f6c492196c8cebdc9a1d0f43734))
+
+### Build
+
+- Generate the settings types from the compiled model - ([45e54c4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/45e54c43d073f2ddf90273efe8de915914fc2da7))
+- Use the per-platform code generator - ([9cf755e](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9cf755e0aabd1f1f02954a3e0902256f615e05c0))
+- Run the native settings generator - ([6c16965](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6c169658f50f6ca1a27dbf21779a38fb8d96e8ed))
+
+
 ## [0.8.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.7.5..v0.8.0) - 2026-11-11
 
 ### ⛰️  Features
