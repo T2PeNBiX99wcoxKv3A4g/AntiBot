@@ -1,46 +1,12 @@
 import {Native} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
+import type {AppSettingsGenerated} from "./settings.generated";
 
 /** The stored settings plus the folder the host uses when nothing has been saved. */
-export interface SettingsView {
-    logDirectory: string;
-    defaultLogDirectory: string;
-    avatarApiProviders: string[];
-    autoBlock: boolean;
-    autoDisableAvatarInteraction: boolean;
-    autoHideChatBox: boolean;
-    autoCloseVrchat: boolean;
-    autoSafeMode: boolean;
-    autoSafeAvatar: boolean;
-    safeAvatarId: string;
-    skipCloseInVr: boolean;
-    autoRejectFriendRequests: boolean;
-    threatThreshold: number;
-    whitelist: string[];
-    language: string;
-    startHidden: boolean;
-    /** 0 uses the port VRChat reports. */
-    oscPort: number;
-}
+export type SettingsView = AppSettingsGenerated & {defaultLogDirectory: string};
 
-export interface AppSettings {
-    logDirectory: string;
-    avatarApiProviders: string[];
-    autoBlock: boolean;
-    autoDisableAvatarInteraction: boolean;
-    autoHideChatBox: boolean;
-    autoCloseVrchat: boolean;
-    autoSafeMode: boolean;
-    autoSafeAvatar: boolean;
-    safeAvatarId: string;
-    skipCloseInVr: boolean;
-    autoRejectFriendRequests: boolean;
-    threatThreshold: number;
-    whitelist: string[];
-    language: string;
-    startHidden: boolean;
-    oscPort: number;
-}
+/** What `settings.save` sends; generated from the C# `AppSettings` model. */
+export type AppSettings = AppSettingsGenerated;
 
 const empty: SettingsView = {
     logDirectory: "",
