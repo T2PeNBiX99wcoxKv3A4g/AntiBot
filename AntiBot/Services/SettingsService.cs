@@ -9,7 +9,7 @@ using Serilog;
 namespace AntiBot.Services;
 
 /// <summary>Owns the settings model and its file; the shared base handles the standard messages.</summary>
-internal sealed class SettingsService : SettingsServiceBase<AppSettings, SettingsPayload>
+internal sealed class SettingsService : SettingsServiceBase<SettingsService, AppSettings, SettingsPayload>
 {
     private const string Header =
         "# AntiBot settings. Rewritten when settings are saved; comments are not preserved.";
@@ -20,9 +20,7 @@ internal sealed class SettingsService : SettingsServiceBase<AppSettings, Setting
         Path.Combine(Constants.DataDirectory, "settings.json")
     }.FirstOrDefault(File.Exists);
 
-    public static readonly SettingsService Instance = new();
-
-    private SettingsService() : base(new TomlSettingsStore<AppSettings>(
+    public SettingsService() : base(new TomlSettingsStore<AppSettings>(
         Path.Combine(Constants.SettingsDirectory, "settings.toml"),
         AppSettings.Default,
         AppTomlContext.Default.AppSettings,
