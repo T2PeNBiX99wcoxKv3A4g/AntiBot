@@ -116,7 +116,8 @@
   "no_players_in_this_instance_yet": "No players in this instance yet.",
   "capacity_users": "/ {capacity} users",
   "online": "Online",
-  // VRChat shows these two access types as-is; keep the wording it uses.
+  // The access and status labels follow VRChat's own localization: ja uses パブリック / インバイト
+  // and だれでもおいで / きいてみてね for the two legacy statuses.
   "join_me": "Join Me",
   "ask_me": "Ask Me",
   "busy": "Busy",
