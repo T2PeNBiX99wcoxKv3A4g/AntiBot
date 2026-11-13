@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "../api/i18n";
-import type {LocalizationKey} from "../api/i18n.generated";
+import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {
     type BatchFinished,
     getBatchState,

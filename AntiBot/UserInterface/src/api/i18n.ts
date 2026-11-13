@@ -1,11 +1,5 @@
-import {
-    type Translate as BridgeTranslate,
-    useTranslation as useBridgeTranslation
-} from "@photino-net-utils/bridge";
-import type {LocalizationKey} from "./i18n.generated";
+// The generated file augments the bridge's LocalizationKeys interface, which is what narrows the
+// keys of the translator exported below.
+import type {} from "./i18n.generated";
 
-/** The bridge translator with its keys narrowed to the app's generated union. */
-export type Translate = BridgeTranslate<LocalizationKey>;
-
-/** Every key in this app, so a typo fails the TypeScript build instead of rendering the raw key. */
-export const useTranslation = (): Translate => useBridgeTranslation<LocalizationKey>();
+export {type Translate, useTranslation} from "@photino-net-utils/bridge";

@@ -2,7 +2,7 @@ import {type FormEvent, useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {Native} from "@photino-net-utils/bridge";
 import {useTranslation} from "../api/i18n";
-import type {LocalizationKey} from "../api/i18n.generated";
+import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {
     type AccountSummary,
     type AuthSnapshot,

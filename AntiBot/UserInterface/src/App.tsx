@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
 import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
 import {useTranslation} from "./api/i18n";
-import type {LocalizationKey} from "./api/i18n.generated";
+import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";

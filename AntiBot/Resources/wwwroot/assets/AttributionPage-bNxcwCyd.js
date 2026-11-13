@@ -1,4 +1,4 @@
-import{a as e,i as t,n,r,t as i}from"./index-CKHFioGy.js";var a=e(t(),1),o=[{name:`@fontsource/inter`,version:`5.3.0`,license:`OFL-1.1`,text:`Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+import{a as e,i as t,n,r,t as i}from"./index-ocgq4Icf.js";var a=e(t(),1),o=[{name:`@fontsource/inter`,version:`5.3.0`,license:`OFL-1.1`,text:`Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter) Inter-Italic[opsz,wght].ttf: Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
@@ -4770,13 +4770,13 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l,{children:[(0,s.jsx)(u,{children:o.map(n=>(0,s.jsxs)(d,{$active:n.name===e.name,onClick:()=>t(n),type:`button`,children:[(0,s.jsx)(`strong`,{children:n.name}),(0,s.jsx)(`span`,{children:[n.version,n.license].filter(Boolean).join(` · `)})]},`${n.name}@${n.version}`))}),(0,s.jsxs)(f,{children:[(0,s.jsxs)(p,{children:[(0,s.jsx)(`strong`,{children:e.name}),(0,s.jsx)(`span`,{children:[e.version,e.license].filter(Boolean).join(` · `)})]}),(0,s.jsx)(m,{children:e.text})]})]})}var l=n.div`
+SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l,{children:[(0,s.jsx)(u,{children:o.map(n=>(0,s.jsxs)(d,{$active:n.name===e.name,onClick:()=>t(n),type:`button`,children:[(0,s.jsx)(`strong`,{children:n.name}),(0,s.jsx)(`span`,{children:[n.version,n.license].filter(Boolean).join(` · `)})]},`${n.name}@${n.version}`))}),(0,s.jsxs)(f,{children:[(0,s.jsxs)(p,{children:[(0,s.jsx)(`strong`,{children:e.name}),(0,s.jsx)(`span`,{children:[e.version,e.license].filter(Boolean).join(` · `)})]}),(0,s.jsx)(m,{children:e.text})]})]})}var l=i.div`
     display: grid;
     grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.6fr);
     gap: 12px;
     flex: 1;
     min-height: 0;
-`,u=n.div`
+`,u=i.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -4786,7 +4786,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: var(--bg-input);
-`,d=n.button`
+`,d=i.button`
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -4819,7 +4819,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     &:hover {
         background: var(--bg-card-hover);
     }
-`,f=n.div`
+`,f=i.div`
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -4827,7 +4827,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     border-radius: var(--radius-sm);
     background: var(--bg-input);
     overflow: hidden;
-`,p=n.div`
+`,p=i.div`
     display: flex;
     align-items: baseline;
     justify-content: space-between;
@@ -4844,7 +4844,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
         font-size: 9px;
         color: var(--text-muted);
     }
-`,m=n.pre`
+`,m=i.pre`
     flex: 1;
     min-height: 0;
     margin: 0;
@@ -4857,7 +4857,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     user-select: text;
-`;function h({onClose:e}){let t=i();return(0,s.jsx)(g,{onClick:e,children:(0,s.jsxs)(_,{onClick:e=>e.stopPropagation(),children:[(0,s.jsxs)(v,{children:[(0,s.jsx)(`h2`,{children:t(`Open source attribution`)}),(0,s.jsx)(y,{onClick:e,title:t(`Close`),type:`button`,children:`×`})]}),(0,s.jsx)(b,{children:t(`Open source licenses for the libraries AntiBot uses.`)}),(0,s.jsx)(c,{})]})})}var g=n.div`
+`;function h({onClose:e}){let t=n();return(0,s.jsx)(g,{onClick:e,children:(0,s.jsxs)(_,{onClick:e=>e.stopPropagation(),children:[(0,s.jsxs)(v,{children:[(0,s.jsx)(`h2`,{children:t(`Open source attribution`)}),(0,s.jsx)(y,{onClick:e,title:t(`Close`),type:`button`,children:`×`})]}),(0,s.jsx)(b,{children:t(`Open source licenses for the libraries AntiBot uses.`)}),(0,s.jsx)(c,{})]})})}var g=i.div`
     position: fixed;
     inset: 0;
     z-index: 40;
@@ -4867,7 +4867,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     padding: 24px;
     background: rgba(6, 4, 12, 0.72);
     backdrop-filter: blur(3px);
-`,_=n.div`
+`,_=i.div`
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -4880,7 +4880,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
     border-radius: var(--radius-md);
     background: var(--bg-card);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-`,v=n.header`
+`,v=i.header`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -4890,7 +4890,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
         font-size: 15px;
         font-weight: 600;
     }
-`,y=n.button`
+`,y=i.button`
     width: 26px;
     height: 26px;
     border: 0;
@@ -4905,7 +4905,7 @@ SOFTWARE.`}],s=r();function c(){let[e,t]=(0,a.useState)(o[0]);return(0,s.jsxs)(l
         background: var(--bg-card-hover);
         color: var(--text-primary);
     }
-`,b=n.p`
+`,b=i.p`
     font-size: 11px;
     line-height: 1.5;
     color: var(--text-muted);
