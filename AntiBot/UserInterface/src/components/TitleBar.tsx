@@ -1,6 +1,5 @@
 import styled from "styled-components";
-import {useWindowControls, useWindowDrag} from "@photino-net-utils/bridge";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {useTranslation, useWindowControls, useWindowDrag} from "@photino-net-utils/bridge";
 import {BrandMark} from "./Brand";
 
 /** The interface draws the window title bar; the host hides the native one but keeps its frame. */

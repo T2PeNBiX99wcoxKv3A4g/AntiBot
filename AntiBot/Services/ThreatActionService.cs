@@ -2,7 +2,6 @@ using System.Threading.Channels;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Notifications;
-using Serilog;
 
 namespace AntiBot.Services;
 
@@ -17,8 +16,13 @@ internal partial class ThreatActionService
 {
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _gate = new();
+
     private readonly Channel<(string UserId, string Name)> _observations =
-        Channel.CreateUnbounded<(string UserId, string Name)>(new UnboundedChannelOptions { SingleReader = true });
+        Channel.CreateUnbounded<(string UserId, string Name)>(new()
+        {
+            SingleReader = true
+        });
+
     private readonly HashSet<string> _rejecting = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";

@@ -1,10 +1,10 @@
-import {Native} from "@photino-net-utils/bridge";
 import type {ThemeMode} from "@photino-net-utils/bridge";
+import {Native} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
 import type {AppSettingsGenerated} from "./settings.generated";
 
 /** The stored settings plus the folder the host uses when nothing has been saved. */
-export type SettingsView = AppSettingsGenerated & {defaultLogDirectory: string};
+export type SettingsView = AppSettingsGenerated & { defaultLogDirectory: string };
 
 /** What `settings.save` sends; generated from the C# `AppSettings` model. */
 export type AppSettings = AppSettingsGenerated;

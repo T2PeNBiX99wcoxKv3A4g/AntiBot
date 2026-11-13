@@ -1,8 +1,14 @@
 import {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
-import {Native, ResizeHandles, useTheme, useWindowCorners, type ThemeMode} from "@photino-net-utils/bridge";
-import {useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import {
+    Native,
+    ResizeHandles,
+    type ThemeMode,
+    useTheme,
+    useTranslation,
+    useWindowCorners
+} from "@photino-net-utils/bridge";
 import {getSettings, normalizeTheme} from "./api/settings";
 import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";

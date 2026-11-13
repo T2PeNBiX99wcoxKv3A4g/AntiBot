@@ -1,7 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {useLocale} from "@photino-net-utils/bridge";
-import {type Translate, useTranslation} from "@photino-net-utils/bridge";
+import {type Translate, useLocale, useTranslation} from "@photino-net-utils/bridge";
 import {
     clearFriendRequests,
     type FriendRequest,

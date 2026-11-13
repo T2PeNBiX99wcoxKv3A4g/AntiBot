@@ -1,5 +1,5 @@
-import {Native} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import {Native} from "@photino-net-utils/bridge";
 
 /** One scoring signal: a translation key, the points it added (negative for trust) and a placeholder. */
 export interface ThreatReason {

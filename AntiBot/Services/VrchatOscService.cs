@@ -23,6 +23,10 @@ internal partial class VrchatOscService
     private readonly UdpClient? _receive;
 
     private readonly UdpClient _udp = new();
+    private long _safeModeConfirmedAt;
+
+    private int _safeModePending;
+    private bool _warnedNoOsc;
 
     private VrchatOscService()
     {
@@ -35,10 +39,6 @@ internal partial class VrchatOscService
         if (_receive is not null)
             _ = Task.Run(ReceiveAsync);
     }
-
-    private int _safeModePending;
-    private long _safeModeConfirmedAt;
-    private bool _warnedNoOsc;
 
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
     public bool IsListening { get; private set; }

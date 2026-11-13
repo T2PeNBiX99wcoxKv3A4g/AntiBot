@@ -4,7 +4,6 @@ using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Services;
-using Serilog;
 
 namespace AntiBot.Services;
 

@@ -1,6 +1,6 @@
+import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {Native} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
-import type {LocalizationKey} from "@photino-net-utils/bridge";
 
 /** The users the pasted links point at, and the lines that did not contain a user id. */
 export interface BatchPreview {

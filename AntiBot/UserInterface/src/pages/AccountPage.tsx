@@ -1,8 +1,7 @@
 import {type FormEvent, useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {Native} from "@photino-net-utils/bridge";
-import {useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import {Native, useTranslation} from "@photino-net-utils/bridge";
 import {
     type AccountSummary,
     type AuthSnapshot,

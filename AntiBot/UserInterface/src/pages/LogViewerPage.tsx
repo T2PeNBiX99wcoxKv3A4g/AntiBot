@@ -1,7 +1,7 @@
 import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import {useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, exportLog, type LogLine} from "../api/logs";
 import {ArrowDownIcon, DownloadIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
 import type {VrchatLog} from "../hooks/useVrchatLog";
