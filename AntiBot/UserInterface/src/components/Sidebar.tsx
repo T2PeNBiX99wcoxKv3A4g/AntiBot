@@ -1,5 +1,6 @@
 import styled, {css, keyframes} from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
 import {AlertIcon, BatchIcon, BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
@@ -12,7 +13,7 @@ interface SidebarProps {
     debug: boolean;
 }
 
-const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
+const items: { id: Page; label: LocalizationKey; icon: typeof LogIcon }[] = [
     {id: "logs", label: "Log viewer", icon: LogIcon},
     {id: "instance", label: "Instance", icon: UsersIcon},
     {id: "batch", label: "Batch actions", icon: BatchIcon},
@@ -22,7 +23,7 @@ const items: { id: Page; label: string; icon: typeof LogIcon }[] = [
     {id: "settings", label: "Settings", icon: SlidersIcon},
 ];
 
-const debugItem: { id: Page; label: string; icon: typeof LogIcon } =
+const debugItem: { id: Page; label: LocalizationKey; icon: typeof LogIcon } =
     {id: "debug", label: "Debug", icon: AlertIcon};
 
 /** The running dot breathes instead of sitting still, so the status is visible without reading it. */

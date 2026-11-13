@@ -1,6 +1,8 @@
 import {type FormEvent, useCallback, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {Native, useTranslation} from "@photino-net-utils/bridge";
+import {Native} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {
     type AccountSummary,
     type AuthSnapshot,
@@ -754,7 +756,7 @@ function Profile({auth, busy, error, run}: {
 }
 
 /** The presence label and colour the site uses. */
-function statusInfo(status?: string): { labelKey: string; color: string } | null {
+function statusInfo(status?: string): { labelKey: LocalizationKey; color: string } | null {
     switch (status) {
         case "active":
             return {labelKey: "Online", color: "#4ade80"};
@@ -767,7 +769,7 @@ function statusInfo(status?: string): { labelKey: string; color: string } | null
         case "offline":
             return {labelKey: "Offline", color: "#94a3b8"};
         default:
-            return status && status.length > 0 ? {labelKey: status, color: "#94a3b8"} : null;
+            return status && status.length > 0 ? {labelKey: status as LocalizationKey, color: "#94a3b8"} : null;
     }
 }
 
@@ -1187,7 +1189,7 @@ function methodHint(method: string) {
     }
 }
 
-function storageLabel(storage: AuthStorage) {
+function storageLabel(storage: AuthStorage): LocalizationKey {
     switch (storage) {
         case "password":
             return "password-encrypted";
@@ -1198,7 +1200,7 @@ function storageLabel(storage: AuthStorage) {
         case "hello":
             return "Windows Hello";
         case "software":
-            return "software key";
+            return "Software key";
         default:
             return "not stored";
     }

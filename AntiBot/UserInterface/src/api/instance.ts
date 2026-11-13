@@ -1,8 +1,9 @@
 import {Native} from "@photino-net-utils/bridge";
+import type {LocalizationKey} from "./i18n.generated";
 
 /** One scoring signal: a translation key, the points it added (negative for trust) and a placeholder. */
 export interface ThreatReason {
-    text: string;
+    text: LocalizationKey;
     weight: number;
     /** Fills the `{days}` placeholder of the text, when it has one. */
     detail?: string;

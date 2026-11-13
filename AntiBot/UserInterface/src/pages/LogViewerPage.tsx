@@ -1,13 +1,14 @@
 import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {desktopAvailable, exportLog, type LogLine} from "../api/logs";
 import {ArrowDownIcon, DownloadIcon, LogIcon, SearchIcon, TrashIcon, XIcon} from "../components/Icons";
 import type {VrchatLog} from "../hooks/useVrchatLog";
 
 const LEVELS = ["debug", "info", "warning", "error"] as const;
 
-const LEVEL_LABELS: Record<string, string> = {
+const LEVEL_LABELS: Record<string, LocalizationKey> = {
     debug: "Debug",
     info: "Info",
     warning: "Warning",

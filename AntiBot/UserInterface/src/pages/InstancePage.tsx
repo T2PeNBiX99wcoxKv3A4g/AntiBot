@@ -1,6 +1,7 @@
 import {type ReactNode, useEffect, useRef, useState} from "react";
 import styled, {keyframes} from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {type Translate, useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {
     emptyInstance,
     getInstance,
@@ -363,7 +364,7 @@ export function PlayerDialog({user, now, onClose}: {
 }
 
 /** The avatar name, or a translated loading/unknown state. */
-function avatarName(user: InstanceUser, t: (key: string, params?: Record<string, string | number>) => string): string {
+function avatarName(user: InstanceUser, t: Translate): string {
     if (user.avatarName) return user.avatarName;
     if (user.isRobot) return t("Robot (default)");
     if (!(user.avatarLoaded ?? false)) return t("Loading…");
@@ -382,9 +383,9 @@ function Field({label, value}: { label: string; value: string }) {
 
 /** The dot and the text together: the custom status when there is one, otherwise the default label. */
 function StatusField({status, text, t}: {
-    status: { labelKey: string; color: string } | null;
+    status: { labelKey: LocalizationKey; color: string } | null;
     text?: string;
-    t: (key: string, params?: Record<string, string | number>) => string;
+    t: Translate;
 }) {
     const label = text || (status ? t(status.labelKey) : t("—"));
 
@@ -412,7 +413,7 @@ function useWorldThumbnail(worldId: string, thumbnail?: string): string {
     return cache.current.url;
 }
 
-function statusInfo(status?: string): { labelKey: string; color: string } | null {
+function statusInfo(status?: string): { labelKey: LocalizationKey; color: string } | null {
     switch (status) {
         case "active":
             return {labelKey: "Online", color: "#4ade80"};
@@ -425,20 +426,20 @@ function statusInfo(status?: string): { labelKey: string; color: string } | null
         case "offline":
             return {labelKey: "Offline", color: "#94a3b8"};
         default:
-            return status && status.length > 0 ? {labelKey: status, color: "#94a3b8"} : null;
+            return status && status.length > 0 ? {labelKey: status as LocalizationKey, color: "#94a3b8"} : null;
     }
 }
 
 /** VRChat does not say whether a PC user is in VR; the tooltip explains the limitation. */
 function platformTitle(platform: string | undefined,
-                       t: (key: string, params?: Record<string, string | number>) => string): string | undefined {
+                       t: Translate): string | undefined {
     return platform === "standalonewindows"
         ? t("PC includes both desktop and PCVR users; VRChat does not report which one.")
         : undefined;
 }
 
 function platformLabel(platform: string | undefined,
-                       t: (key: string, params?: Record<string, string | number>) => string): string {
+                       t: Translate): string {
     switch (platform) {
         case "standalonewindows":
             return t("PC/VR");
@@ -453,7 +454,7 @@ function platformLabel(platform: string | undefined,
 
 /** How long the player has been in the instance, from the log's join time. */
 function durationLabel(joinedAt: string, now: number,
-                       t: (key: string, params?: Record<string, string | number>) => string): string {
+                       t: Translate): string {
     if (!joinedAt) return t("—");
 
     const [hours, minutes, seconds] = joinedAt.split(":").map(Number);
@@ -473,7 +474,7 @@ function durationLabel(joinedAt: string, now: number,
 /** The region as a small flag. Windows has no flag emoji, so the emoji only ever showed "JP". */
 function RegionFlag({region, t}: {
     region: string;
-    t: (key: string, params?: Record<string, string | number>) => string;
+    t: Translate;
 }) {
     switch (region.toLowerCase()) {
         case "jp":
@@ -528,7 +529,7 @@ function RegionFlag({region, t}: {
 }
 
 function instanceTypeLabel(type: string | undefined,
-                           t: (key: string, params?: Record<string, string | number>) => string): string {
+                           t: Translate): string {
     switch (type) {
         case "public":
             return t("Public");

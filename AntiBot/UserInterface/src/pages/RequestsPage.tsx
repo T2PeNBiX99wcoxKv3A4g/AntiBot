@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {useLocale, useTranslation} from "@photino-net-utils/bridge";
+import {useLocale} from "@photino-net-utils/bridge";
+import {type Translate, useTranslation} from "../api/i18n";
 import {
     clearFriendRequests,
     type FriendRequest,
@@ -148,7 +149,7 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
 }
 
 function groupByDay(requests: FriendRequest[],
-                    t: (key: string, params?: Record<string, string | number>) => string,
+                    t: Translate,
                     locale: string): { day: string; items: FriendRequest[] }[] {
     const groups = new Map<string, FriendRequest[]>();
 
@@ -163,7 +164,7 @@ function groupByDay(requests: FriendRequest[],
 }
 
 function dayLabel(ms: number,
-                  t: (key: string, params?: Record<string, string | number>) => string,
+                  t: Translate,
                   locale: string): string {
     const date = new Date(ms);
 

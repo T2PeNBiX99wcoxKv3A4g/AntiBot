@@ -1,5 +1,6 @@
 import {Native} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
+import type {LocalizationKey} from "./i18n.generated";
 
 /** The users the pasted links point at, and the lines that did not contain a user id. */
 export interface BatchPreview {
@@ -14,7 +15,7 @@ export interface BatchStart {
     started: boolean;
     total: number;
     /** Translation keys for the actions this run will apply. */
-    actions: string[];
+    actions: LocalizationKey[];
     error?: string;
 }
 
@@ -51,7 +52,7 @@ export interface BatchState {
     cancelled: boolean;
     error?: string;
     outcomes: BatchOutcome[];
-    actions: string[];
+    actions: LocalizationKey[];
 }
 
 /** Parses the links now; the profile lookup can take a while for a long list. */

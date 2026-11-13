@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {
     type BatchFinished,
     getBatchState,
@@ -27,7 +28,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
     const [done, setDone] = useState(0);
     const [total, setTotal] = useState(0);
     const [failed, setFailed] = useState(0);
-    const [actions, setActions] = useState<string[]>([]);
+    const [actions, setActions] = useState<LocalizationKey[]>([]);
     const [finished, setFinished] = useState<BatchFinished | null>(null);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const now = Date.now();

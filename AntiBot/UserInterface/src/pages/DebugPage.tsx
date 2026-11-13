@@ -1,6 +1,6 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
-import {useTranslation} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
 import {closeVrchat, type DebugUserResult, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
 import {type OscStatus, oscStatus} from "../api/osc";
 

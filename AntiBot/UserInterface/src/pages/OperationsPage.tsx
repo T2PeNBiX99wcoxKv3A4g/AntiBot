@@ -1,6 +1,8 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {useLocale, useTranslation} from "@photino-net-utils/bridge";
+import {useLocale} from "@photino-net-utils/bridge";
+import {useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {
     clearOperations,
     getOperations,
@@ -161,7 +163,7 @@ function formatTime(at: number, locale: string): string {
 }
 
 /** The English label is also the translation key. */
-function kindKey(kind: string): string {
+function kindKey(kind: string): LocalizationKey {
     switch (kind) {
         case "block":
             return "Blocked";
@@ -188,7 +190,7 @@ function kindKey(kind: string): string {
         case "chatBoxShown":
             return "Chat box shown";
         default:
-            return kind;
+            return kind as LocalizationKey;
     }
 }
 

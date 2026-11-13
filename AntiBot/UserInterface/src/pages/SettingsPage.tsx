@@ -1,6 +1,8 @@
 import {lazy, Suspense, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import {loadStrings, useTranslation} from "@photino-net-utils/bridge";
+import {loadStrings} from "@photino-net-utils/bridge";
+import {type Translate, useTranslation} from "../api/i18n";
+import type {LocalizationKey} from "../api/i18n.generated";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
@@ -43,7 +45,7 @@ const LOCALE_NAMES: Record<string, string> = {
 };
 
 /** The settings sections, in page order; the jump list is built from this. */
-const SECTIONS = [
+const SECTIONS: { id: string; label: LocalizationKey }[] = [
     {id: "settings-language", label: "Language"},
     {id: "settings-startup", label: "Start with the system"},
     {id: "settings-log-source", label: "Log source"},
@@ -919,7 +921,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     );
 }
 
-function updatePhaseLabel(phase: UpdateDialogPhase, t: (key: string) => string): string {
+function updatePhaseLabel(phase: UpdateDialogPhase, t: Translate): string {
     switch (phase) {
         case "changelog":
             return t("Preparing the update…");

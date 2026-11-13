@@ -1,6 +1,8 @@
 import {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
-import {Native, ResizeHandles, useTranslation, useWindowCorners} from "@photino-net-utils/bridge";
+import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
+import {useTranslation} from "./api/i18n";
+import type {LocalizationKey} from "./api/i18n.generated";
 import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
@@ -29,12 +31,12 @@ const pageIn = keyframes`
     }
 `;
 
-const pageMeta: Record<Page, { title: string; subtitle: string }> = {
+const pageMeta: Record<Page, { title: LocalizationKey; subtitle: LocalizationKey }> = {
     logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
     instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
     batch: {
         title: "Batch actions",
-        subtitle: "Apply the configured API actions to a list of VRChat users.",
+        subtitle: "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.",
     },
     requests: {
         title: "Friend requests",
