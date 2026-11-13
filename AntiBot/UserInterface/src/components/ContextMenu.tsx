@@ -120,17 +120,25 @@ export function ContextMenu() {
         const onKey = (event: KeyboardEvent) => {
             if (event.key === "Escape") setMenu(null);
         };
+        const onVisibility = () => {
+            if (document.hidden) close();
+        };
 
         window.addEventListener("click", close);
         window.addEventListener("scroll", close, true);
         window.addEventListener("resize", close);
         window.addEventListener("keydown", onKey);
+        // Leaving the app (or the page becoming hidden) should not leave a menu floating around.
+        window.addEventListener("blur", close);
+        document.addEventListener("visibilitychange", onVisibility);
 
         return () => {
             window.removeEventListener("click", close);
             window.removeEventListener("scroll", close, true);
             window.removeEventListener("resize", close);
             window.removeEventListener("keydown", onKey);
+            window.removeEventListener("blur", close);
+            document.removeEventListener("visibilitychange", onVisibility);
         };
     }, [menu]);
 

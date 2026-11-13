@@ -162,25 +162,42 @@ export function Dropdown({value, options, onChange, up, disabled, title}: Dropdo
     useEffect(() => {
         if (!open) return;
 
-        const onPointerDown = (event: MouseEvent) => {
-            if (!root.current?.contains(event.target as Node)) setOpen(false);
+        const close = () => setOpen(false);
+        const onPointerDown = (event: PointerEvent) => {
+            if (!root.current?.contains(event.target as Node)) close();
         };
         const onKeyDown = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setOpen(false);
+            if (event.key === "Escape") close();
+        };
+        // Clicking another window (or the desktop) never reaches the document, so the menu would
+        // otherwise stay open until an option was picked.
+        const onVisibility = () => {
+            if (document.hidden) close();
         };
 
-        document.addEventListener("mousedown", onPointerDown);
+        document.addEventListener("pointerdown", onPointerDown);
         document.addEventListener("keydown", onKeyDown);
+        window.addEventListener("blur", close);
+        document.addEventListener("visibilitychange", onVisibility);
+
         return () => {
-            document.removeEventListener("mousedown", onPointerDown);
+            document.removeEventListener("pointerdown", onPointerDown);
             document.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("blur", close);
+            document.removeEventListener("visibilitychange", onVisibility);
         };
     }, [open]);
 
     const selected = options.find((option) => option.value === value)?.label ?? value;
 
     return (
-        <Root ref={root}>
+        <Root
+            onBlur={(event) => {
+                // Tabbing out of the dropdown, or clicking an element that takes focus, closes it too.
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+            }}
+            ref={root}
+        >
             <Trigger
                 aria-expanded={open}
                 aria-haspopup="listbox"
