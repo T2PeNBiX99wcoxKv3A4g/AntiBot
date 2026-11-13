@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.9.0..v0.9.1) - 2026-11-13
+
+### ⚙️ Miscellaneous Tasks
+
+- Add photino-net-utils-bridge v0.25.1 - ([3faf243](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3faf243718098a464daf5e7fbd500b2856f9789c))
+- Update photino-net-utils-bridge to v0.25.1 - ([f47e452](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f47e452b39408be4717f05152dcc333a6a6192ba))
+- Build with the .NET 11 SDK - ([3ce5890](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3ce58903634bce10047b879939f2136de3bf7871))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([ce0cda3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ce0cda3f483e8e069d79fafa0251a01769c13884))
+
+
 ## [0.9.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.8.0..v0.9.0) - 2026-11-13
 
 ### ⛰️  Features
