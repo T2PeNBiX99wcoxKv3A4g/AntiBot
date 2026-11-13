@@ -1,7 +1,7 @@
 import {lazy, Suspense, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import type {LocalizationKey, ThemeMode} from "@photino-net-utils/bridge";
-import {loadStrings, type Translate, useTranslation} from "@photino-net-utils/bridge";
+import {loadStrings, Markdown, type Translate, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
 import {type AppSettings, getSettings, getWhitelistPeople, normalizeTheme, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
@@ -918,9 +918,11 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                         <ChangelogTitle>{t("changelog")}</ChangelogTitle>
                         <Changelog>
-                            {updateDialog.changelog || (updateDialog.phase === "changelog"
-                                ? t("loading_the_changelog")
-                                : t("the_changelog_could_not_be_loaded"))}
+                            {updateDialog.changelog
+                                ? <Markdown source={updateDialog.changelog}/>
+                                : updateDialog.phase === "changelog"
+                                    ? t("loading_the_changelog")
+                                    : t("the_changelog_could_not_be_loaded")}
                         </Changelog>
 
                         <ProgressRow>
@@ -1312,21 +1314,116 @@ const ChangelogTitle = styled.span`
     color: var(--text-muted);
 `;
 
-const Changelog = styled.pre`
+const Changelog = styled.div`
     min-height: 130px;
     max-height: 42vh;
     margin: 0;
-    padding: 12px;
+    padding: 12px 14px;
     overflow: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     background: var(--bg-primary);
     color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    line-height: 1.55;
-    white-space: pre-wrap;
+    font-size: 11.5px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
+
+    h1, h2, h3, h4, h5, h6 {
+        margin: 14px 0 6px;
+        color: var(--text-primary);
+        font-size: 13px;
+        line-height: 1.35;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 15px;
+    }
+
+    h2 {
+        font-size: 13.5px;
+    }
+
+    h3 {
+        font-size: 12.5px;
+    }
+
+    p, ul, ol, blockquote {
+        margin: 7px 0;
+    }
+
+    ul, ol {
+        padding-left: 18px;
+    }
+
+    li {
+        margin: 3px 0;
+    }
+
+    li::marker {
+        color: var(--text-muted);
+    }
+
+    a {
+        color: var(--accent-primary);
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    code {
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: var(--bg-input);
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+    }
+
+    pre {
+        margin: 8px 0;
+        padding: 10px;
+        overflow: auto;
+        border-radius: var(--radius-sm);
+        background: var(--bg-input);
+    }
+
+    pre code {
+        padding: 0;
+        background: none;
+    }
+
+    blockquote {
+        padding-left: 10px;
+        border-left: 2px solid var(--border-color);
+        color: var(--text-muted);
+    }
+
+    hr {
+        margin: 12px 0;
+        border: none;
+        border-top: 1px solid var(--border-color);
+    }
+
+    table {
+        border-collapse: collapse;
+        font-size: 10.5px;
+    }
+
+    th, td {
+        padding: 4px 8px;
+        border: 1px solid var(--border-color);
+        text-align: left;
+    }
+
+    th {
+        color: var(--text-primary);
+    }
+
+    img {
+        max-width: 100%;
+    }
 `;
 
 const ProgressRow = styled.div`
