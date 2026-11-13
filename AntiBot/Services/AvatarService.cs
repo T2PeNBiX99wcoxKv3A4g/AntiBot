@@ -3,7 +3,6 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using AntiBot.Models;
-using PhotinoNetUtils.Utils;
 
 namespace AntiBot.Services;
 

@@ -23,8 +23,7 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
 
     private static readonly string? LegacySettingsPath = new[]
     {
-        Path.Combine(Constants.SettingsDirectory, "settings.json"),
-        Path.Combine(Constants.DataDirectory, "settings.json")
+        Path.Combine(Constants.SettingsDirectory, "settings.json"), Path.Combine(Constants.DataDirectory, "settings.json")
     }.FirstOrDefault(File.Exists);
 
     /// <summary>The log folder in use by the follower.</summary>

@@ -73,7 +73,7 @@ internal static class Program
 
             // Touching each singleton constructs it; the generator registers it and subscribes its
             // native message handlers when the instance is created.
-            using var appInfo = new AppInfoService(new AppInfoOptions(
+            using var appInfo = new AppInfoService(new(
                 typeof(Program).Assembly, Constants.LogDirectory, Constants.IsDebugMode,
                 () => WindowManager.Instance.DrawsWindowCorners));
 
@@ -89,7 +89,7 @@ internal static class Program
                 LogDirectory: Constants.LogDirectory,
                 Shutdown: () => WindowManager.Instance.Exit(),
                 Notify: (type, data) => WindowManager.Instance.NotifyMainWindow(type, data)));
-            using var startup = new StartupService(new StartupRegistration(
+            using var startup = new StartupService(new(
                 typeof(Program).Assembly, Constants.Name, "antibot"));
             _ = VrchatLogService.Instance;
 
