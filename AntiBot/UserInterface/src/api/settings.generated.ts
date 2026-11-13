@@ -32,7 +32,7 @@ export interface AppSettingsGenerated {
     skipCloseInVr: boolean;
     /** Hide friend requests from high-threat users. */
     autoRejectFriendRequests: boolean;
-    /** 0-100; at or above this the automatic actions run. */
+    /** At or above this score the automatic actions run. */
     threatThreshold: number;
     /** Users that are never acted on, whatever their score. */
     whitelist: string[];

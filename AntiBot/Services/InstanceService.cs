@@ -352,12 +352,21 @@ internal partial class InstanceService
 
             case "join":
                 PlayerService.Instance.Request(gameEvent.UserId);
+
+                if (IsRecent(gameEvent.At))
+                    Observed?.Invoke(gameEvent.UserId, gameEvent.DisplayName);
+
                 return Upsert(gameEvent.UserId, gameEvent.DisplayName, gameEvent.At);
 
             case "leave":
                 // The local player leaving ends the roster; everyone else only removes themselves.
                 if (_localName.Length > 0 && gameEvent.DisplayName == _localName)
                     return ResetSession();
+
+                // Some bots never announce a join, so the leave line is the first and only chance to
+                // score them. The rules run asynchronously; removing the row first is fine.
+                if (IsRecent(gameEvent.At))
+                    Observed?.Invoke(gameEvent.UserId, gameEvent.DisplayName);
 
                 return Remove(gameEvent.UserId);
 
@@ -509,6 +518,12 @@ internal partial class InstanceService
     /// <summary>Raised with every pushed snapshot, so the threat rules can look at the players.</summary>
     public event Action<InstanceSnapshot>? Published;
 
+    /// <summary>
+    ///     Raised for a join or a leave that is happening now, even when the user is not in the list
+    ///     (some bots only ever show a leave line). The threat rules consume it on their own loop.
+    /// </summary>
+    public event Action<string, string>? Observed;
+
     private static string Signature(InstanceSnapshot snapshot) => string.Join('|',
         snapshot.Source,
         snapshot.World,
@@ -525,6 +540,24 @@ internal partial class InstanceService
             $"{user.UserId}:{user.Name}:{user.Local}:{user.Trust}:{user.AvatarUrl}:{user.AvatarImageUrl}:" +
             $"{user.IconUrl}:{user.AvatarName}:{user.IsRobot}:{user.Status}:{user.StatusDescription}:{user.Bio}:" +
             $"{user.IsFriend}:{user.Pronouns}:{user.JoinedAt}:{user.Threat}:{user.ProfileLoaded}:{user.AvatarLoaded}")));
+
+    /// <summary>
+    ///     Whether a log line happened just now. The follower replays the whole session when it
+    ///     attaches, and acting on hours-old joins would block people who are long gone.
+    /// </summary>
+    private static bool IsRecent(string at)
+    {
+        if (!TimeSpan.TryParse(at, out var time))
+            return false;
+
+        var happened = DateTime.Today.Add(time);
+        var now = DateTime.Now;
+
+        if (happened > now.AddMinutes(1))
+            happened = happened.AddDays(-1);
+
+        return now - happened <= TimeSpan.FromMinutes(2);
+    }
 
     private InstanceSnapshot Snapshot()
     {

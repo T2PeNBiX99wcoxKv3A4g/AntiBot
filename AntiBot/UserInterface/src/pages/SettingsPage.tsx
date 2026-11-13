@@ -662,15 +662,13 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <Field>
                             <Label>{t("Threat threshold")}</Label>
                             <Row>
-                                <Range
-                                    max={100}
+                                <ThresholdInput
                                     min={0}
                                     onChange={(event) => changeThreshold(Number(event.target.value))}
-                                    step={5}
-                                    type="range"
+                                    step={10}
+                                    type="number"
                                     value={threshold}
                                 />
-                                <ThresholdValue>{threshold}</ThresholdValue>
                             </Row>
                             <Hint>
                                 {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
@@ -1375,17 +1373,15 @@ const AttributionLink = styled.button`
     }
 `;
 
-const Range = styled.input`
-    flex: 1;
-    accent-color: var(--accent-primary);
-`;
-
-const ThresholdValue = styled.strong`
-    width: 48px;
-    text-align: right;
+const ThresholdInput = styled.input`
+    width: 120px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--accent-primary);
 `;
 
 const ToggleRow = styled.div`

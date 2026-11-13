@@ -36,6 +36,8 @@ internal partial class VrchatOscService
             _ = Task.Run(ReceiveAsync);
     }
 
+    private bool _warnedNoOsc;
+
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
     public bool IsListening { get; private set; }
 
@@ -92,7 +94,15 @@ internal partial class VrchatOscService
     public bool EnableSafeMode()
     {
         if (!IsListening)
+        {
+            if (!_warnedNoOsc)
+            {
+                _warnedNoOsc = true;
+                Log.Warning("Safe Mode was requested but VRChat has not advertised its OSC port; is OSC enabled?");
+            }
+
             return false;
+        }
 
         try
         {
@@ -225,6 +235,7 @@ internal partial class VrchatOscService
                 {
                     DetectedPort = value;
                     IsListening = true;
+                    _warnedNoOsc = false;
                 }
             }
         }

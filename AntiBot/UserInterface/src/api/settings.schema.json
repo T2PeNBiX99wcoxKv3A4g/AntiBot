@@ -70,9 +70,8 @@
     },
     "threatThreshold": {
       "type": "integer",
-      "description": "0-100; at or above this the automatic actions run.",
-      "minimum": 0,
-      "maximum": 100
+      "description": "At or above this score the automatic actions run.",
+      "minimum": 0
     },
     "whitelist": {
       "type": "array",

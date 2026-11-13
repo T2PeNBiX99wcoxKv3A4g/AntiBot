@@ -71,8 +71,8 @@ public sealed record AppSettings
     [Setting(Comment = "Hide friend requests from high-threat users.")]
     public bool AutoRejectFriendRequests { get; init; } = true;
 
-    /// <summary>0-100; at or above this the automatic actions run.</summary>
-    [Setting(Comment = "0-100; at or above this the automatic actions run.", Min = 0, Max = 100)]
+    /// <summary>The score at or above which the automatic actions run.</summary>
+    [Setting(Comment = "At or above this score the automatic actions run.", Min = 0)]
     public int ThreatThreshold { get; init; } = 50;
 
     /// <summary>Users that are never acted on, whatever their score.</summary>

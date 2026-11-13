@@ -1,6 +1,8 @@
+using System.Threading.Channels;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Notifications;
+using Serilog;
 
 namespace AntiBot.Services;
 
@@ -15,11 +17,44 @@ internal partial class ThreatActionService
 {
     private readonly HashSet<string> _acted = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _gate = new();
+    private readonly Channel<(string UserId, string Name)> _observations =
+        Channel.CreateUnbounded<(string UserId, string Name)>(new UnboundedChannelOptions { SingleReader = true });
     private readonly HashSet<string> _rejecting = new(StringComparer.OrdinalIgnoreCase);
     private readonly CancellationTokenSource _stop = new();
     private string _instance = "";
 
-    private ThreatActionService() => InstanceService.Instance.Published += OnSnapshot;
+    private ThreatActionService()
+    {
+        InstanceService.Instance.Published += OnSnapshot;
+        InstanceService.Instance.Observed += OnObserved;
+
+        // Scoring has its own loop: a profile lookup must never hold up the log reader, and a bot
+        // that only shows a leave line still gets scored before it is gone.
+        _ = Task.Run(ScoreObservedAsync);
+    }
+
+    private void OnObserved(string userId, string name) => _observations.Writer.TryWrite((userId, name));
+
+    private async Task ScoreObservedAsync()
+    {
+        try
+        {
+            await foreach (var (userId, name) in _observations.Reader.ReadAllAsync(_stop.Token))
+                try
+                {
+                    var user = InstanceService.Instance.Describe(userId, name);
+                    ActIfNeeded(user, SettingsService.Instance.Current);
+                }
+                catch (Exception ex)
+                {
+                    Log.Debug(ex, "Could not score {UserId}", userId);
+                }
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutting down.
+        }
+    }
 
     private void OnSnapshot(InstanceSnapshot snapshot)
     {
@@ -33,21 +68,24 @@ internal partial class ThreatActionService
             }
 
         foreach (var user in snapshot.Users)
-        {
-            // Friends are treated like whitelisted users: never act on someone already on the list.
-            if (user.Local || user.IsFriend || user.Threat < settings.ThreatThreshold)
-                continue;
+            ActIfNeeded(user, settings);
+    }
 
-            if (settings.Whitelist.Contains(user.UserId, StringComparer.OrdinalIgnoreCase))
-                continue;
+    private void ActIfNeeded(InstanceUser user, AppSettings settings)
+    {
+        // Friends are treated like whitelisted users: never act on someone already on the list.
+        if (user.Local || user.IsFriend || user.Threat < settings.ThreatThreshold)
+            return;
 
-            lock (_gate)
-                if (!_acted.Add(user.UserId))
-                    continue;
+        if (settings.Whitelist.Contains(user.UserId, StringComparer.OrdinalIgnoreCase))
+            return;
 
-            WarnSignedOut(user, settings);
-            _ = ActAsync(user, settings);
-        }
+        lock (_gate)
+            if (!_acted.Add(user.UserId))
+                return;
+
+        WarnSignedOut(user, settings);
+        _ = ActAsync(user, settings);
     }
 
     /// <summary>
@@ -83,6 +121,8 @@ internal partial class ThreatActionService
         else if (VrchatClient.IsRunning())
             // OSC is local and instant, so it goes out now, before the rate-limited API queue.
             await ApplyOscAsync(user, settings, detail);
+        else
+            Log.Debug("Skipping the local actions for {UserId}: VRChat is not running", user.UserId);
 
         try
         {
