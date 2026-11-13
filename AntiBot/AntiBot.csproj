@@ -81,7 +81,7 @@
     <Target Name="GenerateLocalizationKeys"
             BeforeTargets="BeforeBuild"
             Condition="Exists('$(SettingsCodeGenPath)')"
-            Inputs="$(TranslationFile)"
+            Inputs="$(TranslationFile);$(SettingsCodeGenPath)"
             Outputs="$(LocalizationKeysPath)">
         <Exec Command="&quot;$(SettingsCodeGenPath)&quot; --i18n &quot;$(TranslationFile)&quot; --i18n-out &quot;$(LocalizationKeysPath)&quot;"/>
     </Target>
@@ -92,7 +92,7 @@
     <Target Name="GenerateSettingsTypes"
             AfterTargets="CoreCompile"
             Condition="Exists('$(SettingsCodeGenPath)')"
-            Inputs="@(IntermediateAssembly)"
+            Inputs="@(IntermediateAssembly);$(SettingsCodeGenPath)"
             Outputs="$(SettingsTypeScriptPath);$(SettingsSchemaPath)">
         <Exec Command="&quot;$(SettingsCodeGenPath)&quot; --assembly &quot;@(IntermediateAssembly)&quot; --out &quot;$(SettingsTypeScriptPath)&quot; --schema &quot;$(SettingsSchemaPath)&quot;"/>
     </Target>
