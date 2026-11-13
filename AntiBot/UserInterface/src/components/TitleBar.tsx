@@ -55,7 +55,7 @@ const Bar = styled.header`
     align-items: stretch;
     height: 38px;
     flex-shrink: 0;
-    background: rgba(8, 7, 15, 0.96);
+    background: var(--chrome-bg);
     border-bottom: 1px solid var(--border-color);
     user-select: none;
     -webkit-user-select: none;

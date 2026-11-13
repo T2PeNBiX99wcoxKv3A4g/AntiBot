@@ -660,9 +660,9 @@ const World = styled.div<{ $src?: string }>`
         inset: 0 auto 0 0;
         width: max(40%, 560px);
         background: linear-gradient(90deg,
-        rgba(8, 7, 15, 0.68) 0%,
-        rgba(8, 7, 15, 0.3) 55%,
-        rgba(8, 7, 15, 0) 100%);
+        var(--scrim-strong) 0%,
+        var(--scrim-medium) 55%,
+        var(--scrim-clear) 100%);
     }
 `;
 

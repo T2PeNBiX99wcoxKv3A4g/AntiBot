@@ -488,5 +488,11 @@
   "batch.error.noUsers": "有効なユーザーリンクが見つかりませんでした。",
   "batch.error.noActions": "先に「自動保護」で API 操作を 1 つ以上有効にしてください。",
   "batch.error.running": "一括操作はすでに実行中です。",
-  "batch.error.apiRefused": "VRChat が操作を拒否しました。"
+  "batch.error.apiRefused": "VRChat が操作を拒否しました。",
+  "Appearance": "外観",
+  "Theme": "テーマ",
+  "Follow the system": "システムに従う",
+  "Light": "ライト",
+  "Dark": "ダーク",
+  "Applies to the whole interface.": "インターフェース全体に適用されます。"
 }

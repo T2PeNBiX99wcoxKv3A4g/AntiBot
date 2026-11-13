@@ -37,7 +37,7 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
             Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort);
+            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort, Current.Theme);
 
     protected override string? Validate(AppSettings settings) =>
         string.IsNullOrWhiteSpace(settings.LogDirectory)
@@ -57,6 +57,7 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
         {
             LogDirectory = settings.LogDirectory.Trim(),
             Language = Localization.Normalize(settings.Language),
+            Theme = settings.Theme is "light" or "dark" ? settings.Theme : "system",
             AvatarApiProviders = providers,
             SafeAvatarId = Ids.Avatar(settings.SafeAvatarId) ?? "",
             Whitelist =

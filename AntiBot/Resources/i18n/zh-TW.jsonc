@@ -488,5 +488,11 @@
   "batch.error.noUsers": "找不到有效的使用者連結。",
   "batch.error.noActions": "請先在「自動防護」中啟用至少一個 API 操作。",
   "batch.error.running": "已有批次操作正在執行。",
-  "batch.error.apiRefused": "VRChat 拒絕了該操作。"
+  "batch.error.apiRefused": "VRChat 拒絕了該操作。",
+  "Appearance": "外觀",
+  "Theme": "主題",
+  "Follow the system": "跟隨系統",
+  "Light": "淺色",
+  "Dark": "深色",
+  "Applies to the whole interface.": "套用於整個介面。"
 }

@@ -10,6 +10,10 @@ import "@fontsource/jetbrains-mono/latin-400.css";
 import "@fontsource/jetbrains-mono/latin-500.css";
 import App from "./App";
 
+// Paint the OS theme before React mounts; the stored setting takes over after the first fetch.
+document.documentElement.dataset.theme =
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
 const rootElement = document.getElementById("root");
 if (rootElement)
     createRoot(rootElement).render(

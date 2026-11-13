@@ -31,6 +31,8 @@ declare module "@photino-net-utils/bridge"
         "Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.": true;
         "API endpoints": true;
         "app.info": true;
+        "Appearance": true;
+        "Applies to the whole interface.": true;
         "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.": true;
         "Approve it in the VRChat app; the password never reaches AntiBot.": true;
         "Approve the sign-in on your phone; the password never reaches AntiBot.": true;
@@ -100,6 +102,7 @@ declare module "@photino-net-utils/bridge"
         "Could not send the test message.": true;
         "Create an autostart entry for this user.": true;
         "Currently: {storage}": true;
+        "Dark": true;
         "Debug": true;
         "default Robot avatar": true;
         "Desktop host required": true;
@@ -171,6 +174,7 @@ declare module "@photino-net-utils/bridge"
         "fair": true;
         "Filter lines…": true;
         "Filter log lines": true;
+        "Follow the system": true;
         "Following": true;
         "Forget it": true;
         "Forget saved password": true;
@@ -216,6 +220,7 @@ declare module "@photino-net-utils/bridge"
         "Language": true;
         "Language used by both the interface and the desktop backend.": true;
         "license": true;
+        "Light": true;
         "Linux": true;
         "Listening on port {port}": true;
         "Live output of VRChat's log while it is running.": true;
@@ -396,6 +401,7 @@ declare module "@photino-net-utils/bridge"
         "The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.": true;
         "The sign-in code is unavailable.": true;
         "The update failed.": true;
+        "Theme": true;
         "These lines did not contain a user link.": true;
         "Threat": true;
         "Threat threshold": true;

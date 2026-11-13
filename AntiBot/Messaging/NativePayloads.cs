@@ -28,7 +28,8 @@ internal sealed record SettingsPayload(
     string[] Whitelist,
     string Language,
     bool StartHidden,
-    int OscPort);
+    int OscPort,
+    string Theme);
 
 /// <summary>Body for <c>log.export</c>.</summary>
 internal sealed record LogExportPayload(bool Saved, int Lines, string? Path);

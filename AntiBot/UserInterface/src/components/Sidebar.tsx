@@ -69,7 +69,7 @@ const Aside = styled.aside`
     width: 218px;
     flex-shrink: 0;
     padding: 16px 14px 18px;
-    background: rgba(8, 7, 15, 0.9);
+    background: var(--chrome-bg);
     border-right: 1px solid var(--border-color);
 `;
 

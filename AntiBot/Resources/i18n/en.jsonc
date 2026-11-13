@@ -494,5 +494,11 @@
   "batch.error.noUsers": "No valid user links were found.",
   "batch.error.noActions": "Enable at least one API action under Automatic protection first.",
   "batch.error.running": "A batch is already running.",
-  "batch.error.apiRefused": "VRChat refused the action."
+  "batch.error.apiRefused": "VRChat refused the action.",
+  "Appearance": "Appearance",
+  "Theme": "Theme",
+  "Follow the system": "Follow the system",
+  "Light": "Light",
+  "Dark": "Dark",
+  "Applies to the whole interface.": "Applies to the whole interface."
 }

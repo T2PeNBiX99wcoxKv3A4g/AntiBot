@@ -1,8 +1,9 @@
 import {useEffect, useState} from "react";
 import styled, {keyframes} from "styled-components";
-import {Native, ResizeHandles, useWindowCorners} from "@photino-net-utils/bridge";
+import {Native, ResizeHandles, useTheme, useWindowCorners, type ThemeMode} from "@photino-net-utils/bridge";
 import {useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import {getSettings, normalizeTheme} from "./api/settings";
 import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
 import {TitleBar} from "./components/TitleBar";
@@ -58,10 +59,12 @@ export default function App() {
     const [update, setUpdate] = useState<UpdateCheck | null>(null);
     const [authExpired, setAuthExpired] = useState(false);
     const [pendingSettingsSection, setPendingSettingsSection] = useState<string | null>(null);
+    const [theme, setTheme] = useState<ThemeMode>("system");
     const corners = useWindowCorners();
     const log = useVrchatLog();
     const {auth, ready} = useAuth();
     const signedIn = auth.state === "loggedIn";
+    useTheme(theme);
 
     // A successful sign-in makes the expiry notice obsolete.
     useEffect(() => {
@@ -70,6 +73,16 @@ export default function App() {
 
     useEffect(() => {
         void getAppInfo().then(setInfo, () => setInfo(null));
+    }, []);
+
+    // The theme lives in the settings; the host pushes settings.changed after every save.
+    useEffect(() => {
+        void getSettings().then((settings) => setTheme(normalizeTheme(settings.theme)), () => undefined);
+
+        return Native.on((message) => {
+            if (message.type === "settings.changed")
+                setTheme(normalizeTheme((message.data as { theme?: string } | undefined)?.theme));
+        });
     }, []);
 
     // The backend caches the published version, so this normally answers at once.

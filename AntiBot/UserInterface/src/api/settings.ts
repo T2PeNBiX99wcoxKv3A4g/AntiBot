@@ -1,4 +1,5 @@
 import {Native} from "@photino-net-utils/bridge";
+import type {ThemeMode} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
 import type {AppSettingsGenerated} from "./settings.generated";
 
@@ -24,9 +25,15 @@ const empty: SettingsView = {
     threatThreshold: 50,
     whitelist: [],
     language: "system",
+    theme: "system",
     startHidden: false,
     oscPort: 0,
 };
+
+/** Anything the host does not recognize falls back to following the system. */
+export function normalizeTheme(theme: string | undefined): ThemeMode {
+    return theme === "light" || theme === "dark" ? theme : "system";
+}
 
 /** Reads the log folder, the avatar databases and the protection settings. */
 export async function getSettings(): Promise<SettingsView> {

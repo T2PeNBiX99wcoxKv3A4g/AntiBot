@@ -3,8 +3,9 @@ import styled from "styled-components";
 import {loadStrings} from "@photino-net-utils/bridge";
 import {type Translate, useTranslation} from "@photino-net-utils/bridge";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
+import type {ThemeMode} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
-import {type AppSettings, getSettings, getWhitelistPeople, saveSettings} from "../api/settings";
+import {type AppSettings, getSettings, getWhitelistPeople, normalizeTheme, saveSettings} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
 import {
@@ -48,6 +49,7 @@ const LOCALE_NAMES: Record<string, string> = {
 /** The settings sections, in page order; the jump list is built from this. */
 const SECTIONS: { id: string; label: LocalizationKey }[] = [
     {id: "settings-language", label: "Language"},
+    {id: "settings-appearance", label: "Appearance"},
     {id: "settings-startup", label: "Start with the system"},
     {id: "settings-log-source", label: "Log source"},
     {id: "settings-avatar-lookups", label: "Avatar name lookups"},
@@ -92,6 +94,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [newWhitelist, setNewWhitelist] = useState("");
     const [people, setPeople] = useState<InstanceUser[]>([]);
     const [language, setLanguage] = useState(SYSTEM_LOCALE);
+    const [theme, setTheme] = useState<ThemeMode>("system");
     const [locales, setLocales] = useState<string[]>([]);
     const [startHidden, setStartHidden] = useState(false);
     const [oscPort, setOscPort] = useState(9000);
@@ -169,6 +172,7 @@ export function SettingsPage({info}: SettingsPageProps) {
             setThreshold(settings.threatThreshold);
             setWhitelist(settings.whitelist ?? []);
             setLanguage(settings.language ?? SYSTEM_LOCALE);
+            setTheme(normalizeTheme(settings.theme));
             setStartHidden(settings.startHidden);
             setOscPort(settings.oscPort || 9000);
 
@@ -252,6 +256,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         threatThreshold: threshold,
         whitelist,
         language,
+        theme,
         startHidden,
         oscPort,
         ...overrides,
@@ -277,6 +282,12 @@ export function SettingsPage({info}: SettingsPageProps) {
     const changeLanguage = (next: string) => {
         setLanguage(next);
         void persist({language: next});
+    };
+
+    /** The theme applies immediately; App listens to settings.changed and re-applies it. */
+    const changeTheme = (next: ThemeMode) => {
+        setTheme(next);
+        void persist({theme: next});
     };
 
     /** The startup entry lives outside the settings; its presence is the state. */
@@ -447,6 +458,28 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
                         </Field>
 
+                    </Card>
+                </Section>
+
+                <Section id="settings-appearance">
+                    <SectionHeader>
+                        <h2>{t("Appearance")}</h2>
+                    </SectionHeader>
+
+                    <Card>
+                        <Field>
+                            <Label>{t("Theme")}</Label>
+                            <Dropdown
+                                onChange={(value) => changeTheme(value as ThemeMode)}
+                                options={[
+                                    {value: "system", label: t("Follow the system")},
+                                    {value: "light", label: t("Light")},
+                                    {value: "dark", label: t("Dark")},
+                                ]}
+                                value={theme}
+                            />
+                            <Hint>{t("Applies to the whole interface.")}</Hint>
+                        </Field>
                     </Card>
                 </Section>
 

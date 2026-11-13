@@ -20,6 +20,10 @@ public sealed record AppSettings
     [Setting(Comment = "Interface and backend language: system, en, ja, zh-CN or zh-TW.")]
     public string Language { get; init; } = "system";
 
+    /// <summary>Interface theme: <c>system</c>, <c>light</c> or <c>dark</c>.</summary>
+    [Setting(Comment = "Interface theme: system, light or dark.")]
+    public string Theme { get; init; } = "system";
+
     /// <summary>The port VRChat listens on for OSC.</summary>
     [Setting(Comment = "Port VRChat listens on for OSC.", Min = 1, Max = 65535)]
     public int OscPort { get; init; } = 9000;

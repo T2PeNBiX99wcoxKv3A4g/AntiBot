@@ -6,6 +6,8 @@ export interface AppSettingsGenerated {
     logDirectory: string;
     /** Interface and backend language: system, en, ja, zh-CN or zh-TW. */
     language: string;
+    /** Interface theme: system, light or dark. */
+    theme: string;
     /** Port VRChat listens on for OSC. */
     oscPort: number;
     /** Start with the window hidden in the tray. */
