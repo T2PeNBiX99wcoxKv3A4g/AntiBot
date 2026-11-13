@@ -25,7 +25,7 @@ import {
     type UpdateProgress
 } from "../api/system";
 import {Dropdown} from "../components/Dropdown";
-import {DownloadIcon, EyeIcon, EyeOffIcon, FolderIcon, TrashIcon} from "../components/Icons";
+import {DownloadIcon, ExternalIcon, EyeIcon, EyeOffIcon, FolderIcon, RefreshIcon, TrashIcon} from "../components/Icons";
 import {Toggle} from "../components/Toggle";
 
 /* The licence texts are large, so the notices page is loaded only when it is opened. */
@@ -845,11 +845,11 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                         <Actions>
                             <Button disabled={updateBusy} onClick={() => void checkUpdates()} type="button">
-                                {updateBusy ? t("checking") : t("check_for_updates")}
+                                <RefreshIcon/>{updateBusy ? t("checking") : t("check_for_updates")}
                             </Button>
                             {updateResult?.available && (
                                 <Button onClick={() => void openReleasePage()} type="button">
-                                    {t("open_release_page")}
+                                    <ExternalIcon size={16}/>{t("open_release_page")}
                                 </Button>
                             )}
                             {updateResult?.available && info?.platform === "windows" && (
