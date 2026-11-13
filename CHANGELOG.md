@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.10.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.9.1..v0.10.0) - 2026-11-13
+
+### ⛰️  Features
+
+- *(ui)* Render the changelog as markdown - ([0fb4cc3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0fb4cc3bad8332f33d59014d1791cabe403fd917))
+- *(ui)* Put icons on the update buttons - ([8981796](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/8981796bc191303d49f819e7c17519fd4da4ee55))
+
+### 🐛 Bug Fixes
+
+- *(ui)* Close the menus when the window loses focus - ([7274b0e](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7274b0ee06546c75d1d2b7e836da5084ada60dbd))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update photino-net-utils-bridge to v0.26.0 - ([fe79352](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fe793521c0afce6e14e566f79dbe519fc5d9d1fe))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([f6cd8e4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f6cd8e4dd5c5f4f6e6599cce7b8b750d521cbb85))
+
+
 ## [0.9.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.9.0..v0.9.1) - 2026-11-13
 
 ### ⚙️ Miscellaneous Tasks
