@@ -14,17 +14,17 @@ interface SidebarProps {
 }
 
 const items: { id: Page; label: LocalizationKey; icon: typeof LogIcon }[] = [
-    {id: "logs", label: "Log viewer", icon: LogIcon},
-    {id: "instance", label: "Instance", icon: UsersIcon},
-    {id: "batch", label: "Batch actions", icon: BatchIcon},
-    {id: "requests", label: "Friend requests", icon: BellIcon},
-    {id: "operations", label: "Operations", icon: ShieldIcon},
-    {id: "account", label: "Account", icon: UserIcon},
-    {id: "settings", label: "Settings", icon: SlidersIcon},
+    {id: "logs", label: "log_viewer", icon: LogIcon},
+    {id: "instance", label: "instance", icon: UsersIcon},
+    {id: "batch", label: "batch_actions", icon: BatchIcon},
+    {id: "requests", label: "friend_requests", icon: BellIcon},
+    {id: "operations", label: "operations", icon: ShieldIcon},
+    {id: "account", label: "account", icon: UserIcon},
+    {id: "settings", label: "settings", icon: SlidersIcon},
 ];
 
 const debugItem: { id: Page; label: LocalizationKey; icon: typeof LogIcon } =
-    {id: "debug", label: "Debug", icon: AlertIcon};
+    {id: "debug", label: "debug", icon: AlertIcon};
 
 /** The running dot breathes instead of sitting still, so the status is visible without reading it. */
 const pulse = keyframes`
@@ -52,10 +52,10 @@ export function Sidebar({page, onNavigate, status, debug}: SidebarProps) {
             </Nav>
 
             <StatusCard>
-                <StatusLabel>{t("VRChat")}</StatusLabel>
+                <StatusLabel>{t("vr_chat")}</StatusLabel>
                 <StatusValue $active={status.running}>
                     <Dot $active={status.running}/>
-                    {status.running ? t("running") : t("not running")}
+                    {status.running ? t("running") : t("not_running")}
                 </StatusValue>
             </StatusCard>
         </Aside>

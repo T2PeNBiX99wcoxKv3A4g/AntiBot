@@ -100,7 +100,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
             if (preview.error)
                 setError(preview.error);
             else if (preview.users.length === 0)
-                setError(t("No valid user links were found."));
+                setError(t("no_valid_user_links_were_found"));
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
         } finally {
@@ -148,10 +148,10 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
             {!signedIn && (
                 <Notice>
                     <NoticeText>
-                        <strong>{t("Not signed in")}</strong>
-                        <span>{t("Sign in first.")}</span>
+                        <strong>{t("not_signed_in")}</strong>
+                        <span>{t("sign_in_first")}</span>
                     </NoticeText>
-                    <NoticeButton onClick={onSignIn} type="button">{t("Sign in")}</NoticeButton>
+                    <NoticeButton onClick={onSignIn} type="button">{t("sign_in")}</NoticeButton>
                 </Notice>
             )}
 
@@ -159,8 +159,8 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                 <CardHead>
                     <BatchIcon size={20}/>
                     <div>
-                        <h2>{t("Batch actions")}</h2>
-                        <p>{t("Apply the moderation actions enabled under Automatic protection to a list of VRChat users.")}</p>
+                        <h2>{t("batch_actions")}</h2>
+                        <p>{t("apply_the_moderation_actions_enabled_under_automatic_protection_to_a_list_of_vr_chat_users")}</p>
                     </div>
                 </CardHead>
 
@@ -184,21 +184,21 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                         onClick={() => void parse()}
                         type="button"
                     >
-                        {parsing ? t("Parsing…") : t("Parse links")}
+                        {parsing ? t("parsing") : t("parse_links")}
                     </Primary>
                     <Secondary
                         disabled={running || parsing || users.length === 0 || !signedIn}
                         onClick={() => void run()}
                         type="button"
                     >
-                        {t("Batch block")}
+                        {t("batch_block")}
                     </Secondary>
                     {running && (
                         <Secondary disabled={stopping} onClick={() => void stop()} type="button">
-                            {t("Stop")}
+                            {t("stop")}
                         </Secondary>
                     )}
-                    <Hint>{t("Actions follow the switches under Automatic protection.")}</Hint>
+                    <Hint>{t("actions_follow_the_switches_under_automatic_protection")}</Hint>
                 </Actions>
 
                 {error && <ErrorText>{error}</ErrorText>}
@@ -209,8 +209,8 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                     <CardHead>
                         <AlertIcon size={18}/>
                         <div>
-                            <h2>{t("Invalid lines")}</h2>
-                            <p>{t("These lines did not contain a user link.")}</p>
+                            <h2>{t("invalid_lines")}</h2>
+                            <p>{t("these_lines_did_not_contain_a_user_link")}</p>
                         </div>
                     </CardHead>
                     <InvalidList>
@@ -224,10 +224,10 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
             {(running || total > 0) && (
                 <Card>
                     <ProgressHead>
-                        <span>{t("Progress")}</span>
+                        <span>{t("progress")}</span>
                         <span>
                             {done} / {total}
-                            {failed > 0 && ` · ${failed} ${t("Failed")}`}
+                            {failed > 0 && ` · ${failed} ${t("failed")}`}
                         </span>
                     </ProgressHead>
                     <Bar>
@@ -237,7 +237,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                         {actions.length > 0 && <span>{actions.map((action) => t(action)).join(" · ")}</span>}
                         {finished && !running && (
                             <span>
-                                {finished.cancelled ? t("Stopped") : t("Done")}
+                                {finished.cancelled ? t("stopped") : t("done")}
                                 {finished.error && ` · ${finished.error}`}
                             </span>
                         )}
@@ -249,11 +249,11 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                 <ListCard>
                     <ListHeader>
                         <span/>
-                        <span>{t("User")}</span>
-                        <span>{t("Trust")}</span>
-                        <span>{t("Pronouns")}</span>
-                        <span>{t("Status")}</span>
-                        <span>{t("Platform")}</span>
+                        <span>{t("user")}</span>
+                        <span>{t("trust")}</span>
+                        <span>{t("pronouns")}</span>
+                        <span>{t("status")}</span>
+                        <span>{t("platform")}</span>
                     </ListHeader>
 
                     <Rows>

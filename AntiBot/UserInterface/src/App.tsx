@@ -33,23 +33,23 @@ const pageIn = keyframes`
 `;
 
 const pageMeta: Record<Page, { title: LocalizationKey; subtitle: LocalizationKey }> = {
-    logs: {title: "VRChat log", subtitle: "Live output of VRChat's log while it is running."},
-    instance: {title: "Instance", subtitle: "Players in your VRChat instance, from the API once signed in."},
+    logs: {title: "vr_chat_log", subtitle: "live_output_of_vr_chat_s_log_while_it_is_running"},
+    instance: {title: "instance", subtitle: "players_in_your_vr_chat_instance_from_the_api_once_signed_in"},
     batch: {
-        title: "Batch actions",
-        subtitle: "Apply the moderation actions enabled under Automatic protection to a list of VRChat users.",
+        title: "batch_actions",
+        subtitle: "apply_the_moderation_actions_enabled_under_automatic_protection_to_a_list_of_vr_chat_users",
     },
     requests: {
-        title: "Friend requests",
-        subtitle: "Every incoming request AntiBot has recorded, with the sender's profile.",
+        title: "friend_requests",
+        subtitle: "every_incoming_request_anti_bot_has_recorded_with_the_sender_s_profile",
     },
     operations: {
-        title: "Operations",
-        subtitle: "The automatic actions AntiBot has taken, newest first.",
+        title: "operations",
+        subtitle: "the_automatic_actions_anti_bot_has_taken_newest_first",
     },
-    account: {title: "Account", subtitle: "Sign in to VRChat so the instance comes from the API, not the log."},
-    settings: {title: "Settings", subtitle: "Where the log comes from, and what AntiBot does with it."},
-    debug: {title: "Debug", subtitle: "Tools that only a debug build shows."},
+    account: {title: "account", subtitle: "sign_in_to_vr_chat_so_the_instance_comes_from_the_api_not_the_log"},
+    settings: {title: "settings", subtitle: "where_the_log_comes_from_and_what_anti_bot_does_with_it"},
+    debug: {title: "debug", subtitle: "tools_that_only_a_debug_build_shows"},
 };
 
 export default function App() {
@@ -110,7 +110,7 @@ export default function App() {
         return () => window.clearTimeout(timer);
     }, []);
 
-    // The tray can ask for a page (for example "Settings") while the window is hidden.
+    // The tray can ask for a page (for example "settings") while the window is hidden.
     useEffect(() => {
         return Native.on((message) => {
             if (message.type === "auth.expired") {
@@ -151,8 +151,8 @@ export default function App() {
                             {!signedIn && (
                                 <SignInPill onClick={() => setPage("account")} type="button">
                                     {authExpired
-                                        ? t("Session expired · automatic protection is off")
-                                        : t("Not signed in · only the log is available")}
+                                        ? t("session_expired_automatic_protection_is_off")
+                                        : t("not_signed_in_only_the_log_is_available")}
                                 </SignInPill>
                             )}
                         </HeaderMeta>
@@ -179,17 +179,17 @@ export default function App() {
                     <Footer>
                         <Version>
                             <VersionText>
-                                {info ? `v${info.version} · ${info.platform}` : t("browser preview")}
+                                {info ? `v${info.version} · ${info.platform}` : t("browser_preview")}
                             </VersionText>
-                            {info?.debug && <DebugBadge title={t("Debug")}>{t("Debug")}</DebugBadge>}
+                            {info?.debug && <DebugBadge title={t("debug")}>{t("debug")}</DebugBadge>}
                             {update?.available && (
                                 <UpdateDot
-                                    aria-label={t("Version {version} is available.", {version: update.latest})}
+                                    aria-label={t("version_version_is_available", {version: update.latest})}
                                     onClick={() => {
                                         setPage("settings");
                                         setPendingSettingsSection("settings-build");
                                     }}
-                                    title={t("Version {version} is available.", {version: update.latest})}
+                                    title={t("version_version_is_available", {version: update.latest})}
                                     type="button"
                                 />
                             )}

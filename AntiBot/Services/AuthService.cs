@@ -172,8 +172,8 @@ internal partial class AuthService
         }
 
         NotificationService.Notify("auth.startup",
-            Localization.Get("auth.startup.signedOutTitle"),
-            Localization.Get("auth.startup.signedOutMessage"));
+            Localization.Get("auth.startup.signed_out_title"),
+            Localization.Get("auth.startup.signed_out_message"));
     }
 
     /// <summary>
@@ -274,7 +274,7 @@ internal partial class AuthService
     {
         var request = context.Payload<AuthLoginRequest>();
         if (request?.Username is not { Length: > 0 } username || request.Password is not { Length: > 0 } password)
-            return context.Fail("auth.login.result", Localization.Get("error.authMissing"));
+            return context.Fail("auth.login.result", Localization.Get("error.auth_missing"));
 
         // A new attempt must not inherit the cookies of an abandoned one. The QR client is separate,
         // because both forms are on screen at the same time.
@@ -316,7 +316,7 @@ internal partial class AuthService
 
         return await CompleteSignInAsync(api, user, true)
             ? context.Reply("auth.login.result", Snapshot())
-            : context.Fail("auth.login.result", Localization.Get("error.authNoAccount"));
+            : context.Fail("auth.login.result", Localization.Get("error.auth_no_account"));
     }
 
     /// <summary>Signs in with one saved account when the user pressed its row in the list.</summary>
@@ -325,7 +325,7 @@ internal partial class AuthService
         var dir = context.Payload<SavedLoginRequest>()?.Dir;
 
         if (dir is { Length: > 0 } && !CredentialStore.Exists(dir))
-            return context.Fail("auth.login.saved.result", Localization.Get("error.authNoSavedPassword"));
+            return context.Fail("auth.login.saved.result", Localization.Get("error.auth_no_saved_password"));
 
         _lastAutoLoginError = null;
 
@@ -334,7 +334,7 @@ internal partial class AuthService
             return context.Reply("auth.login.saved.result", Snapshot());
 
         return context.Fail("auth.login.saved.result",
-            _lastAutoLoginError ?? Localization.Get("error.authSavedLoginFailed"));
+            _lastAutoLoginError ?? Localization.Get("error.auth_saved_login_failed"));
     }
 
     /// <summary>Deletes one saved password, keeping the account and its session.</summary>
@@ -353,7 +353,7 @@ internal partial class AuthService
     {
         var request = context.Payload<AuthVerifyRequest>();
         if (request?.Code.Trim() is not { Length: > 0 } code)
-            return context.Fail("auth.verify.result", Localization.Get("error.authCodeMissing"));
+            return context.Fail("auth.verify.result", Localization.Get("error.auth_code_missing"));
 
         var api = SignInApi();
 
@@ -365,12 +365,12 @@ internal partial class AuthService
         };
 
         if (!verified)
-            return context.Fail("auth.verify.result", Localization.Get("error.authCodeRejected"));
+            return context.Fail("auth.verify.result", Localization.Get("error.auth_code_rejected"));
 
         var (user, _) = await api.GetCurrentUserAsync(CancellationToken.None);
         return await CompleteSignInAsync(api, user, true)
             ? context.Reply("auth.verify.result", Snapshot())
-            : context.Fail("auth.verify.result", Localization.Get("error.authSessionUnconfirmed"));
+            : context.Fail("auth.verify.result", Localization.Get("error.auth_session_unconfirmed"));
     }
 
     /// <summary>Opens a stored session, either for a switch or for the account left locked at startup.</summary>
@@ -385,19 +385,19 @@ internal partial class AuthService
         var hello = account?.Storage == AuthStorage.Hello;
 
         if (!hello && password is not { Length: > 0 })
-            return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockPassword"));
+            return context.Fail("auth.unlock.result", Localization.Get("error.auth_unlock_password"));
 
         // The session written before accounts had folders has no account yet.
         if (account is null)
             return AuthStore.LegacyExists
                 ? await UnlockLegacyAsync(context, password)
-                : context.Fail("auth.unlock.result", Localization.Get("error.authAccountMissing"));
+                : context.Fail("auth.unlock.result", Localization.Get("error.auth_account_missing"));
 
         var (status, payload) = await AuthStore.LoadAsync(AccountStore.PathOf(account.Dir),
             hello ? null : password);
 
         if (status == SessionLoadStatus.Cancelled)
-            return context.Fail("auth.unlock.result", Localization.Get("error.authHelloCancelled"));
+            return context.Fail("auth.unlock.result", Localization.Get("error.auth_hello_cancelled"));
 
         if (status == SessionLoadStatus.None || payload is null)
             return context.Fail("auth.unlock.result",
@@ -427,7 +427,7 @@ internal partial class AuthService
         var account = dir is null ? null : _accounts.FirstOrDefault(entry => entry.Dir == dir);
 
         if (account is null)
-            return context.Fail("auth.switch.result", Localization.Get("error.authAccountMissing"));
+            return context.Fail("auth.switch.result", Localization.Get("error.auth_account_missing"));
 
         if (ReferenceEquals(account, _active) && IsLoggedIn)
             return context.Reply("auth.switch.result", new SwitchPayload(true, false, null, Snapshot()));
@@ -444,13 +444,13 @@ internal partial class AuthService
 
             if (status == SessionLoadStatus.Cancelled)
                 return context.Reply("auth.switch.result",
-                    new SwitchPayload(false, false, Localization.Get("error.authHelloCancelled"), null));
+                    new SwitchPayload(false, false, Localization.Get("error.auth_hello_cancelled"), null));
 
             if (status != SessionLoadStatus.Loaded || loaded is null)
             {
                 DropSession(account);
                 return context.Reply("auth.switch.result",
-                    new SwitchPayload(false, false, Localization.Get("error.authSessionExpired"), null, true));
+                    new SwitchPayload(false, false, Localization.Get("error.auth_session_expired"), null, true));
             }
 
             payload = loaded;
@@ -459,7 +459,7 @@ internal partial class AuthService
         {
             if (account.Cookies is not { Length: > 0 } cookies)
                 return context.Reply("auth.switch.result",
-                    new SwitchPayload(false, false, Localization.Get("error.authAccountSignedOut"), null, true));
+                    new SwitchPayload(false, false, Localization.Get("error.auth_account_signed_out"), null, true));
 
             payload = JsonSerializer.SerializeToUtf8Bytes(cookies, VrchatJsonContext.Default.CookieRecordArray);
         }
@@ -489,7 +489,7 @@ internal partial class AuthService
         var account = dir is null ? null : _accounts.FirstOrDefault(entry => entry.Dir == dir);
 
         if (account is null)
-            return context.Fail("auth.remove.result", Localization.Get("error.authAccountMissing"));
+            return context.Fail("auth.remove.result", Localization.Get("error.auth_account_missing"));
 
         // Signing out already forgets the account, so it must not be removed twice. The trash button
         // is an explicit removal, though, so it also drops the saved password and its storage choice.
@@ -553,11 +553,11 @@ internal partial class AuthService
                 return context.Reply("auth.storage.save.result", Snapshot());
             }
 
-            return context.Fail("auth.storage.save.result", Localization.Get("error.authSignInFirst"));
+            return context.Fail("auth.storage.save.result", Localization.Get("error.auth_sign_in_first"));
         }
 
         if (mode != AuthStorage.None && !IsLoggedIn)
-            return context.Fail("auth.storage.save.result", Localization.Get("error.authSignInFirst"));
+            return context.Fail("auth.storage.save.result", Localization.Get("error.auth_sign_in_first"));
 
         var directory = AccountStore.PathOf(account.Dir);
         var cookies = mode == AuthStorage.None
@@ -567,7 +567,7 @@ internal partial class AuthService
         try
         {
             if (!await AuthStore.SaveAsync(directory, cookies, mode, request?.Password))
-                return context.Fail("auth.storage.save.result", Localization.Get("error.authStoragePassword"));
+                return context.Fail("auth.storage.save.result", Localization.Get("error.auth_storage_password"));
 
             if (mode == AuthStorage.None)
                 AccountStore.Delete(account.Dir);
@@ -640,12 +640,12 @@ internal partial class AuthService
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
         {
             Log.Warning(ex, "Could not start a device sign-in");
-            return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceNetwork"));
+            return context.Fail("auth.device.start.result", Localization.Get("error.auth_device_network"));
         }
 
         if (device?.DeviceCode is not { Length: > 0 } code ||
             device.VerificationUrlComplete is not { Length: > 0 } url)
-            return context.Fail("auth.device.start.result", Localization.Get("error.authDeviceStart"));
+            return context.Fail("auth.device.start.result", Localization.Get("error.auth_device_start"));
 
         return context.Reply("auth.device.start.result", new DeviceCodePayload(
             code, url, QrCode.DataUrl(url), device.Interval ?? 5, device.ExpiresIn ?? 300));
@@ -655,7 +655,7 @@ internal partial class AuthService
     {
         var code = context.Payload<DevicePollRequest>()?.DeviceCode;
         if (code is not { Length: > 0 })
-            return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceMissing"));
+            return context.Fail("auth.device.poll.result", Localization.Get("error.auth_device_missing"));
 
         var api = DeviceApi();
 
@@ -669,7 +669,7 @@ internal partial class AuthService
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
         {
             Log.Warning(ex, "Could not poll the device sign-in");
-            return context.Fail("auth.device.poll.result", Localization.Get("error.authDeviceNetwork"));
+            return context.Fail("auth.device.poll.result", Localization.Get("error.auth_device_network"));
         }
 
         if (!approved)
@@ -678,7 +678,7 @@ internal partial class AuthService
         var (user, _) = await api.GetCurrentUserAsync(CancellationToken.None);
         return await CompleteSignInAsync(api, user)
             ? context.Reply("auth.device.poll.result", new DevicePollPayload(true, null, Snapshot()))
-            : context.Fail("auth.device.poll.result", Localization.Get("error.authSessionUnconfirmed"));
+            : context.Fail("auth.device.poll.result", Localization.Get("error.auth_session_unconfirmed"));
     }
 
     /// <summary>Takes the cookies from a sign-in client and makes that account the active one.</summary>
@@ -736,7 +736,7 @@ internal partial class AuthService
             .GetOrNull();
 
         if (cookies is not { Length: > 0 })
-            return (Localization.Get("error.authSessionExpired"), true);
+            return (Localization.Get("error.auth_session_expired"), true);
 
         _api.ImportCookies(cookies);
 
@@ -750,7 +750,7 @@ internal partial class AuthService
         if (user?.Id is not { Length: > 0 })
         {
             Restore(previous, previousCookies);
-            return (Localization.Get("error.authSessionExpired"), true);
+            return (Localization.Get("error.auth_session_expired"), true);
         }
 
         await CompleteAsync(account, user, fresh, applyLoginOptions);
@@ -1040,10 +1040,10 @@ internal partial class AuthService
         var (status, payload) = await AuthStore.LoadLegacyAsync(password);
 
         if (status == SessionLoadStatus.Cancelled)
-            return context.Fail("auth.unlock.result", Localization.Get("error.authHelloCancelled"));
+            return context.Fail("auth.unlock.result", Localization.Get("error.auth_hello_cancelled"));
 
         if (status != SessionLoadStatus.Loaded || payload is null)
-            return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockFailed"));
+            return context.Fail("auth.unlock.result", Localization.Get("error.auth_unlock_failed"));
 
         try
         {
@@ -1052,7 +1052,7 @@ internal partial class AuthService
                 .GetOrNull();
 
             if (cookies is not { Length: > 0 })
-                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
+                return context.Fail("auth.unlock.result", Localization.Get("error.auth_session_expired"));
 
             _api.ImportCookies(cookies);
             var (user, _) = await _api.GetCurrentUserAsync(CancellationToken.None);
@@ -1060,7 +1060,7 @@ internal partial class AuthService
             if (user?.Id is not { Length: > 0 } id)
             {
                 _api.ResetCookies();
-                return context.Fail("auth.unlock.result", Localization.Get("error.authSessionExpired"));
+                return context.Fail("auth.unlock.result", Localization.Get("error.auth_session_expired"));
             }
 
             var account = FindOrAdd(id, user.DisplayName);
@@ -1069,7 +1069,7 @@ internal partial class AuthService
 
             var directory = AccountStore.PathOf(account.Dir);
             if (!await AuthStore.SaveAsync(directory, payload, account.Storage, password))
-                return context.Fail("auth.unlock.result", Localization.Get("error.authUnlockFailed"));
+                return context.Fail("auth.unlock.result", Localization.Get("error.auth_unlock_failed"));
 
             if (account.ChoiceMade)
                 AuthStore.MarkChoiceMade(directory);
@@ -1418,7 +1418,7 @@ internal partial class AuthService
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException)
         {
             // Offline or a VPN that dropped the connection; the next try may well work.
-            _lastAutoLoginError = Localization.Get("error.authDeviceNetwork");
+            _lastAutoLoginError = Localization.Get("error.auth_device_network");
             Log.Warning(ex, "Could not reach VRChat for an automatic sign-in");
             return (false, true);
         }
@@ -1428,12 +1428,12 @@ internal partial class AuthService
         if (failure == LoginFailure.WrongPassword)
         {
             CredentialStore.Delete(target);
-            _lastAutoLoginError = Localization.Get("error.authUnauthorized");
+            _lastAutoLoginError = Localization.Get("error.auth_unauthorized");
             Log.Warning("VRChat rejected the saved password; the credential was deleted");
 
             NotificationService.Notify("auth.savedInvalid",
-                Localization.Get("auth.savedInvalidTitle"),
-                Localization.Get("auth.savedInvalidMessage"));
+                Localization.Get("auth.saved_invalid_title"),
+                Localization.Get("auth.saved_invalid_message"));
 
             _ = RefreshSavedAsync();
             return (false, false);
@@ -1441,7 +1441,7 @@ internal partial class AuthService
 
         if (error is not null || user is null)
         {
-            _lastAutoLoginError = error ?? Localization.Get("error.authSavedLoginFailed");
+            _lastAutoLoginError = error ?? Localization.Get("error.auth_saved_login_failed");
             Log.Warning("Automatic sign-in failed: {Error}", error ?? "no user");
 
             // An email confirmation needs the user's inbox; every other failure may clear up.
@@ -1458,8 +1458,8 @@ internal partial class AuthService
 
             Notify();
             NotificationService.Notify("auth.twoFactor",
-                Localization.Get("auth.autoLogin.twoFactorTitle"),
-                Localization.Get("auth.autoLogin.twoFactorMessage"));
+                Localization.Get("auth.auto_login.two_factor_title"),
+                Localization.Get("auth.auto_login.two_factor_message"));
             return (false, false);
         }
 
@@ -1826,14 +1826,14 @@ internal partial class AuthService
         var userId = Ids.User(input);
 
         if (userId is null)
-            return context.Fail("debug.user.result", Localization.Get("error.debugUserMissing"));
+            return context.Fail("debug.user.result", Localization.Get("error.debug_user_missing"));
 
         if (!IsLoggedIn)
-            return context.Fail("debug.user.result", Localization.Get("error.authSignInFirst"));
+            return context.Fail("debug.user.result", Localization.Get("error.auth_sign_in_first"));
 
         var profile = await PlayerService.Instance.FetchAsync(userId, CancellationToken.None);
         if (profile is null)
-            return context.Fail("debug.user.result", Localization.Get("error.debugUserNotFound"));
+            return context.Fail("debug.user.result", Localization.Get("error.debug_user_not_found"));
 
         var fileId = AvatarService.FileIdOf(profile.AvatarUrl)
                      ?? AvatarService.FileIdOf(profile.AvatarImageUrl)

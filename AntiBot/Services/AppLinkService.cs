@@ -15,7 +15,7 @@ internal partial class AppLinkService
         var url = context.Payload<OpenUrlRequest>()?.Url;
 
         if (!IsVrchatLink(url))
-            return context.Fail("system.openUrl.result", Localization.Get("error.onlyVrchatLinks"));
+            return context.Fail("system.openUrl.result", Localization.Get("error.only_vrchat_links"));
 
         SystemLauncher.Open(url!);
         return context.Reply("system.openUrl.result", new OkPayload());

@@ -101,8 +101,8 @@ internal partial class ThreatActionService
             return;
 
         NotificationService.Notify("auth.signedOut",
-            Localization.Get("auth.expired.detectedTitle"),
-            Localization.Get("auth.expired.detectedMessage").Replace("{name}", user.Name));
+            Localization.Get("auth.expired.detected_title"),
+            Localization.Get("auth.expired.detected_message").Replace("{name}", user.Name));
     }
 
     private async Task ActAsync(InstanceUser user, AppSettings settings)

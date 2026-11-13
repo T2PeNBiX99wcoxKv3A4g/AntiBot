@@ -387,7 +387,7 @@ internal partial class VrchatLogService
         var directory = SettingsService.Instance.LogDirectory;
 
         if (!Directory.Exists(directory))
-            return context.Fail("log.openFolder.result", Localization.Get("error.logDirectoryMissing"));
+            return context.Fail("log.openFolder.result", Localization.Get("error.log_directory_missing"));
 
         ProcessStartInfo request = OperatingSystem.IsWindows()
             ? new("explorer.exe", directory)
@@ -396,7 +396,7 @@ internal partial class VrchatLogService
         return Try.Run(() => Process.Start(request) is not null)
             .OnFailure(ex => Log.Warning(ex, "Failed to open {Directory}", directory))
             ? context.Reply("log.openFolder.result", new OkPayload())
-            : context.Fail("log.openFolder.result", Localization.Get("error.openFolder"));
+            : context.Fail("log.openFolder.result", Localization.Get("error.open_folder"));
     }
 
     /// <summary>Writes every line read so far, in its original form, to a new file in Downloads.</summary>
@@ -408,7 +408,7 @@ internal partial class VrchatLogService
             lines = [.. _buffer.Where(line => line.Raw.Length > 0).Select(line => line.Raw)];
 
         if (lines.Length == 0)
-            return context.Fail("log.export.result", Localization.Get("error.noLog"));
+            return context.Fail("log.export.result", Localization.Get("error.no_log"));
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var downloads = Path.Combine(home, "Downloads");

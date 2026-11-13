@@ -48,15 +48,15 @@ const LOCALE_NAMES: Record<string, string> = {
 
 /** The settings sections, in page order; the jump list is built from this. */
 const SECTIONS: { id: string; label: LocalizationKey }[] = [
-    {id: "settings-language", label: "Language"},
-    {id: "settings-appearance", label: "Appearance"},
-    {id: "settings-startup", label: "Start with the system"},
-    {id: "settings-log-source", label: "Log source"},
-    {id: "settings-avatar-lookups", label: "Avatar name lookups"},
-    {id: "settings-osc", label: "OSC"},
-    {id: "settings-protection", label: "Automatic protection"},
-    {id: "settings-whitelist", label: "Whitelist"},
-    {id: "settings-build", label: "Build"},
+    {id: "settings-language", label: "language"},
+    {id: "settings-appearance", label: "appearance"},
+    {id: "settings-startup", label: "start_with_the_system"},
+    {id: "settings-log-source", label: "log_source"},
+    {id: "settings-avatar-lookups", label: "avatar_name_lookups"},
+    {id: "settings-osc", label: "osc"},
+    {id: "settings-protection", label: "automatic_protection"},
+    {id: "settings-whitelist", label: "whitelist"},
+    {id: "settings-build", label: "build"},
 ];
 
 interface SettingsPageProps {
@@ -138,8 +138,8 @@ export function SettingsPage({info}: SettingsPageProps) {
         try {
             const result = await testOsc(oscPort);
             setOscResult(result.sent
-                ? t("Sent to port {port}. If the Quick Menu opened, OSC is working.", {port: result.port})
-                : t("Could not send the test message."));
+                ? t("sent_to_port_port_if_the_quick_menu_opened_osc_is_working", {port: result.port})
+                : t("could_not_send_the_test_message"));
             refreshOsc();
         } catch (reason) {
             setOscResult(reason instanceof Error ? reason.message : String(reason));
@@ -179,7 +179,7 @@ export function SettingsPage({info}: SettingsPageProps) {
 
             void loadPeople(0);
             refreshOsc();
-        }, () => setError(t("Could not read the settings.")));
+        }, () => setError(t("could_not_read_the_settings")));
     }, []);
 
     useEffect(() => {
@@ -449,16 +449,16 @@ export function SettingsPage({info}: SettingsPageProps) {
             <Stack>
                 <Section id="settings-language">
                     <SectionHeader>
-                        <h2>{t("Language")}</h2>
+                        <h2>{t("language")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("Language")}</Label>
+                            <Label>{t("language")}</Label>
                             <Dropdown
                                 onChange={(value) => void changeLanguage(value)}
                                 options={[
-                                    {value: SYSTEM_LOCALE, label: t("System default")},
+                                    {value: SYSTEM_LOCALE, label: t("system_default")},
                                     ...locales.map((locale) => ({
                                         value: locale,
                                         label: LOCALE_NAMES[locale] ?? locale,
@@ -466,7 +466,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 ]}
                                 value={language}
                             />
-                            <Hint>{t("Language used by both the interface and the desktop backend.")}</Hint>
+                            <Hint>{t("language_used_by_both_the_interface_and_the_desktop_backend")}</Hint>
                         </Field>
 
                     </Card>
@@ -474,29 +474,29 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-appearance">
                     <SectionHeader>
-                        <h2>{t("Appearance")}</h2>
+                        <h2>{t("appearance")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("Theme")}</Label>
+                            <Label>{t("theme")}</Label>
                             <Dropdown
                                 onChange={(value) => changeTheme(value as ThemeMode)}
                                 options={[
-                                    {value: "system", label: t("Follow the system")},
-                                    {value: "light", label: t("Light")},
-                                    {value: "dark", label: t("Dark")},
+                                    {value: "system", label: t("follow_the_system")},
+                                    {value: "light", label: t("light")},
+                                    {value: "dark", label: t("dark")},
                                 ]}
                                 value={theme}
                             />
-                            <Hint>{t("Applies to the whole interface.")}</Hint>
+                            <Hint>{t("applies_to_the_whole_interface")}</Hint>
                         </Field>
                     </Card>
                 </Section>
 
                 <Section id="settings-startup">
                     <SectionHeader>
-                        <h2>{t("Start with the system")}</h2>
+                        <h2>{t("start_with_the_system")}</h2>
                     </SectionHeader>
 
                     <Card>
@@ -504,18 +504,18 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Toggle
                                 checked={startup?.enabled ?? false}
                                 disabled={startupBusy || !startup?.supported}
-                                hint={t("Create an autostart entry for this user.")}
+                                hint={t("create_an_autostart_entry_for_this_user")}
                                 onChange={(value) => void changeStartup(value)}
-                                title={t("Start with the system")}
+                                title={t("start_with_the_system")}
                             />
                             <Toggle
                                 checked={startHidden}
-                                hint={t("Open in the tray instead of showing the window.")}
+                                hint={t("open_in_the_tray_instead_of_showing_the_window")}
                                 onChange={(value) => {
                                     setStartHidden(value);
                                     void persist({startHidden: value});
                                 }}
-                                title={t("Start hidden")}
+                                title={t("start_hidden")}
                             />
                         </ToggleRow>
                     </Card>
@@ -523,30 +523,30 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-log-source">
                     <SectionHeader>
-                        <h2>{t("Log source")}</h2>
+                        <h2>{t("log_source")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("VRChat log folder")}</Label>
+                            <Label>{t("vr_chat_log_folder")}</Label>
                             <Row>
                                 <Input
-                                    aria-label={t("VRChat log folder")}
+                                    aria-label={t("vr_chat_log_folder")}
                                     onBlur={() => void persist()}
                                     onChange={(event) => setDirectory(event.target.value)}
-                                    placeholder={t("VRChat's log folder")}
+                                    placeholder={t("vr_chat_s_log_folder")}
                                     spellCheck={false}
                                     value={directory}
                                 />
                             </Row>
                             <Hint>
-                                {t("The newest log in this folder is followed while VRChat is running. Nothing is read while it is closed.")}
+                                {t("the_newest_log_in_this_folder_is_followed_while_vr_chat_is_running_nothing_is_read_while_it_is_closed")}
                             </Hint>
                         </Field>
 
                         <Actions>
                             <Button disabled={!desktopAvailable} onClick={revealFolder} type="button">
-                                <FolderIcon/>{t("Open folder")}
+                                <FolderIcon/>{t("open_folder")}
                             </Button>
                             <Button
                                 disabled={!defaultDirectory || trimmed === defaultDirectory}
@@ -556,7 +556,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 }}
                                 type="button"
                             >
-                                {t("Use VRChat's folder")}
+                                {t("use_vr_chat_s_folder")}
                             </Button>
                         </Actions>
                     </Card>
@@ -564,25 +564,25 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-avatar-lookups">
                     <SectionHeader>
-                        <h2>{t("Avatar name lookups")}</h2>
+                        <h2>{t("avatar_name_lookups")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("API endpoints")}</Label>
+                            <Label>{t("api_endpoints")}</Label>
                             <Hint>
-                                {t("Tried in order; the first name wins. Each is called as")}
-                                <code> ?fileId=file_…</code> {t("and must answer with JSON containing a")}
+                                {t("tried_in_order_the_first_name_wins_each_is_called_as")}
+                                <code> ?fileId=file_…</code> {t("and_must_answer_with_json_containing_a")}
                                 <code> name</code>.
                             </Hint>
 
                             <Providers>
                                 {providers.length === 0 &&
-                                    <EmptyHint>{t("No endpoint; avatar names stay unknown.")}</EmptyHint>}
+                                    <EmptyHint>{t("no_endpoint_avatar_names_stay_unknown")}</EmptyHint>}
                                 {providers.map((provider, index) => (
                                     <Row key={`${provider}-${index}`}>
                                         <Input
-                                            aria-label={t("Avatar API endpoint")}
+                                            aria-label={t("avatar_api_endpoint")}
                                             onBlur={() => void persist()}
                                             onChange={(event) => {
                                                 const next = [...providers];
@@ -593,7 +593,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                             value={provider}
                                         />
                                         <Button
-                                            aria-label={t("Remove endpoint")}
+                                            aria-label={t("remove_endpoint")}
                                             onClick={() => removeProvider(index)}
                                             type="button"
                                         >
@@ -605,14 +605,14 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                             <Row>
                                 <Input
-                                    aria-label={t("New avatar API endpoint")}
+                                    aria-label={t("new_avatar_api_endpoint")}
                                     onChange={(event) => setNewProvider(event.target.value)}
                                     placeholder="https://example.com/avatars"
                                     spellCheck={false}
                                     value={newProvider}
                                 />
                                 <Button disabled={newProvider.trim().length === 0} onClick={addProvider} type="button">
-                                    {t("Add")}
+                                    {t("add")}
                                 </Button>
                             </Row>
                         </Field>
@@ -621,15 +621,15 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-osc">
                     <SectionHeader>
-                        <h2>{t("OSC")}</h2>
+                        <h2>{t("osc")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("OSC port")}</Label>
+                            <Label>{t("osc_port")}</Label>
                             <Row>
                                 <Input
-                                    aria-label={t("OSC port")}
+                                    aria-label={t("osc_port")}
                                     max={65535}
                                     min={1}
                                     onChange={(event) => changeOscPort(Number(event.target.value) || 9000)}
@@ -638,25 +638,25 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 />
                             </Row>
                             <Hint>
-                                {t("VRChat listens on 9000 unless it was started with a custom --osc port.")}
+                                {t("vr_chat_listens_on_9000_unless_it_was_started_with_a_custom_osc_port")}
                             </Hint>
                         </Field>
 
                         <Field>
                             <Row>
                                 <Button disabled={oscBusy} onClick={() => void runOscTest()} type="button">
-                                    {oscBusy ? t("Testing…") : t("Test connection")}
+                                    {oscBusy ? t("testing") : t("test_connection")}
                                 </Button>
-                                <Hint>{t("Opens VRChat's Quick Menu when OSC is working.")}</Hint>
+                                <Hint>{t("opens_vr_chat_s_quick_menu_when_osc_is_working")}</Hint>
                             </Row>
 
                             <Hint>
                                 {oscState?.listening
                                     ? oscState.detected > 0 && oscState.detected !== oscPort
-                                        ? t("VRChat reports port {detected}; AntiBot sends to {port}.",
+                                        ? t("vr_chat_reports_port_detected_anti_bot_sends_to_port",
                                             {detected: oscState.detected, port: oscPort})
-                                        : t("VRChat is advertising OSC on port {port}.", {port: oscPort})
-                                    : t("VRChat is not advertising OSC. Enable it in the Action Menu.")}
+                                        : t("vr_chat_is_advertising_osc_on_port_port", {port: oscPort})
+                                    : t("vr_chat_is_not_advertising_osc_enable_it_in_the_action_menu")}
                             </Hint>
 
                             {oscResult && <Hint>{oscResult}</Hint>}
@@ -666,12 +666,12 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-protection">
                     <SectionHeader>
-                        <h2>{t("Automatic protection")}</h2>
+                        <h2>{t("automatic_protection")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("Threat threshold")}</Label>
+                            <Label>{t("threat_threshold")}</Label>
                             <Row>
                                 <ThresholdInput
                                     min={0}
@@ -682,60 +682,60 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 />
                             </Row>
                             <Hint>
-                                {t("Any user at or above this score is acted on; the score is a guess and can be wrong. Friends and whitelisted users are never acted on.")}
+                                {t("any_user_at_or_above_this_score_is_acted_on_the_score_is_a_guess_and_can_be_wrong_friends_and_whitelisted_users_are_never_acted_on")}
                             </Hint>
                         </Field>
 
                         <ToggleRow>
                             <Toggle
                                 checked={autoBlock}
-                                hint={t("Block the user. VRChat may then refuse to send them your avatar if it checks blocks on the server; it may also have no effect.")}
+                                hint={t("block_the_user_vr_chat_may_then_refuse_to_send_them_your_avatar_if_it_checks_blocks_on_the_server_it_may_also_have_no_effect")}
                                 onChange={(value) => {
                                     setAutoBlock(value);
                                     void persist({autoBlock: value});
                                 }}
-                                title={t("Block the user")}
+                                title={t("block_the_user")}
                             />
                             <Toggle
                                 checked={autoAvatar}
-                                hint={t("Turn the user's avatar interactions off, so their avatar cannot trigger anything on yours.")}
+                                hint={t("turn_the_user_s_avatar_interactions_off_so_their_avatar_cannot_trigger_anything_on_yours")}
                                 onChange={(value) => {
                                     setAutoAvatar(value);
                                     void persist({autoDisableAvatarInteraction: value});
                                 }}
-                                title={t("Disable avatar interactions")}
+                                title={t("disable_avatar_interactions")}
                             />
                             <Toggle
                                 checked={autoChat}
-                                hint={t("Hide the user's chat box, so they cannot flood or harass through it.")}
+                                hint={t("hide_the_user_s_chat_box_so_they_cannot_flood_or_harass_through_it")}
                                 onChange={(value) => {
                                     setAutoChat(value);
                                     void persist({autoHideChatBox: value});
                                 }}
-                                title={t("Hide the chat box")}
+                                title={t("hide_the_chat_box")}
                             />
                             <Toggle
                                 checked={autoSafeMode}
-                                hint={t("Turn on VRChat's Safe Mode over OSC when a user reaches the threshold, so every non-friend avatar is replaced at once. It needs OSC enabled in VRChat and stays on until you turn it off.")}
+                                hint={t("turn_on_vr_chat_s_safe_mode_over_osc_when_a_user_reaches_the_threshold_so_every_non_friend_avatar_is_replaced_at_once_it_needs_osc_enabled_in_vr_chat_and_stays_on_until_you_turn_it_off")}
                                 onChange={(value) => {
                                     setAutoSafeMode(value);
                                     void persist({autoSafeMode: value});
                                 }}
-                                requires={t("Requires OSC")}
-                                title={t("Safe Mode (OSC)")}
+                                requires={t("requires_osc")}
+                                title={t("safe_mode_osc")}
                             />
                             <Toggle
                                 checked={autoSafeAvatar}
-                                hint={t("Switch to another avatar over OSC when a user reaches the threshold. It is not switched back.")}
+                                hint={t("switch_to_another_avatar_over_osc_when_a_user_reaches_the_threshold_it_is_not_switched_back")}
                                 onChange={(value) => {
                                     setAutoSafeAvatar(value);
                                     void persist({autoSafeAvatar: value});
                                 }}
-                                requires={t("Requires OSC")}
-                                title={t("Switch avatar (OSC)")}
+                                requires={t("requires_osc")}
+                                title={t("switch_avatar_osc")}
                             />
                             <ToggleField>
-                                <Label>{t("Safe avatar id")}</Label>
+                                <Label>{t("safe_avatar_id")}</Label>
                                 <SecretInput
                                     disabled={!autoSafeAvatar}
                                     onBlur={() => void persist()}
@@ -744,37 +744,37 @@ export function SettingsPage({info}: SettingsPageProps) {
                                     value={safeAvatarId}
                                 />
                                 <Hint>
-                                    {t("Only avatars in your favourites, your recents or your own uploads can be used. Paste the avatar's link or its id (avtr_…).")}
+                                    {t("only_avatars_in_your_favourites_your_recents_or_your_own_uploads_can_be_used_paste_the_avatar_s_link_or_its_id_avtr")}
                                 </Hint>
                             </ToggleField>
                             <Toggle
                                 checked={autoClose}
-                                hint={t("Close VRChat, so the client has as little chance as possible to download and cache their avatar.") + " " +
-                                    t("When VRChat really quits, the OSC actions are skipped because there is nothing left to protect.")}
+                                hint={t("close_vr_chat_so_the_client_has_as_little_chance_as_possible_to_download_and_cache_their_avatar") + " " +
+                                    t("when_vr_chat_really_quits_the_osc_actions_are_skipped_because_there_is_nothing_left_to_protect")}
                                 onChange={(value) => {
                                     setAutoClose(value);
                                     void persist({autoCloseVrchat: value});
                                 }}
-                                title={t("Close VRChat")}
+                                title={t("close_vr_chat")}
                             />
                             <Toggle
                                 checked={skipCloseVr}
                                 disabled={!autoClose}
-                                hint={t("Do not close VRChat while a VR headset is in use; quitting from VR is disruptive.")}
+                                hint={t("do_not_close_vr_chat_while_a_vr_headset_is_in_use_quitting_from_vr_is_disruptive")}
                                 onChange={(value) => {
                                     setSkipCloseVr(value);
                                     void persist({skipCloseInVr: value});
                                 }}
-                                title={t("Skip while in VR")}
+                                title={t("skip_while_in_vr")}
                             />
                             <Toggle
                                 checked={autoReject}
-                                hint={t("Reject friend requests from any user at or above the threshold. VRChat's notification is hidden and only the block, avatar interaction and chat box actions are applied to the sender; the request stays in AntiBot's list as rejected, where it can be undone.")}
+                                hint={t("reject_friend_requests_from_any_user_at_or_above_the_threshold_vr_chat_s_notification_is_hidden_and_only_the_block_avatar_interaction_and_chat_box_actions_are_applied_to_the_sender_the_request_stays_in_anti_bot_s_list_as_rejected_where_it_can_be_undone")}
                                 onChange={(value) => {
                                     setAutoReject(value);
                                     void persist({autoRejectFriendRequests: value});
                                 }}
-                                title={t("Reject friend requests")}
+                                title={t("reject_friend_requests")}
                             />
                         </ToggleRow>
                     </Card>
@@ -782,15 +782,15 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-whitelist">
                     <SectionHeader>
-                        <h2>{t("Whitelist")}</h2>
+                        <h2>{t("whitelist")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("Add a user")}</Label>
+                            <Label>{t("add_a_user")}</Label>
                             <Row>
                                 <Input
-                                    aria-label={t("Whitelisted user id")}
+                                    aria-label={t("whitelisted_user_id")}
                                     onChange={(event) => setNewWhitelist(event.target.value)}
                                     placeholder="usr_… or https://vrchat.com/home/user/usr_…"
                                     spellCheck={false}
@@ -798,16 +798,16 @@ export function SettingsPage({info}: SettingsPageProps) {
                                 />
                                 <Button disabled={newWhitelist.trim().length === 0} onClick={addWhitelist}
                                         type="button">
-                                    {t("Add")}
+                                    {t("add")}
                                 </Button>
                             </Row>
                             <Hint>
-                                {t("Paste a VRChat user id or profile link. Whitelisted users get a white row and no automatic action.")}
+                                {t("paste_a_vr_chat_user_id_or_profile_link_whitelisted_users_get_a_white_row_and_no_automatic_action")}
                             </Hint>
                         </Field>
 
                         <WhitelistList>
-                            {whitelist.length === 0 && <EmptyHint>{t("Nobody is whitelisted.")}</EmptyHint>}
+                            {whitelist.length === 0 && <EmptyHint>{t("nobody_is_whitelisted")}</EmptyHint>}
                             {whitelist.map((id) => {
                                 const person = people.find((item) => item.userId === id);
                                 return (
@@ -818,7 +818,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                                             <span>{person?.trust ?? id}</span>
                                         </WhitelistName>
                                         <Button
-                                            aria-label={t("Remove from whitelist")}
+                                            aria-label={t("remove_from_whitelist")}
                                             onClick={() => removeWhitelist(id)}
                                             type="button"
                                         >
@@ -835,46 +835,46 @@ export function SettingsPage({info}: SettingsPageProps) {
 
                 <Section id="settings-build">
                     <SectionHeader>
-                        <h2>{t("Build")}</h2>
+                        <h2>{t("build")}</h2>
                     </SectionHeader>
 
                     <Card>
                         <Field>
-                            <Label>{t("Version")}</Label>
-                            <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser preview")}</Value>
-                            <Hint>{t("Read from the executable the interface is running in.")}</Hint>
+                            <Label>{t("version")}</Label>
+                            <Value $mono>{info ? `v${info.version} · ${info.platform}` : t("browser_preview")}</Value>
+                            <Hint>{t("read_from_the_executable_the_interface_is_running_in")}</Hint>
                         </Field>
 
                         <Actions>
                             <Button disabled={updateBusy} onClick={() => void checkUpdates()} type="button">
-                                {updateBusy ? t("Checking…") : t("Check for updates")}
+                                {updateBusy ? t("checking") : t("check_for_updates")}
                             </Button>
                             {updateResult?.available && (
                                 <Button onClick={() => void openReleasePage()} type="button">
-                                    {t("Open release page")}
+                                    {t("open_release_page")}
                                 </Button>
                             )}
                             {updateResult?.available && info?.platform === "windows" && (
                                 <Button onClick={() => void startUpdate()} type="button">
-                                    <DownloadIcon/>{t("Download and install")}
+                                    <DownloadIcon/>{t("download_and_install")}
                                 </Button>
                             )}
                             <Button onClick={() => void revealLogs()} type="button">
-                                <FolderIcon/>{t("Open log folder")}
+                                <FolderIcon/>{t("open_log_folder")}
                             </Button>
                         </Actions>
 
                         {updateResult && (updateResult.available
                             ? <UpdateAvailable>
-                                {t("Version {version} is available.", {version: updateResult.latest})}
+                                {t("version_version_is_available", {version: updateResult.latest})}
                             </UpdateAvailable>
                             : <Hint>
-                                {t("Up to date: {version} is the newest version.", {version: updateResult.current})}
+                                {t("up_to_date_version_is_the_newest_version", {version: updateResult.current})}
                             </Hint>)}
 
                         {info?.logDirectory && (
                             <Field>
-                                <Label>{t("Log files are written to:")}</Label>
+                                <Label>{t("log_files_are_written_to")}</Label>
                                 <Value $mono>{info.logDirectory}</Value>
                             </Field>
                         )}
@@ -882,7 +882,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                 </Section>
 
                 <AttributionLink onClick={() => setAttributionOpen(true)} type="button">
-                    {t("Open source attribution")}
+                    {t("open_source_attribution")}
                 </AttributionLink>
 
                 <Suspense fallback={null}>
@@ -909,20 +909,20 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <UpdateHead>
                             <DownloadIcon size={20}/>
                             <div>
-                                <h2>{t("Updating AntiBot")}</h2>
+                                <h2>{t("updating_anti_bot")}</h2>
                                 <p>
                                     {updateResult?.latest
-                                        ? t("Version {version}", {version: updateResult.latest})
-                                        : t("Preparing the update…")}
+                                        ? t("version_version", {version: updateResult.latest})
+                                        : t("preparing_the_update")}
                                 </p>
                             </div>
                         </UpdateHead>
 
-                        <ChangelogTitle>{t("Changelog")}</ChangelogTitle>
+                        <ChangelogTitle>{t("changelog")}</ChangelogTitle>
                         <Changelog>
                             {updateDialog.changelog || (updateDialog.phase === "changelog"
-                                ? t("Loading the changelog…")
-                                : t("The changelog could not be loaded."))}
+                                ? t("loading_the_changelog")
+                                : t("the_changelog_could_not_be_loaded"))}
                         </Changelog>
 
                         <ProgressRow>
@@ -939,15 +939,15 @@ export function SettingsPage({info}: SettingsPageProps) {
                         <UpdateActions>
                             {(updateDialog.phase === "changelog" || updateDialog.phase === "downloading") && (
                                 <Button onClick={() => void cancelUpdate()} type="button">
-                                    {t("Cancel")}
+                                    {t("cancel")}
                                 </Button>
                             )}
                             {updateDialog.phase === "installing" && (
-                                <Button disabled type="button">{t("Installing…")}</Button>
+                                <Button disabled type="button">{t("installing")}</Button>
                             )}
                             {(updateDialog.phase === "error" || updateDialog.phase === "cancelled") && (
                                 <Button onClick={() => setUpdateDialog(null)} type="button">
-                                    {t("Close")}
+                                    {t("close")}
                                 </Button>
                             )}
                         </UpdateActions>
@@ -961,17 +961,17 @@ export function SettingsPage({info}: SettingsPageProps) {
 function updatePhaseLabel(phase: UpdateDialogPhase, t: Translate): string {
     switch (phase) {
         case "changelog":
-            return t("Preparing the update…");
+            return t("preparing_the_update");
         case "downloading":
-            return t("Downloading the update…");
+            return t("downloading_the_update");
         case "ready":
-            return t("Download complete.");
+            return t("download_complete");
         case "cancelled":
-            return t("Update cancelled.");
+            return t("update_cancelled");
         case "error":
-            return t("The update failed.");
+            return t("the_update_failed");
         case "installing":
-            return t("Installing…");
+            return t("installing");
         default:
             return "";
     }
@@ -1023,7 +1023,7 @@ function SecretInput({value, onChange, onBlur, placeholder, disabled}: {
                 value={value}
             />
             <Reveal
-                aria-label={visible ? t("Hide the avatar id") : t("Show the avatar id")}
+                aria-label={visible ? t("hide_the_avatar_id") : t("show_the_avatar_id")}
                 onClick={() => setVisible((current) => !current)}
                 type="button"
             >

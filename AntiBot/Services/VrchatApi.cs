@@ -62,7 +62,7 @@ internal sealed class VrchatApi : IDisposable
         {
             var failure = Classify(body);
             var error = failure == LoginFailure.EmailConfirmation
-                ? Localization.Get("error.authCheckEmail")
+                ? Localization.Get("error.auth_check_email")
                 : Describe(response.StatusCode, body);
 
             return (null, error, failure);
@@ -474,12 +474,12 @@ internal sealed class VrchatApi : IDisposable
 
         return status switch
         {
-            HttpStatusCode.Unauthorized => Localization.Get("error.authUnauthorized"),
-            HttpStatusCode.Forbidden => Localization.Get("error.authForbidden"),
-            HttpStatusCode.TooManyRequests => Localization.Get("error.authRateLimited"),
+            HttpStatusCode.Unauthorized => Localization.Get("error.auth_unauthorized"),
+            HttpStatusCode.Forbidden => Localization.Get("error.auth_forbidden"),
+            HttpStatusCode.TooManyRequests => Localization.Get("error.auth_rate_limited"),
             _ => message is { Length: > 0 }
                 ? message
-                : Localization.Get("error.vrchatStatus").Replace("{status}", ((int)status).ToString())
+                : Localization.Get("error.vrchat_status").Replace("{status}", ((int)status).ToString())
         };
     }
 }

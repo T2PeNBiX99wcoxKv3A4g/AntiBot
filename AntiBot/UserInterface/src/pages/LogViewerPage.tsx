@@ -9,10 +9,10 @@ import type {VrchatLog} from "../hooks/useVrchatLog";
 const LEVELS = ["debug", "info", "warning", "error"] as const;
 
 const LEVEL_LABELS: Record<string, LocalizationKey> = {
-    debug: "Debug",
-    info: "Info",
-    warning: "Warning",
-    error: "Error",
+    debug: "debug",
+    info: "info",
+    warning: "warning",
+    error: "error",
 };
 
 const LEVEL_TAGS: Record<string, string> = {
@@ -96,7 +96,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
         try {
             const result = await exportLog();
             if (result.saved) setNotice({
-                text: t("Exported {count} lines to {path}.", {count: result.lines, path: result.path ?? ""}),
+                text: t("exported_count_lines_to_path", {count: result.lines, path: result.path ?? ""}),
             });
         } catch (reason) {
             setNotice({text: reason instanceof Error ? reason.message : String(reason), error: true});
@@ -112,15 +112,15 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     <SearchBox>
                         <SearchIcon/>
                         <input
-                            aria-label={t("Filter log lines")}
+                            aria-label={t("filter_log_lines")}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder={t("Filter lines…")}
+                            placeholder={t("filter_lines")}
                             spellCheck={false}
                             type="search"
                             value={query}
                         />
                         {query && (
-                            <ClearSearch aria-label={t("Clear the filter")} onClick={() => setQuery("")} type="button">
+                            <ClearSearch aria-label={t("clear_the_filter")} onClick={() => setQuery("")} type="button">
                                 <XIcon/>
                             </ClearSearch>
                         )}
@@ -131,28 +131,28 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                     <ToolbarButton
                         $active={follow}
                         onClick={() => setFollow((value) => !value)}
-                        title={follow ? t("Stop scrolling as new lines arrive") : t("Scroll to the newest line again")}
+                        title={follow ? t("stop_scrolling_as_new_lines_arrive") : t("scroll_to_the_newest_line_again")}
                         type="button"
                     >
-                        <FollowDot $active={follow}/>{follow ? t("Following") : t("Paused")}
+                        <FollowDot $active={follow}/>{follow ? t("following") : t("paused")}
                     </ToolbarButton>
 
                     <ToolbarButton
                         disabled={lines.length === 0}
                         onClick={clear}
-                        title={t("Clear the view; the log itself is untouched")}
+                        title={t("clear_the_view_the_log_itself_is_untouched")}
                         type="button"
                     >
-                        <TrashIcon/>{t("Clear")}
+                        <TrashIcon/>{t("clear")}
                     </ToolbarButton>
 
                     <ToolbarButton
                         disabled={lines.length === 0 || exporting}
                         onClick={exportLines}
-                        title={t("Save every line read so far to a file")}
+                        title={t("save_every_line_read_so_far_to_a_file")}
                         type="button"
                     >
-                        <DownloadIcon/>{exporting ? t("Exporting…") : t("Export")}
+                        <DownloadIcon/>{exporting ? t("exporting") : t("export")}
                     </ToolbarButton>
                 </ToolbarRow>
 
@@ -163,7 +163,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                             $on={!hidden.has(level)}
                             key={level}
                             onClick={() => toggleLevel(level)}
-                            title={t(hidden.has(level) ? "Show {level} lines" : "Hide {level} lines",
+                            title={t(hidden.has(level) ? "show_level_lines" : "hide_level_lines",
                                 {level: t(LEVEL_LABELS[level])})}
                             type="button"
                         >
@@ -176,44 +176,44 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             {notice && (
                 <Notice $error={notice.error}>
                     <span>{notice.text}</span>
-                    <button aria-label={t("Dismiss")} onClick={() => setNotice(null)} type="button"><XIcon/></button>
+                    <button aria-label={t("dismiss")} onClick={() => setNotice(null)} type="button"><XIcon/></button>
                 </Notice>
             )}
 
             <Viewer>
                 {!desktopAvailable ? (
                     <EmptyState
-                        hint={t("The log is read through the desktop host. Start AntiBot instead of the browser preview.")}
-                        title={t("Desktop host required")}
+                        hint={t("the_log_is_read_through_the_desktop_host_start_anti_bot_instead_of_the_browser_preview")}
+                        title={t("desktop_host_required")}
                     />
                 ) : lines.length === 0 ? (
                     !status.running ? (
                         <EmptyState
-                            hint={t("Nothing is read while VRChat is closed. Its log appears here once it starts.")}
-                            title={t("VRChat is not running")}
+                            hint={t("nothing_is_read_while_vr_chat_is_closed_its_log_appears_here_once_it_starts")}
+                            title={t("vr_chat_is_not_running")}
                         />
                     ) : !status.exists ? (
                         <EmptyState
-                            hint={t("The configured log folder cannot be found. Set VRChat's log folder in Settings.")}
-                            title={t("Log folder not found")}
+                            hint={t("the_configured_log_folder_cannot_be_found_set_vr_chat_s_log_folder_in_settings")}
+                            title={t("log_folder_not_found")}
                         />
                     ) : (
                         <EmptyState
-                            hint={t("VRChat is starting; lines appear here as soon as it writes them.")}
-                            title={t("Waiting for the log")}
+                            hint={t("vr_chat_is_starting_lines_appear_here_as_soon_as_it_writes_them")}
+                            title={t("waiting_for_the_log")}
                         />
                     )
                 ) : visible.length === 0 ? (
                     <EmptyState
                         hint={query.trim()
-                            ? t("No line contains “{query}”.", {query: query.trim()})
-                            : t("Every line is hidden by the level filter.")}
-                        title={t("Nothing matches")}
+                            ? t("no_line_contains_query", {query: query.trim()})
+                            : t("every_line_is_hidden_by_the_level_filter")}
+                        title={t("nothing_matches")}
                     />
                 ) : (
                     <Rows onScroll={handleScroll} ref={rowsRef}>
                         {visible.map(({line, level}) => line.level === "session" ? (
-                            <SessionDivider key={line.id}>{t("new session")}</SessionDivider>
+                            <SessionDivider key={line.id}>{t("new_session")}</SessionDivider>
                         ) : (
                             <Row $level={level} key={line.id}>
                                 <Time>{line.time}</Time>
@@ -226,7 +226,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
                 {!follow && visible.length > 0 && (
                     <JumpButton onClick={() => setFollow(true)} type="button">
-                        <ArrowDownIcon/>{t("Jump to latest")}
+                        <ArrowDownIcon/>{t("jump_to_latest")}
                     </JumpButton>
                 )}
             </Viewer>
@@ -234,8 +234,8 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             <StatusBar>
                 <span>
                     {visible.length === lines.length
-                        ? t("{count} lines", {count: lines.length})
-                        : t("{visible} of {total} lines", {visible: visible.length, total: lines.length})}
+                        ? t("count_lines", {count: lines.length})
+                        : t("visible_of_total_lines", {visible: visible.length, total: lines.length})}
                 </span>
             </StatusBar>
         </Page>

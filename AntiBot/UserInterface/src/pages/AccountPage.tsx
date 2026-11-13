@@ -241,12 +241,12 @@ export function AccountPage({initial, ready = false, expired = false}: {
             {expired && (
                 <SessionNotice role="alert">
                     <ShieldIcon size={16}/>
-                    <span>{t("VRChat session expired. Sign in again.")}</span>
+                    <span>{t("vr_chat_session_expired_sign_in_again")}</span>
                     <NoticeSignIn disabled={busy} onClick={() => {
                         setError("");
                         setAdding(true);
                     }} type="button">
-                        {t("Sign in")}
+                        {t("sign_in")}
                     </NoticeSignIn>
                 </SessionNotice>
             )}
@@ -279,11 +279,11 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
             <CardHead>
                 <UsersIcon size={20}/>
                 <div>
-                    <h2>{t("Accounts")}</h2>
+                    <h2>{t("accounts")}</h2>
                     <p>
                         {signedIn
-                            ? t("Switch to another account; only one is signed in at a time.")
-                            : t("Pick an account to sign in with.")}
+                            ? t("switch_to_another_account_only_one_is_signed_in_at_a_time")
+                            : t("pick_an_account_to_sign_in_with")}
                     </p>
                 </div>
             </CardHead>
@@ -323,11 +323,11 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
                                     <span>{t(storageLabel(account.storage))}</span>
                                 </RowText>
                                 {current
-                                    ? <ActiveTag>{t("Signed in")}</ActiveTag>
+                                    ? <ActiveTag>{t("signed_in")}</ActiveTag>
                                     : (
                                         <RowActions>
                                             <IconButton
-                                                aria-label={t("Remove account")}
+                                                aria-label={t("remove_account")}
                                                 disabled={busy}
                                                 onClick={(event) => {
                                                     // The row itself switches accounts.
@@ -346,7 +346,7 @@ function AccountList({accounts, busy, signedIn, onAdd, onSwitch, onRemove}: {
             )}
 
             <Actions>
-                <Secondary disabled={busy} onClick={onAdd} type="button">{t("Add account")}</Secondary>
+                <Secondary disabled={busy} onClick={onAdd} type="button">{t("add_account")}</Secondary>
             </Actions>
         </Card>
     );
@@ -366,8 +366,8 @@ function SavedAccounts({accounts, busy, onSignIn, onForget}: {
             <CardHead>
                 <KeyIcon size={20}/>
                 <div>
-                    <h2>{t("Saved accounts")}</h2>
-                    <p>{t("Press an account to sign in with its saved password.")}</p>
+                    <h2>{t("saved_accounts")}</h2>
+                    <p>{t("press_an_account_to_sign_in_with_its_saved_password")}</p>
                 </div>
             </CardHead>
 
@@ -395,18 +395,18 @@ function SavedAccounts({accounts, busy, onSignIn, onForget}: {
                         </AvatarSmall>
                         <RowText>
                             <strong>{account.name}</strong>
-                            <span>{account.autoLogin ? t("Signs in automatically") : t("Manual sign-in")}</span>
+                            <span>{account.autoLogin ? t("signs_in_automatically") : t("manual_sign_in")}</span>
                         </RowText>
                         <RowActions>
                             <IconButton
-                                aria-label={t("Forget saved password")}
+                                aria-label={t("forget_saved_password")}
                                 disabled={busy}
                                 onClick={(event) => {
                                     // The row itself signs in.
                                     event.stopPropagation();
                                     onForget(account);
                                 }}
-                                title={t("Forget saved password")}
+                                title={t("forget_saved_password")}
                                 type="button">
                                 <TrashIcon size={14}/>
                             </IconButton>
@@ -440,16 +440,16 @@ function UnlockPanel({account, busy, error, onUnlock, onCancel}: {
                 <CardHead>
                     <KeyIcon size={20}/>
                     <div>
-                        <h2>{t("Unlock {name}", {name: account.name})}</h2>
+                        <h2>{t("unlock_name", {name: account.name})}</h2>
                         <p>
-                            {t("The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.")}
+                            {t("the_session_was_encrypted_with_a_key_derived_from_your_password_it_is_never_stored_so_it_has_to_be_typed_again")}
                         </p>
                     </div>
                 </CardHead>
 
                 <Form onSubmit={submit}>
                     <Field>
-                        <Label htmlFor="switch-password">{t("Password")}</Label>
+                        <Label htmlFor="switch-password">{t("password")}</Label>
                         <PasswordInput
                             autoComplete="current-password"
                             autoFocus
@@ -463,9 +463,9 @@ function UnlockPanel({account, busy, error, onUnlock, onCancel}: {
 
                     <Actions>
                         <Primary disabled={busy} type="submit">
-                            {busy ? t("Unlocking…") : t("Unlock")}
+                            {busy ? t("unlocking") : t("unlock")}
                         </Primary>
-                        <Secondary disabled={busy} onClick={onCancel} type="button">{t("Cancel")}</Secondary>
+                        <Secondary disabled={busy} onClick={onCancel} type="button">{t("cancel")}</Secondary>
                     </Actions>
                 </Form>
             </StoragePanel>
@@ -508,18 +508,18 @@ function LoginForm({auth, busy, error, run, onSignedIn, onSignInSaved, onForgetS
                             <Logo>
                                 <UserIcon size={22}/>
                             </Logo>
-                            <h1>{t("Sign in to VRChat")}</h1>
-                            <p>{t("Use your VRChat account, or scan the code instead.")}</p>
+                            <h1>{t("sign_in_to_vr_chat")}</h1>
+                            <p>{t("use_your_vr_chat_account_or_scan_the_code_instead")}</p>
                         </LoginHead>
 
                         <Form onSubmit={submit}>
                             <Field>
-                                <Label htmlFor="username">{t("Username or email")}</Label>
+                                <Label htmlFor="username">{t("username_or_email")}</Label>
                                 <UsernameInput onChange={setUsername} value={username}/>
                             </Field>
 
                             <Field>
-                                <Label htmlFor="password">{t("Password")}</Label>
+                                <Label htmlFor="password">{t("password")}</Label>
                                 <PasswordInput
                                     autoComplete="current-password"
                                     id="password"
@@ -531,44 +531,44 @@ function LoginForm({auth, busy, error, run, onSignedIn, onSignInSaved, onForgetS
                             <LoginOptions>
                                 <Toggle
                                     checked={remember}
-                                    hint={t("Keeps this account's password on this device, encrypted by the OS or the TPM.")}
+                                    hint={t("keeps_this_account_s_password_on_this_device_encrypted_by_the_os_or_the_tpm")}
                                     onChange={(value) => {
                                         setRemember(value);
                                         if (!value) setAutoLogin(false);
                                     }}
-                                    title={t("Remember password")}
+                                    title={t("remember_password")}
                                 />
 
                                 <Toggle
                                     checked={autoLogin}
                                     disabled={!remember}
-                                    hint={t("Signs in with the saved password when the session expires. VRChat may still ask for a two-factor code.")}
+                                    hint={t("signs_in_with_the_saved_password_when_the_session_expires_vr_chat_may_still_ask_for_a_two_factor_code")}
                                     onChange={setAutoLogin}
-                                    title={t("Sign in automatically")}
+                                    title={t("sign_in_automatically")}
                                 />
                             </LoginOptions>
 
                             {error && <ErrorText>{error}</ErrorText>}
 
                             <Submit disabled={busy} type="submit">
-                                {busy ? t("Signing in…") : t("Sign in")}
+                                {busy ? t("signing_in") : t("sign_in")}
                             </Submit>
                             {onCancel && (
                                 <SecondaryInline disabled={busy} onClick={onCancel} type="button">
-                                    {t("Cancel")}
+                                    {t("cancel")}
                                 </SecondaryInline>
                             )}
                         </Form>
 
                         <Note>
-                            {t("Signing in is optional. Without it AntiBot only reads VRChat's local log, so the instance list can be inaccurate and player details are unavailable.")}
+                            {t("signing_in_is_optional_without_it_anti_bot_only_reads_vr_chat_s_local_log_so_the_instance_list_can_be_inaccurate_and_player_details_are_unavailable")}
                         </Note>
                     </LoginSide>
 
                     <QrSide>
                         <div>
-                            <h2>{t("Or scan to sign in")}</h2>
-                            <p>{t("Approve it in the VRChat app; the password never reaches AntiBot.")}</p>
+                            <h2>{t("or_scan_to_sign_in")}</h2>
+                            <p>{t("approve_it_in_the_vr_chat_app_the_password_never_reaches_anti_bot")}</p>
                         </div>
                         <DeviceLogin onSignedIn={onSignedIn}/>
                     </QrSide>
@@ -608,8 +608,8 @@ function TwoFactorForm({auth, busy, error, run, onCancel}: {
                 <CardHead>
                     <ShieldIcon size={20}/>
                     <div>
-                        <h2>{t("Two-factor authentication")}</h2>
-                        <p>{t("VRChat wants a second factor before it hands over the session.")}</p>
+                        <h2>{t("two_factor_authentication")}</h2>
+                        <p>{t("vr_chat_wants_a_second_factor_before_it_hands_over_the_session")}</p>
                     </div>
                 </CardHead>
 
@@ -638,11 +638,11 @@ function TwoFactorForm({auth, busy, error, run, onCancel}: {
                     {error && <ErrorText>{error}</ErrorText>}
 
                     <Submit disabled={busy} type="submit">
-                        {busy ? t("Verifying…") : t("Verify")}
+                        {busy ? t("verifying") : t("verify")}
                     </Submit>
                     {onCancel && (
                         <SecondaryInline disabled={busy} onClick={onCancel} type="button">
-                            {t("Cancel")}
+                            {t("cancel")}
                         </SecondaryInline>
                     )}
                 </Form>
@@ -673,11 +673,11 @@ function UnlockForm({auth, busy, error, run, onBrowse}: {
                 <CardHead>
                     <KeyIcon size={20}/>
                     <div>
-                        <h2>{hello ? t("Unlock with Windows Hello") : t("Unlock the saved session")}</h2>
+                        <h2>{hello ? t("unlock_with_windows_hello") : t("unlock_the_saved_session")}</h2>
                         <p>
                             {hello
-                                ? t("The session is protected by Windows Hello. Confirm with your PIN, fingerprint or face.")
-                                : t("The session was encrypted with a key derived from your password. It is never stored, so it has to be typed again.")}
+                                ? t("the_session_is_protected_by_windows_hello_confirm_with_your_pin_fingerprint_or_face")
+                                : t("the_session_was_encrypted_with_a_key_derived_from_your_password_it_is_never_stored_so_it_has_to_be_typed_again")}
                         </p>
                     </div>
                 </CardHead>
@@ -685,7 +685,7 @@ function UnlockForm({auth, busy, error, run, onBrowse}: {
                 <Form onSubmit={submit}>
                     {!hello && (
                         <Field>
-                            <Label htmlFor="unlock-password">{t("Password")}</Label>
+                            <Label htmlFor="unlock-password">{t("password")}</Label>
                             <PasswordInput
                                 autoComplete="current-password"
                                 autoFocus
@@ -699,16 +699,16 @@ function UnlockForm({auth, busy, error, run, onBrowse}: {
                     {error && <ErrorText>{error}</ErrorText>}
 
                     <Submit disabled={busy} type="submit">
-                        {busy ? t("Unlocking…") : hello ? t("Unlock with Windows Hello") : t("Unlock")}
+                        {busy ? t("unlocking") : hello ? t("unlock_with_windows_hello") : t("unlock")}
                     </Submit>
                     <SecondaryInline onClick={() => void run(async () => {
                         return await saveStorage("none");
                     })} type="button">
-                        {t("Forget it")}
+                        {t("forget_it")}
                     </SecondaryInline>
                     {onBrowse && (
                         <SecondaryInline disabled={busy} onClick={onBrowse} type="button">
-                            {t("Accounts")}
+                            {t("accounts")}
                         </SecondaryInline>
                     )}
                 </Form>
@@ -736,16 +736,16 @@ function Profile({auth, busy, error, run}: {
                         <h2>{user.displayName}</h2>
                         <StatusLine>
                             {status && <StatusDot $color={status.color}/>}
-                            <p>{user.statusDescription || (status ? t(status.labelKey) : t("Signed in to VRChat"))}</p>
+                            <p>{user.statusDescription || (status ? t(status.labelKey) : t("signed_in_to_vr_chat"))}</p>
                         </StatusLine>
                         {auth.expiresAt && (
-                            <p>{t("Session expires {date}", {
+                            <p>{t("session_expires_date", {
                                 date: new Date(auth.expiresAt).toLocaleDateString(),
                             })}</p>
                         )}
                     </Identity>
                     <SignOut disabled={busy} onClick={() => void run(logout)} type="button">
-                        {t("Sign out")}
+                        {t("sign_out")}
                     </SignOut>
                 </ProfileRow>
 
@@ -759,15 +759,15 @@ function Profile({auth, busy, error, run}: {
 function statusInfo(status?: string): { labelKey: LocalizationKey; color: string } | null {
     switch (status) {
         case "active":
-            return {labelKey: "Online", color: "#4ade80"};
+            return {labelKey: "online", color: "#4ade80"};
         case "join me":
-            return {labelKey: "Join Me", color: "#60a5fa"};
+            return {labelKey: "join_me", color: "#60a5fa"};
         case "ask me":
-            return {labelKey: "Ask Me", color: "#fbbf24"};
+            return {labelKey: "ask_me", color: "#fbbf24"};
         case "busy":
-            return {labelKey: "Busy", color: "#f87171"};
+            return {labelKey: "busy", color: "#f87171"};
         case "offline":
-            return {labelKey: "Offline", color: "#94a3b8"};
+            return {labelKey: "offline", color: "#94a3b8"};
         default:
             return status && status.length > 0 ? {labelKey: status as LocalizationKey, color: "#94a3b8"} : null;
     }
@@ -789,7 +789,7 @@ function UsernameInput({value, onChange}: { value: string; onChange: (value: str
                 value={value}
             />
             <PasswordReveal
-                aria-label={visible ? t("Hide the username") : t("Show the username")}
+                aria-label={visible ? t("hide_the_username") : t("show_the_username")}
                 onClick={() => setVisible((current) => !current)}
                 type="button"
             >
@@ -823,7 +823,7 @@ function PasswordInput({id, value, onChange, placeholder = "••••••�
                 value={value}
             />
             <PasswordReveal
-                aria-label={visible ? t("Hide password") : t("Show password")}
+                aria-label={visible ? t("hide_password") : t("show_password")}
                 onClick={() => setVisible((current) => !current)}
                 type="button"
             >
@@ -870,12 +870,12 @@ function StorageChoice({auth, busy, error, run}: {
         setOpen(true);
     };
 
-    // A fresh login has no stored choice yet, so the default "Do not remember" must still be savable.
+    // A fresh login has no stored choice yet, so the default "do_not_remember" must still be savable.
     const dirty = mode !== auth.storage || (mode === "password" && password.length > 0) || !auth.storageChosen;
 
     const save = () => {
         if (!signedIn) {
-            setLocalError(t("Sign in first."));
+            setLocalError(t("sign_in_first"));
             return;
         }
 
@@ -887,12 +887,12 @@ function StorageChoice({auth, busy, error, run}: {
 
         if (mode === "password") {
             if (password.length < 1) {
-                setLocalError(t("Enter the password that unlocks the session."));
+                setLocalError(t("enter_the_password_that_unlocks_the_session"));
                 return;
             }
 
             if (password !== confirm) {
-                setLocalError(t("The passwords do not match."));
+                setLocalError(t("the_passwords_do_not_match"));
                 return;
             }
         }
@@ -911,8 +911,8 @@ function StorageChoice({auth, busy, error, run}: {
         return (
             <Card>
                 <SavedRow>
-                    <SavedValue>{t("Currently: {storage}", {storage: t(storageLabel(auth.storage))})}</SavedValue>
-                    <Secondary onClick={openPanel} type="button">{t("Change save method")}</Secondary>
+                    <SavedValue>{t("currently_storage", {storage: t(storageLabel(auth.storage))})}</SavedValue>
+                    <Secondary onClick={openPanel} type="button">{t("change_save_method")}</Secondary>
                 </SavedRow>
             </Card>
         );
@@ -924,9 +924,9 @@ function StorageChoice({auth, busy, error, run}: {
                 <CardHead>
                     <ShieldIcon size={20}/>
                     <div>
-                        <h2>{t("Keep the session between launches")}</h2>
+                        <h2>{t("keep_the_session_between_launches")}</h2>
                         <p>
-                            {t("Only the VRChat session cookie is stored, never your password. Every mode except \"Do not remember\" encrypts it at rest; the difference is what unlocks it.")}
+                            {t("only_the_vr_chat_session_cookie_is_stored_never_your_password_every_mode_except_do_not_remember_encrypts_it_at_rest_the_difference_is_what_unlocks_it")}
                         </p>
                     </div>
                 </CardHead>
@@ -939,12 +939,12 @@ function StorageChoice({auth, busy, error, run}: {
                         type="button"
                     >
                         <OptionHead>
-                            <strong>{t("Software key")}</strong>
+                            <strong>{t("software_key")}</strong>
                             <Tag>{t("obfuscation")}</Tag>
                             <Safety $tone="weak">{t("weak")}</Safety>
-                            <Platforms>{t("Linux")}</Platforms>
+                            <Platforms>{t("linux")}</Platforms>
                         </OptionHead>
-                        <p>{t("AES-256-GCM with a key file next to the session; obfuscation only, not real protection.")}</p>
+                        <p>{t("aes_256_gcm_with_a_key_file_next_to_the_session_obfuscation_only_not_real_protection")}</p>
                     </Option>
 
                     <Option
@@ -958,14 +958,14 @@ function StorageChoice({auth, busy, error, run}: {
                             <Tag>{t("encrypted")}</Tag>
                             <Safety $tone="fair">{t("fair")}</Safety>
                             <Platforms>
-                                {systemName === "Windows DPAPI" ? t("Windows") :
-                                    systemName === "System keyring" ? t("Linux") : t("Windows · Linux")}
+                                {systemName === "Windows DPAPI" ? t("windows") :
+                                    systemName === "System keyring" ? t("linux") : t("windows_linux")}
                             </Platforms>
                         </OptionHead>
                         <p>
                             {systemName === "Windows DPAPI"
-                                ? t("Encrypted with Windows DPAPI for your account; unlocks automatically.")
-                                : t("Held in the desktop keyring; unlocks with your login session.")}
+                                ? t("encrypted_with_windows_dpapi_for_your_account_unlocks_automatically")
+                                : t("held_in_the_desktop_keyring_unlocks_with_your_login_session")}
                         </p>
                     </Option>
 
@@ -976,12 +976,12 @@ function StorageChoice({auth, busy, error, run}: {
                         type="button"
                     >
                         <OptionHead>
-                            <strong>{t("TPM")}</strong>
-                            <Tag>{t("no prompt")}</Tag>
+                            <strong>{t("tpm")}</strong>
+                            <Tag>{t("no_prompt")}</Tag>
                             <Safety $tone="good">{t("good")}</Safety>
-                            <Platforms>{t("Windows · Linux")}</Platforms>
+                            <Platforms>{t("windows_linux")}</Platforms>
                         </OptionHead>
-                        <p>{t("AES key wrapped by this machine's TPM; unlocks automatically.")}</p>
+                        <p>{t("aes_key_wrapped_by_this_machine_s_tpm_unlocks_automatically")}</p>
                     </Option>
 
                     <Option
@@ -991,38 +991,38 @@ function StorageChoice({auth, busy, error, run}: {
                         type="button"
                     >
                         <OptionHead>
-                            <strong>{t("Windows Hello")}</strong>
-                            <Tag>{t("PIN / biometrics")}</Tag>
+                            <strong>{t("windows_hello")}</strong>
+                            <Tag>{t("pin_biometrics")}</Tag>
                             <Safety $tone="strong">{t("strong")}</Safety>
-                            <Platforms>{t("Windows")}</Platforms>
+                            <Platforms>{t("windows")}</Platforms>
                         </OptionHead>
-                        <p>{t("Windows Hello confirms it is you before unlocking.")}</p>
+                        <p>{t("windows_hello_confirms_it_is_you_before_unlocking")}</p>
                     </Option>
 
                     <Option $active={mode === "password"} onClick={() => setMode("password")} type="button">
                         <OptionHead>
-                            <strong>{t("Password")}</strong>
-                            <Tag>{t("asks every launch")}</Tag>
+                            <strong>{t("password")}</strong>
+                            <Tag>{t("asks_every_launch")}</Tag>
                             <Safety $tone="strong">{t("strong")}</Safety>
-                            <Platforms>{t("Windows · Linux")}</Platforms>
+                            <Platforms>{t("windows_linux")}</Platforms>
                         </OptionHead>
-                        <p>{t("AES-256-GCM with a key derived from your password; asked each launch.")}</p>
+                        <p>{t("aes_256_gcm_with_a_key_derived_from_your_password_asked_each_launch")}</p>
                     </Option>
 
                     <Option $active={mode === "none"} onClick={() => setMode("none")} type="button">
                         <OptionHead>
-                            <strong>{t("Do not remember")}</strong>
-                            <Tag>{t("nothing on disk")}</Tag>
+                            <strong>{t("do_not_remember")}</strong>
+                            <Tag>{t("nothing_on_disk")}</Tag>
                             <Safety $tone="safest">{t("safest")}</Safety>
-                            <Platforms>{t("Windows · Linux")}</Platforms>
+                            <Platforms>{t("windows_linux")}</Platforms>
                         </OptionHead>
-                        <p>{t("Nothing is written; the next launch signs in again.")}</p>
+                        <p>{t("nothing_is_written_the_next_launch_signs_in_again")}</p>
                     </Option>
                 </Options>
 
                 {mode === "password" && (
                     <Field>
-                        <Label htmlFor="storage-password">{t("Password for this session")}</Label>
+                        <Label htmlFor="storage-password">{t("password_for_this_session")}</Label>
                         <PasswordInput
                             autoComplete="current-password"
                             id="storage-password"
@@ -1032,7 +1032,7 @@ function StorageChoice({auth, busy, error, run}: {
                         <PasswordInput
                             autoComplete="current-password"
                             onChange={setConfirm}
-                            placeholder={t("repeat the password")}
+                            placeholder={t("repeat_the_password")}
                             value={confirm}
                         />
                     </Field>
@@ -1042,7 +1042,7 @@ function StorageChoice({auth, busy, error, run}: {
 
                 <Actions>
                     <Primary disabled={busy || !signedIn} onClick={save} type="button">
-                        {busy ? t("Saving…") : t("Save")}
+                        {busy ? t("saving") : t("save")}
                     </Primary>
                 </Actions>
             </StoragePanel>
@@ -1147,20 +1147,20 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
         <QrPanel>
             <QrFrame $dim={!device || failed}>
                 {device?.qrDataUrl
-                    ? <Qr alt={t("Device sign-in")} src={device.qrDataUrl}/>
-                    : <QrEmpty>{starting ? t("Preparing the code…") : t("The sign-in code is unavailable.")}</QrEmpty>}
+                    ? <Qr alt={t("device_sign_in")} src={device.qrDataUrl}/>
+                    : <QrEmpty>{starting ? t("preparing_the_code") : t("the_sign_in_code_is_unavailable")}</QrEmpty>}
             </QrFrame>
 
             {failed
                 ? <QrStatus>
-                    <span>{error || t("The code expired. Start again.")}</span>
-                    <LinkButton onClick={() => void start()} type="button">{t("Try again")}</LinkButton>
+                    <span>{error || t("the_code_expired_start_again")}</span>
+                    <LinkButton onClick={() => void start()} type="button">{t("try_again")}</LinkButton>
                 </QrStatus>
-                : <QrStatus>{device ? t("Waiting for approval…") : t("Preparing the code…")}</QrStatus>}
+                : <QrStatus>{device ? t("waiting_for_approval") : t("preparing_the_code")}</QrStatus>}
 
             {device && (
                 <LinkBox>
-                    <a href={device.url} rel="noreferrer" target="_blank">{t("Open the link instead")}</a>
+                    <a href={device.url} rel="noreferrer" target="_blank">{t("open_the_link_instead")}</a>
                 </LinkBox>
             )}
         </QrPanel>
@@ -1170,39 +1170,39 @@ function DeviceLogin({onSignedIn}: { onSignedIn: (auth: AuthSnapshot) => void })
 function methodLabel(method: string) {
     switch (method) {
         case "totp":
-            return "Authenticator";
+            return "authenticator";
         case "emailOtp":
-            return "Email code";
+            return "email_code";
         default:
-            return "Recovery code";
+            return "recovery_code";
     }
 }
 
 function methodHint(method: string) {
     switch (method) {
         case "totp":
-            return "Code from your authenticator app";
+            return "code_from_your_authenticator_app";
         case "emailOtp":
-            return "Code VRChat emailed you";
+            return "code_vr_chat_emailed_you";
         default:
-            return "One of your recovery codes";
+            return "one_of_your_recovery_codes";
     }
 }
 
 function storageLabel(storage: AuthStorage): LocalizationKey {
     switch (storage) {
         case "password":
-            return "password-encrypted";
+            return "password_encrypted";
         case "system":
-            return "system-protected";
+            return "system_protected";
         case "tpm":
-            return "TPM-protected";
+            return "tpm_protected";
         case "hello":
-            return "Windows Hello";
+            return "windows_hello";
         case "software":
-            return "Software key";
+            return "software_key";
         default:
-            return "not stored";
+            return "not_stored";
     }
 }
 

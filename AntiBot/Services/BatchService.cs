@@ -43,7 +43,7 @@ internal partial class BatchService
     {
         if (!AuthService.Instance.IsReady)
             return context.Reply("batch.parse.result",
-                new BatchPreviewPayload([], [], Localization.Get("batch.error.signedOut")));
+                new BatchPreviewPayload([], [], Localization.Get("batch.error.signed_out")));
 
         var text = context.Payload<BatchParseRequest>()?.Text ?? "";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -66,7 +66,7 @@ internal partial class BatchService
 
         if (ids.Count == 0)
             return context.Reply("batch.parse.result",
-                new BatchPreviewPayload([], [.. invalid], Localization.Get("batch.error.noUsers")));
+                new BatchPreviewPayload([], [.. invalid], Localization.Get("batch.error.no_users")));
 
         var users = new List<InstanceUser>(ids.Count);
 
@@ -96,7 +96,7 @@ internal partial class BatchService
     {
         if (!AuthService.Instance.IsReady)
             return Task.FromResult<NativeResponse?>(Reply(context, false, 0, [],
-                Localization.Get("batch.error.signedOut")));
+                Localization.Get("batch.error.signed_out")));
 
         var ids = (context.Payload<BatchRunRequest>()?.UserIds ?? [])
             .Select(Ids.User)
@@ -107,12 +107,12 @@ internal partial class BatchService
 
         if (ids.Length == 0)
             return Task.FromResult<NativeResponse?>(Reply(context, false, 0, [],
-                Localization.Get("batch.error.noUsers")));
+                Localization.Get("batch.error.no_users")));
 
         var actions = ConfiguredActions();
         if (actions.Length == 0)
             return Task.FromResult<NativeResponse?>(Reply(context, false, 0, [],
-                Localization.Get("batch.error.noActions")));
+                Localization.Get("batch.error.no_actions")));
 
         int total;
         string[] kinds;
@@ -171,7 +171,7 @@ internal partial class BatchService
 
                     if (!AuthService.Instance.IsReady)
                     {
-                        error = Localization.Get("batch.error.signedOut");
+                        error = Localization.Get("batch.error.signed_out");
                         ok = false;
                         userError = error;
                         break;
@@ -185,7 +185,7 @@ internal partial class BatchService
                     else
                     {
                         ok = false;
-                        userError ??= Localization.Get("batch.error.apiRefused");
+                        userError ??= Localization.Get("batch.error.api_refused");
                     }
 
                     lock (_gate)

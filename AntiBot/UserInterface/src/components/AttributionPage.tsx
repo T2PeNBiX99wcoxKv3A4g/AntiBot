@@ -10,11 +10,11 @@ export function AttributionPage({onClose}: { onClose: () => void }) {
         <Overlay onClick={onClose}>
             <Panel onClick={(event) => event.stopPropagation()}>
                 <Header>
-                    <h2>{t("Open source attribution")}</h2>
-                    <CloseButton onClick={onClose} title={t("Close")} type="button">×</CloseButton>
+                    <h2>{t("open_source_attribution")}</h2>
+                    <CloseButton onClick={onClose} title={t("close")} type="button">×</CloseButton>
                 </Header>
 
-                <Hint>{t("Open source licenses for the libraries AntiBot uses.")}</Hint>
+                <Hint>{t("open_source_licenses_for_the_libraries_anti_bot_uses")}</Hint>
                 <AttributionBrowser/>
             </Panel>
         </Overlay>

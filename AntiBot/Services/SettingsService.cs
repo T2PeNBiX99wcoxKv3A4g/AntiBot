@@ -41,7 +41,7 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
 
     protected override string? Validate(AppSettings settings) =>
         string.IsNullOrWhiteSpace(settings.LogDirectory)
-            ? Localization.Get("error.invalidLogDirectory")
+            ? Localization.Get("error.invalid_log_directory")
             : null;
 
     protected override AppSettings Normalize(AppSettings settings)

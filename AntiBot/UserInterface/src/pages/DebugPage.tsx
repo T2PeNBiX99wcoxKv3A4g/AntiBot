@@ -31,7 +31,7 @@ function CloseClient() {
         try {
             const closed = await closeVrchat();
             setFailed(!closed);
-            setResult(closed ? t("VRChat closed.") : t("VRChat did not close. Is it running?"));
+            setResult(closed ? t("vr_chat_closed") : t("vr_chat_did_not_close_is_it_running"));
         } catch (err) {
             setFailed(true);
             setResult(err instanceof Error ? err.message : String(err));
@@ -42,12 +42,12 @@ function CloseClient() {
 
     return (
         <Card>
-            <h2>{t("Close VRChat")}</h2>
-            <p>{t("Asks VRChat to quit normally, so the client tells the instance it is leaving.")}</p>
+            <h2>{t("close_vr_chat")}</h2>
+            <p>{t("asks_vr_chat_to_quit_normally_so_the_client_tells_the_instance_it_is_leaving")}</p>
 
             <Actions>
                 <Primary disabled={busy} onClick={() => void run()} type="button">
-                    {busy ? t("Working…") : t("Close VRChat")}
+                    {busy ? t("working") : t("close_vr_chat")}
                 </Primary>
             </Actions>
 
@@ -88,8 +88,8 @@ function SafeMode() {
             const state = await enableSafeMode();
             setFailed(!state.ok);
             setResult(state.ok
-                ? t("Safe Mode request sent.")
-                : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+                ? t("safe_mode_request_sent")
+                : t("vr_chat_is_not_listening_for_osc_enable_it_in_the_action_menu"));
             refresh();
         } catch (err) {
             setFailed(true);
@@ -101,19 +101,19 @@ function SafeMode() {
 
     return (
         <Card>
-            <h2>{t("Safe Mode (OSC)")}</h2>
-            <p>{t("Presses VRChat's panic button over OSC, which replaces every non-friend avatar at once.")}</p>
+            <h2>{t("safe_mode_osc")}</h2>
+            <p>{t("presses_vr_chat_s_panic_button_over_osc_which_replaces_every_non_friend_avatar_at_once")}</p>
 
             <Rows>
-                <Row label={t("OSC")}
+                <Row label={t("osc")}
                      value={osc?.listening
-                         ? t("Listening on port {port}", {port: osc.port})
-                         : t("Not listening")}/>
+                         ? t("listening_on_port_port", {port: osc.port})
+                         : t("not_listening")}/>
             </Rows>
 
             <Actions>
                 <Primary disabled={busy} onClick={() => void run()} type="button">
-                    {busy ? t("Working…") : t("Safe Mode (OSC)")}
+                    {busy ? t("working") : t("safe_mode_osc")}
                 </Primary>
             </Actions>
 
@@ -138,12 +138,12 @@ function SafeAvatar() {
             const state = await switchAvatar();
             setFailed(!state.ok);
             setResult(state.ok
-                ? t("Avatar changed.")
+                ? t("avatar_changed")
                 : state.already
-                    ? t("Already wearing that avatar.")
+                    ? t("already_wearing_that_avatar")
                     : !state.configured
-                        ? t("Set the avatar id in the settings first.")
-                        : t("VRChat is not listening for OSC. Enable it in the Action Menu."));
+                        ? t("set_the_avatar_id_in_the_settings_first")
+                        : t("vr_chat_is_not_listening_for_osc_enable_it_in_the_action_menu"));
         } catch (err) {
             setFailed(true);
             setResult(err instanceof Error ? err.message : String(err));
@@ -154,12 +154,12 @@ function SafeAvatar() {
 
     return (
         <Card>
-            <h2>{t("Switch avatar (OSC)")}</h2>
-            <p>{t("Asks VRChat to wear the avatar id from the settings.")}</p>
+            <h2>{t("switch_avatar_osc")}</h2>
+            <p>{t("asks_vr_chat_to_wear_the_avatar_id_from_the_settings")}</p>
 
             <Actions>
                 <Primary disabled={busy} onClick={() => void run()} type="button">
-                    {busy ? t("Working…") : t("Switch avatar (OSC)")}
+                    {busy ? t("working") : t("switch_avatar_osc")}
                 </Primary>
             </Actions>
 
@@ -192,8 +192,8 @@ function UserCheck() {
 
     return (
         <Card>
-            <h2>{t("User check")}</h2>
-            <p>{t("Paste a VRChat user id or a profile link to see how it would be scored.")}</p>
+            <h2>{t("user_check")}</h2>
+            <p>{t("paste_a_vr_chat_user_id_or_a_profile_link_to_see_how_it_would_be_scored")}</p>
 
             <Form onSubmit={(event) => {
                 event.preventDefault();
@@ -205,7 +205,7 @@ function UserCheck() {
                     value={input}
                 />
                 <Primary disabled={busy || input.trim().length === 0} type="submit">
-                    {busy ? t("Checking…") : t("Check")}
+                    {busy ? t("checking") : t("check")}
                 </Primary>
             </Form>
 
@@ -215,13 +215,13 @@ function UserCheck() {
                 <Report>
                     <Threat $score={result.threat}>{result.threat}</Threat>
                     <Rows>
-                        <Row label={t("Name")} value={result.displayName}/>
-                        <Row label={t("User ID")} value={result.id}/>
-                        <Row label={t("Rank")} value={result.trust ?? t("Unknown")}/>
-                        <Row label={t("Joined")} value={result.dateJoined ?? t("Unknown")}/>
-                        <Row label={t("Platform")} value={result.platform ?? t("Unknown")}/>
-                        <Row label={t("Avatar")}
-                             value={result.avatarName ?? (result.isRobot ? t("Robot (default)") : t("Unknown"))}/>
+                        <Row label={t("name")} value={result.displayName}/>
+                        <Row label={t("user_id")} value={result.id}/>
+                        <Row label={t("rank")} value={result.trust ?? t("unknown")}/>
+                        <Row label={t("joined")} value={result.dateJoined ?? t("unknown")}/>
+                        <Row label={t("platform")} value={result.platform ?? t("unknown")}/>
+                        <Row label={t("avatar")}
+                             value={result.avatarName ?? (result.isRobot ? t("robot_default") : t("unknown"))}/>
                     </Rows>
                     <Reasons>
                         {result.reasons.length > 0
@@ -236,7 +236,7 @@ function UserCheck() {
                                     </Weight>
                                 </li>
                             ))
-                            : <li>{t("No signal matched.")}</li>}
+                            : <li>{t("no_signal_matched")}</li>}
                     </Reasons>
                 </Report>
             )}

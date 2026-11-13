@@ -66,28 +66,28 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
             {!signedIn && (
                 <Notice>
                     <NoticeText>
-                        <strong>{t("Not signed in")}</strong>
-                        <span>{t("Sign in to record the friend requests VRChat receives.")}</span>
+                        <strong>{t("not_signed_in")}</strong>
+                        <span>{t("sign_in_to_record_the_friend_requests_vr_chat_receives")}</span>
                     </NoticeText>
-                    <NoticeButton onClick={onSignIn} type="button">{t("Sign in")}</NoticeButton>
+                    <NoticeButton onClick={onSignIn} type="button">{t("sign_in")}</NoticeButton>
                 </Notice>
             )}
 
             <Card>
                 <CardHead>
                     <div>
-                        <h2>{t("Friend requests")}</h2>
+                        <h2>{t("friend_requests")}</h2>
                         <p>
                             {requests.length === 0
-                                ? t("Every incoming request is recorded here with the sender's profile.")
-                                : t("{count} recorded · {pending} still pending", {
+                                ? t("every_incoming_request_is_recorded_here_with_the_sender_s_profile")
+                                : t("count_recorded_pending_still_pending", {
                                     count: requests.length,
                                     pending,
                                 })}
                         </p>
                     </div>
                     <CardActions>
-                        <Legend>{t("Faded rows are no longer pending")}</Legend>
+                        <Legend>{t("faded_rows_are_no_longer_pending")}</Legend>
                         <ClearButton
                             $confirming={confirming}
                             disabled={requests.length === 0}
@@ -95,24 +95,24 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                             onClick={clear}
                             type="button"
                         >
-                            {confirming ? t("Confirm clear") : t("Clear history")}
+                            {confirming ? t("confirm_clear") : t("clear_history")}
                         </ClearButton>
                     </CardActions>
                 </CardHead>
 
                 <ListHeader>
                     <span/>
-                    <span>{t("User")}</span>
-                    <span>{t("Trust")}</span>
-                    <span>{t("Pronouns")}</span>
-                    <span>{t("Status")}</span>
-                    <span>{t("Platform")}</span>
-                    <span>{t("Received")}</span>
+                    <span>{t("user")}</span>
+                    <span>{t("trust")}</span>
+                    <span>{t("pronouns")}</span>
+                    <span>{t("status")}</span>
+                    <span>{t("platform")}</span>
+                    <span>{t("received")}</span>
                 </ListHeader>
 
                 <Rows>
                     {requests.length === 0 ? (
-                        <Empty>{t("No friend requests recorded yet.")}</Empty>
+                        <Empty>{t("no_friend_requests_recorded_yet")}</Empty>
                     ) : groupByDay(requests, t, locale).map((group) => (
                         <section key={group.day}>
                             <Day>{group.day}</Day>
@@ -132,7 +132,7 @@ export function RequestsPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn
                                             }}
                                             type="button"
                                         >
-                                            {t("Undo")}
+                                            {t("undo")}
                                         </UndoButton>
                                     ) : undefined}
                                     user={request.user}
@@ -169,7 +169,7 @@ function dayLabel(ms: number,
     const date = new Date(ms);
 
     return date.toDateString() === new Date().toDateString()
-        ? t("Today")
+        ? t("today")
         : date.toLocaleDateString(locale, {year: "numeric", month: "short", day: "numeric"});
 }
 

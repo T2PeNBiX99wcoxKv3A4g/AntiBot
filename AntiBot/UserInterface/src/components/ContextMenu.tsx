@@ -140,7 +140,7 @@ export function ContextMenu() {
         setMenu(null);
         try {
             await navigator.clipboard.writeText(value);
-            flash(t("Copied"));
+            flash(t("copied"));
         } catch {
             // The clipboard was refused; nothing sensible to show.
         }
@@ -167,7 +167,7 @@ export function ContextMenu() {
                 return next;
             });
             window.dispatchEvent(new CustomEvent("antibot:whitelist", {detail: {userId, whitelisted}}));
-            flash(whitelisted ? t("Added to whitelist") : t("Removed from whitelist"));
+            flash(whitelisted ? t("added_to_whitelist") : t("removed_from_whitelist"));
         } catch {
             // The host refused; the settings page can still change the list by hand.
         }
@@ -181,27 +181,27 @@ export function ContextMenu() {
                 <Menu style={{left: menu.x, top: menu.y}}>
                     {menu.selection && (
                         <Item onClick={() => void copy(menu.selection)} type="button">
-                            {t("Copy")}
+                            {t("copy")}
                         </Item>
                     )}
                     {menu.userId && (
                         <Item onClick={() => void copy(menu.userId!)} type="button">
-                            {t("Copy ID")}
+                            {t("copy_id")}
                         </Item>
                     )}
                     {menu.userId && (
                         <Item onClick={() => void copy(`https://vrchat.com/home/user/${menu.userId}`)} type="button">
-                            {t("Copy profile URL")}
+                            {t("copy_profile_url")}
                         </Item>
                     )}
                     {menu.userId && (
                         <Item onClick={() => void toggleWhitelist(menu.userId!, !whitelisted)} type="button">
-                            {whitelisted ? t("Remove from whitelist") : t("Add to whitelist")}
+                            {whitelisted ? t("remove_from_whitelist") : t("add_to_whitelist")}
                         </Item>
                     )}
                     {menu.editable && (
                         <Item onClick={() => void paste(menu.editable!)} type="button">
-                            {t("Paste")}
+                            {t("paste")}
                         </Item>
                     )}
                 </Menu>

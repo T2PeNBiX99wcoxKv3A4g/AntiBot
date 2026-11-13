@@ -74,7 +74,7 @@ export function OperationsPage() {
         void undoOperation(entry.id).then((result) => {
             setNotice({ok: result.ok, text: result.message});
         }, () => {
-            setNotice({ok: false, text: t("The host did not answer.")});
+            setNotice({ok: false, text: t("the_host_did_not_answer")});
         }).finally(() => {
             setUndoing(null);
             window.setTimeout(() => setNotice(null), 6000);
@@ -86,11 +86,11 @@ export function OperationsPage() {
             <Card>
                 <Head>
                     <div>
-                        <h2>{t("Operation history")}</h2>
-                        <p>{t("Every block, chat-box mute and avatar-interaction change, as it happened.")}</p>
+                        <h2>{t("operation_history")}</h2>
+                        <p>{t("every_block_chat_box_mute_and_avatar_interaction_change_as_it_happened")}</p>
                     </div>
                     <HeadActions>
-                        <Count>{t("{count} action(s)", {count: entries.length})}</Count>
+                        <Count>{t("count_action_s", {count: entries.length})}</Count>
                         <ClearButton
                             $confirming={confirming}
                             disabled={entries.length === 0}
@@ -98,7 +98,7 @@ export function OperationsPage() {
                             onClick={clear}
                             type="button"
                         >
-                            {confirming ? t("Confirm clear") : t("Clear history")}
+                            {confirming ? t("confirm_clear") : t("clear_history")}
                         </ClearButton>
                     </HeadActions>
                 </Head>
@@ -107,13 +107,13 @@ export function OperationsPage() {
 
                 <List>
                     {entries.length === 0 ? (
-                        <Empty>{t("AntiBot has not taken an automatic action yet.")}</Empty>
+                        <Empty>{t("anti_bot_has_not_taken_an_automatic_action_yet")}</Empty>
                     ) : entries.map((entry) => (
                         <Item data-user-id={entry.userId || undefined} key={entry.id} onClick={() => openUser(entry)}>
                             <Avatar $src={entry.avatarUrl}/>
                             <Time>{formatTime(entry.at, locale)}</Time>
                             <Kind $kind={entry.kind}>{t(kindKey(entry.kind))}</Kind>
-                            <Who>{entry.displayName || t("Unknown user")}</Who>
+                            <Who>{entry.displayName || t("unknown_user")}</Who>
                             <Detail title={entry.detail}>{entry.detail}</Detail>
                             <Actions>
                                 {canUndo(entry) && (
@@ -125,7 +125,7 @@ export function OperationsPage() {
                                         }}
                                         type="button"
                                     >
-                                        {undoing === entry.id ? t("Undoing…") : t("Undo")}
+                                        {undoing === entry.id ? t("undoing") : t("undo")}
                                     </UndoButton>
                                 )}
                                 <ProfileButton
@@ -134,11 +134,11 @@ export function OperationsPage() {
                                         event.stopPropagation();
                                         void openUrl(`https://vrchat.com/home/user/${entry.userId}`);
                                     }}
-                                    title={t("Open the VRChat profile")}
+                                    title={t("open_the_vr_chat_profile")}
                                     type="button"
                                 >
                                     <ExternalIcon size={11}/>
-                                    {t("Profile")}
+                                    {t("profile")}
                                 </ProfileButton>
                             </Actions>
                         </Item>
@@ -166,29 +166,29 @@ function formatTime(at: number, locale: string): string {
 function kindKey(kind: string): LocalizationKey {
     switch (kind) {
         case "block":
-            return "Blocked";
+            return "blocked";
         case "avatarInteractionOff":
-            return "Avatar interactions off";
+            return "avatar_interactions_off";
         case "chatBoxHidden":
-            return "Chat box hidden";
+            return "chat_box_hidden";
         case "closeVrchat":
-            return "Closed VRChat";
+            return "closed_vr_chat";
         case "safeMode":
-            return "Safe Mode on";
+            return "safe_mode_on";
         case "switchedAvatar":
-            return "Switched avatar";
+            return "switched_avatar";
         case "returnHome":
-            return "Returned home";
+            return "returned_home";
         case "rejectRequest":
-            return "Request rejected";
+            return "request_rejected";
         case "undoReject":
-            return "Rejection undone";
+            return "rejection_undone";
         case "unblock":
-            return "Unblocked";
+            return "unblocked";
         case "avatarInteractionOn":
-            return "Avatar interactions on";
+            return "avatar_interactions_on";
         case "chatBoxShown":
-            return "Chat box shown";
+            return "chat_box_shown";
         default:
             return kind as LocalizationKey;
     }
