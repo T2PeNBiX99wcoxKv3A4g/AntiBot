@@ -36,6 +36,8 @@ internal partial class VrchatOscService
             _ = Task.Run(ReceiveAsync);
     }
 
+    private int _safeModePending;
+    private long _safeModeConfirmedAt;
     private bool _warnedNoOsc;
 
     /// <summary>Whether VRChat advertised an OSC port this session, which means it is listening.</summary>
@@ -104,11 +106,19 @@ internal partial class VrchatOscService
             return false;
         }
 
+        var requested = Environment.TickCount64;
+
         try
         {
             Send("/input/PanicButton", ",T");
             Send("/input/PanicButton", ",F");
             Log.Information("Safe Mode requested over OSC on port {Port}", Port);
+
+            // VRChat does not acknowledge OSC input, so the log's safety line is the only proof it
+            // arrived. Send once more when it never appears; a lost datagram is rare but silent.
+            if (Interlocked.Exchange(ref _safeModePending, 1) == 0)
+                _ = ConfirmSafeModeAsync(requested);
+
             return true;
         }
         catch (Exception ex)
@@ -116,6 +126,29 @@ internal partial class VrchatOscService
             Log.Warning(ex, "Could not send the Safe Mode request over OSC");
             return false;
         }
+    }
+
+    /// <summary>
+    ///     VRChat logs <c>Safety level set to: PanicMode</c> when the panic button arrived; without
+    ///     that line the request was lost.
+    /// </summary>
+    private async Task ConfirmSafeModeAsync(long requested)
+    {
+        await Task.Delay(1500);
+
+        if (_safeModeConfirmedAt < requested)
+            try
+            {
+                Log.Warning("VRChat did not confirm Safe Mode; sending the panic button again");
+                Send("/input/PanicButton", ",T");
+                Send("/input/PanicButton", ",F");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not resend the Safe Mode request over OSC");
+            }
+
+        Interlocked.Exchange(ref _safeModePending, 0);
     }
 
     /// <summary>
@@ -238,6 +271,9 @@ internal partial class VrchatOscService
                     _warnedNoOsc = false;
                 }
             }
+
+            if (message.Contains("Safety level set to: PanicMode", StringComparison.Ordinal))
+                _safeModeConfirmedAt = Environment.TickCount64;
         }
     }
 }
