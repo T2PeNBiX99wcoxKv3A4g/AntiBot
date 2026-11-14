@@ -80,9 +80,19 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
     }
 
     protected override Task<NativeResponse?> HandleExtraAsync(NativeContext context) =>
-        context.Request.Type == "whitelist.people"
-            ? Task.FromResult<NativeResponse?>(WhitelistPeople(context))
-            : base.HandleExtraAsync(context);
+        context.Request.Type switch
+        {
+            "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
+            "settings.reset" => ResetAsync(context),
+            _ => base.HandleExtraAsync(context)
+        };
+
+    /// <summary>Puts every setting back to the value a fresh install starts with.</summary>
+    private async Task<NativeResponse?> ResetAsync(NativeContext context)
+    {
+        await SaveAsync(AppSettings.Default);
+        return context.Reply("settings.reset.result", Payload());
+    }
 
     /// <summary>
     ///     Describes every whitelisted user and starts the profile lookups, so a newly added id turns

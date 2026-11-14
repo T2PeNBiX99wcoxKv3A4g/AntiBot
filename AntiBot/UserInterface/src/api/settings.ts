@@ -49,6 +49,13 @@ export async function saveSettings(settings: AppSettings): Promise<SettingsView>
     return await Native.request<SettingsView>("settings.save", settings);
 }
 
+/** Puts every setting back to the value a fresh install starts with. */
+export async function resetSettings(): Promise<SettingsView> {
+    if (!Native.available) return {...empty};
+
+    return await Native.request<SettingsView>("settings.reset");
+}
+
 /** The whitelisted users, described like the instance list describes a player. */
 export async function getWhitelistPeople(): Promise<InstanceUser[]> {
     if (!Native.available) return [];

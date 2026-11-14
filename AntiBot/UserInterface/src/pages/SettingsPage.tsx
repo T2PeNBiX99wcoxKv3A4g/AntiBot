@@ -3,7 +3,7 @@ import styled from "styled-components";
 import type {LocalizationKey, ThemeMode} from "@photino-net-utils/bridge";
 import {loadStrings, Markdown, type Translate, useTranslation} from "@photino-net-utils/bridge";
 import {desktopAvailable, openLogFolder} from "../api/logs";
-import {type AppSettings, getSettings, getWhitelistPeople, normalizeTheme, saveSettings} from "../api/settings";
+import {type AppSettings, getSettings, getWhitelistPeople, normalizeTheme, resetSettings, saveSettings, type SettingsView} from "../api/settings";
 import {type OscStatus, oscStatus, testOsc} from "../api/osc";
 import type {InstanceUser} from "../api/instance";
 import {
@@ -106,6 +106,9 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [updateDialog, setUpdateDialog] = useState<UpdateDialogState | null>(null);
     const [attributionOpen, setAttributionOpen] = useState(false);
     const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
+    const [resetBusy, setResetBusy] = useState(false);
+    const [resetConfirming, setResetConfirming] = useState(false);
+    const [resetDone, setResetDone] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const thresholdTimer = useRef(0);
     const autoInstalled = useRef(false);
@@ -153,28 +156,32 @@ export function SettingsPage({info}: SettingsPageProps) {
         oscTimer.current = window.setTimeout(() => void persist({oscPort: value}), 400);
     };
 
+    /** Puts a settings snapshot into every control; after a save the host is the source of truth. */
+    const applySettings = (settings: SettingsView) => {
+        setDirectory(settings.logDirectory ?? "");
+        setDefaultDirectory(settings.defaultLogDirectory ?? "");
+        setProviders(settings.avatarApiProviders ?? []);
+
+        setAutoBlock(settings.autoBlock);
+        setAutoAvatar(settings.autoDisableAvatarInteraction);
+        setAutoChat(settings.autoHideChatBox);
+        setAutoClose(settings.autoCloseVrchat);
+        setAutoSafeMode(settings.autoSafeMode);
+        setAutoSafeAvatar(settings.autoSafeAvatar);
+        setSafeAvatarId(settings.safeAvatarId ?? "");
+        setSkipCloseVr(settings.skipCloseInVr);
+        setAutoReject(settings.autoRejectFriendRequests);
+        setThreshold(settings.threatThreshold);
+        setWhitelist(settings.whitelist ?? []);
+        setLanguage(settings.language ?? SYSTEM_LOCALE);
+        setTheme(normalizeTheme(settings.theme));
+        setStartHidden(settings.startHidden);
+        setOscPort(settings.oscPort || 9000);
+    };
+
     useEffect(() => {
         void getSettings().then((settings) => {
-            setDirectory(settings.logDirectory ?? "");
-            setDefaultDirectory(settings.defaultLogDirectory ?? "");
-            setProviders(settings.avatarApiProviders ?? []);
-
-            setAutoBlock(settings.autoBlock);
-            setAutoAvatar(settings.autoDisableAvatarInteraction);
-            setAutoChat(settings.autoHideChatBox);
-            setAutoClose(settings.autoCloseVrchat);
-            setAutoSafeMode(settings.autoSafeMode);
-            setAutoSafeAvatar(settings.autoSafeAvatar);
-            setSafeAvatarId(settings.safeAvatarId ?? "");
-            setSkipCloseVr(settings.skipCloseInVr);
-            setAutoReject(settings.autoRejectFriendRequests);
-            setThreshold(settings.threatThreshold);
-            setWhitelist(settings.whitelist ?? []);
-            setLanguage(settings.language ?? SYSTEM_LOCALE);
-            setTheme(normalizeTheme(settings.theme));
-            setStartHidden(settings.startHidden);
-            setOscPort(settings.oscPort || 9000);
-
+            applySettings(settings);
             void loadPeople(0);
             refreshOsc();
         }, () => setError(t("could_not_read_the_settings")));
@@ -303,6 +310,24 @@ export function SettingsPage({info}: SettingsPageProps) {
         }
     };
 
+    /** Puts every setting back to a fresh install's values; a second press is the confirmation. */
+    const resetAll = async () => {
+        setResetBusy(true);
+        setError(null);
+
+        try {
+            applySettings(await resetSettings());
+            void loadPeople(0);
+            refreshOsc();
+            setResetDone(true);
+            window.setTimeout(() => setResetDone(false), 5000);
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setResetBusy(false);
+        }
+    };
+
     // A finished download installs itself; the panel is only a progress report, no second click.
     useEffect(() => {
         if (updateDialog?.phase !== "ready" || autoInstalled.current)
@@ -377,13 +402,14 @@ export function SettingsPage({info}: SettingsPageProps) {
         }
     };
 
+    /** Closing is what the press means; the host drops the running download and its partial file. */
     const cancelUpdate = async () => {
+        setUpdateDialog(null);
+
         try {
             await cancelUpdateDownload();
         } catch (reason) {
-            setUpdateDialog((current) => current
-                ? {...current, phase: "error", error: reason instanceof Error ? reason.message : String(reason)}
-                : current);
+            setError(reason instanceof Error ? reason.message : String(reason));
         }
     };
 
@@ -878,6 +904,28 @@ export function SettingsPage({info}: SettingsPageProps) {
                         )}
                     </Card>
                 </Section>
+
+                <ResetRow>
+                    <ResetButton
+                        $confirming={resetConfirming}
+                        disabled={resetBusy}
+                        onBlur={() => setResetConfirming(false)}
+                        onClick={() => {
+                            if (!resetConfirming) {
+                                setResetConfirming(true);
+                                return;
+                            }
+
+                            setResetConfirming(false);
+                            void resetAll();
+                        }}
+                        type="button"
+                    >
+                        <TrashIcon size={14}/>
+                        {resetConfirming ? t("confirm_reset_every_setting") : t("reset_to_defaults")}
+                    </ResetButton>
+                    {resetDone && <ResetDone>{t("settings_restored_to_their_defaults")}</ResetDone>}
+                </ResetRow>
 
                 <AttributionLink onClick={() => setAttributionOpen(true)} type="button">
                     {t("open_source_attribution")}
@@ -1454,6 +1502,43 @@ const UpdateActions = styled.div`
     display: flex;
     justify-content: flex-end;
     gap: 8px;
+`;
+
+const ResetRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+/** Destructive, so the first press only arms it; the second one resets everything. */
+const ResetButton = styled.button<{ $confirming: boolean }>`
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 1px solid ${({$confirming}) => $confirming ? "rgba(251, 113, 133, 0.6)" : "var(--border-color)"};
+    border-radius: var(--radius-sm);
+    background: ${({$confirming}) => $confirming ? "rgba(251, 113, 133, 0.12)" : "transparent"};
+    color: ${({$confirming}) => $confirming ? "#fb7185" : "var(--text-secondary)"};
+    font: inherit;
+    font-size: 10.5px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        border-color: var(--border-color-hover);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+`;
+
+const ResetDone = styled.span`
+    color: #4ade80;
+    font-size: 10.5px;
 `;
 
 /** A quiet line at the very bottom that opens the notices page. */

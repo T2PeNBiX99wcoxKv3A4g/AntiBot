@@ -94,6 +94,7 @@ declare module "@photino-net-utils/bridge"
         "code_vr_chat_emailed_you": true;
         "configurable": true;
         "confirm_clear": true;
+        "confirm_reset_every_setting": true;
         "copied": true;
         "copy": true;
         "copy_id": true;
@@ -336,6 +337,7 @@ declare module "@photino-net-utils/bridge"
         "repeat_the_password": true;
         "request_rejected": true;
         "requires_osc": true;
+        "reset_to_defaults": true;
         "restore": true;
         "returned_home": true;
         "robot_default": true;
@@ -357,6 +359,7 @@ declare module "@photino-net-utils/bridge"
         "session_expired_automatic_protection_is_off": true;
         "session_expires_date": true;
         "settings": true;
+        "settings_restored_to_their_defaults": true;
         "set_the_avatar_id_in_the_settings_first": true;
         "show_level_lines": true;
         "show_password": true;
