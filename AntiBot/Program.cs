@@ -5,6 +5,7 @@ using PhotinoNetUtils;
 using PhotinoNetUtils.Interop;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Notifications;
 using PhotinoNetUtils.Platform;
 using PhotinoNetUtils.Services;
 using PhotinoNetUtils.Updates;
@@ -80,6 +81,11 @@ internal static class Program
             // A property access is not a statement on its own, so `_ =` is how this line says
             // "construct it now" when nothing else on the next lines uses the instance.
             _ = AppLinkService.Instance;
+
+            // A toast click restores the window on the page it belongs to; the auth notifications
+            // carry "account" so a lapsed session can be fixed straight away.
+            NotificationService.Activated += page =>
+                WindowManager.Instance.ShowMainWindow(string.IsNullOrEmpty(page) ? null : page);
             using var updates = new UpdateService(new(
                 "T2PeNBiX99wcoxKv3A4g",
                 "AntiBot",

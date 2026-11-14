@@ -48,7 +48,7 @@ internal partial class OperationService
 
         // Taking an action back is a user-initiated correction, not a new automatic action worth a toast.
         if (notify && !IsUndo(kind))
-            NotificationService.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}");
+            NotificationService.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}", "operations");
 
         Publish();
     }

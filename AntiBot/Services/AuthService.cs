@@ -173,7 +173,7 @@ internal partial class AuthService
 
         NotificationService.Notify("auth.startup",
             Localization.Get("auth.startup.signed_out_title"),
-            Localization.Get("auth.startup.signed_out_message"));
+            Localization.Get("auth.startup.signed_out_message"), "account");
     }
 
     /// <summary>
@@ -1278,7 +1278,7 @@ internal partial class AuthService
     private void NotifySessionExpired(string? directory = null)
     {
         NotificationService.Notify("auth.expired",
-            Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
+            Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"), "account");
 
         var cancellation = new CancellationTokenSource();
         if (Interlocked.CompareExchange(ref _expiryReminder, cancellation, null) is not null)
@@ -1301,7 +1301,8 @@ internal partial class AuthService
                         return;
 
                     NotificationService.Notify("auth.expired",
-                        Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"));
+                        Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"),
+                        "account");
                 }
             }
             catch (OperationCanceledException)
@@ -1433,7 +1434,7 @@ internal partial class AuthService
 
             NotificationService.Notify("auth.savedInvalid",
                 Localization.Get("auth.saved_invalid_title"),
-                Localization.Get("auth.saved_invalid_message"));
+                Localization.Get("auth.saved_invalid_message"), "account");
 
             _ = RefreshSavedAsync();
             return (false, false);
@@ -1459,7 +1460,7 @@ internal partial class AuthService
             Notify();
             NotificationService.Notify("auth.twoFactor",
                 Localization.Get("auth.auto_login.two_factor_title"),
-                Localization.Get("auth.auto_login.two_factor_message"));
+                Localization.Get("auth.auto_login.two_factor_message"), "account");
             return (false, false);
         }
 
