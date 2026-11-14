@@ -26,7 +26,7 @@ AntiBot tails the newest `output_log_*.txt` in that folder. It does not need a m
 
 ## 3. Set a threshold
 
-The threshold is a score from 0 to 100. Every new user is scored, and the reasons are shown next to the score. Nothing happens below the threshold, and friends and whitelisted users are never acted on.
+The threshold is a score. Every new user is scored, and the reasons are shown next to the score. Nothing happens below the threshold, and friends and whitelisted users are never acted on.
 
 See [Threat scoring](Threat-Scoring) for what goes into the number, and [Automatic protection](Automatic-Protection) for what happens above it.
 

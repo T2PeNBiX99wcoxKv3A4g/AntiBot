@@ -1,6 +1,6 @@
 # Threat scoring
 
-Every new user gets a score. It runs from **0 to 100**, the same range as the threshold in the settings: one strong signal is enough to act on, and several of them only make the answer more certain.
+Every new user gets a score. It starts at 0 and has **no upper limit**: the number is a score, not a percentage, and several strong signals can push it past 100. The threshold in the settings decides when the automatic actions run.
 
 It is a guess, not a verdict: a real person can score high, and a bot can score low.
 
@@ -11,17 +11,19 @@ It is a guess, not a verdict: a real person can score high, and a bot can score 
 > identical, and a high trust rank does not prove that an account belongs to a human. The score
 > cannot reliably separate the two; treat it as a hint, not a judgment.
 
-The score is the sum of the reasons shown next to it, capped at 100. Each reason carries its own points; green reasons lower the score, red ones raise it.
+The score is the sum of the reasons shown next to it. Each reason carries its own points; green reasons lower the score, red ones raise it.
 
 ## Account age
 
 | Account created | Points |
 | --- | --- |
-| under 7 days | +30 |
-| under 30 days | +25 |
-| under 90 days | +15 |
-| under 180 days | +8 |
-| under a year | +4 |
+| under a day | +40 |
+| under 3 days | +32 |
+| under 7 days | +25 |
+| under 30 days | +18 |
+| under 90 days | +12 |
+| under 180 days | +6 |
+| under a year | +3 |
 | 1–2 years | 0 |
 | 2–3 years | −5 |
 | 3–4 years | −10 |

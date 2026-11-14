@@ -698,7 +698,6 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Label>{t("threat_threshold")}</Label>
                             <Row>
                                 <ThresholdInput
-                                    max={100}
                                     min={0}
                                     onChange={(event) => changeThreshold(Number(event.target.value))}
                                     step={10}

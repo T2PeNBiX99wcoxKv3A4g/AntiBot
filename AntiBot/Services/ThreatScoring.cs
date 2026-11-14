@@ -8,17 +8,21 @@ namespace AntiBot.Services;
 /// <summary>
 ///     Scores how likely a user is a bot. Each signal adds to the total, except the ranks above
 ///     <c>User</c> and accounts older than a year, which subtract. The name is capped at 20 and the age
-///     at 30 on the positive side, and the total stays within 0–100, the same range as the threshold in
-///     the settings, so one strong signal is enough and a pile of them only reads as certainty. The
-///     threshold decides when the automatic actions run.
+///     at 40 on the positive side, and the total is only clamped at 0: a profile matching several strong
+///     signals can pass any threshold, because the number is a score, not a percentage. The threshold in
+///     the settings decides when the automatic actions run.
 /// </summary>
 internal static partial class ThreatScoring
 {
     /// <summary>
-    ///     Age weights: bots are usually a few days old, so a fresh account is a strong signal. An old
-    ///     account counts against the suspicion instead: from one year it adds nothing, and every
-    ///     further year subtracts, down to a floor at five years.
+    ///     Age weights: the accounts that actually join an instance are usually created within a day,
+    ///     so that is the strongest age signal; a three-day and a one-week step follow. An old account
+    ///     counts against the suspicion instead: from one year it adds nothing, and every further year
+    ///     subtracts, down to a floor at five years.
     /// </summary>
+    private const int AgeOneDay = 1;
+
+    private const int AgeThreeDays = 3;
     private const int AgeMaxDays = 7;
 
     private const int AgeMonthDays = 30;
@@ -93,7 +97,7 @@ internal static partial class ThreatScoring
             score = halved;
         }
 
-        return (Math.Clamp(score, 0, 100), [.. reasons]);
+        return (Math.Max(score, 0), [.. reasons]);
     }
 
     /// <summary>
@@ -126,7 +130,7 @@ internal static partial class ThreatScoring
     /// <summary>
     ///     How new the account is. A fresh account is a strong signal; from a year old the age adds
     ///     nothing, and each further year subtracts, down to a floor of -20 at five years. The positive
-    ///     side is capped at 30.
+    ///     side is capped at 40, reached within the first day.
     /// </summary>
     private static (int Score, string Text, string? Detail) AgeScore(string? dateJoined)
     {
@@ -140,11 +144,13 @@ internal static partial class ThreatScoring
 
         var score = days switch
         {
-            <= AgeMaxDays => 30,
-            <= AgeMonthDays => 25,
-            <= AgeQuarterDays => 15,
-            <= AgeHalfYearDays => 8,
-            < AgeYearDays => 4,
+            <= AgeOneDay => 40,
+            <= AgeThreeDays => 32,
+            <= AgeMaxDays => 25,
+            <= AgeMonthDays => 18,
+            <= AgeQuarterDays => 12,
+            <= AgeHalfYearDays => 6,
+            < AgeYearDays => 3,
             < AgeTwoYearsDays => 0,
             < AgeThreeYearsDays => -5,
             < AgeFourYearsDays => -10,

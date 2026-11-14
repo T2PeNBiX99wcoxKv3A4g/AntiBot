@@ -72,7 +72,7 @@ public sealed record AppSettings
     public bool AutoRejectFriendRequests { get; init; } = true;
 
     /// <summary>The score at or above which the automatic actions run.</summary>
-    [Setting(Comment = "At or above this score the automatic actions run.", Min = 0, Max = 100)]
+    [Setting(Comment = "At or above this score the automatic actions run.", Min = 0)]
     public int ThreatThreshold { get; init; } = 70;
 
     /// <summary>Users that are never acted on, whatever their score.</summary>

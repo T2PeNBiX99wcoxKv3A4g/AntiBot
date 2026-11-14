@@ -128,7 +128,7 @@ libayatana-appindicator3.so.1   （或較舊的 libappindicator3.so.1）
 2. **指向日誌資料夾。** 預設是 VRChat 自己的資料夾：
    Windows 上為 `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat`；Linux 上會自動尋找 Proton
    前綴。AntiBot 會跟隨該資料夾中最新的 `output_log_*.txt`。
-3. **設定 0 到 100 的門檻。** 低於門檻不會有任何動作，而每個分數的原因都會顯示在列表中。
+3. **設定閾值。** 低於閾值不會有任何動作，而每個分數的原因都會顯示在列表中。
 4. **選擇操作。** 在 **設定 → 自動保護**中開啟你要的項目。安全模式和切換頭像需要 OSC；其他
    功能不需要。
 

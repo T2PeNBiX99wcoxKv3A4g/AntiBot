@@ -37,7 +37,7 @@ export interface InstanceUser {
     isRobot?: boolean;
     /** True when this player is on the signed-in account's friend list. */
     isFriend?: boolean;
-    /** 0-100 bot threat score. */
+    /** Bot threat score; higher is more suspicious and there is no upper limit. */
     threat?: number;
     /** Why the score is what it is. */
     threatReasons?: ThreatReason[];

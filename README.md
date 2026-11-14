@@ -136,7 +136,7 @@ To find the package that owns a missing soname, ask your package manager — for
 2. **Point it at the log folder.** The default is VRChat's own folder:
    `%USERPROFILE%\AppData\LocalLow\VRChat\VRChat` on Windows; on Linux the Proton prefix is found
    automatically. AntiBot tails the newest `output_log_*.txt` there.
-3. **Set a threshold** from 0 to 100. Nothing happens below it, and the reasons for every score are
+3. **Set a threshold.** Nothing happens below it, and the reasons for every score are
    shown in the list.
 4. **Pick the actions** under **Settings → Automatic protection**. Safe Mode and the avatar switch
    need OSC; everything else works without it.
