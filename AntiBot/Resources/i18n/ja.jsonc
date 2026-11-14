@@ -178,6 +178,8 @@
   "unblocked": "ブロック解除",
   "avatar_interactions_on": "アバター相互作用オン",
   "chat_box_shown": "チャットボックス表示",
+  "operation.cannot_undo": "この操作は取り消せません。",
+  "operation.undo_refused": "VRChat が取り消しを拒否しました。",
 
   "sign_in_to_vr_chat": "VRChat にサインイン",
   "the_password_is_used_for_this_one_request_and_is_never_stored": "パスワードはこの 1 回のリクエストにのみ使用され、保存されることはありません。",
@@ -379,6 +381,7 @@
   "check_for_updates": "アップデートを確認",
   "open_release_page": "リリースページを開く",
   "open_account": "アカウントを開く",
+  "open_operations": "操作履歴を開く",
   "open_log_folder": "ログフォルダーを開く",
   "log_files_are_written_to": "ログの保存先：",
   "up_to_date_version_is_the_newest_version": "最新版です：{version} が最新バージョンです。",

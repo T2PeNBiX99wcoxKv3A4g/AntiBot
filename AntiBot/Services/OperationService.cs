@@ -1,5 +1,6 @@
 using AntiBot.Messaging;
 using AntiBot.Models;
+using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
 
@@ -48,9 +49,27 @@ internal partial class OperationService
 
         // Taking an action back is a user-initiated correction, not a new automatic action worth a toast.
         if (notify && !IsUndo(kind))
-            NotificationService.Notify(userId, "AntiBot", $"{KindLabel(kind)} · {displayName}", "operations");
+            _ = NotifyAsync(kind, userId, displayName, avatarUrl);
 
         Publish();
+    }
+
+    /// <summary>
+    ///     Shows the action as a notification: the translated label, the picture of the player it was
+    ///     about, and a button that opens the operation history. The download runs apart from the
+    ///     action, so it never holds up the next moderation call.
+    /// </summary>
+    private static async Task NotifyAsync(string kind, string userId, string displayName, string? avatarUrl)
+    {
+        var image = await PlayerImages.GetAsync(avatarUrl ?? AvatarOf(userId));
+
+        NotificationService.Notify(userId, Localization.Get(KindKey(kind)), displayName,
+            new NotificationOptions
+            {
+                Action = "operations",
+                ImagePath = image,
+                ButtonText = Localization.Get("open_operations")
+            });
     }
 
     private static bool IsUndo(string kind) =>
@@ -61,7 +80,7 @@ internal partial class OperationService
     {
         var entry = Database.Instance.LoadOperation(id);
         if (entry is null || entry.Undone)
-            return (false, "This action cannot be undone.");
+            return (false, Localization.Get("operation.cannot_undo"));
 
         // The unmoderate endpoint removes the moderation of the given type, so it is the original
         // type that is sent back, not its opposite.
@@ -74,16 +93,15 @@ internal partial class OperationService
         };
 
         if (type is null)
-            return (false, "This action cannot be undone.");
+            return (false, Localization.Get("operation.cannot_undo"));
 
         if (!await ModerationQueue.Instance.UnmoderateAsync(entry.UserId, type, CancellationToken.None))
-            return (false, "VRChat refused to undo it.");
+            return (false, Localization.Get("operation.undo_refused"));
 
         await Database.Instance.SetOperationUndoneAsync(id);
-        await LogAsync(kind!, entry.UserId, entry.DisplayName, $"undid {KindLabel(entry.Kind)}",
-            entry.AvatarUrl);
+        await LogAsync(kind!, entry.UserId, entry.DisplayName, entry.Detail, entry.AvatarUrl);
 
-        return (true, $"{KindLabel(kind!)} · {entry.DisplayName}");
+        return (true, $"{Localization.Get(KindKey(kind!))} · {entry.DisplayName}");
     }
 
     /// <summary>Entries with an avatar from the profile cache, so rows recorded earlier get one too.</summary>
@@ -128,20 +146,21 @@ internal partial class OperationService
         WindowManager.Instance.NotifyMainWindow("operations.changed", entries);
     }
 
-    private static string KindLabel(string kind) => kind switch
+    /// <summary>The translation key for an operation kind; the history page uses the same labels.</summary>
+    private static string KindKey(string kind) => kind switch
     {
-        "block" => "Blocked",
-        "avatarInteractionOff" => "Avatar interactions off",
-        "chatBoxHidden" => "Chat box hidden",
-        "closeVrchat" => "Closed VRChat",
-        "safeMode" => "Safe Mode on",
-        "switchedAvatar" => "Switched avatar",
-        "returnHome" => "Returned home",
-        "rejectRequest" => "Friend request rejected",
-        "undoReject" => "Rejection undone",
-        "unblock" => "Unblocked",
-        "avatarInteractionOn" => "Avatar interactions on",
-        "chatBoxShown" => "Chat box shown",
+        "block" => "blocked",
+        "avatarInteractionOff" => "avatar_interactions_off",
+        "chatBoxHidden" => "chat_box_hidden",
+        "closeVrchat" => "closed_vr_chat",
+        "safeMode" => "safe_mode_on",
+        "switchedAvatar" => "switched_avatar",
+        "returnHome" => "returned_home",
+        "rejectRequest" => "request_rejected",
+        "undoReject" => "rejection_undone",
+        "unblock" => "unblocked",
+        "avatarInteractionOn" => "avatar_interactions_on",
+        "chatBoxShown" => "chat_box_shown",
         _ => kind
     };
 }

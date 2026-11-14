@@ -184,6 +184,8 @@
   "unblocked": "Unblocked",
   "avatar_interactions_on": "Avatar interactions on",
   "chat_box_shown": "Chat box shown",
+  "operation.cannot_undo": "This action cannot be undone.",
+  "operation.undo_refused": "VRChat refused to undo it.",
 
   "sign_in_to_vr_chat": "Sign in to VRChat",
   "the_password_is_used_for_this_one_request_and_is_never_stored": "The password is used for this one request and is never stored.",
@@ -383,6 +385,7 @@
   "check_for_updates": "Check for updates",
   "open_release_page": "Open release page",
   "open_account": "Open account",
+  "open_operations": "Open operations",
   "open_log_folder": "Open log folder",
   "log_files_are_written_to": "Log files are written to:",
   "up_to_date_version_is_the_newest_version": "Up to date: {version} is the newest version.",

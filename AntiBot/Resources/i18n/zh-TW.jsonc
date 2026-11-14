@@ -178,6 +178,8 @@
   "unblocked": "已解除封鎖",
   "avatar_interactions_on": "已開啟頭像互動",
   "chat_box_shown": "已顯示聊天框",
+  "operation.cannot_undo": "此操作無法撤銷。",
+  "operation.undo_refused": "VRChat 拒絕撤銷。",
 
   "sign_in_to_vr_chat": "登入 VRChat",
   "the_password_is_used_for_this_one_request_and_is_never_stored": "密碼只用於這一次請求，不會被儲存。",
@@ -379,6 +381,7 @@
   "check_for_updates": "檢查更新",
   "open_release_page": "開啟發行頁面",
   "open_account": "開啟帳號",
+  "open_operations": "開啟操作紀錄",
   "open_log_folder": "開啟日誌資料夾",
   "log_files_are_written_to": "日誌寫入位置：",
   "up_to_date_version_is_the_newest_version": "已是最新版本：{version} 是最新版本。",

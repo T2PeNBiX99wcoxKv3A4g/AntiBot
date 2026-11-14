@@ -121,7 +121,7 @@ internal partial class ThreatActionService
             : null;
 
         if (close is not null && await close)
-            await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail);
+            await OperationService.Instance.LogAsync("closeVrchat", user.UserId, user.Name, detail, avatar);
         else if (VrchatClient.IsRunning())
             // OSC is local and instant, so it goes out now, before the rate-limited API queue.
             await ApplyOscAsync(user, settings, detail);
@@ -210,12 +210,14 @@ internal partial class ThreatActionService
     /// <summary>Sends the local actions, which need no server and never wait behind the API calls.</summary>
     private static async Task ApplyOscAsync(InstanceUser user, AppSettings settings, string detail)
     {
+        var avatar = user.IconUrl ?? user.AvatarUrl;
+
         if (settings.AutoSafeMode && VrchatOscService.Instance.EnableSafeMode())
-            await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail);
+            await OperationService.Instance.LogAsync("safeMode", user.UserId, user.Name, detail, avatar);
 
         // A different avatar is only useful if it is not the one already worn, which VRChat reports.
         if (settings.AutoSafeAvatar && VrchatOscService.Instance.ChangeAvatar(settings.SafeAvatarId))
-            await OperationService.Instance.LogAsync("switchedAvatar", user.UserId, user.Name, detail);
+            await OperationService.Instance.LogAsync("switchedAvatar", user.UserId, user.Name, detail, avatar);
     }
 
     private async Task ApplyModerationAsync(InstanceUser user, AppSettings settings)

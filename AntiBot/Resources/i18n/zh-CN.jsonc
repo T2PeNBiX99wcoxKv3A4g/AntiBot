@@ -178,6 +178,8 @@
   "unblocked": "已解除屏蔽",
   "avatar_interactions_on": "已开启头像互动",
   "chat_box_shown": "已显示聊天框",
+  "operation.cannot_undo": "此操作无法撤销。",
+  "operation.undo_refused": "VRChat 拒绝撤销。",
 
   "sign_in_to_vr_chat": "登录 VRChat",
   "the_password_is_used_for_this_one_request_and_is_never_stored": "密码只用于这一次请求，不会被保存。",
@@ -379,6 +381,7 @@
   "check_for_updates": "检查更新",
   "open_release_page": "打开发布页面",
   "open_account": "打开账户",
+  "open_operations": "打开操作记录",
   "open_log_folder": "打开日志文件夹",
   "log_files_are_written_to": "日志写入位置：",
   "up_to_date_version_is_the_newest_version": "已是最新版本：{version} 是最新版本。",

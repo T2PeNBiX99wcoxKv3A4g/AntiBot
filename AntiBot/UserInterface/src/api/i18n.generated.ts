@@ -278,11 +278,14 @@ declare module "@photino-net-utils/bridge"
         "open_in_the_tray_instead_of_showing_the_window": true;
         "open_log_folder": true;
         "open_on_vrchat_com": true;
+        "open_operations": true;
         "open_release_page": true;
         "open_source_attribution": true;
         "open_source_licenses_for_the_libraries_anti_bot_uses": true;
         "open_the_link_instead": true;
         "open_the_vr_chat_profile": true;
+        "operation.cannot_undo": true;
+        "operation.undo_refused": true;
         "operations": true;
         "operation_history": true;
         "or_scan_to_sign_in": true;
