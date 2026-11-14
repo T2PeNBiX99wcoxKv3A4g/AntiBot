@@ -22,7 +22,7 @@ const empty: SettingsView = {
     safeAvatarId: "",
     skipCloseInVr: true,
     autoRejectFriendRequests: true,
-    threatThreshold: 50,
+    threatThreshold: 70,
     whitelist: [],
     language: "system",
     theme: "system",

@@ -87,7 +87,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [safeAvatarId, setSafeAvatarId] = useState("");
     const [skipCloseVr, setSkipCloseVr] = useState(true);
     const [autoReject, setAutoReject] = useState(true);
-    const [threshold, setThreshold] = useState(50);
+    const [threshold, setThreshold] = useState(70);
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [newWhitelist, setNewWhitelist] = useState("");
     const [people, setPeople] = useState<InstanceUser[]>([]);
@@ -698,6 +698,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                             <Label>{t("threat_threshold")}</Label>
                             <Row>
                                 <ThresholdInput
+                                    max={100}
                                     min={0}
                                     onChange={(event) => changeThreshold(Number(event.target.value))}
                                     step={10}

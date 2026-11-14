@@ -8,9 +8,9 @@ namespace AntiBot.Services;
 /// <summary>
 ///     Scores how likely a user is a bot. Each signal adds to the total, except the ranks above
 ///     <c>User</c> and accounts older than a year, which subtract. The name is capped at 20 and the age
-///     at 40 on the positive side, and the total is clamped at 0 but deliberately not capped at 100, so
-///     a profile matching several strong signals can exceed it. The threshold in the settings decides
-///     when the automatic actions run.
+///     at 30 on the positive side, and the total stays within 0–100, the same range as the threshold in
+///     the settings, so one strong signal is enough and a pile of them only reads as certainty. The
+///     threshold decides when the automatic actions run.
 /// </summary>
 internal static partial class ThreatScoring
 {
@@ -75,12 +75,12 @@ internal static partial class ThreatScoring
         if (string.Equals(avatarName?.Trim(), "Sex Bot", StringComparison.OrdinalIgnoreCase))
         {
             score += 10;
-            reasons.Add(new("avatar named \"Sex Bot\"", 10));
+            reasons.Add(new("avatar_named_sex_bot", 10));
         }
         else if (isRobot)
         {
             score += 5;
-            reasons.Add(new("default Robot avatar", 5));
+            reasons.Add(new("default_robot_avatar", 5));
         }
 
         // Quest and iOS are very unlikely to host a bot; halve whatever the other signals added.
@@ -89,11 +89,11 @@ internal static partial class ThreatScoring
              string.Equals(platform, "ios", StringComparison.OrdinalIgnoreCase)))
         {
             var halved = score / 2;
-            reasons.Add(new("Quest/iOS platform (score halved)", halved - score));
+            reasons.Add(new("quest_i_os_platform_score_halved", halved - score));
             score = halved;
         }
 
-        return (Math.Max(score, 0), [.. reasons]);
+        return (Math.Clamp(score, 0, 100), [.. reasons]);
     }
 
     /// <summary>
@@ -103,30 +103,30 @@ internal static partial class ThreatScoring
     private static (int Score, string Reason) TrustScore(string[] tags)
     {
         if (tags.Contains("system_troll"))
-            return (60, "Nuisance");
+            return (50, "nuisance");
 
         if (tags.Contains("system_probable_troll"))
-            return (30, "probably Nuisance");
+            return (25, "probably_nuisance");
 
         if (tags.Contains("system_trust_veteran"))
-            return (-10, "Trusted User account");
+            return (-15, "trusted_user_account");
 
         if (tags.Contains("system_trust_trusted"))
-            return (-5, "Known User account");
+            return (-10, "known_user_account");
 
         if (tags.Contains("system_trust_known"))
             return (0, "");
 
         if (tags.Contains("system_trust_basic"))
-            return (10, "New User account");
+            return (5, "new_user_account");
 
-        return (30, "Visitor account");
+        return (15, "visitor_account");
     }
 
     /// <summary>
     ///     How new the account is. A fresh account is a strong signal; from a year old the age adds
-    ///     nothing, and each further year subtracts, down to a floor of -40 at five years. The positive
-    ///     side is capped at 40.
+    ///     nothing, and each further year subtracts, down to a floor of -20 at five years. The positive
+    ///     side is capped at 30.
     /// </summary>
     private static (int Score, string Text, string? Detail) AgeScore(string? dateJoined)
     {
@@ -140,16 +140,16 @@ internal static partial class ThreatScoring
 
         var score = days switch
         {
-            <= AgeMaxDays => 40,
-            <= AgeMonthDays => 35,
-            <= AgeQuarterDays => 25,
-            <= AgeHalfYearDays => 15,
-            < AgeYearDays => 8,
+            <= AgeMaxDays => 30,
+            <= AgeMonthDays => 25,
+            <= AgeQuarterDays => 15,
+            <= AgeHalfYearDays => 8,
+            < AgeYearDays => 4,
             < AgeTwoYearsDays => 0,
-            < AgeThreeYearsDays => -10,
-            < AgeFourYearsDays => -20,
-            < AgeFiveYearsDays => -30,
-            _ => -40
+            < AgeThreeYearsDays => -5,
+            < AgeFourYearsDays => -10,
+            < AgeFiveYearsDays => -15,
+            _ => -20
         };
 
         if (score == 0)
@@ -158,17 +158,17 @@ internal static partial class ThreatScoring
         var whole = (int)days;
 
         if (whole <= 0)
-            return (score, "account created today", null);
+            return (score, "account_created_today", null);
 
         if (whole == 1)
-            return (score, "account created yesterday", null);
+            return (score, "account_created_yesterday", null);
 
         if (whole < AgeYearDays)
-            return (score, "account created {days} days ago", whole.ToString(CultureInfo.InvariantCulture));
+            return (score, "account_created_days_days_ago", whole.ToString(CultureInfo.InvariantCulture));
 
         return whole / 365 == 1
-            ? (score, "account created 1 year ago", null)
-            : (score, "account created {years} years ago", whole.ToString(CultureInfo.InvariantCulture));
+            ? (score, "account_created_1_year_ago", null)
+            : (score, "account_created_years_years_ago", whole.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -191,19 +191,19 @@ internal static partial class ThreatScoring
         if (hexSuffix)
         {
             score += 15;
-            reasons.Add(new("four-character hex suffix", 15));
+            reasons.Add(new("four_character_hex_suffix", 15));
         }
 
         // A long run is the stronger clue of the two; do not also add the generic digit mix for it.
         if (MixedPattern().IsMatch(body))
         {
             score += 5;
-            reasons.Add(new("long letter-digit-letter pattern", 5));
+            reasons.Add(new("long_letter_digit_letter_pattern", 5));
         }
         else if (LetterDigitPattern().IsMatch(body))
         {
             score += 5;
-            reasons.Add(new("digits mixed into the name", 5));
+            reasons.Add(new("digits_mixed_into_the_name", 5));
         }
 
         return (Math.Min(score, 20), [.. reasons]);
@@ -228,37 +228,37 @@ internal static partial class ThreatScoring
         if (FuzzyTerms.Any(term => text.Contains(term, StringComparison.Ordinal)))
         {
             score += 5;
-            reasons.Add(new("suspicious wording in the profile", 5));
+            reasons.Add(new("suspicious_wording_in_the_profile", 5));
         }
 
         if (text.Contains("hexed", StringComparison.Ordinal))
         {
             score += 10;
-            reasons.Add(new("known bot site (hexed)", 10));
+            reasons.Add(new("known_bot_site_hexed", 10));
         }
 
         if (text.Contains("check bio", StringComparison.Ordinal))
         {
             score += 5;
-            reasons.Add(new("status says \"check bio\"", 5));
+            reasons.Add(new("status_says_check_bio", 5));
         }
 
         if (text.Contains("hexed.cc", StringComparison.Ordinal))
         {
-            score += 100;
-            reasons.Add(new("known bot site (hexed.cc)", 100));
+            score += 110;
+            reasons.Add(new("known_bot_site_hexed_cc", 110));
         }
 
         if (text.Contains("oversee", StringComparison.Ordinal))
         {
             score += 10;
-            reasons.Add(new("known bot site (oversee)", 10));
+            reasons.Add(new("known_bot_site_oversee", 10));
         }
 
         if (text.Contains("oversee.lol", StringComparison.Ordinal))
         {
-            score += 100;
-            reasons.Add(new("known bot site (oversee.lol)", 100));
+            score += 110;
+            reasons.Add(new("known_bot_site_oversee_lol", 110));
         }
 
         return (score, [.. reasons]);

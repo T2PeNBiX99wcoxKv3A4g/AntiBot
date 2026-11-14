@@ -232,9 +232,17 @@ internal partial class ThreatActionService
             await ModerationQueue.Instance.ModerateAsync(user.UserId, "muteChat", _stop.Token);
     }
 
+    /// <summary>One player, with the profile summary an operation records.</summary>
     private static string Describe(InstanceUser user) =>
         $"{user.Threat}" +
         (user.ThreatReasons is { Length: > 0 } reasons
-            ? " · " + string.Join(", ", reasons.Select(reason => reason.Text))
+            ? " · " + string.Join(", ", reasons.Select(DescribeReason))
             : "");
+
+    /// <summary>
+    ///     A reason as its translation key, with the value in parentheses when it fills a placeholder.
+    ///     The history stores this, so the wording follows the language in use when it is read.
+    /// </summary>
+    private static string DescribeReason(ThreatReason reason) =>
+        reason.Detail is { Length: > 0 } detail ? $"{reason.Text}({detail})" : reason.Text;
 }

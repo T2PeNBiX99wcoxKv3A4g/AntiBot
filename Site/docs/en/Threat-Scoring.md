@@ -1,6 +1,6 @@
 # Threat scoring
 
-Every new user gets a score. It starts at 0 and has **no upper limit**: several strong signals can push it past 100. The threshold in the settings is 0–100, so anything above 100 always crosses it.
+Every new user gets a score. It runs from **0 to 100**, the same range as the threshold in the settings: one strong signal is enough to act on, and several of them only make the answer more certain.
 
 It is a guess, not a verdict: a real person can score high, and a bot can score low.
 
@@ -11,22 +11,22 @@ It is a guess, not a verdict: a real person can score high, and a bot can score 
 > identical, and a high trust rank does not prove that an account belongs to a human. The score
 > cannot reliably separate the two; treat it as a hint, not a judgment.
 
-The score is the sum of the reasons shown next to it, and each reason carries its own points. Green reasons lower the score, red ones raise it.
+The score is the sum of the reasons shown next to it, capped at 100. Each reason carries its own points; green reasons lower the score, red ones raise it.
 
 ## Account age
 
 | Account created | Points |
 | --- | --- |
-| under 7 days | +40 |
-| under 30 days | +35 |
-| under 90 days | +25 |
-| under 180 days | +15 |
-| under a year | +8 |
+| under 7 days | +30 |
+| under 30 days | +25 |
+| under 90 days | +15 |
+| under 180 days | +8 |
+| under a year | +4 |
 | 1–2 years | 0 |
-| 2–3 years | −10 |
-| 3–4 years | −20 |
-| 4–5 years | −30 |
-| 5 years or more | −40 |
+| 2–3 years | −5 |
+| 3–4 years | −10 |
+| 4–5 years | −15 |
+| 5 years or more | −20 |
 
 ## Trust rank
 
@@ -34,13 +34,13 @@ The score is the sum of the reasons shown next to it, and each reason carries it
 
 | Rank | Points |
 | --- | --- |
-| Trusted User | −10 |
-| Known User | −5 |
+| Trusted User | −15 |
+| Known User | −10 |
 | User | 0 |
-| New User | +10 |
-| Visitor | +30 |
-| probably Nuisance | +30 |
-| Nuisance | +60 |
+| New User | +5 |
+| Visitor | +15 |
+| probably Nuisance | +25 |
+| Nuisance | +50 |
 
 ## Name patterns
 
@@ -63,9 +63,9 @@ The bio comes from the public profile. AntiBot fetches it for every player and r
 | suspicious wording (`hexed`, `oversee`, `quality cheats`, `user stalking`, `tracking`, `4 free`, …) | +5 |
 | `hexed` | +10 |
 | `check bio` | +5 |
-| `hexed.cc` | +100 |
+| `hexed.cc` | +110 |
 | `oversee` | +10 |
-| `oversee.lol` | +100 |
+| `oversee.lol` | +110 |
 
 ## Avatar
 

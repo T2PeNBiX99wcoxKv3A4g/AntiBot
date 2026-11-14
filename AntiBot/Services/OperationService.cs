@@ -3,6 +3,7 @@ using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Notifications;
+using System.Globalization;
 
 namespace AntiBot.Services;
 
@@ -111,14 +112,60 @@ internal partial class OperationService
 
         return
         [
-            .. entries.Select(entry => entry.AvatarUrl is { Length: > 0 }
-                ? entry
-                : entry with
-                {
-                    AvatarUrl = AvatarOf(entry.UserId)
-                })
+            .. entries.Select(entry => entry with { Detail = LocalizeDetail(entry.Detail) })
+                .Select(entry => entry.AvatarUrl is { Length: > 0 }
+                    ? entry
+                    : entry with
+                    {
+                        AvatarUrl = AvatarOf(entry.UserId)
+                    })
         ];
     }
+
+    /// <summary>
+    ///     Turns a stored detail into the current language. The entry holds reason keys, with the
+    ///     value in parentheses when it fills a placeholder; anything that is not one is left alone.
+    /// </summary>
+    private static string LocalizeDetail(string detail)
+    {
+        var separator = detail.IndexOf(" · ", StringComparison.Ordinal);
+        if (separator < 0 || !int.TryParse(detail.AsSpan(0, separator), out _))
+            return detail;
+
+        var reasons = detail[(separator + 3)..]
+            .Split(", ", StringSplitOptions.RemoveEmptyEntries)
+            .Select(LocalizeReason)
+            .Where(reason => reason.Length > 0)
+            .ToArray();
+
+        return reasons.Length == 0
+            ? detail[..separator]
+            : $"{detail[..separator]} · {string.Join(", ", reasons)}";
+    }
+
+    private static string LocalizeReason(string reason)
+    {
+        var open = reason.IndexOf('(');
+        var hasDetail = open > 0 && reason.EndsWith(')');
+        var key = hasDetail ? reason[..open] : reason;
+        var detail = hasDetail ? reason[(open + 1)..^1] : null;
+
+        if (!IsLocalizationKey(key))
+            return reason;
+
+        var text = Localization.Get(key);
+        if (detail is null)
+            return text;
+
+        var years = int.TryParse(detail, out var days) ? days / 365 : 0;
+        return text
+            .Replace("{days}", detail)
+            .Replace("{years}", years.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static bool IsLocalizationKey(string value) =>
+        value.Length > 0 && char.IsAsciiLetterLower(value[0]) &&
+        value.All(c => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '_' or '.');
 
     private static string? AvatarOf(string userId)
     {
