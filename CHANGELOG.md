@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.11.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.11.0..v0.11.1) - 2026-11-14
+
+### ⚙️ Miscellaneous Tasks
+
+- Update PhotinoNetUtils bridge to version 0.28.3 - ([ea4ec28](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ea4ec28a5d9072caa1328f556a382099c1068a35))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([08a3e11](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/08a3e1131f6807cde0e940e11c7d26bdace4e5f3))
+
+
 ## [0.11.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.10.2..v0.11.0) - 2026-11-14
 
 ### ⛰️  Features
