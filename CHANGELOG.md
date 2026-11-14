@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.12.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.11.1..v0.12.0) - 2026-11-14
+
+### ⛰️  Features
+
+- *(settings)* Reset to defaults and close the download panel on cancel - ([c4363eb](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c4363ebad03a149d7d6629b100999226f8acd553))
+
+### 🐛 Bug Fixes
+
+- *(threat)* Translate every reason and rebalance the score - ([d415484](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d41548498de943498629dde756d35f49c53d1d43))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update the shared library to 0.29.0 - ([79b9f61](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/79b9f6165bc9d0328bfd23b60c68bd3f0aa29d95))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([51194f3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/51194f30be54c86089e2194aa41a37a8b5aa3fb3))
+
+
 ## [0.11.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.11.0..v0.11.1) - 2026-11-14
 
 ### ⚙️ Miscellaneous Tasks
