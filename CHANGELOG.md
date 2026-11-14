@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.11.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.10.2..v0.11.0) - 2026-11-14
+
+### ⛰️  Features
+
+- *(notifications)* Enrich and translate the operation toasts - ([b9e3a4c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b9e3a4c29a6137a9819e0b27e539f91876e9c9d9))
+- *(notifications)* Show the account picture on the auth toast - ([25c047f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/25c047fcf0a98291de455d0bf2cf2ea6694c2588))
+- *(notifications)* Open the page a notification belongs to - ([9ba81a2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9ba81a216ba73bd6be0b8fa52313fc9bbdade671))
+
+### 🚜 Refactor
+
+- Fix AntiBot project file formatting - ([1c9e3a9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1c9e3a98df65d393abd9d1da23eea5dd5a5aaf13))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update PhotinoNetUtils bridge to version 0.28.2 - ([654a953](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/654a953c132935557d978b478dfd66468d241aab))
+- Sync the notification guard - ([4477c15](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4477c15c2d7b93f89f09cda4b862697d5ddaf7ca))
+- Sync the notification options - ([7eca8a4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7eca8a43fef9200947a98930117fa9ca11e3e33a))
+- Sync the self-implemented notification service - ([812b3d8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/812b3d803398143ce89dd86f1e9cde6225018234))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([b776b4c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b776b4c6e058d29364a189d2a8c637c2c981274d))
+
+
 ## [0.10.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.10.1..v0.10.2) - 2026-11-14
 
 ### ⚙️ Miscellaneous Tasks
