@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.0..v0.12.1) - 2026-11-14
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([0dd55fd](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0dd55fd1d3a793515200193bb9ba22f4d39a592c))
+
+### Tune
+
+- *(threat)* Weight the first days higher and drop the score cap - ([1dc386a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/1dc386aff6e0d6cf3d97993116ed52d786682fb7))
+
+
 ## [0.12.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.11.1..v0.12.0) - 2026-11-14
 
 ### ⛰️  Features
