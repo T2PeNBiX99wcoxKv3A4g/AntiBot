@@ -173,7 +173,7 @@ internal partial class AuthService
 
         NotificationService.Notify("auth.startup",
             Localization.Get("auth.startup.signed_out_title"),
-            Localization.Get("auth.startup.signed_out_message"), "account");
+            Localization.Get("auth.startup.signed_out_message"), AccountToast(_active?.Dir));
     }
 
     /// <summary>
@@ -1271,6 +1271,17 @@ internal partial class AuthService
     }
 
     /// <summary>
+    ///     The shape every account notification uses: it opens the account page, carries the cached
+    ///     picture of that account when there is one, and labels its button in the current language.
+    /// </summary>
+    private static NotificationOptions AccountToast(string? directory) => new()
+    {
+        Action = "account",
+        ImagePath = directory is { Length: > 0 } ? AccountStore.AvatarFile(directory) : null,
+        ButtonText = Localization.Get("open_account")
+    };
+
+    /// <summary>
     ///     Tells the user, loudly, that automatic protection is off: once now, then every few minutes
     ///     until a sign-in succeeds. Without the session VRChat refuses every moderation request, so a
     ///     bot can join and nothing can be done about it.
@@ -1278,7 +1289,8 @@ internal partial class AuthService
     private void NotifySessionExpired(string? directory = null)
     {
         NotificationService.Notify("auth.expired",
-            Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"), "account");
+            Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"),
+            AccountToast(directory ?? _active?.Dir));
 
         var cancellation = new CancellationTokenSource();
         if (Interlocked.CompareExchange(ref _expiryReminder, cancellation, null) is not null)
@@ -1302,7 +1314,7 @@ internal partial class AuthService
 
                     NotificationService.Notify("auth.expired",
                         Localization.Get("auth.expired.title"), Localization.Get("auth.expired.message"),
-                        "account");
+                        AccountToast(directory ?? _active?.Dir));
                 }
             }
             catch (OperationCanceledException)
@@ -1434,7 +1446,7 @@ internal partial class AuthService
 
             NotificationService.Notify("auth.savedInvalid",
                 Localization.Get("auth.saved_invalid_title"),
-                Localization.Get("auth.saved_invalid_message"), "account");
+                Localization.Get("auth.saved_invalid_message"), AccountToast(target));
 
             _ = RefreshSavedAsync();
             return (false, false);
@@ -1460,7 +1472,7 @@ internal partial class AuthService
             Notify();
             NotificationService.Notify("auth.twoFactor",
                 Localization.Get("auth.auto_login.two_factor_title"),
-                Localization.Get("auth.auto_login.two_factor_message"), "account");
+                Localization.Get("auth.auto_login.two_factor_message"), AccountToast(target));
             return (false, false);
         }
 

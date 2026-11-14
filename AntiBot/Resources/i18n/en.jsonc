@@ -382,6 +382,7 @@
   "read_from_the_executable_the_interface_is_running_in": "Read from the executable the interface is running in.",
   "check_for_updates": "Check for updates",
   "open_release_page": "Open release page",
+  "open_account": "Open account",
   "open_log_folder": "Open log folder",
   "log_files_are_written_to": "Log files are written to:",
   "up_to_date_version_is_the_newest_version": "Up to date: {version} is the newest version.",

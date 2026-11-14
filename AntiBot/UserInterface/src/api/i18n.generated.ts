@@ -273,6 +273,7 @@ declare module "@photino-net-utils/bridge"
         "only_the_vr_chat_session_cookie_is_stored_never_your_password_every_mode_except_do_not_remember_encrypts_it_at_rest_the_difference_is_what_unlocks_it": true;
         "only_vr_chat_s_local_log_is_read_the_player_list_and_instance_details_can_be_wrong_when_more_than_one_client_runs_and_status_platform_and_avatar_names_are_unavailable": true;
         "opens_vr_chat_s_quick_menu_when_osc_is_working": true;
+        "open_account": true;
         "open_folder": true;
         "open_in_the_tray_instead_of_showing_the_window": true;
         "open_log_folder": true;

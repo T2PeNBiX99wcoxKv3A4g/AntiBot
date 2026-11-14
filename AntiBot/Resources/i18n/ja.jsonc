@@ -378,6 +378,7 @@
   "read_from_the_executable_the_interface_is_running_in": "インターフェースが動作している実行ファイルから読み取ります。",
   "check_for_updates": "アップデートを確認",
   "open_release_page": "リリースページを開く",
+  "open_account": "アカウントを開く",
   "open_log_folder": "ログフォルダーを開く",
   "log_files_are_written_to": "ログの保存先：",
   "up_to_date_version_is_the_newest_version": "最新版です：{version} が最新バージョンです。",

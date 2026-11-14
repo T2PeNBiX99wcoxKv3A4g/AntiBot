@@ -378,6 +378,7 @@
   "read_from_the_executable_the_interface_is_running_in": "從介面所在的執行檔讀取。",
   "check_for_updates": "檢查更新",
   "open_release_page": "開啟發行頁面",
+  "open_account": "開啟帳號",
   "open_log_folder": "開啟日誌資料夾",
   "log_files_are_written_to": "日誌寫入位置：",
   "up_to_date_version_is_the_newest_version": "已是最新版本：{version} 是最新版本。",

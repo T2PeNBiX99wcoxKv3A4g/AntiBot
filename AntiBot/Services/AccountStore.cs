@@ -90,6 +90,9 @@ internal static class AccountStore
         return value;
     }
 
+    /// <summary>The cached picture file itself, for a consumer that needs a path rather than a data URL.</summary>
+    public static string? AvatarFile(string dir) => Try.Run(() => AvatarPath(dir)).GetOrNull();
+
     /// <summary>Downloads the account's picture and keeps it beside the session. Returns its data URL.</summary>
     public static async Task<string?> DownloadAvatarAsync(string dir, string? url, CancellationToken token = default)
     {

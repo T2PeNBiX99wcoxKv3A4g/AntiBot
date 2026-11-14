@@ -378,6 +378,7 @@
   "read_from_the_executable_the_interface_is_running_in": "从界面所在的执行文件读取。",
   "check_for_updates": "检查更新",
   "open_release_page": "打开发布页面",
+  "open_account": "打开账户",
   "open_log_folder": "打开日志文件夹",
   "log_files_are_written_to": "日志写入位置：",
   "up_to_date_version_is_the_newest_version": "已是最新版本：{version} 是最新版本。",
