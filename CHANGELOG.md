@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.1..v0.12.2) - 2026-11-15
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([883edb3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/883edb3e35925ca7ac761d51e9f147a474c401d9))
+
+### Build
+
+- Treat every Windows runtime identifier as Windows - ([def68d6](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/def68d679a1036174807b5d86bcc9f72add11641))
+- Follow the runtime identifier for the Windows projection - ([e9d94ea](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e9d94ea5779c1732e7859f63ea0497636194a1b8))
+
+
 ## [0.12.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.0..v0.12.1) - 2026-11-14
 
 ### Action
