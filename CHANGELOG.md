@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.2..v0.12.3) - 2026-11-15
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([f661292](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/f66129297448ffcd078d08fd5f987ada71135989))
+
+### Build
+
+- Pick up PhotinoNETUtils 0.29.2 - ([681110a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/681110a11a0585d2f15d5835c787cb4feb67610d))
+
+
 ## [0.12.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.1..v0.12.2) - 2026-11-15
 
 ### Action
