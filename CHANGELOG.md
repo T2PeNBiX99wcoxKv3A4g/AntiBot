@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.15.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.14.1..v0.15.0) - 2026-11-16
+
+### ⛰️  Features
+
+- *(site)* One install panel, split by system - ([6319b0c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6319b0cb20f98e77f363c8cb34864c07e1887291))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([80bdcab](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/80bdcabf3eab46a382bdb9d41c7280530d1955a1))
+
+
 ## [0.14.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.14.0..v0.14.1) - 2026-11-16
 
 ### 📚 Documentation
