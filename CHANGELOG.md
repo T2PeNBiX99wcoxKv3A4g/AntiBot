@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.13.2..v0.14.0) - 2026-11-16
+
+### ⛰️  Features
+
+- *(site)* Show the screenshots the project already has, and fit a phone - ([9eb5f05](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9eb5f058833bd401cdcd679c34eea00af53983b4))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([772e721](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/772e72153e367468205e0f05f8e22672d81d1993))
+
+
 ## [0.13.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.13.1..v0.13.2) - 2026-11-16
 
 ### 🚜 Refactor
