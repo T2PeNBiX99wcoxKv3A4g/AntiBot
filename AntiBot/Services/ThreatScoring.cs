@@ -237,7 +237,7 @@ internal static partial class ThreatScoring
             reasons.Add(new("suspicious_wording_in_the_profile", 5));
         }
 
-        if (text.Contains("hexed", StringComparison.Ordinal))
+        if (HexedPattern().IsMatch(text))
         {
             score += 10;
             reasons.Add(new("known_bot_site_hexed", 10));
@@ -249,19 +249,19 @@ internal static partial class ThreatScoring
             reasons.Add(new("status_says_check_bio", 5));
         }
 
-        if (text.Contains("hexed.cc", StringComparison.Ordinal))
+        if (HexedSitePattern().IsMatch(text))
         {
             score += 110;
             reasons.Add(new("known_bot_site_hexed_cc", 110));
         }
 
-        if (text.Contains("oversee", StringComparison.Ordinal))
+        if (OverseePattern().IsMatch(text))
         {
             score += 10;
             reasons.Add(new("known_bot_site_oversee", 10));
         }
 
-        if (text.Contains("oversee.lol", StringComparison.Ordinal))
+        if (OverseeSitePattern().IsMatch(text))
         {
             score += 110;
             reasons.Add(new("known_bot_site_oversee_lol", 110));
@@ -290,10 +290,10 @@ internal static partial class ThreatScoring
             .Replace('\u01C3', '!')
             .Replace('\u2018', '\'')
             .Replace('\u2019', '\'')
-            .Replace("\u200B", "")
-            .Replace("\u200C", "")
-            .Replace("\u200D", "")
-            .Replace("\uFEFF", "");
+            .Replace("\u200B", " ")
+            .Replace("\u200C", " ")
+            .Replace("\u200D", " ")
+            .Replace("\uFEFF", " ");
 
         // Bots spell the dot out to dodge a plain "hexed.cc" match: hexed (dot) cc, hexed [dot] cc,
         // hexed dot cc, and the bracket-only forms. The existing dot/space cleanup runs after this.
@@ -301,6 +301,25 @@ internal static partial class ThreatScoring
 
         return DotSpacePattern().Replace(SpacePattern().Replace(normalized, " "), ".");
     }
+
+    /// <summary>The site name on its own, as a whole word.</summary>
+    [GeneratedRegex(@"\bhexed\b", RegexOptions.CultureInvariant)]
+    private static partial Regex HexedPattern();
+
+    /// <summary>The other site name on its own, as a whole word.</summary>
+    [GeneratedRegex(@"\boversee\b", RegexOptions.CultureInvariant)]
+    private static partial Regex OverseePattern();
+
+    /// <summary>
+    ///     The site with any separator at all: <c>hexed … cc</c>. The two words must be whole words,
+    ///     but whatever sits between them is ignored, so a dot, a bracket, an emoji or a word works.
+    /// </summary>
+    [GeneratedRegex(@"\bhexed\b.*\bcc\b", RegexOptions.CultureInvariant | RegexOptions.Singleline)]
+    private static partial Regex HexedSitePattern();
+
+    /// <summary>The same for <c>oversee … lol</c>.</summary>
+    [GeneratedRegex(@"\boversee\b.*\blol\b", RegexOptions.CultureInvariant | RegexOptions.Singleline)]
+    private static partial Regex OverseeSitePattern();
 
     /// <summary>
     ///     A dot written as a word or inside brackets, which is how bot profiles hide a site address.
