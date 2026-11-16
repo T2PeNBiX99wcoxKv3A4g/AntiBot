@@ -56,7 +56,7 @@ The two digit patterns are alternatives, so a name gets one +5 shape bonus. The 
 
 ## Profile text
 
-The custom status, pronouns and bio are matched after punctuation is normalised, so lookalike characters do not dodge the check.
+The custom status, pronouns and bio are matched after punctuation is normalised, so lookalike characters do not dodge the check. A dot written as `(dot)`, `[dot]` or the word `dot` is normalised too, so `hexed (dot) cc` is still read as `hexed.cc`.
 
 The bio comes from the public profile. AntiBot fetches it for every player and refreshes it at most every ten minutes; the batch page and the details panel always load it.
 

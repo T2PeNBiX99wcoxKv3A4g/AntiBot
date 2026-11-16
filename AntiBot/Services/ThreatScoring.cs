@@ -295,8 +295,20 @@ internal static partial class ThreatScoring
             .Replace("\u200D", "")
             .Replace("\uFEFF", "");
 
+        // Bots spell the dot out to dodge a plain "hexed.cc" match: hexed (dot) cc, hexed [dot] cc,
+        // hexed dot cc, and the bracket-only forms. The existing dot/space cleanup runs after this.
+        normalized = SpelledDotPattern().Replace(normalized, ".");
+
         return DotSpacePattern().Replace(SpacePattern().Replace(normalized, " "), ".");
     }
+
+    /// <summary>
+    ///     A dot written as a word or inside brackets, which is how bot profiles hide a site address.
+    /// </summary>
+    [GeneratedRegex(
+        @"\(\s*(?:dot|d0t|\.)\s*\)|\[\s*(?:dot|d0t|\.)\s*\]|\{\s*(?:dot|d0t|\.)\s*\}|<\s*(?:dot|d0t|\.)\s*>|\bdot\b|\bd0t\b",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SpelledDotPattern();
 
     [GeneratedRegex(@"\s[0-9a-fA-F]{4}$", RegexOptions.CultureInvariant)]
     private static partial Regex HexSuffixPattern();
