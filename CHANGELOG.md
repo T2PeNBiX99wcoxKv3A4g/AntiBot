@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.13.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.13.0..v0.13.1) - 2026-11-16
+
+### 🚜 Refactor
+
+- *(site)* Build the site from the shared package - ([a0b23d8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a0b23d88dd75fb9b2cd8a20d71e6f51d03b80c89))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([9e45db4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9e45db463aff37e96a8b1b5d9192753b57ef5f3a))
+
+
 ## [0.13.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.4..v0.13.0) - 2026-11-16
 
 ### ⛰️  Features
