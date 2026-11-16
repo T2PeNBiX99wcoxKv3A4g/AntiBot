@@ -55,9 +55,7 @@
       "设定阈值并选择要执行的操作。低于阈值时什么都不会发生。"
     ],
     "installTitle": "安装",
-    "installBefore": "自包含版本：已内置 .NET 运行时，不需要另外安装。Linux 需要 WebKitGTK 4.1 和 AppIndicator 库（见",
     "readme": "README",
-    "installAfter": "）。Windows 版没有代码签名，第一次运行时 Windows 可能会警告。",
     "platforms": [
       {
         "name": "Windows",
@@ -76,7 +74,8 @@
         "note": "x86_64 (.pkg.tar.zst)"
       }
     ],
-    "webView2Note": "Windows 11 已内置 WebView2 运行时；Windows 10 没有，请先从 {link} 安装后再启动。"
+    "installWindows": "构建版本是自包含的：.NET 运行时已一并打包。Windows 11 已内置 WebView2 运行时；Windows 10 需要先安装，请从 {link} 获取。",
+    "installLinux": "构建版本是自包含的：.NET 运行时已一并打包。Linux 需要 WebKitGTK 4.1 和 AppIndicator 库，安装包会自动带上。"
   },
   "docs": {
     "setup": "设置",
