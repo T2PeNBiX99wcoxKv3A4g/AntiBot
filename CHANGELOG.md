@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.12.4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.3..v0.12.4) - 2026-11-16
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([5447a18](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/5447a18900b9f22e5287d6e198f547a4cd6cc91b))
+
+### Build
+
+- *(ui)* Take the build scripts from the shared bridge - ([fbe1b00](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fbe1b00a8aaed619849e58a5c8c3fa904e712da9))
+
+
 ## [0.12.3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.2..v0.12.3) - 2026-11-15
 
 ### Action
