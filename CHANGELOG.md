@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.14.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.14.0..v0.14.1) - 2026-11-16
+
+### 📚 Documentation
+
+- Correct what Windows 10 needs before the first launch - ([29da2f9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/29da2f9514cbf8d2a11c9e5566be7bafa12993a7))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([913dce2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/913dce230c701e617b216172b86b119ab448fe18))
+
+
 ## [0.14.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.13.2..v0.14.0) - 2026-11-16
 
 ### ⛰️  Features
