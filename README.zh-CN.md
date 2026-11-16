@@ -90,8 +90,8 @@ AntiBot 会监视 VRChat 本来就会写入的日志，显示当前实例中有�
 
 ### Windows
 
-1. Microsoft Edge **WebView2 运行时**。Windows 10 和 11 通常已内置；否则请使用
-   [Microsoft 的页面](https://developer.microsoft.com/microsoft-edge/webview2/)。
+1. Microsoft Edge **WebView2 运行时**。Windows 11 已内置；Windows 10 需要安装，请从
+   [Microsoft 的页面](https://developer.microsoft.com/microsoft-edge/webview2/) 获取。
 2. Windows 10 或更新版本，x64。
 3. 此版本未进行代码签名，Windows 第一次启动时可能会显示警告。
 

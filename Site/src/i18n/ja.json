@@ -55,7 +55,7 @@
       "しきい値と実行する操作を選びます。しきい値未満では何も起きません。"
     ],
     "installTitle": "インストール",
-    "installBefore": "自己完結ビルドです。.NET ランタイムを同梱しているので、他に何もインストールする必要はありません。Windows では WebView2 ランタイムも必要ですが、Windows 10 と 11 には最初から入っています。Linux では WebKitGTK 4.1 と AppIndicator ライブラリが必要です（",
+    "installBefore": "自己完結ビルドです。.NET ランタイムを同梱しているので、他に何もインストールする必要はありません。Linux では WebKitGTK 4.1 と AppIndicator ライブラリが必要です（",
     "readme": "README",
     "installAfter": " を参照）。Windows 版はコード署名されていないため、初回に Windows の警告が出ることがあります。",
     "platforms": [
@@ -75,7 +75,8 @@
         "name": "Arch Linux",
         "note": "x86_64 (.pkg.tar.zst)"
       }
-    ]
+    ],
+    "webView2Note": "Windows 11 には WebView2 ランタイムが含まれます。Windows 10 にはないため、起動前に {link} からインストールしてください。"
   },
   "docs": {
     "setup": "セットアップ",

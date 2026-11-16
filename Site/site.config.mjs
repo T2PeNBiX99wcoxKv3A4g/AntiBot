@@ -8,6 +8,7 @@ export const site = {
     description: "AntiBot watches VRChat's log, scores the users who join, and acts before their avatar loads.",
     url: "https://t2penbix99wcoxkv3a4g.github.io/AntiBot/",
     icon: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/icon.svg",
+    webView2Url: "https://developer.microsoft.com/microsoft-edge/webview2/",
     repository: "https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot",
     languages: ["en", "ja", "zh-CN", "zh-TW"],
     screenshots: {
