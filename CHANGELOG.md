@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.13.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.4..v0.13.0) - 2026-11-16
+
+### ⛰️  Features
+
+- *(threat)* Match a bot site across any separator - ([3bff0a4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/3bff0a48e5467e1e3d2824c09269f739898fc718))
+
+### 🐛 Bug Fixes
+
+- *(threat)* Normalise spelled-out dots in profile text - ([12a67c8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/12a67c835d5dc41e7a3c79e55d5488fecd0294b9))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([a7934ed](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a7934ed83483cda5633ace162071604667d51e11))
+
+
 ## [0.12.4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.12.3..v0.12.4) - 2026-11-16
 
 ### Action
