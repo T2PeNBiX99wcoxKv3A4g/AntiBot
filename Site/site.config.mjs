@@ -10,6 +10,13 @@ export const site = {
     icon: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/icon.svg",
     repository: "https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot",
     languages: ["en", "ja", "zh-CN", "zh-TW"],
+    screenshots: {
+        gallery: [
+            {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/instance.png", alt: "Everyone in the instance, with their scores"},
+            {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/account.png", alt: "The account behind a score"},
+            {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/operations.png", alt: "What the app can do about a threat"},
+        ],
+    },
     docs: [
         {slug: "Getting-Started", group: "setup"},
         {slug: "OSC", group: "setup"},
