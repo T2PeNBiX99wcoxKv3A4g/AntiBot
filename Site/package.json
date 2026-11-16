@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "node node_modules/@photino-net-utils/site/scripts/generate-docs.mjs && node node_modules/@photino-net-utils/site/scripts/generate-og.mjs",
+    "generate": "node node_modules/@photino-net-utils/site/scripts/generate-docs.mjs && node node_modules/@photino-net-utils/site/scripts/generate-og.mjs && node node_modules/@photino-net-utils/site/scripts/generate-index.mjs",
     "dev": "npm run generate && vite",
     "build": "npm run generate && tsc --noEmit && vite build",
     "preview": "vite preview",
