@@ -11,8 +11,14 @@
     "noteText": "AntiBot targets automated bots that collect data through modified clients. A real person using a modified client can be very hard to tell apart, and a high trust rank does not prove that an account belongs to a human. Treat the score as a hint, not a judgment.",
     "download": "Download",
     "documentation": "Documentation",
+    "mainWindow": "The instance list, with a score for every user",
+    "mainWindowAlt": "The AntiBot instance list",
     "whatTitle": "What it does",
     "whatText": "AntiBot reads the log VRChat already writes, sees who joins your instance, and scores each new user. Above your threshold it can act before their avatar finishes loading: block them, turn their avatar interactions off, hide their chat box, press Safe Mode over OSC, switch to a low-risk avatar, or close the client.",
+    "popupTitle": "The account behind a score",
+    "popupText": "Clicking a user opens the account behind the score: the reasons that added up, and the VRChat profile it read with the stored session.",
+    "popupCaption": "The account page, with the stored session",
+    "popupAlt": "The AntiBot account page",
     "featuresTitle": "Features",
     "features": [
       {

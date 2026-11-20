@@ -11,8 +11,14 @@
     "noteText": "AntiBot 主要針對透過改造客戶端收集資料的自動機器人。如果使用改造客戶端的是真人，通常很難分辨；信任等級高也不代表帳號一定屬於真人。請把分數當作提示，而不是判定。",
     "download": "下載",
     "documentation": "文件",
+    "mainWindow": "實例裡的每個人，以及各自的評分",
+    "mainWindowAlt": "AntiBot 的實例列表",
     "whatTitle": "它能做什麼",
     "whatText": "AntiBot 讀取 VRChat 自己寫出的日誌，看到誰進入了你的實例，並替每個新使用者評分。超過閾值時，它能在對方的頭像載入完成之前行動：封鎖、關閉頭像互動、隱藏聊天框、透過 OSC 開啟安全模式、切換到低風險頭像，或關閉客戶端。",
+    "popupTitle": "評分背後的帳號",
+    "popupText": "點擊使用者即可打開評分背後的帳號：各項加分原因，以及 AntiBot 透過已儲存工作階段從 VRChat API 讀到的資料。",
+    "popupCaption": "保留工作階段的帳號頁面",
+    "popupAlt": "AntiBot 的帳號頁面",
     "featuresTitle": "功能",
     "features": [
       {

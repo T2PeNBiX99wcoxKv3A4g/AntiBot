@@ -12,9 +12,9 @@ export const site = {
     repository: "https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot",
     languages: ["en", "ja", "zh-CN", "zh-TW"],
     screenshots: {
+        main: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/instance.png",
+        popup: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/account.png",
         gallery: [
-            {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/instance.png", alt: "Everyone in the instance, with their scores"},
-            {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/account.png", alt: "The account behind a score"},
             {src: "https://raw.githubusercontent.com/T2PeNBiX99wcoxKv3A4g/AntiBot/master/docs/operations.png", alt: "What the app can do about a threat"},
         ],
     },
