@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.2..v0.17.0) - 2026-11-20
+
+### ⛰️  Features
+
+- *(site)* Read the changelog from GitHub first - ([9ba7cb8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9ba7cb8d4b9aa79b5cc81fbf37dd59bbb84c6c12))
+- *(site)* Add a changelog page - ([bd05c6c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/bd05c6cd8f4acf54c789dfe0c42d6c1a8995b7c4))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([de8ae96](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/de8ae96783e052fa9672fa8273da7617218c8899))
+
+
 ## [0.16.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.1..v0.16.2) - 2026-11-20
 
 ### ⚙️ Miscellaneous Tasks
