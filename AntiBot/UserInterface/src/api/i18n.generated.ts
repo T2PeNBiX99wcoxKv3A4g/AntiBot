@@ -177,6 +177,9 @@ declare module "@photino-net-utils/bridge"
         "faded_rows_are_no_longer_pending": true;
         "failed": true;
         "fair": true;
+        "fake_data": true;
+        "fake_instance_list": true;
+        "fake_operation_history": true;
         "filter_lines": true;
         "filter_log_lines": true;
         "following": true;
@@ -306,6 +309,7 @@ declare module "@photino-net-utils/bridge"
         "pc_vr": true;
         "pick_an_account_to_sign_in_with": true;
         "pin_biometrics": true;
+        "placeholder_players_and_actions_for_screenshots_nothing_is_stored": true;
         "platform": true;
         "players_appear_here_as_vr_chat_writes_join_and_leave_lines_or_once_an_account_is_signed_in": true;
         "players_in_your_vr_chat_instance_from_the_api_once_signed_in": true;
@@ -361,6 +365,8 @@ declare module "@photino-net-utils/bridge"
         "settings": true;
         "settings_restored_to_their_defaults": true;
         "set_the_avatar_id_in_the_settings_first": true;
+        "showing_placeholder_data": true;
+        "showing_real_data": true;
         "show_level_lines": true;
         "show_password": true;
         "show_the_avatar_id": true;

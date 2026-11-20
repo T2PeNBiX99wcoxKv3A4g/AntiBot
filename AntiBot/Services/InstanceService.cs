@@ -24,6 +24,9 @@ internal partial class InstanceService
 
     private ApiInstance? _apiInstance;
     private string _apiLocation = "";
+#if DEBUG
+    private InstanceSnapshot? _fake;
+#endif
     private string _instance = "";
     private string _localName = "";
     private int _publishScheduled;
@@ -44,9 +47,37 @@ internal partial class InstanceService
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
-        context.Request.Type == "instance.snapshot"
-            ? Task.FromResult<NativeResponse?>(context.Reply("instance.snapshot.result", Snapshot()))
-            : Task.FromResult<NativeResponse?>(null);
+        context.Request.Type switch
+        {
+            "instance.snapshot" =>
+                Task.FromResult<NativeResponse?>(context.Reply("instance.snapshot.result", Snapshot())),
+#if DEBUG
+            "debug.fakeInstance" => Task.FromResult<NativeResponse?>(ToggleFakeInstance(context)),
+#endif
+            _ => Task.FromResult<NativeResponse?>(null)
+        };
+
+#if DEBUG
+    /// <summary>
+    ///     Debug build only: puts a fixed set of players in place of the real list, so the interface can
+    ///     be photographed without an instance. Asking again puts the real list back.
+    /// </summary>
+    private NativeResponse ToggleFakeInstance(NativeContext context)
+    {
+        bool on;
+
+        lock (_gate)
+        {
+            _fake = _fake is null ? DebugFixtures.Instance() : null;
+            on = _fake is not null;
+            _pushed = "";
+        }
+
+        Publish();
+        Log.Information("Debug instance list {State}", on ? "shown" : "cleared");
+        return context.Reply("debug.fakeInstance.result", new FakeDataPayload(on));
+    }
+#endif
 
     private void OnLinesRead(VrchatLogBatch batch)
     {
@@ -512,6 +543,17 @@ internal partial class InstanceService
 
         Log.Information("Instance list: {Count} player(s) from {Source}", snapshot.Users.Count, snapshot.Source);
         WindowManager.Instance.NotifyMainWindow("instance.changed", snapshot);
+
+#if DEBUG
+        // The fabricated list is for the screen only: handing it to the threat rules would make them
+        // try to block players that do not exist.
+        lock (_gate)
+        {
+            if (_fake is not null)
+                return;
+        }
+#endif
+
         Published?.Invoke(snapshot);
     }
 
@@ -563,6 +605,10 @@ internal partial class InstanceService
     {
         lock (_gate)
         {
+#if DEBUG
+            if (_fake is not null)
+                return _fake;
+#endif
             if (_apiInstance is { } api && AuthService.Instance.IsLoggedIn && LooksLikeInstance(_apiLocation))
             {
                 // The log knows everyone this client can see. The API roster can be partial (it only

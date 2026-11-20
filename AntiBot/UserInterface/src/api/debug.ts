@@ -48,3 +48,15 @@ export interface DebugAvatarResult {
 export async function switchAvatar(): Promise<DebugAvatarResult> {
     return await Native.request<DebugAvatarResult>("debug.avatar", undefined, 30_000);
 }
+
+/** Debug builds only: swaps the instance list for placeholder players, or back. True while showing them. */
+export async function toggleFakeInstance(): Promise<boolean> {
+    const result = await Native.request<{ on: boolean }>("debug.fakeInstance", undefined, 30_000);
+    return result.on;
+}
+
+/** Debug builds only: swaps the operation history for placeholder actions, or back. */
+export async function toggleFakeOperations(): Promise<boolean> {
+    const result = await Native.request<{ on: boolean }>("debug.fakeOperations", undefined, 30_000);
+    return result.on;
+}

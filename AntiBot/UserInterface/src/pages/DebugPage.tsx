@@ -1,18 +1,66 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
-import {closeVrchat, type DebugUserResult, enableSafeMode, scoreUser, switchAvatar} from "../api/debug";
+import {closeVrchat, type DebugUserResult, enableSafeMode, scoreUser, switchAvatar, toggleFakeInstance, toggleFakeOperations} from "../api/debug";
 import {type OscStatus, oscStatus} from "../api/osc";
 
 /** Debug builds only: the actions that are hard to trigger for real. */
 export function DebugPage() {
     return (
         <Page>
+            <FakeData/>
             <CloseClient/>
             <SafeMode/>
             <SafeAvatar/>
             <UserCheck/>
         </Page>
+    );
+}
+
+/** Placeholder players and actions, so a screenshot does not need a real instance. */
+function FakeData() {
+    const t = useTranslation();
+    const [instanceOn, setInstanceOn] = useState<boolean | null>(null);
+    const [operationsOn, setOperationsOn] = useState<boolean | null>(null);
+    const [busy, setBusy] = useState<"instance" | "operations" | null>(null);
+    const [error, setError] = useState("");
+
+    const toggle = async (which: "instance" | "operations") => {
+        setBusy(which);
+        setError("");
+
+        try {
+            const on = which === "instance" ? await toggleFakeInstance() : await toggleFakeOperations();
+            if (which === "instance") setInstanceOn(on);
+            else setOperationsOn(on);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    return (
+        <Card>
+            <h2>{t("fake_data")}</h2>
+            <p>{t("placeholder_players_and_actions_for_screenshots_nothing_is_stored")}</p>
+
+            <Actions>
+                <Primary disabled={busy !== null} onClick={() => void toggle("instance")} type="button">
+                    {busy === "instance" ? t("working") : t("fake_instance_list")}
+                </Primary>
+                <Primary disabled={busy !== null} onClick={() => void toggle("operations")} type="button">
+                    {busy === "operations" ? t("working") : t("fake_operation_history")}
+                </Primary>
+            </Actions>
+
+            {instanceOn !== null || operationsOn !== null
+                ? <Status $failed={false}>
+                    {instanceOn || operationsOn ? t("showing_placeholder_data") : t("showing_real_data")}
+                </Status>
+                : null}
+            {error && <Status $failed>{error}</Status>}
+        </Card>
     );
 }
 

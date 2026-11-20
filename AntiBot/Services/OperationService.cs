@@ -12,6 +12,9 @@ namespace AntiBot.Services;
 internal partial class OperationService
 {
     private readonly Lock _gate = new();
+#if DEBUG
+    private OperationEntry[]? _fake;
+#endif
     private string _pushed = "";
 
     private OperationService() => NativeBridge.MessageReceived += HandleMessageAsync;
@@ -37,10 +40,37 @@ internal partial class OperationService
                 return context.Reply("user.describe.result",
                     InstanceService.Instance.Describe(request?.UserId ?? "", request?.DisplayName ?? ""));
 
+#if DEBUG
+            case "debug.fakeOperations":
+                return ToggleFakeOperations(context);
+#endif
+
             default:
                 return null;
         }
     }
+
+#if DEBUG
+    /// <summary>
+    ///     Debug build only: swaps the history for a fixed set of actions, so the page can be
+    ///     photographed without waiting for a bot. Asking again puts the real history back.
+    /// </summary>
+    private NativeResponse ToggleFakeOperations(NativeContext context)
+    {
+        bool on;
+
+        lock (_gate)
+        {
+            _fake = _fake is null ? DebugFixtures.Operations() : null;
+            on = _fake is not null;
+            _pushed = "";
+        }
+
+        Publish();
+        Log.Information("Debug operation history {State}", on ? "shown" : "cleared");
+        return context.Reply("debug.fakeOperations.result", new FakeDataPayload(on));
+    }
+#endif
 
     public async Task LogAsync(string kind, string userId, string displayName, string detail,
         string? avatarUrl = null, bool notify = true)
@@ -108,6 +138,10 @@ internal partial class OperationService
     /// <summary>Entries with an avatar from the profile cache, so rows recorded earlier get one too.</summary>
     private OperationEntry[] Snapshot()
     {
+#if DEBUG
+        if (_fake is { } fake)
+            return fake;
+#endif
         var entries = Database.Instance.LoadOperations();
 
         return
