@@ -61,13 +61,15 @@ internal static class Program
                 return;
             }
 
+            // One local server for both builds: it serves the built interface in a release build and,
+            // in a debug build, the account pictures while the interface comes from Vite.
+            using var server = AppServer.Start();
+
 #if !DEBUG
-            // Kestrel binds to an OS-assigned port, so several Photino apps can run side by side.
-            using var staticServer = StaticServer.Start(Constants.DataDirectory);
-            var appUrl = $"{staticServer.BaseUrl}/index.html?v={AppIdentity.BuildToken}";
+            var appUrl = $"{server.BaseUrl}/index.html?v={AppIdentity.BuildToken}";
 #else
             // A Debug build always talks to the Vite dev server, which is where hot reload lives.
-            const string appUrl = "http://127.0.0.1:3200";
+            var appUrl = "http://127.0.0.1:3200";
 #endif
 
             Log.Information("Serving React app at {AppUrl}", appUrl);

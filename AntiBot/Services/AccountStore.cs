@@ -25,7 +25,6 @@ internal static class AccountStore
 {
     private static readonly ILogger Logger = Log.ForContext(typeof(AccountStore));
     private static readonly HttpClient Http = CreateHttp();
-    private static readonly ConcurrentDictionary<string, string?> Avatars = new();
 
     public static string Root => Path.Combine(Constants.DataDirectory, "accounts");
 
@@ -70,25 +69,11 @@ internal static class AccountStore
             File.Move(temporary, IndexPath, true);
         }).OnFailure(ex => Logger.Warning(ex, "Could not write the account index"));
 
-    /// <summary>The cached picture as a data URL, so the list renders while the session is locked.</summary>
-    public static string? Avatar(string dir)
-    {
-        if (Avatars.TryGetValue(dir, out var cached))
-            return cached;
-
-        var value = Try.Run(() =>
-        {
-            var path = AvatarPath(dir);
-            if (path is null)
-                return null;
-
-            var bytes = File.ReadAllBytes(path);
-            return $"data:{Sniff(bytes)};base64,{Convert.ToBase64String(bytes)}";
-        }).GetOrNull();
-
-        Avatars[dir] = value;
-        return value;
-    }
+    /// <summary>The cached picture's URL, so the list renders while the session is locked.</summary>
+    public static string? Avatar(string dir) =>
+        AppServer.DataUrl is not { Length: > 0 } baseUrl || AvatarFile(dir) is null
+            ? null
+            : $"{baseUrl}/avatar/{Uri.EscapeDataString(dir)}";
 
     /// <summary>The cached picture file itself, for a consumer that needs a path rather than a data URL.</summary>
     public static string? AvatarFile(string dir) => Try.Run(() => AvatarPath(dir)).GetOrNull();
@@ -117,7 +102,6 @@ internal static class AccountStore
             foreach (var stale in Directory.EnumerateFiles(folder, "avatar.*").Where(file => file != path))
                 Try.Run(() => File.Delete(stale));
 
-            Avatars.TryRemove(dir, out _);
             return Avatar(dir);
         }
         catch (Exception ex)
@@ -147,7 +131,6 @@ internal static class AccountStore
 
     public static void Delete(string dir)
     {
-        Avatars.TryRemove(dir, out _);
 
         var folder = PathOf(dir);
         if (!Directory.Exists(folder))
