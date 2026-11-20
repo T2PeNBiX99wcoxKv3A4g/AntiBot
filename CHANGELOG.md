@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.18.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.17.0..v0.18.0) - 2026-11-20
+
+### ⛰️  Features
+
+- *(data)* Serve the lists from the local data plane as binary blocks - ([9815877](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/981587758530feedd6d89fc4bbbbad90660cb2e6))
+- *(debug)* Add fake instance list and operation history for screenshots - ([83db951](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/83db951f555063b3bcf8319bef44c178dcb8e134))
+- *(site)* Show the main window and popup like URLCheck - ([c23d2c3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c23d2c38e6733f623d722abbdcb72780e3c841af))
+
+### 🐛 Bug Fixes
+
+- *(site)* Pin the gfm autolink package npm cannot download - ([ebe1b9b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ebe1b9b2a899cab2cb84bcf292e5c8d3f1c3d2d0))
+
+### 📚 Documentation
+
+- Scope bot descriptions to avatar ripping instead of broad data collection - ([d0601df](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/d0601df88d4dbddadcd7c2e5787886a47099ecda))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([4f6ab82](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4f6ab82391f24b3aa5c4f8db83afa66f4b84ff39))
+
+
 ## [0.17.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.2..v0.17.0) - 2026-11-20
 
 ### ⛰️  Features
