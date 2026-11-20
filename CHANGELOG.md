@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.16.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.15.0..v0.16.0) - 2026-11-20
+
+### ⛰️  Features
+
+- *(avatars)* Serve account pictures over the local data plane - ([c650eb8](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c650eb80ac8d2051b03e3a8a4a9c35af0626d640))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([5778388](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/57783885179a44ead203cc452f09a13a5fa52371))
+
+
 ## [0.15.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.14.1..v0.15.0) - 2026-11-16
 
 ### ⛰️  Features
