@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.0..v0.16.1) - 2026-11-20
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([b0a348c](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b0a348ceb5f04304ebf9df8fbe5d34977736a56f))
+
+
 ## [0.16.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.15.0..v0.16.0) - 2026-11-20
 
 ### ⛰️  Features
