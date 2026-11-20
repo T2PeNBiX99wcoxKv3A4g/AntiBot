@@ -41,6 +41,9 @@ internal partial class VrchatLogService
     /// <summary>The file and byte offset last read, kept after closing so it is never read twice.</summary>
     private string? _lastFile;
 
+    /// <summary>Bumped whenever the buffer is thrown away, so the viewer knows to drop what it has.</summary>
+    private long _generation;
+
     private long _lastId;
     private long _lastPosition;
     private long _processCheckedAt;
@@ -82,7 +85,6 @@ internal partial class VrchatLogService
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) => context.Request.Type switch
     {
-        "log.snapshot" => Task.FromResult<NativeResponse?>(context.Reply("log.snapshot.result", Snapshot())),
         "log.export" => ExportAsync(context),
         "log.openFolder" => Task.FromResult<NativeResponse?>(OpenFolder(context)),
         _ => Task.FromResult<NativeResponse?>(null)
@@ -99,15 +101,8 @@ internal partial class VrchatLogService
 
                 Log.Debug("Read {Count} new VRChat log line(s)", batch.Lines.Count);
 
-                // The parsers need every line, but a page that just mounted only needs the tail.
-                var visible = batch.Lines.Count > BufferLimit
-                    ? batch with
-                    {
-                        Lines = [.. batch.Lines.Skip(batch.Lines.Count - BufferLimit)]
-                    }
-                    : batch;
-
-                WindowManager.Instance.NotifyMainWindow("log.lines", visible);
+                // A ping, not the lines: the viewer fetches what it is missing from the local server.
+                WindowManager.Instance.NotifyMainWindow("log.changed", null);
             }
 
             try
@@ -341,18 +336,27 @@ internal partial class VrchatLogService
         CloseFile();
 
         lock (_gate)
+        {
             _buffer.Clear();
+            _generation++;
+        }
 
         _lastFile = null;
         _lastPosition = 0;
     }
 
-    private VrchatLogSnapshot Snapshot()
+    /// <summary>
+    ///     The buffered lines the viewer does not have yet. Ids only grow, so a caller that remembers
+    ///     the newest one it drew can ask for exactly the rest.
+    /// </summary>
+    internal LogPage DataPage(long after, int limit)
     {
         var directory = SettingsService.Instance.LogDirectory;
+        var exists = Directory.Exists(directory);
 
         lock (_gate)
-            return new(Directory.Exists(directory), _running, [.. _buffer]);
+            return new(exists, _running, _generation,
+                [.. _buffer.Where(line => line.Id > after).TakeLast(limit)]);
     }
 
     private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines)
@@ -456,3 +460,6 @@ internal partial class VrchatLogService
         @"^\d{4}\.\d{2}\.\d{2} (?<time>\d{2}:\d{2}:\d{2}) (?<level>Trace|Debug|Info|Warning|Error|Fatal)\s+-\s{0,2}(?<message>.*)$")]
     private static partial Regex LinePattern();
 }
+
+/// <summary>What the data plane serves the log viewer: the lines it is missing, and the follower's state.</summary>
+internal sealed record LogPage(bool Exists, bool Running, long Generation, IReadOnlyList<VrchatLogLine> Lines);

@@ -69,7 +69,7 @@ AntiBot 會監看 VRChat 原本就會寫入的日誌，顯示目前實例中有�
 - **以 .NET 11 上的 C# 撰寫** — 所有邏輯：讀取日誌、與 VRChat API 通訊、評分、處置操作、OSC
   與本機資料庫。
 - **React 19 + TypeScript**，由 **Vite** 打包並以 **styled-components** 設計樣式 — 介面。它與
-  C# 端交換 JSON 訊息，本身不執行任何工作。
+  以訊息橋傳送命令，從本機伺服器以二進位區塊讀取清單，本身不執行任何工作。
 - **Photino.NET** — 桌面外殼。它在作業系統自己的 WebView 中顯示介面，因此 WebView 是執行階段
   相依元件：Windows 上為 WebView2，Linux 上為 WebKitGTK。
 - **SQLite** — 實例事件、玩家資料、好友邀請與操作紀錄。

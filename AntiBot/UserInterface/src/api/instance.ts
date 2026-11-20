@@ -1,5 +1,6 @@
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {Native} from "@photino-net-utils/bridge";
+import {type DataBlock, readBlock} from "./data";
 
 /** One scoring signal: a translation key, the points it added (negative for trust) and a placeholder. */
 export interface ThreatReason {
@@ -73,17 +74,100 @@ export interface InstanceSnapshot {
 
 export const emptyInstance: InstanceSnapshot = {running: false, world: "", instance: "", users: []};
 
+const LocalFlag = 1;
+const FriendFlag = 2;
+const RobotFlag = 4;
+const WhitelistFlag = 8;
+const ProfileLoadedFlag = 16;
+const AvatarLoadedFlag = 32;
+
 /** Reads the list the host built from the log, or from the API while signed in. */
 export async function getInstance(): Promise<InstanceSnapshot> {
     if (!Native.available) return emptyInstance;
 
-    return await Native.request<InstanceSnapshot>("instance.snapshot");
+    return await fetchInstance();
 }
 
-/** Subscribes to list changes. Returns an unsubscribe function. */
+/** Subscribes to list changes. The push is only a ping; the list itself is fetched. */
 export function onInstanceChanged(handler: (snapshot: InstanceSnapshot) => void): () => void {
     return Native.on((message) => {
-        if (message.type === "instance.changed") handler(message.data as InstanceSnapshot);
+        if (message.type !== "instance.changed") return;
+
+        void fetchInstance().then(handler, () => {
+            // The host did not answer; the list on screen stays as it was.
+        });
+    });
+}
+
+async function fetchInstance(): Promise<InstanceSnapshot> {
+    return toSnapshot(await readBlock("/instance"));
+}
+
+function toSnapshot(block: DataBlock): InstanceSnapshot {
+    const meta = block.meta;
+
+    return {
+        running: meta.running === "1",
+        world: meta.world ?? "",
+        instance: meta.instance ?? "",
+        users: block.rows.map((row) => toUser(row)),
+        source: meta.source === "api" || meta.source === "log" ? meta.source : undefined,
+        worldName: meta.worldName,
+        userCount: Number(meta.userCount ?? 0),
+        capacity: Number(meta.capacity ?? 0),
+        worldId: meta.worldId,
+        worldThumbnail: meta.worldThumbnail,
+        instanceType: meta.instanceType,
+        instanceRegion: meta.instanceRegion,
+        instanceOwnerId: meta.instanceOwnerId,
+        instanceShortName: meta.instanceShortName,
+        instanceNumber: meta.instanceNumber,
+        instanceDisplayName: meta.instanceDisplayName,
+        instanceRestricted: meta.instanceRestricted === "1",
+        instanceAgeGated: meta.instanceAgeGated === "1",
+    };
+}
+
+export function toUser(row: Record<string, string | number>, prefix = ""): InstanceUser {
+    const flags = Number(row[`${prefix}flags`] ?? 0);
+    const text = (name: string) => String(row[prefix + name] ?? "");
+
+    return {
+        userId: text("userId"),
+        name: text("name"),
+        local: (flags & LocalFlag) !== 0,
+        joinedAt: text("joined"),
+        iconUrl: text("icon") || undefined,
+        trust: text("trust") || undefined,
+        status: text("status") || undefined,
+        statusDescription: text("statusText") || undefined,
+        pronouns: text("pronouns") || undefined,
+        bio: text("bio") || undefined,
+        dateJoined: text("dateJoined") || undefined,
+        platform: text("platform") || undefined,
+        avatarName: text("avatarName") || undefined,
+        isRobot: (flags & RobotFlag) !== 0,
+        isFriend: (flags & FriendFlag) !== 0,
+        threat: Number(row[`${prefix}threat`] ?? 0),
+        threatReasons: toReasons(text("reasons")),
+        whitelisted: (flags & WhitelistFlag) !== 0,
+        profileLoaded: (flags & ProfileLoadedFlag) !== 0,
+        avatarLoaded: (flags & AvatarLoadedFlag) !== 0,
+    };
+}
+
+/** The reasons travel as one string: key, weight and detail, separated by unit separators. */
+function toReasons(value: string): ThreatReason[] {
+    if (!value) return [];
+
+    return value.split("\u001f").map((part) => {
+        const [text, weight, detail] = part.split("|");
+
+        return {
+            text: text as LocalizationKey,
+            weight: Number(weight ?? 0),
+            detail: detail || undefined,
+        };
     });
 }
 

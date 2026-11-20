@@ -76,7 +76,8 @@ reason is shown with its own points, so you can see why a user was flagged.
 - **C# on .NET 11** — all of the logic: reading the log, talking to the VRChat API, scoring,
   moderation, OSC and the local database.
 - **React 19 + TypeScript**, bundled by **Vite** and styled with **styled-components** — the
-  interface. It exchanges JSON messages with the C# side and does no work of its own.
+  interface. It sends commands over the message bridge and reads its lists from the local server as
+binary blocks, and does no work of its own.
 - **Photino.NET** — the desktop shell. It shows the interface in the operating system's own web
   view, which is why the web view is a runtime dependency: WebView2 on Windows, WebKitGTK on Linux.
 - **SQLite** — the instance events, player profiles, friend requests and operation history.

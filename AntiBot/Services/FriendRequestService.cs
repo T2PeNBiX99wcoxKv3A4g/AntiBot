@@ -38,9 +38,6 @@ internal partial class FriendRequestService
     {
         switch (context.Request.Type)
         {
-            case "friendRequests.snapshot":
-                return context.Reply("friendRequests.snapshot.result", Build());
-
             case "friendRequests.clear":
                 await Database.Instance.ClearFriendRequestsAsync();
 
@@ -153,6 +150,9 @@ internal partial class FriendRequestService
         ];
     }
 
+    /// <summary>The requests as the data plane serves them. The window fetches them, not the push.</summary>
+    internal FriendRequest[] DataRequests => Build();
+
     private void Publish()
     {
         var requests = Build();
@@ -170,7 +170,8 @@ internal partial class FriendRequestService
             _pushed = signature;
         }
 
-        WindowManager.Instance.NotifyMainWindow("friendRequests.changed", requests);
+        // A ping, not the list: the window fetches it from the local server.
+        WindowManager.Instance.NotifyMainWindow("friendRequests.changed", null);
 
         // A request from a high-threat user is hidden and moderated, once.
         foreach (var request in requests)

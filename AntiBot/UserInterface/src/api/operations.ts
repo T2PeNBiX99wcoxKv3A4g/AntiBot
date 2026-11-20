@@ -1,4 +1,5 @@
 import {Native} from "@photino-net-utils/bridge";
+import {readBlock} from "./data";
 
 /** One automatic action AntiBot took. */
 export interface OperationEntry {
@@ -17,7 +18,7 @@ export interface OperationEntry {
 export async function getOperations(): Promise<OperationEntry[]> {
     if (!Native.available) return [];
 
-    return await Native.request<OperationEntry[]>("operations.snapshot");
+    return await fetchOperations();
 }
 
 export async function clearOperations(): Promise<void> {
@@ -40,6 +41,25 @@ export async function undoOperation(id: number): Promise<UndoResult> {
 
 export function onOperationsChanged(handler: (entries: OperationEntry[]) => void): () => void {
     return Native.on((message) => {
-        if (message.type === "operations.changed") handler(message.data as OperationEntry[]);
+        if (message.type !== "operations.changed") return;
+
+        void fetchOperations().then(handler, () => {
+            // The host did not answer; the history on screen stays as it was.
+        });
     });
+}
+
+async function fetchOperations(): Promise<OperationEntry[]> {
+    const block = await readBlock("/operations");
+
+    return block.rows.map((row) => ({
+        id: Number(row.id),
+        at: Number(row.at),
+        kind: String(row.kind),
+        userId: String(row.userId),
+        displayName: String(row.displayName),
+        detail: String(row.detail),
+        avatarUrl: String(row.avatar ?? "") || undefined,
+        undone: Number(row.undone) !== 0,
+    }));
 }

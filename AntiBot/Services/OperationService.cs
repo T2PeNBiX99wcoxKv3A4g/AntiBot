@@ -23,9 +23,6 @@ internal partial class OperationService
     {
         switch (context.Request.Type)
         {
-            case "operations.snapshot":
-                return context.Reply("operations.snapshot.result", Snapshot());
-
             case "operations.clear":
                 await Database.Instance.ClearOperationsAsync();
                 Publish();
@@ -135,6 +132,9 @@ internal partial class OperationService
         return (true, $"{Localization.Get(KindKey(kind!))} · {entry.DisplayName}");
     }
 
+    /// <summary>The history as the data plane serves it. The window fetches it instead of a push carrying it.</summary>
+    internal OperationEntry[] DataEntries => Snapshot();
+
     /// <summary>Entries with an avatar from the profile cache, so rows recorded earlier get one too.</summary>
     private OperationEntry[] Snapshot()
     {
@@ -224,7 +224,7 @@ internal partial class OperationService
             _pushed = signature;
         }
 
-        WindowManager.Instance.NotifyMainWindow("operations.changed", entries);
+        WindowManager.Instance.NotifyMainWindow("operations.changed", null);
     }
 
     /// <summary>The translation key for an operation kind; the history page uses the same labels.</summary>

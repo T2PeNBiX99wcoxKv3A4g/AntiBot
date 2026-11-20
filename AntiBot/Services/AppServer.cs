@@ -37,6 +37,8 @@ internal static class AppServer
 
     private static void MapData(WebApplication app, string token)
     {
+        DataRoutes.Map(app, token);
+
         // An account picture is a small PNG, but it is still a picture: as a response it keeps the
         // browser's cache and connection pool, and the payload carries a URL instead of base64.
         app.MapGet($"/data/{token}/avatar/{{id}}", (string id) =>

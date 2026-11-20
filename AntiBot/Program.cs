@@ -118,6 +118,9 @@ internal static class Program
             _ = ThreatActionService.Instance;
             _ = BatchService.Instance;
 
+            // Answers where the data plane lives, so the window can fetch its lists from there.
+            _ = DataPlaneService.Instance;
+
             var manager = WindowManager.Instance;
             manager.AppUrl = appUrl;
             manager.IconPath = AppIcon.EnsureExtracted(typeof(Program).Assembly, Constants.Name);

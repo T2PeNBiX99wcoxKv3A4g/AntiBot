@@ -49,8 +49,6 @@ internal partial class InstanceService
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
         context.Request.Type switch
         {
-            "instance.snapshot" =>
-                Task.FromResult<NativeResponse?>(context.Reply("instance.snapshot.result", Snapshot())),
 #if DEBUG
             "debug.fakeInstance" => Task.FromResult<NativeResponse?>(ToggleFakeInstance(context)),
 #endif
@@ -542,7 +540,9 @@ internal partial class InstanceService
         }
 
         Log.Information("Instance list: {Count} player(s) from {Source}", snapshot.Users.Count, snapshot.Source);
-        WindowManager.Instance.NotifyMainWindow("instance.changed", snapshot);
+
+        // A ping, not the list: the window fetches it from the local server and decodes the block.
+        WindowManager.Instance.NotifyMainWindow("instance.changed", null);
 
 #if DEBUG
         // The fabricated list is for the screen only: handing it to the threat rules would make them
@@ -559,6 +559,9 @@ internal partial class InstanceService
 
     /// <summary>Raised with every pushed snapshot, so the threat rules can look at the players.</summary>
     public event Action<InstanceSnapshot>? Published;
+
+    /// <summary>The list as the data plane serves it. The window reads it from there, not from a push.</summary>
+    internal InstanceSnapshot DataSnapshot => Snapshot();
 
     /// <summary>
     ///     Raised for a join or a leave that is happening now, even when the user is not in the list

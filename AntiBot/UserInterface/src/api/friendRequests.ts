@@ -1,5 +1,6 @@
 import {Native} from "@photino-net-utils/bridge";
-import type {InstanceUser} from "./instance";
+import {readBlock} from "./data";
+import {type InstanceUser, toUser} from "./instance";
 
 /** One friend request AntiBot has seen, with the sender described like an instance player. */
 export interface FriendRequest {
@@ -19,7 +20,7 @@ export interface FriendRequest {
 export async function getFriendRequests(): Promise<FriendRequest[]> {
     if (!Native.available) return [];
 
-    return await Native.request<FriendRequest[]>("friendRequests.snapshot");
+    return await fetchFriendRequests();
 }
 
 export async function clearFriendRequests(): Promise<void> {
@@ -37,6 +38,24 @@ export async function undoFriendRequest(id: string): Promise<void> {
 
 export function onFriendRequestsChanged(handler: (requests: FriendRequest[]) => void): () => void {
     return Native.on((message) => {
-        if (message.type === "friendRequests.changed") handler(message.data as FriendRequest[]);
+        if (message.type !== "friendRequests.changed") return;
+
+        void fetchFriendRequests().then(handler, () => {
+            // The host did not answer; the list on screen stays as it was.
+        });
     });
+}
+
+async function fetchFriendRequests(): Promise<FriendRequest[]> {
+    const block = await readBlock("/requests");
+
+    return block.rows.map((row) => ({
+        id: String(row.id),
+        userId: String(row.userId),
+        createdAt: String(row.createdAt),
+        active: Number(row.active) !== 0,
+        rejected: Number(row.rejected) !== 0,
+        firstSeen: Number(row.firstSeen),
+        user: toUser(row, "user."),
+    }));
 }

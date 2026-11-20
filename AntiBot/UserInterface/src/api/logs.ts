@@ -1,4 +1,5 @@
 import {Native} from "@photino-net-utils/bridge";
+import {readBlock} from "./data";
 
 /** One line of the VRChat log, already split into the parts the viewer renders. */
 export interface LogLine {
@@ -21,7 +22,7 @@ export interface LogSnapshot extends LogStatus {
     lines: LogLine[];
 }
 
-/** Body of the `log.lines` push; `reset` means the viewer should drop its current lines. */
+/** Body of a push; `reset` means the viewer should drop its current lines. */
 export interface LogBatch extends LogStatus {
     reset: boolean;
     lines: LogLine[];
@@ -31,17 +32,41 @@ export const desktopAvailable = Native.available;
 
 export const emptyStatus: LogStatus = {exists: false, running: false};
 
+/** How many lines one request asks for. */
+const SnapshotLines = 5_000;
+const PushLines = 3_000;
+
+/** The newest line the page has been given, and the buffer it belongs to. */
+let newest = 0;
+let generation = -1;
+
 /** Reads what the follower has buffered, plus whether VRChat is running right now. */
 export async function getLogSnapshot(): Promise<LogSnapshot> {
     if (!Native.available) return {...emptyStatus, lines: []};
 
-    return await Native.request<LogSnapshot>("log.snapshot");
+    const page = await fetchLog(0, SnapshotLines);
+    generation = page.generation;
+    newest = page.lines.at(-1)?.id ?? newest;
+
+    return {exists: page.exists, running: page.running, lines: page.lines};
 }
 
-/** Subscribes to lines pushed while VRChat writes its log. Returns an unsubscribe function. */
+/** Subscribes to the ping that says new lines exist. Returns an unsubscribe function. */
 export function onLogLines(handler: (batch: LogBatch) => void): () => void {
     return Native.on((message) => {
-        if (message.type === "log.lines") handler(message.data as LogBatch);
+        if (message.type !== "log.changed") return;
+
+        void fetchLog(newest, PushLines).then((page) => {
+            // A new buffer (VRChat restarted, or the folder changed) starts the view over.
+            const reset = generation >= 0 && page.generation !== generation;
+
+            generation = page.generation;
+            newest = page.lines.at(-1)?.id ?? newest;
+
+            handler({exists: page.exists, running: page.running, reset, lines: page.lines});
+        }, () => {
+            // The host did not answer; the next ping asks again.
+        });
     });
 }
 
@@ -63,4 +88,26 @@ export async function exportLog(): Promise<LogExport> {
     if (!Native.available) return {saved: false, lines: 0};
 
     return await Native.request<LogExport>("log.export");
+}
+
+interface LogPage extends LogStatus {
+    generation: number;
+    lines: LogLine[];
+}
+
+/** One page of lines newer than the ones the page already has. */
+async function fetchLog(after: number, limit: number): Promise<LogPage> {
+    const block = await readBlock(`/log?after=${Math.max(0, after)}&limit=${limit}`);
+
+    return {
+        exists: block.meta.exists === "1",
+        running: block.meta.running === "1",
+        generation: Number(block.meta.generation ?? 0),
+        lines: block.rows.map((row) => ({
+            id: Number(row.id),
+            time: String(row.time),
+            level: String(row.level),
+            message: String(row.message),
+        })),
+    };
 }

@@ -98,4 +98,5 @@ namespace AntiBot.Messaging;
 #if DEBUG
 [JsonSerializable(typeof(AntiBot.Services.FakeDataPayload))]
 #endif
+[JsonSerializable(typeof(AntiBot.Services.DataBasePayload))]
 internal sealed partial class AppJsonContext : JsonSerializerContext;
