@@ -6,8 +6,8 @@ It is a guess, not a verdict: a real person can score high, and a bot can score 
 
 > **What it can and cannot tell apart**
 >
-> AntiBot is aimed at automated bots that connect through modified clients to collect data such as
-> avatars, voice and player information. A real person using a modified client can look almost
+> AntiBot is aimed at automated bots that join through modified clients to download avatars without
+> permission and reuse them. A real person using a modified client can look almost
 > identical, and a high trust rank does not prove that an account belongs to a human. The score
 > cannot reliably separate the two; treat it as a hint, not a judgment.
 

@@ -36,8 +36,8 @@ It needs no mod, plugin or patched VRChat client.
 
 ## Why
 
-Public instances are a good place for bots to find avatars, voice data and account links. AntiBot
-scores the users who join and gives you a moment to react before an avatar finishes downloading.
+Public instances are a good place for bots to find avatars to download and reuse. AntiBot scores the
+users who join and gives you a moment to react before an avatar finishes downloading.
 
 The score is a guess, not a verdict: a real person can score high, and a bot can score low. Every
 reason is shown with its own points, so you can see why a user was flagged.
