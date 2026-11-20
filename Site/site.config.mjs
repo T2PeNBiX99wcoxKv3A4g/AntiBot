@@ -24,7 +24,7 @@ export const site = {
         {slug: "Avatar", group: "setup"},
         {slug: "Threat-Scoring", group: "reference"},
         {slug: "Automatic-Protection", group: "reference"},
-        {slug: "Changelog", group: "history", source: "../CHANGELOG.md"},
+        {slug: "Changelog", group: "history", source: "../CHANGELOG.md", remote: "master/CHANGELOG.md"},
     ],
     theme: {
         accent: "#a78bfa",
