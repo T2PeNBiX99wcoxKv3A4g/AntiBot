@@ -206,6 +206,10 @@ Linux 請使用 `-r linux-x64`。這會在 `AntiBot/bin/Release/net11.0/<rid>/pu
   包括端點、登入與雙重驗證流程、處置操作、頭像查詢格式，以及部分日誌解析。VRCX 的 MIT 授權
   收錄於 [LICENSE_VRCX](LICENSE_VRCX)。
 
+## 關於 AI 工具的使用
+
+部分程式碼、文件與圖片使用了 AI 工具製作。
+
 ## 授權
 
 MIT —— 詳見 [LICENSE](LICENSE)。

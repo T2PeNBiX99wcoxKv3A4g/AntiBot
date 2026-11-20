@@ -224,6 +224,10 @@ Linux では `-r linux-x64` を使用します。`AntiBot/bin/Release/net11.0/<r
   形式、ログ解析の一部が含まれます。VRCX の MIT ライセンスは
   [LICENSE_VRCX](LICENSE_VRCX) に収録しています。
 
+## AI ツールの使用について
+
+コード、ドキュメント、画像の一部は AI ツールを使って作成しています。
+
 ## ライセンス
 
 MIT — [LICENSE](LICENSE) を参照してください。

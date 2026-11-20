@@ -219,6 +219,11 @@ on startup.
   avatar lookup format, and parts of the log parsing. VRCX's MIT license is reproduced in
   [LICENSE_VRCX](LICENSE_VRCX).
 
+## Made with AI
+
+Parts of this project — the code, the documentation and the images — were made with the help of AI
+tools.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
