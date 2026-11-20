@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.16.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.1..v0.16.2) - 2026-11-20
+
+### ⚙️ Miscellaneous Tasks
+
+- *(libs)* Update the shared bridge to 0.39.1 - ([4bd3e42](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/4bd3e4225ccb0569d8e15e69964530808040c046))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([ffc6a94](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ffc6a9454fdf1ab0cfb021910514854c24298ac3))
+
+
 ## [0.16.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.16.0..v0.16.1) - 2026-11-20
 
 ### Action
