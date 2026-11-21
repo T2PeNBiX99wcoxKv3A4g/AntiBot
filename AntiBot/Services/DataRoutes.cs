@@ -1,8 +1,8 @@
 using System.Globalization;
-using AntiBot.Messaging;
 using AntiBot.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using PhotinoNetUtils.Hosting;
 using PhotinoNetUtils.Messaging;
 using PhotinoNetUtils.Utils;
 
@@ -43,7 +43,7 @@ internal static class DataRoutes
         app.MapGet($"/data/{token}/log", (Delegate)Log);
     }
 
-    private static IResult Block(byte[] bytes) => Results.Bytes(bytes, DataBlock.ContentType);
+    private static IResult Block(byte[] bytes) => BinaryContent.Bytes(bytes, DataBlock.ContentType);
 
     /// <summary>Who is in the instance, and which instance that is.</summary>
     private static byte[] Instance()
@@ -187,7 +187,7 @@ internal static class DataRoutes
         foreach (var line in page.Lines)
             block.Row([line.Time, line.Level, line.Message], line.Id);
 
-        return Block(block.Build());
+        return DataBlockResults.Block(block);
     }
 
     /// <summary>The reasons as one string: key, weight and detail, separated by unit separators.</summary>
