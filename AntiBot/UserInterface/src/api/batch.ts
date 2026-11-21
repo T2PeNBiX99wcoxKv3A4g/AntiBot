@@ -1,6 +1,7 @@
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {Native} from "@photino-net-utils/bridge";
-import type {InstanceUser} from "./instance";
+import {data} from "./data";
+import {type InstanceUser, toUser} from "./instance";
 
 /** The users the pasted links point at, and the lines that did not contain a user id. */
 export interface BatchPreview {
@@ -59,7 +60,21 @@ export interface BatchState {
 export async function parseLinks(text: string): Promise<BatchPreview> {
     if (!Native.available) return {users: [], invalid: []};
 
-    return await Native.request<BatchPreview>("batch.parse", {text}, 180_000);
+    try {
+        const page = await data.readBlock("/batch-preview", {
+            method: "POST",
+            headers: {"Content-Type": "text/plain; charset=utf-8"},
+            body: text,
+        });
+
+        return {
+            users: page.rows.map((row) => toUser(row)),
+            invalid: split(page.meta.invalid),
+            error: textOrUndefined(page.meta.error),
+        };
+    } catch {
+        return await Native.request<BatchPreview>("batch.parse", {text}, 180_000);
+    }
 }
 
 /** Starts the queue. The progress arrives as `batch.progress` events. */
@@ -76,7 +91,27 @@ export async function getBatchState(): Promise<BatchState> {
     if (!Native.available)
         return {running: false, done: 0, total: 0, failed: 0, cancelled: false, outcomes: [], actions: []};
 
-    return await Native.request<BatchState>("batch.state");
+    try {
+        const page = await data.readBlock("/batch-state");
+        const meta = page.meta;
+
+        return {
+            running: meta.running === "1",
+            done: Number(meta.done ?? 0),
+            total: Number(meta.total ?? 0),
+            failed: Number(meta.failed ?? 0),
+            cancelled: meta.cancelled === "1",
+            error: textOrUndefined(meta.error),
+            outcomes: page.rows.map((row) => ({
+                userId: String(row.userId),
+                ok: Number(row.ok) !== 0,
+                error: textOrUndefined(row.error),
+            })),
+            actions: split(meta.actions) as LocalizationKey[],
+        };
+    } catch {
+        return await Native.request<BatchState>("batch.state");
+    }
 }
 
 export function onBatchProgress(handler: (progress: BatchProgress) => void): () => void {
@@ -87,6 +122,30 @@ export function onBatchProgress(handler: (progress: BatchProgress) => void): () 
 
 export function onBatchFinished(handler: (finished: BatchFinished) => void): () => void {
     return Native.on((message) => {
-        if (message.type === "batch.finished") handler(message.data as BatchFinished);
+        if (message.type !== "batch.finished") return;
+
+        // The event is a ping; the outcome list comes from the data plane.
+        const fallback = message.data as BatchFinished;
+        void getBatchState().then(
+            (state) => handler({
+                cancelled: state.cancelled,
+                done: state.done,
+                total: state.total,
+                failed: state.failed,
+                error: state.error,
+                outcomes: state.outcomes,
+            }),
+            () => handler(fallback),
+        );
     });
+}
+
+function split(value: string | number | undefined): string[] {
+    const text = typeof value === "string" ? value : "";
+    return text.length > 0 ? text.split("\u001f") : [];
+}
+
+function textOrUndefined(value: string | number | undefined): string | undefined {
+    const text = typeof value === "string" ? value : "";
+    return text.length > 0 ? text : undefined;
 }

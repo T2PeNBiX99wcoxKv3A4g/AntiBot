@@ -24,6 +24,8 @@ internal static class DataRoutes
     public const ushort OperationsKind = 2;
     public const ushort LogKind = 3;
     public const ushort RequestsKind = 4;
+    public const ushort BatchPreviewKind = 5;
+    public const ushort BatchStateKind = 6;
 
     private const int DefaultLogLines = 5000;
     private const int MaxLogLines = 20_000;
@@ -41,6 +43,42 @@ internal static class DataRoutes
         app.MapGet($"/data/{token}/operations", (Delegate)((HttpContext _) => Block(Operations())));
         app.MapGet($"/data/{token}/requests", (Delegate)((HttpContext _) => Block(Requests())));
         app.MapGet($"/data/{token}/log", (Delegate)Log);
+
+        app.MapPost($"/data/{token}/batch-preview", (Delegate)(async (HttpContext context) =>
+        {
+            using var reader = new StreamReader(context.Request.Body);
+            var text = await reader.ReadToEndAsync(context.RequestAborted);
+            var preview = await BatchService.Instance.ParseDataAsync(text, context.RequestAborted);
+
+            var block = new DataBlock(BatchPreviewKind)
+                .Meta("invalid", string.Join('\u001f', preview.Invalid))
+                .Meta("error", preview.Error ?? "");
+
+            AddUsers(block, preview.Users);
+            return DataBlockResults.Block(block);
+        }));
+
+        app.MapGet($"/data/{token}/batch-state", (Delegate)((HttpContext _) =>
+        {
+            var state = BatchService.Instance.StateData();
+
+            var block = new DataBlock(BatchStateKind)
+                .Meta("running", state.Running ? "1" : "0")
+                .Meta("done", state.Done.ToString(CultureInfo.InvariantCulture))
+                .Meta("total", state.Total.ToString(CultureInfo.InvariantCulture))
+                .Meta("failed", state.Failed.ToString(CultureInfo.InvariantCulture))
+                .Meta("cancelled", state.Cancelled ? "1" : "0")
+                .Meta("error", state.Error ?? "")
+                .Meta("actions", string.Join('\u001f', state.Actions))
+                .Text("userId")
+                .Text("error")
+                .Number("ok");
+
+            foreach (var outcome in state.Outcomes)
+                block.Row([outcome.UserId, outcome.Error ?? ""], outcome.Ok ? 1 : 0);
+
+            return DataBlockResults.Block(block);
+        }));
     }
 
     private static IResult Block(byte[] bytes) => BinaryContent.Bytes(bytes, DataBlock.ContentType);
@@ -142,6 +180,15 @@ internal static class DataRoutes
     ];
 
     private static double[] Numbers(InstanceUser user) => [user.Threat, Flags(user)];
+
+    /// <summary>Adds the standard player columns and one row per user, for lists outside the instance.</summary>
+    internal static void AddUsers(DataBlock block, IEnumerable<InstanceUser> users)
+    {
+        UserColumns(block);
+
+        foreach (var user in users)
+            block.Row(Text(user), Numbers(user));
+    }
 
     /// <summary>Every automatic action, newest first.</summary>
     private static byte[] Operations()

@@ -39,13 +39,16 @@ internal partial class BatchService
     };
 
     /// <summary>Pulls the ids out of the pasted links and loads every profile the instance list shows.</summary>
-    private async Task<NativeResponse?> ParseAsync(NativeContext context)
+    private async Task<NativeResponse?> ParseAsync(NativeContext context) =>
+        context.Reply("batch.parse.result",
+            await ParseDataAsync(context.Payload<BatchParseRequest>()?.Text ?? "", CancellationToken.None));
+
+    /// <summary>The parsed preview, for the binary data route and the bridge fallback.</summary>
+    public async Task<BatchPreviewPayload> ParseDataAsync(string text, CancellationToken cancellationToken)
     {
         if (!AuthService.Instance.IsReady)
-            return context.Reply("batch.parse.result",
-                new BatchPreviewPayload([], [], Localization.Get("batch.error.signed_out")));
+            return new BatchPreviewPayload([], [], Localization.Get("batch.error.signed_out"));
 
-        var text = context.Payload<BatchParseRequest>()?.Text ?? "";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var ids = new List<string>();
         var invalid = new List<string>();
@@ -65,8 +68,7 @@ internal partial class BatchService
         }
 
         if (ids.Count == 0)
-            return context.Reply("batch.parse.result",
-                new BatchPreviewPayload([], [.. invalid], Localization.Get("batch.error.no_users")));
+            return new BatchPreviewPayload([], [.. invalid], Localization.Get("batch.error.no_users"));
 
         var users = new List<InstanceUser>(ids.Count);
 
@@ -76,20 +78,20 @@ internal partial class BatchService
 
             try
             {
-                await PlayerService.Instance.FetchNowAsync(id, CancellationToken.None);
+                await PlayerService.Instance.FetchNowAsync(id, cancellationToken);
                 users.Add(InstanceService.Instance.Describe(id, ""));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 Log.Warning(ex, "Batch profile lookup for {UserId} failed", id);
                 users.Add(InstanceService.Instance.Describe(id, ""));
             }
 
             if (index + 1 < ids.Count)
-                await Task.Delay(ProfileGap, CancellationToken.None);
+                await Task.Delay(ProfileGap, cancellationToken);
         }
 
-        return context.Reply("batch.parse.result", new BatchPreviewPayload([.. users], [.. invalid]));
+        return new BatchPreviewPayload([.. users], [.. invalid]);
     }
 
     private Task<NativeResponse?> RunAsync(NativeContext context)
@@ -228,7 +230,9 @@ internal partial class BatchService
                 _cancellation?.Dispose();
                 _cancellation = null;
 
-                payload = new(cancelled, _done, _total, _failed, error, [.. outcomes]);
+                // The event is only a ping now: the window fetches the outcome list from the data
+                // plane, so a large batch does not travel through the bridge as JSON.
+                payload = new(cancelled, _done, _total, _failed, error, []);
             }
 
             WindowManager.Instance.NotifyMainWindow("batch.finished", payload);
@@ -264,11 +268,14 @@ internal partial class BatchService
         WindowManager.Instance.NotifyMainWindow("batch.progress", payload);
     }
 
-    private BatchStatePayload State()
+    /// <summary>The running batch or the last one that finished, for the binary data route.</summary>
+    public BatchStatePayload StateData()
     {
         lock (_gate)
             return new(_running, _done, _total, _failed, _cancelled, _error, [.. _outcomes], _actions);
     }
+
+    private BatchStatePayload State() => StateData();
 
     private static (string Api, string Kind, string Label)[] ConfiguredActions()
     {
