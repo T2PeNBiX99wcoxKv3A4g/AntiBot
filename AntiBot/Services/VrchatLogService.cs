@@ -102,7 +102,7 @@ internal partial class VrchatLogService
                 Log.Debug("Read {Count} new VRChat log line(s)", batch.Lines.Count);
 
                 // A ping, not the lines: the viewer fetches what it is missing from the local server.
-                WindowManager.Instance.NotifyMainWindow("log.changed", null);
+                WindowManager.Instance.NotifyMainWindowSoon("log.changed");
             }
 
             try
@@ -354,9 +354,20 @@ internal partial class VrchatLogService
         var directory = SettingsService.Instance.LogDirectory;
         var exists = Directory.Exists(directory);
 
+        VrchatLogLine[] buffered;
+        bool running;
+        long generation;
+
+        // Only the copy is taken under the lock: filtering a full buffer must never hold up the read
+        // loop, which is what the parsers wait for.
         lock (_gate)
-            return new(exists, _running, _generation,
-                [.. _buffer.Where(line => line.Id > after).TakeLast(limit)]);
+        {
+            buffered = [.. _buffer];
+            running = _running;
+            generation = _generation;
+        }
+
+        return new(exists, running, generation, [.. buffered.Where(line => line.Id > after).TakeLast(limit)]);
     }
 
     private VrchatLogBatch State(string directory, bool reset, List<VrchatLogLine> lines)

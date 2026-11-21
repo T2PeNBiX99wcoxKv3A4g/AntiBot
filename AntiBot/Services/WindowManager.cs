@@ -18,6 +18,12 @@ internal partial class WindowManager
 {
     private bool _allowClose;
     private bool _hideWhenRendered;
+
+    /// <summary>Types whose push is already on its way to the web view, plus the ones asked for since.</summary>
+    private readonly HashSet<string> _notifying = [];
+    private readonly HashSet<string> _notifyAgain = [];
+    private readonly Lock _notifyGate = new();
+
     private PhotinoWindow? _mainWindow;
     private WebViewRecovery? _webViewRecovery;
 
@@ -153,6 +159,45 @@ internal partial class WindowManager
 
     /// <summary>Pushes an event to the interface; the shared gate queues it until the page is ready.</summary>
     public void NotifyMainWindow(string type, object? data) => WebViewEvents.Notify(type, data);
+
+    /// <summary>
+    ///     Pushes an event from a background thread without making it wait for the web view: the
+    ///     caller keeps reading VRChat's log even when the interface is busy drawing. At most one push
+    ///     per type is in flight, and a request that arrives meanwhile is folded into one more push,
+    ///     so a slow page cannot build a backlog.
+    /// </summary>
+    public void NotifyMainWindowSoon(string type, object? data = null)
+    {
+        lock (_notifyGate)
+        {
+            if (!_notifying.Add(type))
+            {
+                _notifyAgain.Add(type);
+                return;
+            }
+        }
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                WebViewEvents.Notify(type, data);
+            }
+            finally
+            {
+                bool again;
+
+                lock (_notifyGate)
+                {
+                    _notifying.Remove(type);
+                    again = _notifyAgain.Remove(type);
+                }
+
+                if (again)
+                    NotifyMainWindowSoon(type);
+            }
+        });
+    }
 
     private void HideWhenRendered()
     {

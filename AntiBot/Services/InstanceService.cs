@@ -542,7 +542,7 @@ internal partial class InstanceService
         Log.Information("Instance list: {Count} player(s) from {Source}", snapshot.Users.Count, snapshot.Source);
 
         // A ping, not the list: the window fetches it from the local server and decodes the block.
-        WindowManager.Instance.NotifyMainWindow("instance.changed", null);
+        WindowManager.Instance.NotifyMainWindowSoon("instance.changed");
 
 #if DEBUG
         // The fabricated list is for the screen only: handing it to the threat rules would make them

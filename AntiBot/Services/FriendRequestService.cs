@@ -171,7 +171,7 @@ internal partial class FriendRequestService
         }
 
         // A ping, not the list: the window fetches it from the local server.
-        WindowManager.Instance.NotifyMainWindow("friendRequests.changed", null);
+        WindowManager.Instance.NotifyMainWindowSoon("friendRequests.changed");
 
         // A request from a high-threat user is hidden and moderated, once.
         foreach (var request in requests)

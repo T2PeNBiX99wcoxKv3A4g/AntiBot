@@ -1,5 +1,8 @@
-import {Native} from "@photino-net-utils/bridge";
+import {Log, Native} from "@photino-net-utils/bridge";
 import {readBlock} from "./data";
+
+/** Failures of the viewer go into the host's log, so a report can show what the page saw. */
+const log = Log.child("logs");
 
 /** One line of the VRChat log, already split into the parts the viewer renders. */
 export interface LogLine {
@@ -50,12 +53,17 @@ let queuedHandler: ((batch: LogBatch) => void) | null = null;
 export async function getLogSnapshot(): Promise<LogSnapshot> {
     if (!Native.available) return {...emptyStatus, lines: []};
 
-    const page = await fetchLog(0, SnapshotLines);
-    generation = page.generation;
-    newest = page.lines.at(-1)?.id ?? newest;
-    knownStatus = {exists: page.exists, running: page.running};
+    try {
+        const page = await fetchLog(0, SnapshotLines);
+        generation = page.generation;
+        newest = page.lines.at(-1)?.id ?? newest;
+        knownStatus = {exists: page.exists, running: page.running};
 
-    return {exists: page.exists, running: page.running, lines: page.lines};
+        return {exists: page.exists, running: page.running, lines: page.lines};
+    } catch (error) {
+        log.warn("the log snapshot failed", {error: String(error)});
+        throw error;
+    }
 }
 
 /** Subscribes to the ping that says new lines exist. Returns an unsubscribe function. */
@@ -95,8 +103,9 @@ function pull(handler: (batch: LogBatch) => void): void {
         if (!reset && !statusChanged && page.lines.length === 0) return;
 
         handler({...status, reset, lines: page.lines});
-    }, () => {
-        // The host did not answer; the next ping asks again.
+    }, (error) => {
+        // The host did not answer; the next ping asks again, and the log says why.
+        log.debug("could not read the log page", {error: String(error)});
     }).finally(() => {
         fetching = false;
 

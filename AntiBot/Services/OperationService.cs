@@ -224,7 +224,7 @@ internal partial class OperationService
             _pushed = signature;
         }
 
-        WindowManager.Instance.NotifyMainWindow("operations.changed", null);
+        WindowManager.Instance.NotifyMainWindowSoon("operations.changed");
     }
 
     /// <summary>The translation key for an operation kind; the history page uses the same labels.</summary>
