@@ -39,6 +39,12 @@ const PushLines = 3_000;
 /** The newest line the page has been given, and the buffer it belongs to. */
 let newest = 0;
 let generation = -1;
+let knownStatus: LogStatus = {...emptyStatus};
+
+/** One fetch at a time: a transfer can ping faster than a request settles. */
+let fetching = false;
+let queued = false;
+let queuedHandler: ((batch: LogBatch) => void) | null = null;
 
 /** Reads what the follower has buffered, plus whether VRChat is running right now. */
 export async function getLogSnapshot(): Promise<LogSnapshot> {
@@ -47,6 +53,7 @@ export async function getLogSnapshot(): Promise<LogSnapshot> {
     const page = await fetchLog(0, SnapshotLines);
     generation = page.generation;
     newest = page.lines.at(-1)?.id ?? newest;
+    knownStatus = {exists: page.exists, running: page.running};
 
     return {exists: page.exists, running: page.running, lines: page.lines};
 }
@@ -56,17 +63,50 @@ export function onLogLines(handler: (batch: LogBatch) => void): () => void {
     return Native.on((message) => {
         if (message.type !== "log.changed") return;
 
-        void fetchLog(newest, PushLines).then((page) => {
-            // A new buffer (VRChat restarted, or the folder changed) starts the view over.
-            const reset = generation >= 0 && page.generation !== generation;
+        pull(handler);
+    });
+}
 
-            generation = page.generation;
-            newest = page.lines.at(-1)?.id ?? newest;
+/**
+ * Fetches what the page is missing, one request at a time. A ping that arrives while a request is
+ * in flight only marks that another pass is needed, so the same lines are never fetched twice and
+ * the view is not handed two overlapping batches.
+ */
+function pull(handler: (batch: LogBatch) => void): void {
+    if (fetching) {
+        queued = true;
+        queuedHandler = handler;
+        return;
+    }
 
-            handler({exists: page.exists, running: page.running, reset, lines: page.lines});
-        }, () => {
-            // The host did not answer; the next ping asks again.
-        });
+    fetching = true;
+
+    void fetchLog(newest, PushLines).then((page) => {
+        // A new buffer (VRChat restarted, or the folder changed) starts the view over.
+        const reset = generation >= 0 && page.generation !== generation;
+        const status = {exists: page.exists, running: page.running};
+        const statusChanged = status.exists !== knownStatus.exists || status.running !== knownStatus.running;
+
+        generation = page.generation;
+        knownStatus = status;
+        newest = page.lines.at(-1)?.id ?? newest;
+
+        // Nothing new and nothing changed: a state update would only redraw the same rows.
+        if (!reset && !statusChanged && page.lines.length === 0) return;
+
+        handler({...status, reset, lines: page.lines});
+    }, () => {
+        // The host did not answer; the next ping asks again.
+    }).finally(() => {
+        fetching = false;
+
+        if (queued && queuedHandler) {
+            queued = false;
+
+            const next = queuedHandler;
+            queuedHandler = null;
+            pull(next);
+        }
     });
 }
 

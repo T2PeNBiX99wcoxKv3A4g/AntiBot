@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useMemo, useRef, useState} from "react";
+import {memo, type ReactNode, useEffect, useMemo, useRef, useState} from "react";
 import styled from "styled-components";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {useTranslation} from "@photino-net-utils/bridge";
@@ -66,7 +66,8 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
             window.cancelAnimationFrame(frame);
             window.clearTimeout(timer);
         };
-    }, [visible, follow]);
+        // Only new lines move the view: typing in the filter must not jump to the bottom.
+    }, [lines.length, follow]);
 
     useEffect(() => {
         if (!notice) return;
@@ -215,11 +216,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
                         {visible.map(({line, level}) => line.level === "session" ? (
                             <SessionDivider key={line.id}>{t("new_session")}</SessionDivider>
                         ) : (
-                            <Row $level={level} key={line.id}>
-                                <Time>{line.time}</Time>
-                                <Tag $level={level}>{line.level ? LEVEL_TAGS[level] ?? line.level : ""}</Tag>
-                                <Message $level={level}>{highlight(line.message, query)}</Message>
-                            </Row>
+                            <LogRow key={line.id} level={level} line={line} query={query}/>
                         ))}
                     </Rows>
                 )}
@@ -241,6 +238,17 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
         </Page>
     );
 }
+
+/** One row of the log. The line object is stable, so a batch only renders the lines it added. */
+const LogRow = memo(function LogRow({line, level, query}: { line: LogLine; level: string; query: string }) {
+    return (
+        <Row $level={level}>
+            <Time>{line.time}</Time>
+            <Tag $level={level}>{line.level ? LEVEL_TAGS[level] ?? line.level : ""}</Tag>
+            <Message $level={level}>{highlight(line.message, query)}</Message>
+        </Row>
+    );
+});
 
 /** Applies the level and text filters, carrying a continuation line's level over from its parent. */
 function filterLines(lines: LogLine[], query: string, hidden: Set<string>): VisibleLine[] {

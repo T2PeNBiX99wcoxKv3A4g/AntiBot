@@ -66,9 +66,14 @@ export function useVrchatLog(): VrchatLog {
 }
 
 function appendBatch(current: LogLine[], batch: LogBatch, clearedUpTo: number): LogLine[] {
-    const incoming = batch.lines.filter((line) => line.id > clearedUpTo);
+    if (batch.reset) return batch.lines.filter((line) => line.id > clearedUpTo).slice(-MAX_LINES);
 
-    if (batch.reset) return incoming.slice(-MAX_LINES);
+    // Ids only grow, so anything at or below the last line is already on screen. A fetch that
+    // overlapped another one would otherwise add the same line twice.
+    const newest = current.at(-1)?.id ?? 0;
+    const incoming = batch.lines.filter((line) => line.id > newest && line.id > clearedUpTo);
+
+    if (incoming.length === 0) return current;
 
     const merged = [...current, ...incoming];
     return merged.length > MAX_LINES ? merged.slice(-MAX_LINES) : merged;
