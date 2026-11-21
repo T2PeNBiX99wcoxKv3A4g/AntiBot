@@ -12,6 +12,8 @@ on:
       - ".gitignore"
       - "LICENSE*"
       - "Site/**"
+      # The site's own copy of the shared package: the desktop build never uses it.
+      - "AntiBot/Libs/photino-net-utils-site-*.tgz"
       - ".github/workflows/site.yml"
       - ".github/workflows/dependabot-auto-merge.yml"
 
