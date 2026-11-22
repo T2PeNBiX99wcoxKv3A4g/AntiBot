@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.19.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.18.0..v0.19.0) - 2026-11-22
+
+### ⛰️  Features
+
+- *(data)* Serve batch preview and outcomes as binary blocks - ([47160d5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/47160d59ee7adad9fb60327a14810c434246236a))
+
+### 🐛 Bug Fixes
+
+- *(logs)* Keep overlapping fetches from drawing a line twice - ([7cbce22](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/7cbce228ec88b49ef20a237dd829fbd3735454c9))
+
+### 🚜 Refactor
+
+- *(data)* Use the shared binary block and client - ([de2cd90](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/de2cd903094a5149c7bf855d86c1cfa31f0ea7fc))
+
+### 📚 Documentation
+
+- Say that AI tools helped build the project - ([33c5fa6](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/33c5fa690f1aaeaa6e986590c107c7671bbccbfd))
+
+### ⚡ Performance
+
+- *(batch)* Throttle progress updates to the window - ([a752805](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a7528051390c8dee95a198d68e39a427ee0d1914))
+- *(logs)* Let the log reader run ahead of the viewer - ([fcd6e96](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fcd6e9690e148d021a7545273382dd3ac052a826))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(site)* The site package 1.1.0, and no release for site-only changes - ([0a83274](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0a83274c2cb528406bec4c0dd68a86b2428d0be3))
+- Update the shared bridge and build - ([c6671a5](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c6671a53b3f4cc3ecaeb93d4612e1192d1a8c866))
+- Update PhotinoNetUtils bridge to version 0.43.0 - ([ce2feba](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ce2feba2edabdd2813fc28fb04cd8464a682f0be))
+- Update the shared PhotinoNETUtils build - ([33eb468](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/33eb468602513064e2ce0600af5b8bf528f323c6))
+- Update the shared PhotinoNETUtils build - ([98605c4](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/98605c485b3e46d1c7c3cb2383b4c086b1467f71))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([6c1432f](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6c1432f33450b4f35edda6afcebb85151c0936fe))
+
+### Build
+
+- *(ui)* Rebuild the bundle for the shared bridge 0.44.2 - ([14d34fc](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/14d34fcc671e5ee23ea877ef2446bf66c4b70d03))
+
+
 ## [0.18.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.17.0..v0.18.0) - 2026-11-20
 
 ### ⛰️  Features
