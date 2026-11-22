@@ -60,7 +60,12 @@ internal partial class ThreatActionService
         }
     }
 
-    private void OnSnapshot(InstanceSnapshot snapshot)
+    private void OnSnapshot(InstanceSnapshot snapshot) =>
+        // The sweep starts at once but never on the caller's thread: that thread is the log reader,
+        // and parsing the next lines matters more than scanning the users already known.
+        _ = Task.Run(() => Sweep(snapshot));
+
+    private void Sweep(InstanceSnapshot snapshot)
     {
         var settings = SettingsService.Instance.Current;
 
