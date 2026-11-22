@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.19.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.0..v0.19.1) - 2026-11-22
+
+### ⚡ Performance
+
+- *(threat)* Sweep a snapshot off the log reader's thread - ([94cf20b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/94cf20bfce5586505aa7d2da21fd7f3cce2fe633))
+
+### ⚙️ Miscellaneous Tasks
+
+- Update the shared bridge and build - ([0b3bfe6](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0b3bfe69089b1665d7f957d670de16073db3bf47))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([c037b7b](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c037b7b4f0b04358695def98d8edf69d00944d19))
+
+### Merge
+
+- Update version after release - ([fddae2e](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/fddae2e7b72dcf0ede38890ada45849722b1678e))
+
+
 ## [0.19.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.18.0..v0.19.0) - 2026-11-22
 
 ### ⛰️  Features
