@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.1..v0.19.2) - 2026-11-22
+
+### 🐛 Bug Fixes
+
+- *(logs)* Keep following the newest line once the buffer is full - ([c74b2e2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/c74b2e20e097015211292b2d1b3813b0ccc338d8))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([a5e7900](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/a5e79000c00e1fbaa514c198592be79f30af4b6c))
+
+
 ## [0.19.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.0..v0.19.1) - 2026-11-22
 
 ### ⚡ Performance
