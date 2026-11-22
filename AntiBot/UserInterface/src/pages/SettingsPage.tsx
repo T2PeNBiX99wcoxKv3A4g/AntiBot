@@ -1085,7 +1085,9 @@ const SettingsBody = styled.div`
     display: flex;
     align-items: flex-start;
     gap: 20px;
-    max-width: 960px;
+    /* The cards take the window's width; nothing caps them at a reading column. */
+    width: 100%;
+    min-width: 0;
 `;
 
 /** The jump list sits to the right of the cards, like URLCheck's settings page. */
@@ -1132,9 +1134,9 @@ const NavItem = styled.button<{ $active: boolean }>`
 
 const Stack = styled.div`
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 18px;
-    max-width: 760px;
     min-width: 0;
 `;
 
