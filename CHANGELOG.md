@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.2..v0.19.3) - 2026-11-22
+
+### 🎨 Styling
+
+- *(settings)* Let the cards fill the window - ([36868cf](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/36868cff0d31ff5d21dbd5e3efd68389404bbd87))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([ed4100a](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/ed4100a7fca7349c2aa8e301d38f07c7a538d6a0))
+
+
 ## [0.19.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.1..v0.19.2) - 2026-11-22
 
 ### 🐛 Bug Fixes
