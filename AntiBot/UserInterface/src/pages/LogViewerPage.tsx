@@ -44,14 +44,27 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
     const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
     const rowsRef = useRef<HTMLDivElement>(null);
 
+    /** True while the view is being scrolled to the bottom, so that motion is not read as the user
+     *  scrolling away and does not turn following off. */
+    const pinning = useRef(false);
+
     const visible = useMemo(() => filterLines(lines, query, hidden), [lines, query, hidden]);
 
+    // Every new line, even once the buffer is full and its length no longer changes.
+    const newestLine = lines.at(-1)?.id ?? 0;
+
     // Keep the newest line in view while following. Rows use `content-visibility: auto`, so the
-    // height of the newest ones is only known once they come near the viewport; scrolling again on
-    // the next frame (and once more after it settles) lands on the real bottom instead of behind it.
+    // height of the newest ones is only known once they come near the viewport: scroll now, again on
+    // the next frame, and once more after the browser has laid the new rows out.
     useEffect(() => {
         const element = rowsRef.current;
         if (!follow || !element) return;
+
+        let frame = 0;
+        let settle = 0;
+        let timer = 0;
+
+        pinning.current = true;
 
         const toBottom = () => {
             element.scrollTop = element.scrollHeight;
@@ -59,15 +72,24 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
         toBottom();
 
-        const frame = window.requestAnimationFrame(toBottom);
-        const timer = window.setTimeout(toBottom, 60);
+        frame = window.requestAnimationFrame(() => {
+            toBottom();
+            settle = window.requestAnimationFrame(toBottom);
+        });
+
+        timer = window.setTimeout(() => {
+            toBottom();
+            pinning.current = false;
+        }, 120);
 
         return () => {
             window.cancelAnimationFrame(frame);
+            window.cancelAnimationFrame(settle);
             window.clearTimeout(timer);
+            pinning.current = false;
         };
         // Only new lines move the view: typing in the filter must not jump to the bottom.
-    }, [lines.length, follow]);
+    }, [newestLine, follow]);
 
     useEffect(() => {
         if (!notice) return;
@@ -84,7 +106,7 @@ export function LogViewerPage({log}: { log: VrchatLog }) {
 
     const handleScroll = () => {
         const element = rowsRef.current;
-        if (!element) return;
+        if (!element || pinning.current) return;
 
         const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 48;
         if (atBottom !== follow) setFollow(atBottom);
@@ -487,6 +509,8 @@ const Rows = styled.div`
     flex: 1;
     min-height: 0;
     overflow: auto;
+    /* The view is pinned to the bottom by script; the browser's own anchoring would fight it. */
+    overflow-anchor: none;
     padding: 6px 0 12px;
     font-family: var(--font-mono);
     font-size: 11.5px;
