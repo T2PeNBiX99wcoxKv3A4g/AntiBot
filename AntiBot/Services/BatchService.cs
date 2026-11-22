@@ -24,6 +24,7 @@ internal partial class BatchService
     private int _done;
     private string? _error;
     private int _failed;
+    private long _lastProgressAt;
     private bool _running;
     private int _total;
 
@@ -261,11 +262,21 @@ internal partial class BatchService
     private void PublishProgress(string? userId)
     {
         BatchProgressPayload payload;
+        var now = Environment.TickCount64;
 
         lock (_gate)
-            payload = new(_running, _done, _total, _failed, userId);
+        {
+            // A batch can make thousands of calls; ten updates a second is plenty for the bar and
+            // keeps the bridge from becoming the busiest part of the run.
+            if (_done < _total && now - _lastProgressAt < 100)
+                return;
 
-        WindowManager.Instance.NotifyMainWindow("batch.progress", payload);
+            _lastProgressAt = now;
+            payload = new(_running, _done, _total, _failed, userId);
+        }
+
+        // Folds a newer update into one more push while the window is busy drawing.
+        WindowManager.Instance.NotifyMainWindowSoon("batch.progress", payload);
     }
 
     /// <summary>The running batch or the last one that finished, for the binary data route.</summary>
