@@ -243,8 +243,8 @@ internal partial class AuthService
     public Task<bool> UnmoderateUserAsync(string userId, string type, CancellationToken token) =>
         IsReady ? _api.UnmoderateUserAsync(userId, type, token) : Task.FromResult(false);
 
-    public Task<bool> ReportUserAsync(string userId, CancellationToken token) =>
-        IsReady ? _api.ReportUserAsync(userId, token) : Task.FromResult(false);
+    public Task<ReportResult> ReportUserAsync(string userId, CancellationToken token) =>
+        IsReady ? _api.ReportUserAsync(userId, token) : Task.FromResult(ReportResult.Failed);
 
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
         IsReady ? _api.HideFriendRequestAsync(notificationId, token) : Task.FromResult(false);

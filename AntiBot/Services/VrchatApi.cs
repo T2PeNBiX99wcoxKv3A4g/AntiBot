@@ -17,6 +17,22 @@ internal enum LoginFailure
     Other
 }
 
+/// <summary>What a report request came back with.</summary>
+internal enum ReportResult
+{
+    /// <summary>VRChat accepted the report.</summary>
+    Sent,
+
+    /// <summary>
+    ///     VRChat refused it. The usual cause is that this account already reported that user, which is
+    ///     final: VRChat keeps one report per target, and retrying cannot change the answer.
+    /// </summary>
+    Refused,
+
+    /// <summary>The request never reached VRChat, or it failed temporarily.</summary>
+    Failed
+}
+
 /// <summary>
 ///     The VRChat web API, as far as AntiBot needs it: sign-in, the session cookie, and the instance
 ///     the signed-in account is in.
@@ -261,10 +277,10 @@ internal sealed class VrchatApi : IDisposable
 
     /// <summary>
     ///     Reports a user for client modding, which is VRChat's <c>behavior</c> category with the
-    ///     <c>hacking</c> reason. VRChat refuses a second report of the same user, so the caller must
-    ///     not retry a refused request.
+    ///     <c>hacking</c> reason. It is a plain API call, so neither VRChat nor an instance has to be
+    ///     running. VRChat keeps one report per reported user, so a refusal is final and is not an error.
     /// </summary>
-    public async Task<bool> ReportUserAsync(string userId, CancellationToken token)
+    public async Task<ReportResult> ReportUserAsync(string userId, CancellationToken token)
     {
         using var content = Json(JsonSerializer.Serialize(new("user", "behavior", "hacking", userId, null),
             VrchatJsonContext.Default.ApiReportRequest));
@@ -272,12 +288,21 @@ internal sealed class VrchatApi : IDisposable
         ReportUnauthorized(response);
 
         if (response.IsSuccessStatusCode)
-            return true;
+            return ReportResult.Sent;
 
-        // The body says why it was refused, e.g. that this user was already reported.
-        Logger.Warning("Reporting {UserId} answered {Status}: {Body}", userId, response.StatusCode,
-            await response.Content.ReadAsStringAsync(token));
-        return false;
+        var body = await response.Content.ReadAsStringAsync(token);
+
+        // A client error is the server's final answer: that user was already reported by this account.
+        // Rate limiting and server errors are the only ones another attempt can help with.
+        if (response.StatusCode is not HttpStatusCode.TooManyRequests && (int)response.StatusCode < 500)
+        {
+            Logger.Information("Report for {UserId} was refused with {Status}: {Body}", userId,
+                response.StatusCode, body);
+            return ReportResult.Refused;
+        }
+
+        Logger.Warning("Reporting {UserId} failed with {Status}: {Body}", userId, response.StatusCode, body);
+        return ReportResult.Failed;
     }
 
     /// <summary>

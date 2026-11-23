@@ -149,10 +149,11 @@ internal partial class ThreatActionService
                 await ModerationQueue.Instance.ModerateAsync(user.UserId, "muteChat", _stop.Token))
                 await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
 
-            // A report is sent last: it is the only action VRChat refuses outright once it exists, so
-            // nothing that can still help is left waiting behind a refused one.
+            // A report is a plain API call, so it does not need VRChat or the instance to be running. It
+            // goes last because VRChat keeps one report per reported user: a target that was already
+            // reported is refused, and that refusal is not an action worth recording.
             if (settings.AutoReport &&
-                await ModerationQueue.Instance.ReportAsync(user.UserId, _stop.Token))
+                await ModerationQueue.Instance.ReportAsync(user.UserId, _stop.Token) == ReportResult.Sent)
                 await OperationService.Instance.LogAsync("report", user.UserId, user.Name, detail, avatar);
         }
         catch (OperationCanceledException)

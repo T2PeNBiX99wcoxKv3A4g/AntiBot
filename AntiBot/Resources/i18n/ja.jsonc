@@ -318,7 +318,7 @@
   "hide_the_chat_box": "チャットボックスを隠す",
   "hide_the_user_s_chat_box_so_they_cannot_flood_or_harass_through_it": "そのユーザーのチャットボックスを非表示にし、連投や嫌がらせを防ぎます。",
   "report_the_user": "ユーザーを通報",
-  "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_accepts_only_one_report_per_user_and_refuses_the_rest_so_it_is_sent_once_per_instance": "クライアントの改造（hacking）として VRChat に通報します。VRChat は同じユーザーの通報を 1 回しか受け付けず、2 回目以降は拒否されるため、インスタンスごとに 1 回だけ送信します。",
+  "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_keeps_one_report_per_user_and_refuses_a_second_one_a_refused_report_is_not_recorded": "クライアントの改造（hacking）として VRChat に通報します。VRChat は同じユーザーへの通報を 1 回しか受け付けず、2 回目以降は拒否されるため、拒否された通報は記録しません。",
   "close_vr_chat": "VRChat を終了",
   "close_vr_chat_so_the_client_has_as_little_chance_as_possible_to_download_and_cache_their_avatar": "VRChat を終了し、クライアントが相手のアバターをダウンロードしてキャッシュする機会をできるだけ減らします。",
   "when_vr_chat_really_quits_the_osc_actions_are_skipped_because_there_is_nothing_left_to_protect": "VRChat が実際に終了した場合、守るものが残っていないため OSC の操作はスキップされます。",

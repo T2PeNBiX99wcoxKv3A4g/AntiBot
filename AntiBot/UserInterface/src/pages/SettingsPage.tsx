@@ -743,7 +743,7 @@ export function SettingsPage({info}: SettingsPageProps) {
                             />
                             <Toggle
                                 checked={autoReport}
-                                hint={t("report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_accepts_only_one_report_per_user_and_refuses_the_rest_so_it_is_sent_once_per_instance")}
+                                hint={t("report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_keeps_one_report_per_user_and_refuses_a_second_one_a_refused_report_is_not_recorded")}
                                 onChange={(value) => {
                                     setAutoReport(value);
                                     void persist({autoReport: value});

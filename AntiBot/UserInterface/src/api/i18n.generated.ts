@@ -341,7 +341,7 @@ declare module "@photino-net-utils/bridge"
         "repeat_the_password": true;
         "reported": true;
         "report_the_user": true;
-        "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_accepts_only_one_report_per_user_and_refuses_the_rest_so_it_is_sent_once_per_instance": true;
+        "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_keeps_one_report_per_user_and_refuses_a_second_one_a_refused_report_is_not_recorded": true;
         "request_rejected": true;
         "requires_osc": true;
         "reset_to_defaults": true;

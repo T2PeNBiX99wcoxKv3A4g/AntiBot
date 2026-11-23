@@ -318,7 +318,7 @@
   "hide_the_chat_box": "隐藏聊天框",
   "hide_the_user_s_chat_box_so_they_cannot_flood_or_harass_through_it": "隐藏该用户的聊天框，避免刷屏和骚扰。",
   "report_the_user": "举报用户",
-  "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_accepts_only_one_report_per_user_and_refuses_the_rest_so_it_is_sent_once_per_instance": "以客户端修改（hacking）为由向 VRChat 举报。VRChat 对同一用户只接受一次举报，之后会直接拒绝，因此每个实例只发送一次。",
+  "report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_keeps_one_report_per_user_and_refuses_a_second_one_a_refused_report_is_not_recorded": "以客户端修改（hacking）为由向 VRChat 举报。VRChat 对同一用户只接受一次举报，第二次会被直接拒绝，被拒绝的请求不会记录。",
   "close_vr_chat": "关闭 VRChat",
   "close_vr_chat_so_the_client_has_as_little_chance_as_possible_to_download_and_cache_their_avatar": "关闭 VRChat，尽量让客户端没有机会下载并缓存对方的头像。",
   "when_vr_chat_really_quits_the_osc_actions_are_skipped_because_there_is_nothing_left_to_protect": "VRChat 真的退出后，OSC 操作会被跳过，因为已经没有需要保护的东西了。",
