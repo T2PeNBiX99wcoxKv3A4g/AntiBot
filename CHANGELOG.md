@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.20.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.3..v0.20.0) - 2026-11-23
+
+### ⛰️  Features
+
+- *(protection)* Report a high-threat user for client modding - ([0b339e9](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/0b339e9529cd3c39c57278065a71513cf2aedd9c))
+
+### 🚜 Refactor
+
+- *(report)* Treat a refused report as final instead of an instance rule - ([e89be91](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/e89be91720c69d2655d4b3acc609c3ecb58074e7))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([38487ed](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/38487edf03368aa3489e25f2c33be5ca3f9cd937))
+
+
 ## [0.19.3](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.2..v0.19.3) - 2026-11-22
 
 ### 🎨 Styling
