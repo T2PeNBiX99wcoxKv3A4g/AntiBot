@@ -260,6 +260,27 @@ internal sealed class VrchatApi : IDisposable
     }
 
     /// <summary>
+    ///     Reports a user for client modding, which is VRChat's <c>behavior</c> category with the
+    ///     <c>hacking</c> reason. VRChat refuses a second report of the same user, so the caller must
+    ///     not retry a refused request.
+    /// </summary>
+    public async Task<bool> ReportUserAsync(string userId, CancellationToken token)
+    {
+        using var content = Json(JsonSerializer.Serialize(new("user", "behavior", "hacking", userId, null),
+            VrchatJsonContext.Default.ApiReportRequest));
+        using var response = await _http.PostAsync("moderationReports", content, token);
+        ReportUnauthorized(response);
+
+        if (response.IsSuccessStatusCode)
+            return true;
+
+        // The body says why it was refused, e.g. that this user was already reported.
+        Logger.Warning("Reporting {UserId} answered {Status}: {Body}", userId, response.StatusCode,
+            await response.Content.ReadAsStringAsync(token));
+        return false;
+    }
+
+    /// <summary>
     ///     Creates a new instance of a world. The home location is only a world id, while a self-invite
     ///     needs <c>worldId:instanceId</c>, so going home opens an instance of the home world first.
     /// </summary>

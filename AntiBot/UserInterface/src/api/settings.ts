@@ -16,6 +16,7 @@ const empty: SettingsView = {
     autoBlock: true,
     autoDisableAvatarInteraction: true,
     autoHideChatBox: true,
+    autoReport: false,
     autoCloseVrchat: false,
     autoSafeMode: false,
     autoSafeAvatar: false,

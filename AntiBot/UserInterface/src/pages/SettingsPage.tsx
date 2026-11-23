@@ -81,6 +81,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [autoBlock, setAutoBlock] = useState(true);
     const [autoAvatar, setAutoAvatar] = useState(true);
     const [autoChat, setAutoChat] = useState(true);
+    const [autoReport, setAutoReport] = useState(false);
     const [autoClose, setAutoClose] = useState(false);
     const [autoSafeMode, setAutoSafeMode] = useState(false);
     const [autoSafeAvatar, setAutoSafeAvatar] = useState(false);
@@ -165,6 +166,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         setAutoBlock(settings.autoBlock);
         setAutoAvatar(settings.autoDisableAvatarInteraction);
         setAutoChat(settings.autoHideChatBox);
+        setAutoReport(settings.autoReport);
         setAutoClose(settings.autoCloseVrchat);
         setAutoSafeMode(settings.autoSafeMode);
         setAutoSafeAvatar(settings.autoSafeAvatar);
@@ -253,6 +255,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         autoBlock,
         autoDisableAvatarInteraction: autoAvatar,
         autoHideChatBox: autoChat,
+        autoReport,
         autoCloseVrchat: autoClose,
         autoSafeMode,
         autoSafeAvatar,
@@ -737,6 +740,15 @@ export function SettingsPage({info}: SettingsPageProps) {
                                     void persist({autoHideChatBox: value});
                                 }}
                                 title={t("hide_the_chat_box")}
+                            />
+                            <Toggle
+                                checked={autoReport}
+                                hint={t("report_the_user_to_vr_chat_for_client_modding_hacking_vr_chat_accepts_only_one_report_per_user_and_refuses_the_rest_so_it_is_sent_once_per_instance")}
+                                onChange={(value) => {
+                                    setAutoReport(value);
+                                    void persist({autoReport: value});
+                                }}
+                                title={t("report_the_user")}
                             />
                             <Toggle
                                 checked={autoSafeMode}

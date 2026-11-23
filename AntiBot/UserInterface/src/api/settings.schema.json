@@ -44,6 +44,10 @@
       "type": "boolean",
       "description": "Hide a high-threat user's chat box."
     },
+    "autoReport": {
+      "type": "boolean",
+      "description": "Report a high-threat user to VRChat for client modding."
+    },
     "autoCloseVrchat": {
       "type": "boolean",
       "description": "Close VRChat when a high-threat user appears."

@@ -106,7 +106,8 @@ internal partial class ThreatActionService
         if (AuthService.Instance.IsReady)
             return;
 
-        if (!settings.AutoBlock && !settings.AutoDisableAvatarInteraction && !settings.AutoHideChatBox)
+        if (!settings.AutoBlock && !settings.AutoDisableAvatarInteraction && !settings.AutoHideChatBox &&
+            !settings.AutoReport)
             return;
 
         NotificationService.Notify("auth.signedOut",
@@ -147,6 +148,12 @@ internal partial class ThreatActionService
             if (settings.AutoHideChatBox &&
                 await ModerationQueue.Instance.ModerateAsync(user.UserId, "muteChat", _stop.Token))
                 await OperationService.Instance.LogAsync("chatBoxHidden", user.UserId, user.Name, detail, avatar);
+
+            // A report is sent last: it is the only action VRChat refuses outright once it exists, so
+            // nothing that can still help is left waiting behind a refused one.
+            if (settings.AutoReport &&
+                await ModerationQueue.Instance.ReportAsync(user.UserId, _stop.Token))
+                await OperationService.Instance.LogAsync("report", user.UserId, user.Name, detail, avatar);
         }
         catch (OperationCanceledException)
         {

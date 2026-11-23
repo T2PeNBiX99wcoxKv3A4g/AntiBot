@@ -18,6 +18,7 @@ internal sealed record SettingsPayload(
     bool AutoBlock,
     bool AutoDisableAvatarInteraction,
     bool AutoHideChatBox,
+    bool AutoReport,
     bool AutoCloseVrchat,
     bool AutoSafeMode,
     bool AutoSafeAvatar,

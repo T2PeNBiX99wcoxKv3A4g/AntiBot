@@ -33,7 +33,7 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
 
     protected override SettingsPayload Payload() =>
         new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
-            Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox,
+            Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox, Current.AutoReport,
             Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
             Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
             Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort, Current.Theme);

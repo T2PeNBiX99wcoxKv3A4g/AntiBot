@@ -20,6 +20,8 @@ export interface AppSettingsGenerated {
     autoDisableAvatarInteraction: boolean;
     /** Hide a high-threat user's chat box. */
     autoHideChatBox: boolean;
+    /** Report a high-threat user to VRChat for client modding. */
+    autoReport: boolean;
     /** Close VRChat when a high-threat user appears. */
     autoCloseVrchat: boolean;
     /** Turn VRChat's Safe Mode on over OSC. */

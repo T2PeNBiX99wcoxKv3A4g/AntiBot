@@ -233,6 +233,7 @@ internal partial class OperationService
         "block" => "blocked",
         "avatarInteractionOff" => "avatar_interactions_off",
         "chatBoxHidden" => "chat_box_hidden",
+        "report" => "reported",
         "closeVrchat" => "closed_vr_chat",
         "safeMode" => "safe_mode_on",
         "switchedAvatar" => "switched_avatar",

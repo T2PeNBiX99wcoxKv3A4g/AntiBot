@@ -170,6 +170,8 @@ function kindKey(kind: string): LocalizationKey {
             return "avatar_interactions_off";
         case "chatBoxHidden":
             return "chat_box_hidden";
+        case "report":
+            return "reported";
         case "closeVrchat":
             return "closed_vr_chat";
         case "safeMode":

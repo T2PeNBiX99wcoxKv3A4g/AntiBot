@@ -140,6 +140,19 @@ internal sealed record ApiModerationRequest(
     string Moderated,
     [property: JsonPropertyName("type")] string Type);
 
+/// <summary>
+///     Body for <c>POST moderationReports</c>. VRChat validates the category and reason against
+///     <c>GET config</c>, where <c>reportOptions.user.behavior</c> contains <c>hacking</c>.
+/// </summary>
+internal sealed record ApiReportRequest(
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("category")]
+    string Category,
+    [property: JsonPropertyName("reason")] string Reason,
+    [property: JsonPropertyName("contentId")]
+    string ContentId,
+    string? Description);
+
 /// <summary>One avatar from an external avatar database, looked up by its image file id.</summary>
 internal sealed record AvatarLookup(string? Id, string? Name, string? AvatarName, string? ImageUrl)
 {
@@ -175,6 +188,7 @@ internal sealed record CookieRecord(
 [JsonSerializable(typeof(ApiDeviceStatus))]
 [JsonSerializable(typeof(ApiDeviceStatusRequest))]
 [JsonSerializable(typeof(ApiModerationRequest))]
+[JsonSerializable(typeof(ApiReportRequest))]
 [JsonSerializable(typeof(AvatarLookup))]
 [JsonSerializable(typeof(CookieRecord[]))]
 internal sealed partial class VrchatJsonContext : JsonSerializerContext;

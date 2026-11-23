@@ -20,6 +20,25 @@ internal partial class ModerationQueue
     public Task<bool> UnmoderateAsync(string userId, string type, CancellationToken token) =>
         EnqueueAsync(() => AuthService.Instance.UnmoderateUserAsync(userId, type, token), token);
 
+    /// <summary>
+    ///     Reports a user, once. VRChat refuses a second report of the same user, so a refused request is
+    ///     final and is not retried: retrying would only delay the actions queued behind it.
+    /// </summary>
+    public async Task<bool> ReportAsync(string userId, CancellationToken token)
+    {
+        await _gate.WaitAsync(token);
+
+        try
+        {
+            await PaceAsync(token);
+            return await AuthService.Instance.ReportUserAsync(userId, token);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public Task<bool> HideFriendRequestAsync(string notificationId, CancellationToken token) =>
         EnqueueAsync(() => AuthService.Instance.HideFriendRequestAsync(notificationId, token), token);
 

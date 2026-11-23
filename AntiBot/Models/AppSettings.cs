@@ -47,6 +47,10 @@ public sealed record AppSettings
     [Setting(Comment = "Hide a high-threat user's chat box.")]
     public bool AutoHideChatBox { get; init; } = true;
 
+    /// <summary>Report a high-threat user to VRChat for client modding. Off by default.</summary>
+    [Setting(Comment = "Report a high-threat user to VRChat for client modding.")]
+    public bool AutoReport { get; init; }
+
     /// <summary>Close VRChat when a high-threat user appears, so the instance is left at once.</summary>
     [Setting(Comment = "Close VRChat when a high-threat user appears.")]
     public bool AutoCloseVrchat { get; init; }
