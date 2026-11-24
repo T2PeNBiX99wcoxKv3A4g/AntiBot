@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.20.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.20.0..v0.20.1) - 2026-11-24
+
+### 🐛 Bug Fixes
+
+- *(i18n)* Declare the keys the shared library looks up - ([9ef2a96](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/9ef2a9688d1d5aecefbdbfb3f2e4f13c57e38842))
+
+### 🚜 Refactor
+
+- *(settings)* Take get, save and reset from the shared bridge - ([5af860d](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/5af860dd2cf625a1bd4d9b95e243d0bd9e3f9b73))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(settings)* Follow the shared payload signature - ([317f9ba](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/317f9ba7da06968b9f279fe537f572b96eea20e8))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([6f427be](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/6f427bea1257b09b1926b9dc2573e4ea173816f6))
+
+
 ## [0.20.0](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.19.3..v0.20.0) - 2026-11-23
 
 ### ⛰️  Features
