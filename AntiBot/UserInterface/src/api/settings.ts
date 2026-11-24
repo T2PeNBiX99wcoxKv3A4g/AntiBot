@@ -1,5 +1,4 @@
-import type {ThemeMode} from "@photino-net-utils/bridge";
-import {Native} from "@photino-net-utils/bridge";
+import {loadSettings, Native, resetSettings as reset, saveSettings as save, type ThemeMode} from "@photino-net-utils/bridge";
 import type {InstanceUser} from "./instance";
 import type {AppSettingsGenerated} from "./settings.generated";
 
@@ -9,52 +8,27 @@ export type SettingsView = AppSettingsGenerated & { defaultLogDirectory: string 
 /** What `settings.save` sends; generated from the C# `AppSettings` model. */
 export type AppSettings = AppSettingsGenerated;
 
-const empty: SettingsView = {
-    logDirectory: "",
-    defaultLogDirectory: "",
-    avatarApiProviders: [],
-    autoBlock: true,
-    autoDisableAvatarInteraction: true,
-    autoHideChatBox: true,
-    autoReport: false,
-    autoCloseVrchat: false,
-    autoSafeMode: false,
-    autoSafeAvatar: false,
-    safeAvatarId: "",
-    skipCloseInVr: true,
-    autoRejectFriendRequests: true,
-    threatThreshold: 70,
-    whitelist: [],
-    language: "system",
-    theme: "system",
-    startHidden: false,
-    oscPort: 0,
-};
-
 /** Anything the host does not recognize falls back to following the system. */
 export function normalizeTheme(theme: string | undefined): ThemeMode {
     return theme === "light" || theme === "dark" ? theme : "system";
 }
 
-/** Reads the log folder, the avatar databases and the protection settings. */
+/**
+ * Reads the log folder, the avatar databases and the protection settings. The host fills in every
+ * default, so there is deliberately no copy of those values here.
+ */
 export async function getSettings(): Promise<SettingsView> {
-    if (!Native.available) return empty;
-
-    return await Native.request<SettingsView>("settings.get");
+    return await loadSettings<SettingsView>();
 }
 
 /** Persists the settings and returns the stored snapshot. */
 export async function saveSettings(settings: AppSettings): Promise<SettingsView> {
-    if (!Native.available) return {...empty, ...settings};
-
-    return await Native.request<SettingsView>("settings.save", settings);
+    return await save<SettingsView>(settings);
 }
 
 /** Puts every setting back to the value a fresh install starts with. */
 export async function resetSettings(): Promise<SettingsView> {
-    if (!Native.available) return {...empty};
-
-    return await Native.request<SettingsView>("settings.reset");
+    return await reset<SettingsView>();
 }
 
 /** The whitelisted users, described like the instance list describes a player. */
