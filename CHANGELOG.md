@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.20.2](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.20.1..v0.20.2) - 2026-11-24
+
+### ⚙️ Miscellaneous Tasks
+
+- *(libs)* Rebuild PhotinoNETUtils 0.45.0 from ff1164a - ([b850661](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/b8506615e0d557de804e1394a5eb5e41a22a9fe4))
+
+### Action
+
+- Update version and update `CHANGELOG.md` - ([42c2200](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/commit/42c220022018dc272229d4d0af3dee5b21c3ee37))
+
+
 ## [0.20.1](https://github.com/T2PeNBiX99wcoxKv3A4g/AntiBot/compare/v0.20.0..v0.20.1) - 2026-11-24
 
 ### 🐛 Bug Fixes
