@@ -417,7 +417,7 @@
   "enabled": "enabled",
   "disabled": "disabled",
 
-  "error.invalid_settings": "The settings could not be read.",
+  "error.invalidsettings": "The settings could not be read.",
   "error.invalid_log_directory": "Choose a VRChat log folder.",
   "error.log_directory_missing": "The log folder does not exist.",
   "error.open_folder": "The folder could not be opened.",
@@ -465,7 +465,7 @@
   "error.vrchat_status": "VRChat answered {status}.",
   "error.open_logs_failed": "Could not open the log folder.",
   "error.open_releases_failed": "Could not open the release page.",
-  "error.update_check_failed": "Could not read the published version.",
+  "error.updatecheckfailed": "Could not read the published version.",
 
   "sign_in_automatically": "Sign in automatically",
   "signs_in_with_the_saved_password_when_the_session_expires_vr_chat_may_still_ask_for_a_two_factor_code": "Signs in with the saved password when the session expires. VRChat may still ask for a two-factor code.",

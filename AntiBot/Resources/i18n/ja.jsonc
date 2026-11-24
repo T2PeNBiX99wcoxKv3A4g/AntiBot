@@ -413,7 +413,7 @@
   "enabled": "有効",
   "disabled": "無効",
 
-  "error.invalid_settings": "設定を読み取れませんでした。",
+  "error.invalidsettings": "設定を読み取れませんでした。",
   "error.invalid_log_directory": "VRChat のログフォルダを選択してください。",
   "error.log_directory_missing": "ログフォルダが存在しません。",
   "error.open_folder": "フォルダを開けませんでした。",
@@ -461,7 +461,7 @@
   "error.vrchat_status": "VRChat が {status} を返しました。",
   "error.open_logs_failed": "ログフォルダーを開けませんでした。",
   "error.open_releases_failed": "リリースページを開けませんでした。",
-  "error.update_check_failed": "公開バージョンを読み取れませんでした。",
+  "error.updatecheckfailed": "公開バージョンを読み取れませんでした。",
 
   "sign_in_automatically": "自動でサインイン",
   "signs_in_with_the_saved_password_when_the_session_expires_vr_chat_may_still_ask_for_a_two_factor_code": "セッションが切れたとき、保存したパスワードでサインインします。VRChat が二要素認証を求める場合があります。",

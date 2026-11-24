@@ -413,7 +413,7 @@
   "enabled": "已啟用",
   "disabled": "已停用",
 
-  "error.invalid_settings": "無法讀取設定。",
+  "error.invalidsettings": "無法讀取設定。",
   "error.invalid_log_directory": "請選擇 VRChat 日誌資料夾。",
   "error.log_directory_missing": "日誌資料夾不存在。",
   "error.open_folder": "無法開啟資料夾。",
@@ -461,7 +461,7 @@
   "error.vrchat_status": "VRChat 回傳了 {status}。",
   "error.open_logs_failed": "無法開啟日誌資料夾。",
   "error.open_releases_failed": "無法開啟發行頁面。",
-  "error.update_check_failed": "無法讀取已發佈的版本。",
+  "error.updatecheckfailed": "無法讀取已發佈的版本。",
 
   "sign_in_automatically": "自動登入",
   "signs_in_with_the_saved_password_when_the_session_expires_vr_chat_may_still_ask_for_a_two_factor_code": "工作階段過期時使用已儲存的密碼自動登入。VRChat 仍可能要求二步驟驗證。",

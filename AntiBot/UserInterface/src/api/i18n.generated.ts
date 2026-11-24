@@ -155,15 +155,15 @@ declare module "@photino-net-utils/bridge"
         "error.debug_user_missing": true;
         "error.debug_user_not_found": true;
         "error.export": true;
+        "error.invalidsettings": true;
         "error.invalid_log_directory": true;
-        "error.invalid_settings": true;
         "error.log_directory_missing": true;
         "error.no_log": true;
         "error.only_vrchat_links": true;
         "error.open_folder": true;
         "error.open_logs_failed": true;
         "error.open_releases_failed": true;
-        "error.update_check_failed": true;
+        "error.updatecheckfailed": true;
         "error.vrchat_status": true;
         "europe": true;
         "every_block_chat_box_mute_and_avatar_interaction_change_as_it_happened": true;
