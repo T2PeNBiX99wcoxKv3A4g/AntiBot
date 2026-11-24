@@ -31,12 +31,12 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
     /// <summary>The language both the backend and the interface use.</summary>
     public string Language => Current.Language;
 
-    protected override SettingsPayload Payload() =>
-        new(Current.LogDirectory, AppSettings.DefaultLogDirectory, Current.AvatarApiProviders,
-            Current.AutoBlock, Current.AutoDisableAvatarInteraction, Current.AutoHideChatBox, Current.AutoReport,
-            Current.AutoCloseVrchat, Current.AutoSafeMode, Current.AutoSafeAvatar, Current.SafeAvatarId,
-            Current.SkipCloseInVr, Current.AutoRejectFriendRequests, Current.ThreatThreshold,
-            Current.Whitelist, Current.Language, Current.StartHidden, Current.OscPort, Current.Theme);
+    protected override SettingsPayload Payload(AppSettings settings) =>
+        new(settings.LogDirectory, AppSettings.DefaultLogDirectory, settings.AvatarApiProviders,
+            settings.AutoBlock, settings.AutoDisableAvatarInteraction, settings.AutoHideChatBox, settings.AutoReport,
+            settings.AutoCloseVrchat, settings.AutoSafeMode, settings.AutoSafeAvatar, settings.SafeAvatarId,
+            settings.SkipCloseInVr, settings.AutoRejectFriendRequests, settings.ThreatThreshold,
+            settings.Whitelist, settings.Language, settings.StartHidden, settings.OscPort, settings.Theme);
 
     protected override string? Validate(AppSettings settings) =>
         string.IsNullOrWhiteSpace(settings.LogDirectory)
@@ -83,16 +83,8 @@ internal sealed class SettingsService() : SettingsServiceBase<SettingsService, A
         context.Request.Type switch
         {
             "whitelist.people" => Task.FromResult<NativeResponse?>(WhitelistPeople(context)),
-            "settings.reset" => ResetAsync(context),
             _ => base.HandleExtraAsync(context)
         };
-
-    /// <summary>Puts every setting back to the value a fresh install starts with.</summary>
-    private async Task<NativeResponse?> ResetAsync(NativeContext context)
-    {
-        await SaveAsync(AppSettings.Default);
-        return context.Reply("settings.reset.result", Payload());
-    }
 
     /// <summary>
     ///     Describes every whitelisted user and starts the profile lookups, so a newly added id turns
