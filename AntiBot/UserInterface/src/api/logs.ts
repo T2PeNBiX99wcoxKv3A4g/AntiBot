@@ -49,11 +49,21 @@ let fetching = false;
 let queued = false;
 let queuedHandler: ((batch: LogBatch) => void) | null = null;
 
+/**
+ * A busy log pings every poll, and redrawing the whole list that often makes the window feel frozen.
+ * Pings are coalesced to at most one fetch per interval; the queued one always runs, so the last
+ * lines still arrive.
+ */
+const PullInterval = 1000;
+let lastPullAt = 0;
+let pullTimer = 0;
+
 /** Reads what the follower has buffered, plus whether VRChat is running right now. */
 export async function getLogSnapshot(): Promise<LogSnapshot> {
     if (!Native.available) return {...emptyStatus, lines: []};
 
     try {
+        lastPullAt = Date.now();
         const page = await fetchLog(0, SnapshotLines);
         generation = page.generation;
         newest = page.lines.at(-1)?.id ?? newest;
@@ -82,11 +92,17 @@ export function onLogLines(handler: (batch: LogBatch) => void): () => void {
  */
 function pull(handler: (batch: LogBatch) => void): void {
     if (fetching) {
-        queued = true;
-        queuedHandler = handler;
+        schedulePull(handler);
         return;
     }
 
+    const wait = PullInterval - (Date.now() - lastPullAt);
+    if (wait > 0) {
+        schedulePull(handler);
+        return;
+    }
+
+    lastPullAt = Date.now();
     fetching = true;
 
     void fetchLog(newest, PushLines).then((page) => {
@@ -110,13 +126,35 @@ function pull(handler: (batch: LogBatch) => void): void {
         fetching = false;
 
         if (queued && queuedHandler) {
-            queued = false;
-
             const next = queuedHandler;
+
+            queued = false;
             queuedHandler = null;
-            pull(next);
+            schedulePull(next);
         }
     });
+}
+
+/** Runs the queued pull once the interval has passed; repeated pings keep only the newest handler. */
+function schedulePull(handler: (batch: LogBatch) => void): void {
+    queued = true;
+    queuedHandler = handler;
+
+    if (pullTimer) return;
+
+    const wait = Math.max(0, PullInterval - (Date.now() - lastPullAt));
+
+    pullTimer = window.setTimeout(() => {
+        pullTimer = 0;
+
+        if (!queued || !queuedHandler) return;
+
+        const next = queuedHandler;
+
+        queued = false;
+        queuedHandler = null;
+        pull(next);
+    }, wait);
 }
 
 /** Asks the host to reveal the configured log folder in the file manager. */
