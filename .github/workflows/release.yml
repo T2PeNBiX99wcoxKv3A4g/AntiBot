@@ -12,6 +12,10 @@ on:
       - ".gitignore"
       - "LICENSE*"
       - "Site/**"
+      # Workflow, template and shared-list changes are not a desktop release.
+      - ".github/**"
+      # The shared community list changes on every submission; it is data, not a release.
+      - "data/**"
       # The site's own copy of the shared package: the desktop build never uses it.
       - "AntiBot/Libs/photino-net-utils-site-*.tgz"
       - ".github/workflows/site.yml"

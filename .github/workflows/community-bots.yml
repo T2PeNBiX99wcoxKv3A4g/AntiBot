@@ -1,0 +1,28 @@
+name: Community bot list
+
+on:
+  issues:
+    types: [opened, edited, labeled, closed]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: community-bots
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: ${{ !github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const run = require('./.github/scripts/community-bots.cjs');
+            await run({github, context, core});
