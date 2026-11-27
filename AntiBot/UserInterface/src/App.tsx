@@ -20,6 +20,7 @@ import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
 import {BatchPage} from "./pages/BatchPage";
 import {BotsPage} from "./pages/BotsPage";
+import {CommunityPage} from "./pages/CommunityPage";
 import {DebugPage} from "./pages/DebugPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
@@ -58,6 +59,10 @@ const pageMeta: Record<Page, { title: LocalizationKey; subtitle: LocalizationKey
     bots: {
         title: "bot_list",
         subtitle: "every_account_anti_bot_has_detected_as_a_bot_newest_first_and_repeats_are_merged",
+    },
+    community: {
+        title: "community_list",
+        subtitle: "community_list_description",
     },
     account: {title: "account", subtitle: "sign_in_to_vr_chat_so_the_instance_comes_from_the_api_not_the_log"},
     settings: {title: "settings", subtitle: "where_the_log_comes_from_and_what_anti_bot_does_with_it"},
@@ -197,7 +202,9 @@ export default function App() {
                                             ? <OperationsPage/>
                                             : page === "bots"
                                                 ? <BotsPage debug={info?.debug ?? false} signedIn={signedIn}/>
-                                                : page === "account"
+                                                : page === "community"
+                                                    ? <CommunityPage/>
+                                                    : page === "account"
                                                 ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
                                                 : page === "debug"
                                                     ? <DebugPage/>

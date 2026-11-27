@@ -96,6 +96,15 @@ declare module "@photino-net-utils/bridge"
         "close_vr_chat_so_the_client_has_as_little_chance_as_possible_to_download_and_cache_their_avatar": true;
         "code_from_your_authenticator_app": true;
         "code_vr_chat_emailed_you": true;
+        "community_list": true;
+        "community_list_description": true;
+        "community_list_empty": true;
+        "community_list_updated": true;
+        "community_upload_explanation": true;
+        "community_upload_failed": true;
+        "community_upload_title": true;
+        "community_upload_too_large": true;
+        "community_upload_withdraw": true;
         "configurable": true;
         "confirm_clear": true;
         "confirm_reset_every_setting": true;
@@ -124,6 +133,7 @@ declare module "@photino-net-utils/bridge"
         "done": true;
         "downloading_the_update": true;
         "download_and_install": true;
+        "download_community_list": true;
         "download_complete": true;
         "do_not_close_vr_chat_while_a_vr_headset_is_in_use_quitting_from_vr_is_disruptive": true;
         "do_not_remember": true;
@@ -159,6 +169,7 @@ declare module "@photino-net-utils/bridge"
         "error.auth_unlock_failed": true;
         "error.auth_unlock_password": true;
         "error.bots_export": true;
+        "error.community_list": true;
         "error.debug_user_missing": true;
         "error.debug_user_not_found": true;
         "error.export": true;
@@ -166,6 +177,7 @@ declare module "@photino-net-utils/bridge"
         "error.invalid_log_directory": true;
         "error.log_directory_missing": true;
         "error.no_log": true;
+        "error.only_github_links": true;
         "error.only_vrchat_links": true;
         "error.open_folder": true;
         "error.open_logs_failed": true;
@@ -249,6 +261,7 @@ declare module "@photino-net-utils/bridge"
         "live_output_of_vr_chat_s_log_while_it_is_running": true;
         "loading": true;
         "loading_the_changelog": true;
+        "local_list": true;
         "log_files_are_written_to": true;
         "log_folder_not_found": true;
         "log_source": true;
@@ -294,6 +307,7 @@ declare module "@photino-net-utils/bridge"
         "opens_vr_chat_s_quick_menu_when_osc_is_working": true;
         "open_account": true;
         "open_folder": true;
+        "open_github": true;
         "open_in_the_tray_instead_of_showing_the_window": true;
         "open_log_folder": true;
         "open_on_vrchat_com": true;
@@ -477,6 +491,7 @@ declare module "@photino-net-utils/bridge"
         "unlock_with_windows_hello": true;
         "update_cancelled": true;
         "updating_anti_bot": true;
+        "upload_this_list": true;
         "up_to_date_version_is_the_newest_version": true;
         "user": true;
         "username": true;
