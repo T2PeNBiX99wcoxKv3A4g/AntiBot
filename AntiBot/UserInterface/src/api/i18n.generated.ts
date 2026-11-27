@@ -18,6 +18,7 @@ declare module "@photino-net-utils/bridge"
         "added_to_whitelist": true;
         "add_account": true;
         "add_a_user": true;
+        "add_test_bot": true;
         "add_to_whitelist": true;
         "aes_256_gcm_with_a_key_derived_from_your_password_asked_each_launch": true;
         "aes_256_gcm_with_a_key_file_next_to_the_session_obfuscation_only_not_real_protection": true;

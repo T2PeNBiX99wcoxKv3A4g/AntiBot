@@ -31,6 +31,10 @@ internal partial class BotListService
     private readonly HashSet<string> _seen = new(StringComparer.OrdinalIgnoreCase);
     private string _instance = "";
 
+#if DEBUG
+    private int _debugCounter;
+#endif
+
     private BotListService()
     {
         NativeBridge.MessageReceived += HandleMessageAsync;
@@ -46,6 +50,9 @@ internal partial class BotListService
     {
         "bots.remove" => RemoveAsync(context),
         "bots.export" => ExportAsync(context),
+#if DEBUG
+        "debug.bots.add" => Task.FromResult<NativeResponse?>(AddDebugBot(context)),
+#endif
         _ => Task.FromResult<NativeResponse?>(null)
     };
 
@@ -185,6 +192,35 @@ internal partial class BotListService
         left.LastSeen == right.LastSeen &&
         left.Sightings == right.Sightings &&
         left.Reasons.SequenceEqual(right.Reasons);
+
+#if DEBUG
+    /// <summary>Debug build only: adds a fresh test row, so export and removal can be tried.</summary>
+    private NativeResponse AddDebugBot(NativeContext context)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var number = Interlocked.Increment(ref _debugCounter);
+        var entry = new BotEntry(
+            $"usr_antibot-debug-{now}-{number}",
+            $"Debug Bot {number}",
+            110,
+            [new("known_bot_site_hexed_cc", 110)],
+            null,
+            "Visitor",
+            "standalonewindows",
+            DateTimeOffset.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            now,
+            now,
+            1);
+
+        lock (_gate)
+            _bots[entry.UserId] = new BotRecord(entry, false);
+
+        _ = Database.Instance.SaveBotAsync(entry);
+        Log.Information("Debug bot {UserId} added", entry.UserId);
+        Publish();
+        return context.Reply("debug.bots.add.result", new OkPayload());
+    }
+#endif
 
     private async Task<NativeResponse?> RemoveAsync(NativeContext context)
     {

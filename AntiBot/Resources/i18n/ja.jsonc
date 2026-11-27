@@ -189,6 +189,7 @@
   "bots_are_found_from_the_name_avatar_and_profile_while_signed_out_only_the_log_based_checks_run": "ボットは名前・アバター・プロフィールから判定します。未ログインの間は、アカウントを必要としない判定だけが動きます。",
   "edit": "編集",
   "remove": "削除",
+  "add_test_bot": "テストボットを追加",
   "only_edit_mode_can_remove_a_bot_so_an_accidental_click_cannot_delete_it": "削除できるのは編集モードだけです。誤クリックで消えることはありません。",
   "export_as_json": "JSON で書き出す",
   "export_as_csv": "CSV で書き出す",

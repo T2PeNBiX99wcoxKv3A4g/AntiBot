@@ -1,13 +1,13 @@
 import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {type Translate, useLocale, useTranslation} from "@photino-net-utils/bridge";
-import {type BotEntry, exportBots, getBots, onBotsChanged, removeBot} from "../api/bots";
+import {type BotEntry, addTestBot, exportBots, getBots, onBotsChanged, removeBot} from "../api/bots";
 import type {InstanceUser, ThreatReason} from "../api/instance";
 import {TrashIcon} from "../components/Icons";
 import {platformLabel, PlayerDialog} from "./InstancePage";
 
 /** Every account AntiBot has called a bot, one row per user id. */
-export function BotsPage({signedIn}: { signedIn: boolean }) {
+export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean }) {
     const t = useTranslation();
     const locale = useLocale();
     const [bots, setBots] = useState<BotEntry[]>([]);
@@ -67,6 +67,14 @@ export function BotsPage({signedIn}: { signedIn: boolean }) {
         });
     };
 
+    const add = () => {
+        setNotice(null);
+
+        void addTestBot().catch((reason) => {
+            setNotice({ok: false, text: reason instanceof Error ? reason.message : String(reason)});
+        });
+    };
+
     return (
         <Page>
             <Card>
@@ -81,6 +89,11 @@ export function BotsPage({signedIn}: { signedIn: boolean }) {
                         )}
                     </div>
                     <HeadActions>
+                        {debug && (
+                            <DebugButton onClick={add} type="button">
+                                {t("add_test_bot")}
+                            </DebugButton>
+                        )}
                         <Count>{t("count_bot_s", {count: bots.length})}</Count>
                         <ActionButton
                             disabled={bots.length === 0 || busy}
@@ -278,6 +291,22 @@ const Count = styled.span`
     font-family: var(--font-mono);
     font-size: 9.5px;
     color: var(--text-muted);
+`;
+
+const DebugButton = styled.button`
+    padding: 5px 9px;
+    border: 1px dashed rgba(251, 191, 36, 0.55);
+    border-radius: var(--radius-sm);
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+    font: inherit;
+    font-size: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(251, 191, 36, 0.2);
+    }
 `;
 
 const ActionButton = styled.button`

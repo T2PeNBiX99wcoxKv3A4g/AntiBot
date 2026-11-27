@@ -55,6 +55,13 @@ export async function exportBots(format: "json" | "csv"): Promise<BotExport> {
     return await Native.request<BotExport>("bots.export", {format});
 }
 
+/** Debug builds only: adds a fresh test row, so export and removal can be tried. */
+export async function addTestBot(): Promise<void> {
+    if (!Native.available) return;
+
+    await Native.request("debug.bots.add");
+}
+
 async function fetchBots(): Promise<BotEntry[]> {
     const block = await readBlock("/bots");
 

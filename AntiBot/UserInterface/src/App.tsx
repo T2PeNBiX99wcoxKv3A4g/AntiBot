@@ -196,7 +196,7 @@ export default function App() {
                                         : page === "operations"
                                             ? <OperationsPage/>
                                             : page === "bots"
-                                                ? <BotsPage signedIn={signedIn}/>
+                                                ? <BotsPage debug={info?.debug ?? false} signedIn={signedIn}/>
                                                 : page === "account"
                                                 ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
                                                 : page === "debug"
