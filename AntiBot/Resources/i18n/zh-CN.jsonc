@@ -194,7 +194,10 @@
 
   "community_list": "社区列表",
   "local_list": "本机",
-  "community_list_description": "通过 GitHub 提交的共享列表，仅供查看，不会触发自动操作。",
+  "community_list_description": "自动下载的共享列表。启用自动保护时会参与自动操作。",
+  "community_list_is_downloaded_automatically_and_used_by_automatic_protection": "启动时以及每 6 小时自动下载一次，每次更新后都会用于自动操作。",
+  "use_the_community_list": "使用社区列表",
+  "act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted": "对下载的社区列表中的用户执行自动操作。好友和白名单用户永远不会被处理。",
   "download_community_list": "下载社区列表",
   "community_list_empty": "还没有下载过。",
   "community_list_updated": "更新于 {date}",

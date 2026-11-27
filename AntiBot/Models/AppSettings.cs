@@ -51,6 +51,10 @@ public sealed record AppSettings
     [Setting(Comment = "Report a high-threat user to VRChat for client modding.")]
     public bool AutoReport { get; init; }
 
+    /// <summary>Act on users found in the downloaded community list.</summary>
+    [Setting(Comment = "Act on users found in the downloaded community list.")]
+    public bool UseCommunityList { get; init; } = true;
+
     /// <summary>Close VRChat when a high-threat user appears, so the instance is left at once.</summary>
     [Setting(Comment = "Close VRChat when a high-threat user appears.")]
     public bool AutoCloseVrchat { get; init; }

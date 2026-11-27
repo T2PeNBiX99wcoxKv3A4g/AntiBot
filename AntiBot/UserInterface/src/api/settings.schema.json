@@ -48,6 +48,10 @@
       "type": "boolean",
       "description": "Report a high-threat user to VRChat for client modding."
     },
+    "useCommunityList": {
+      "type": "boolean",
+      "description": "Act on users found in the downloaded community list."
+    },
     "autoCloseVrchat": {
       "type": "boolean",
       "description": "Close VRChat when a high-threat user appears."

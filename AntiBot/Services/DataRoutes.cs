@@ -27,6 +27,7 @@ internal static class DataRoutes
     public const ushort BatchPreviewKind = 5;
     public const ushort BatchStateKind = 6;
     public const ushort BotsKind = 7;
+    public const ushort CommunityKind = 8;
 
     private const int DefaultLogLines = 5000;
     private const int MaxLogLines = 20_000;
@@ -44,6 +45,7 @@ internal static class DataRoutes
         app.MapGet($"/data/{token}/operations", (Delegate)((HttpContext _) => Block(Operations())));
         app.MapGet($"/data/{token}/requests", (Delegate)((HttpContext _) => Block(Requests())));
         app.MapGet($"/data/{token}/bots", (Delegate)((HttpContext _) => Block(Bots())));
+        app.MapGet($"/data/{token}/community", (Delegate)((HttpContext _) => Block(Community())));
         app.MapGet($"/data/{token}/log", (Delegate)Log);
 
         app.MapPost($"/data/{token}/batch-preview", (Delegate)(async (HttpContext context) =>
@@ -172,6 +174,36 @@ internal static class DataRoutes
                 bot.AvatarUrl ?? "", Reasons(bot.Reasons)
             ],
                 bot.Threat, bot.FirstSeen, bot.LastSeen, bot.Sightings);
+
+        return block.Build();
+    }
+
+    /// <summary>The downloaded shared list; its rows can also drive the automatic actions.</summary>
+    private static byte[] Community()
+    {
+        var snapshot = CommunityService.Instance.DataSnapshot;
+
+        var block = new DataBlock(CommunityKind)
+            .Meta("count", snapshot.Bots.Count.ToString(CultureInfo.InvariantCulture))
+            .Meta("updatedAt", snapshot.UpdatedAt)
+            .Text("userId")
+            .Text("name")
+            .Text("trust")
+            .Text("platform")
+            .Text("firstSeen")
+            .Text("lastSeen")
+            .Text("reasons")
+            .Number("threat")
+            .Number("sightings");
+
+        foreach (var bot in snapshot.Bots)
+            block.Row(
+            [
+                bot.UserId, bot.DisplayName, bot.Trust ?? "", bot.Platform ?? "",
+                bot.FirstSeen ?? "", bot.LastSeen ?? "",
+                string.Join('\u001f', bot.Reasons)
+            ],
+                bot.Threat, bot.Sightings);
 
         return block.Build();
     }

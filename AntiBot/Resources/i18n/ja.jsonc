@@ -194,7 +194,10 @@
 
   "community_list": "コミュニティ一覧",
   "local_list": "この端末",
-  "community_list_description": "GitHub 経由で投稿された共有リストです。参照用に表示され、自動操作は行いません。",
+  "community_list_description": "自動でダウンロードされる共有リストです。自動保護が有効な場合は自動操作にも使われます。",
+  "community_list_is_downloaded_automatically_and_used_by_automatic_protection": "起動時と 6 時間ごとにダウンロードされ、更新のたびに自動操作へ反映されます。",
+  "use_the_community_list": "コミュニティ一覧を使う",
+  "act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted": "ダウンロードしたコミュニティ一覧のユーザーに自動操作を行います。フレンドとホワイトリストのユーザーには行いません。",
   "download_community_list": "コミュニティ一覧をダウンロード",
   "community_list_empty": "まだダウンロードしていません。",
   "community_list_updated": "更新: {date}",

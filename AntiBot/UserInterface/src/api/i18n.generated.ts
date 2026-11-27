@@ -14,6 +14,7 @@ declare module "@photino-net-utils/bridge"
         "account_created_years_years_ago": true;
         "account_created_yesterday": true;
         "actions_follow_the_switches_under_automatic_protection": true;
+        "act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted": true;
         "add": true;
         "added_test_bot_entries": true;
         "added_to_whitelist": true;
@@ -99,6 +100,7 @@ declare module "@photino-net-utils/bridge"
         "community_list": true;
         "community_list_description": true;
         "community_list_empty": true;
+        "community_list_is_downloaded_automatically_and_used_by_automatic_protection": true;
         "community_list_updated": true;
         "community_upload_explanation": true;
         "community_upload_failed": true;
@@ -499,6 +501,7 @@ declare module "@photino-net-utils/bridge"
         "user_check": true;
         "user_id": true;
         "use_a_device_code": true;
+        "use_the_community_list": true;
         "use_vr_chat_s_folder": true;
         "use_your_vr_chat_account_or_scan_the_code_instead": true;
         "verify": true;

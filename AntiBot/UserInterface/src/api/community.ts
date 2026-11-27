@@ -1,21 +1,16 @@
 import {Native} from "@photino-net-utils/bridge";
 import type {BotEntry} from "./bots";
+import {readBlock} from "./data";
 
-/** The repository the community list and the submission form live in. */
+/** The repository the submission form lives in. */
 const Repository = "T2PeNBiX99wcoxKv3A4g/AntiBot";
-const Branch = "master";
-
-/** The raw list every instance downloads; GitHub Pages would work too. */
-export const communityListUrl =
-    `https://raw.githubusercontent.com/${Repository}/${Branch}/data/community-bots.json`;
-
 const issueUrl = `https://github.com/${Repository}/issues/new`;
 const marker = "antibot-community-bots:v1";
 
 /** A link longer than this is not reliable in every browser. */
 export const MaxPrefilledUrl = 7000;
 
-/** One row of the shared list, as the repository stores it. */
+/** One row of the community list, as the host serves it. */
 export interface CommunityBot {
     userId: string;
     displayName: string;
@@ -49,27 +44,29 @@ export interface CommunitySubmission {
     }[];
 }
 
-/** Downloads the shared list. It is advisory only; nothing here is acted on. */
-export async function fetchCommunityList(): Promise<CommunityList> {
-    const response = await fetch(`${communityListUrl}?t=${Date.now()}`, {cache: "no-store"});
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+/** Reads the list the background service downloaded; the page never calls GitHub itself. */
+export async function getCommunity(): Promise<CommunityList> {
+    if (!Native.available) return {updatedAt: "", bots: []};
 
-    const data = await response.json() as { updatedAt?: unknown; bots?: unknown };
-    if (!Array.isArray(data.bots)) throw new Error("invalid community list");
+    return await fetchCommunity();
+}
 
-    const byId = new Map<string, CommunityBot>();
+/** The background service reports a new list with this ping. */
+export function onCommunityChanged(handler: (list: CommunityList) => void): () => void {
+    return Native.on((message) => {
+        if (message.type !== "community.changed") return;
 
-    for (const value of data.bots.slice(0, 5000)) {
-        const bot = toCommunityBot(value);
-        if (!bot) continue;
+        void fetchCommunity().then(handler, () => {
+            // The host did not answer; the list on screen stays as it was.
+        });
+    });
+}
 
-        const previous = byId.get(bot.userId);
-        if (!previous || bot.threat >= previous.threat) byId.set(bot.userId, bot);
-    }
+/** Asks the host to download the list now instead of waiting for the next interval. */
+export async function refreshCommunity(): Promise<void> {
+    if (!Native.available) return;
 
-    const bots = [...byId.values()].sort((left, right) => dateOf(right.lastSeen) - dateOf(left.lastSeen));
-
-    return {updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "", bots};
+    await Native.request("community.refresh");
 }
 
 /** Builds the compact payload the workflow reads, plus the issue body around it. */
@@ -132,39 +129,25 @@ export async function copyCommunityBody(body: string): Promise<void> {
     await navigator.clipboard.writeText(body);
 }
 
-function toCommunityBot(value: unknown): CommunityBot | null {
-    if (!value || typeof value !== "object") return null;
-
-    const row = value as Record<string, unknown>;
-    const userId = typeof row.userId === "string" ? row.userId : "";
-    if (!/^usr_[A-Za-z0-9-]{8,64}$/.test(userId)) return null;
+async function fetchCommunity(): Promise<CommunityList> {
+    const block = await readBlock("/community");
 
     return {
-        userId,
-        displayName: typeof row.displayName === "string" ? row.displayName : "",
-        threat: typeof row.threat === "number" ? row.threat : 0,
-        reasons: Array.isArray(row.reasons)
-            ? row.reasons
-                .map((reason) => typeof reason === "string"
-                    ? reason
-                    : reason && typeof reason === "object" && "text" in reason
-                        ? String((reason as { text?: unknown }).text ?? "")
-                        : "")
-                .filter((reason) => reason.length > 0)
-            : [],
-        platform: typeof row.platform === "string" ? row.platform : undefined,
-        trust: typeof row.trust === "string" ? row.trust : undefined,
-        firstSeen: typeof row.firstSeen === "string" ? row.firstSeen : undefined,
-        lastSeen: typeof row.lastSeen === "string" ? row.lastSeen : undefined,
-        sightings: typeof row.sightings === "number" ? row.sightings : 1,
+        updatedAt: String(block.meta.updatedAt ?? ""),
+        bots: block.rows.map((row) => ({
+            userId: String(row.userId ?? ""),
+            displayName: String(row.name ?? ""),
+            threat: Number(row.threat ?? 0),
+            reasons: String(row.reasons ?? "").split("\u001f").filter((reason) => reason.length > 0),
+            platform: String(row.platform ?? "") || undefined,
+            trust: String(row.trust ?? "") || undefined,
+            firstSeen: String(row.firstSeen ?? "") || undefined,
+            lastSeen: String(row.lastSeen ?? "") || undefined,
+            sightings: Number(row.sightings ?? 0),
+        })),
     };
 }
 
 function isoOf(milliseconds: number): string | undefined {
     return milliseconds > 0 ? new Date(milliseconds).toISOString() : undefined;
-}
-
-function dateOf(value: string | undefined): number {
-    const time = value ? Date.parse(value) : 0;
-    return Number.isNaN(time) ? 0 : time;
 }

@@ -82,6 +82,7 @@ export function SettingsPage({info}: SettingsPageProps) {
     const [autoAvatar, setAutoAvatar] = useState(true);
     const [autoChat, setAutoChat] = useState(true);
     const [autoReport, setAutoReport] = useState(false);
+    const [useCommunityList, setUseCommunityList] = useState(true);
     const [autoClose, setAutoClose] = useState(false);
     const [autoSafeMode, setAutoSafeMode] = useState(false);
     const [autoSafeAvatar, setAutoSafeAvatar] = useState(false);
@@ -167,6 +168,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         setAutoAvatar(settings.autoDisableAvatarInteraction);
         setAutoChat(settings.autoHideChatBox);
         setAutoReport(settings.autoReport);
+        setUseCommunityList(settings.useCommunityList);
         setAutoClose(settings.autoCloseVrchat);
         setAutoSafeMode(settings.autoSafeMode);
         setAutoSafeAvatar(settings.autoSafeAvatar);
@@ -256,6 +258,7 @@ export function SettingsPage({info}: SettingsPageProps) {
         autoDisableAvatarInteraction: autoAvatar,
         autoHideChatBox: autoChat,
         autoReport,
+        useCommunityList,
         autoCloseVrchat: autoClose,
         autoSafeMode,
         autoSafeAvatar,
@@ -749,6 +752,15 @@ export function SettingsPage({info}: SettingsPageProps) {
                                     void persist({autoReport: value});
                                 }}
                                 title={t("report_the_user")}
+                            />
+                            <Toggle
+                                checked={useCommunityList}
+                                hint={t("act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted")}
+                                onChange={(value) => {
+                                    setUseCommunityList(value);
+                                    void persist({useCommunityList: value});
+                                }}
+                                title={t("use_the_community_list")}
                             />
                             <Toggle
                                 checked={autoSafeMode}

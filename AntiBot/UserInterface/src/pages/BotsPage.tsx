@@ -2,6 +2,13 @@ import {useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import {type Translate, useLocale, useTranslation} from "@photino-net-utils/bridge";
 import {type BotEntry, addTestBot, exportBots, getBots, onBotsChanged, removeBot} from "../api/bots";
+import {
+    buildSubmission,
+    communityIssueUrl,
+    copyCommunityBody,
+    MaxPrefilledUrl,
+    openCommunityUrl,
+} from "../api/community";
 import type {InstanceUser, ThreatReason} from "../api/instance";
 import {TrashIcon} from "../components/Icons";
 import {platformLabel, PlayerDialog} from "./InstancePage";
@@ -14,6 +21,8 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
     const [editing, setEditing] = useState(false);
     const [selected, setSelected] = useState<InstanceUser | null>(null);
     const [busy, setBusy] = useState(false);
+    const [uploadOpen, setUploadOpen] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
     const received = useRef(false);
 
@@ -75,6 +84,31 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
         });
     };
 
+    const upload = () => {
+        if (bots.length === 0) return;
+
+        setUploading(true);
+        setNotice(null);
+
+        const {body} = buildSubmission(bots);
+        const url = communityIssueUrl(body);
+
+        if (url.length <= MaxPrefilledUrl) {
+            void openCommunityUrl(url).then(() => setUploadOpen(false), (reason) => {
+                setNotice({ok: false, text: reason instanceof Error ? reason.message : t("community_upload_failed")});
+            }).finally(() => setUploading(false));
+            return;
+        }
+
+        void copyCommunityBody(body).then(async () => {
+            await openCommunityUrl(communityIssueUrl());
+            setUploadOpen(false);
+            setNotice({ok: true, text: t("community_upload_too_large")});
+        }).catch(() => {
+            setNotice({ok: false, text: t("community_upload_failed")});
+        }).finally(() => setUploading(false));
+    };
+
     return (
         <Page>
             <Card>
@@ -94,6 +128,14 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
                                 {t("add_test_bot")}
                             </DebugButton>
                         )}
+                        <UploadButton
+                            disabled={bots.length === 0}
+                            onClick={() => setUploadOpen(true)}
+                            title={bots.length === 0 ? t("no_bots_detected_yet") : t("upload_this_list")}
+                            type="button"
+                        >
+                            {t("upload_this_list")}
+                        </UploadButton>
                         <Count>{t("count_bot_s", {count: bots.length})}</Count>
                         <ActionButton
                             disabled={bots.length === 0 || busy}
@@ -185,6 +227,24 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
             </Card>
 
             {selected && <PlayerDialog user={selected} now={Date.now()} onClose={() => setSelected(null)}/>}
+
+            {uploadOpen && (
+                <Overlay onClick={() => !uploading && setUploadOpen(false)}>
+                    <Dialog onClick={(event) => event.stopPropagation()}>
+                        <h2>{t("community_upload_title")}</h2>
+                        <p>{t("community_upload_explanation")}</p>
+                        <p>{t("community_upload_withdraw")}</p>
+                        <DialogActions>
+                            <ActionButton disabled={uploading} onClick={() => setUploadOpen(false)} type="button">
+                                {t("cancel")}
+                            </ActionButton>
+                            <UploadButton disabled={uploading} onClick={upload} type="button">
+                                {uploading ? t("working") : t("open_github")}
+                            </UploadButton>
+                        </DialogActions>
+                    </Dialog>
+                </Overlay>
+            )}
         </Page>
     );
 }
@@ -307,6 +367,67 @@ const DebugButton = styled.button`
     &:hover {
         background: rgba(251, 191, 36, 0.2);
     }
+`;
+
+const UploadButton = styled.button`
+    padding: 5px 9px;
+    border: 1px solid rgba(167, 139, 250, 0.55);
+    border-radius: var(--radius-sm);
+    background: rgba(167, 139, 250, 0.1);
+    color: var(--accent-primary);
+    font: inherit;
+    font-size: 10px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: rgba(167, 139, 250, 0.2);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+`;
+
+const Overlay = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(5, 3, 10, 0.72);
+`;
+
+const Dialog = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(520px, 100%);
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    p {
+        font-size: 11.5px;
+        line-height: 1.55;
+        color: var(--text-secondary);
+    }
+`;
+
+const DialogActions = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
 `;
 
 const ActionButton = styled.button`

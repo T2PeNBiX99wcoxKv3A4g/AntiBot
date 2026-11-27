@@ -200,7 +200,10 @@
 
   "community_list": "Community list",
   "local_list": "This device",
-  "community_list_description": "A shared list submitted through GitHub. It is shown for reference and never triggers automatic actions.",
+  "community_list_description": "A shared list downloaded automatically. It is used by automatic protection when that is enabled.",
+  "community_list_is_downloaded_automatically_and_used_by_automatic_protection": "The list is downloaded on startup and every six hours. The automatic actions use it after each update.",
+  "use_the_community_list": "Use the community list",
+  "act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted": "Act on users found in the downloaded community list. Friends and whitelisted users are never acted on.",
   "download_community_list": "Download community list",
   "community_list_empty": "Nothing has been downloaded yet.",
   "community_list_updated": "Updated {date}",

@@ -31,11 +31,18 @@ internal partial class ThreatActionService
     {
         InstanceService.Instance.Published += OnSnapshot;
         InstanceService.Instance.Observed += OnObserved;
+        CommunityService.Instance.Changed += OnCommunityChanged;
 
         // Scoring has its own loop: a profile lookup must never hold up the log reader, and a bot
         // that only shows a leave line still gets scored before it is gone.
         _ = Task.Run(ScoreObservedAsync);
     }
+
+    /// <summary>
+    ///     The shared list arrived or changed. Sweep the current instance again, so someone already
+    ///     inside is acted on once the download finishes.
+    /// </summary>
+    private void OnCommunityChanged() => _ = Task.Run(() => Sweep(InstanceService.Instance.DataSnapshot));
 
     private void OnObserved(string userId, string name) => _observations.Writer.TryWrite((userId, name));
 
@@ -83,10 +90,16 @@ internal partial class ThreatActionService
     private void ActIfNeeded(InstanceUser user, AppSettings settings)
     {
         // Friends are treated like whitelisted users: never act on someone already on the list.
-        if (user.Local || user.IsFriend || user.Threat < settings.ThreatThreshold)
+        if (user.Local || user.IsFriend)
             return;
 
         if (settings.Whitelist.Contains(user.UserId, StringComparer.OrdinalIgnoreCase))
+            return;
+
+        // A row in the shared list is already a detection; the local score does not have to reach
+        // the threshold again.
+        var community = settings.UseCommunityList ? CommunityService.Instance.Get(user.UserId) : null;
+        if (community is null && user.Threat < settings.ThreatThreshold)
             return;
 
         lock (_gate)
@@ -94,7 +107,7 @@ internal partial class ThreatActionService
                 return;
 
         WarnSignedOut(user, settings);
-        _ = ActAsync(user, settings);
+        _ = ActAsync(user, settings, community);
     }
 
     /// <summary>
@@ -115,9 +128,9 @@ internal partial class ThreatActionService
             Localization.Get("auth.expired.detected_message").Replace("{name}", user.Name), "account");
     }
 
-    private async Task ActAsync(InstanceUser user, AppSettings settings)
+    private async Task ActAsync(InstanceUser user, AppSettings settings, CommunityBot? community)
     {
-        var detail = Describe(user);
+        var detail = Describe(user, community);
         var avatar = user.IconUrl ?? user.AvatarUrl;
 
         // Closing the client is the only action that can beat an avatar download, and it waits for
@@ -175,7 +188,8 @@ internal partial class ThreatActionService
             return;
         if (request.User.IsFriend)
             return;
-        if (request.User.Threat < settings.ThreatThreshold)
+        var community = settings.UseCommunityList ? CommunityService.Instance.Get(request.UserId) : null;
+        if (community is null && request.User.Threat < settings.ThreatThreshold)
             return;
         if (settings.Whitelist.Contains(request.UserId, StringComparer.OrdinalIgnoreCase))
             return;
@@ -199,7 +213,7 @@ internal partial class ThreatActionService
 
             await Database.Instance.SetFriendRequestRejectedAsync(request.Id, true, _stop.Token);
             await OperationService.Instance.LogAsync("rejectRequest", request.UserId, request.User.Name,
-                Describe(request.User), request.User.IconUrl ?? request.User.AvatarUrl);
+                Describe(request.User, community), request.User.IconUrl ?? request.User.AvatarUrl);
         }
         finally
         {
@@ -217,7 +231,7 @@ internal partial class ThreatActionService
 
         await Database.Instance.SetFriendRequestRejectedAsync(request.Id, false, _stop.Token);
         await OperationService.Instance.LogAsync("undoReject", request.UserId, request.User.Name,
-            Describe(request.User), request.User.IconUrl ?? request.User.AvatarUrl);
+            Describe(request.User, null), request.User.IconUrl ?? request.User.AvatarUrl);
     }
 
     /// <summary>Sends the local actions, which need no server and never wait behind the API calls.</summary>
@@ -246,11 +260,20 @@ internal partial class ThreatActionService
     }
 
     /// <summary>One player, with the profile summary an operation records.</summary>
-    private static string Describe(InstanceUser user) =>
-        $"{user.Threat}" +
-        (user.ThreatReasons is { Length: > 0 } reasons
-            ? " · " + string.Join(", ", reasons.Select(DescribeReason))
-            : "");
+    private static string Describe(InstanceUser user, CommunityBot? community)
+    {
+        var reasons = new List<string>();
+
+        if (user.ThreatReasons is { Length: > 0 } list)
+            reasons.AddRange(list.Select(DescribeReason));
+
+        if (community is not null)
+            reasons.Add($"community_list({community.Threat})");
+
+        var score = Math.Max(user.Threat, community?.Threat ?? 0);
+
+        return score + (reasons.Count > 0 ? " · " + string.Join(", ", reasons) : "");
+    }
 
     /// <summary>
     ///     A reason as its translation key, with the value in parentheses when it fills a placeholder.

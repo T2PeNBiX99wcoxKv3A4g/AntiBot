@@ -115,6 +115,7 @@ internal static class Program
             _ = InstanceService.Instance;
             _ = FriendRequestService.Instance;
             _ = OperationService.Instance;
+            _ = CommunityService.Instance;
             _ = ThreatActionService.Instance;
             _ = BotListService.Instance;
             _ = BatchService.Instance;

@@ -2,39 +2,34 @@ import {useEffect, useState} from "react";
 import styled from "styled-components";
 import type {LocalizationKey, Translate} from "@photino-net-utils/bridge";
 import {useLocale, useTranslation} from "@photino-net-utils/bridge";
-import {type BotEntry, getBots, onBotsChanged} from "../api/bots";
 import {
-    buildSubmission,
     type CommunityBot,
     type CommunityList,
-    communityIssueUrl,
-    copyCommunityBody,
-    fetchCommunityList,
-    MaxPrefilledUrl,
-    openCommunityUrl,
+    getCommunity,
+    onCommunityChanged,
+    refreshCommunity,
 } from "../api/community";
 import {platformLabel} from "./InstancePage";
 
-/** The shared list submitted through GitHub; local detection stays authoritative. */
+/** The shared list the background service downloads and the automatic actions also use. */
 export function CommunityPage() {
     const t = useTranslation();
     const locale = useLocale();
-    const [localBots, setLocalBots] = useState<BotEntry[]>([]);
     const [community, setCommunity] = useState<CommunityList | null>(null);
-    const [downloading, setDownloading] = useState(false);
-    const [uploadOpen, setUploadOpen] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
 
     useEffect(() => {
         let cancelled = false;
 
-        void getBots().then((next) => {
-            if (!cancelled) setLocalBots(next);
-        }, () => undefined);
+        const unsubscribe = onCommunityChanged((next) => {
+            if (!cancelled) setCommunity(next);
+        });
 
-        const unsubscribe = onBotsChanged((next) => {
-            if (!cancelled) setLocalBots(next);
+        void getCommunity().then((next) => {
+            if (!cancelled) setCommunity(next);
+        }, () => {
+            // The host failed to answer; the empty state already covers it.
         });
 
         return () => {
@@ -43,45 +38,22 @@ export function CommunityPage() {
         };
     }, []);
 
-    const download = () => {
-        setDownloading(true);
+    const refresh = () => {
+        setRefreshing(true);
         setNotice(null);
 
-        void fetchCommunityList().then((list) => {
-            setCommunity(list);
-            setNotice({ok: true, text: t("count_bot_s", {count: list.bots.length})});
+        void refreshCommunity().then(async () => {
+            const next = await getCommunity();
+            setCommunity(next);
+            setNotice({ok: true, text: t("count_bot_s", {count: next.bots.length})});
         }, () => {
             setNotice({ok: false, text: t("error.community_list")});
+        }).catch(() => {
+            setNotice({ok: false, text: t("error.community_list")});
         }).finally(() => {
-            setDownloading(false);
+            setRefreshing(false);
             window.setTimeout(() => setNotice(null), 6000);
         });
-    };
-
-    const upload = () => {
-        if (localBots.length === 0) return;
-
-        setUploading(true);
-        setNotice(null);
-
-        const {body} = buildSubmission(localBots);
-        const url = communityIssueUrl(body);
-
-        if (url.length <= MaxPrefilledUrl) {
-            void openCommunityUrl(url).then(() => setUploadOpen(false), (reason) => {
-                setUploading(false);
-                setNotice({ok: false, text: reason instanceof Error ? reason.message : t("community_upload_failed")});
-            }).finally(() => setUploading(false));
-            return;
-        }
-
-        void copyCommunityBody(body).then(async () => {
-            await openCommunityUrl(communityIssueUrl());
-            setUploadOpen(false);
-            setNotice({ok: true, text: t("community_upload_too_large")});
-        }).catch(() => {
-            setNotice({ok: false, text: t("community_upload_failed")});
-        }).finally(() => setUploading(false));
     };
 
     const updated = community?.updatedAt
@@ -95,19 +67,13 @@ export function CommunityPage() {
                     <div>
                         <h2>{t("community_list")}</h2>
                         <p>{t("community_list_description")}</p>
+                        <Hint>{t("community_list_is_downloaded_automatically_and_used_by_automatic_protection")}</Hint>
                     </div>
                     <HeadActions>
                         <Count>{community ? t("count_bot_s", {count: community.bots.length}) : ""}</Count>
-                        <ActionButton disabled={downloading} onClick={download} type="button">
-                            {downloading ? t("working") : t("download_community_list")}
+                        <ActionButton disabled={refreshing} onClick={refresh} type="button">
+                            {refreshing ? t("working") : t("download_community_list")}
                         </ActionButton>
-                        <UploadButton
-                            disabled={localBots.length === 0}
-                            onClick={() => setUploadOpen(true)}
-                            type="button"
-                        >
-                            {t("upload_this_list")}
-                        </UploadButton>
                     </HeadActions>
                 </Head>
 
@@ -126,7 +92,7 @@ export function CommunityPage() {
 
                 <List>
                     {!community || community.bots.length === 0 ? (
-                        <Empty>{downloading ? t("working") : t("community_list_empty")}</Empty>
+                        <Empty>{refreshing ? t("working") : t("community_list_empty")}</Empty>
                     ) : community.bots.map((bot) => (
                         <Item key={bot.userId}>
                             <AvatarCell>
@@ -145,24 +111,6 @@ export function CommunityPage() {
                     ))}
                 </List>
             </Card>
-
-            {uploadOpen && (
-                <Overlay onClick={() => !uploading && setUploadOpen(false)}>
-                    <Dialog onClick={(event) => event.stopPropagation()}>
-                        <h2>{t("community_upload_title")}</h2>
-                        <p>{t("community_upload_explanation")}</p>
-                        <p>{t("community_upload_withdraw")}</p>
-                        <DialogActions>
-                            <ActionButton disabled={uploading} onClick={() => setUploadOpen(false)} type="button">
-                                {t("cancel")}
-                            </ActionButton>
-                            <UploadButton disabled={uploading} onClick={upload} type="button">
-                                {uploading ? t("working") : t("open_github")}
-                            </UploadButton>
-                        </DialogActions>
-                    </Dialog>
-                </Overlay>
-            )}
         </Page>
     );
 }
@@ -223,6 +171,11 @@ const Head = styled.div`
     }
 `;
 
+const Hint = styled.p`
+    margin-top: 5px !important;
+    color: var(--text-muted) !important;
+`;
+
 const HeadActions = styled.div`
     display: flex;
     align-items: center;
@@ -264,11 +217,6 @@ const ActionButton = styled.button`
         opacity: 0.45;
         cursor: default;
     }
-`;
-
-const UploadButton = styled(ActionButton)`
-    border-color: rgba(167, 139, 250, 0.55);
-    color: var(--accent-primary);
 `;
 
 const Notice = styled.div<{ $ok: boolean }>`
@@ -377,44 +325,4 @@ const Empty = styled.p`
     text-align: center;
     font-size: 11.5px;
     color: var(--text-muted);
-`;
-
-const Overlay = styled.div`
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: rgba(5, 3, 10, 0.72);
-`;
-
-const Dialog = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: min(520px, 100%);
-    padding: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    background: var(--bg-card);
-
-    h2 {
-        font-size: 15px;
-        font-weight: 600;
-    }
-
-    p {
-        font-size: 11.5px;
-        line-height: 1.55;
-        color: var(--text-secondary);
-    }
-`;
-
-const DialogActions = styled.div`
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 4px;
 `;
