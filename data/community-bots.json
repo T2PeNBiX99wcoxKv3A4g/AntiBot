@@ -1,5 +1,66 @@
 {
   "version": 1,
-  "updatedAt": "",
-  "bots": []
+  "updatedAt": "2026-11-27T20:06:48.041Z",
+  "bots": [
+    {
+      "userId": "usr_antibot-debug-1795809386081-4",
+      "displayName": "Debug Bot 4",
+      "threat": 110,
+      "reasons": [
+        "known_bot_site_hexed_cc"
+      ],
+      "platform": "standalonewindows",
+      "firstSeen": "2026-11-27T19:56:26.081Z",
+      "lastSeen": "2026-11-27T19:56:26.081Z",
+      "sightings": 1,
+      "sources": [
+        3
+      ]
+    },
+    {
+      "userId": "usr_antibot-debug-1795809385890-3",
+      "displayName": "Debug Bot 3",
+      "threat": 110,
+      "reasons": [
+        "known_bot_site_hexed_cc"
+      ],
+      "platform": "standalonewindows",
+      "firstSeen": "2026-11-27T19:56:25.890Z",
+      "lastSeen": "2026-11-27T19:56:25.890Z",
+      "sightings": 1,
+      "sources": [
+        3
+      ]
+    },
+    {
+      "userId": "usr_antibot-debug-1795809385619-2",
+      "displayName": "Debug Bot 2",
+      "threat": 110,
+      "reasons": [
+        "known_bot_site_hexed_cc"
+      ],
+      "platform": "standalonewindows",
+      "firstSeen": "2026-11-27T19:56:25.619Z",
+      "lastSeen": "2026-11-27T19:56:25.619Z",
+      "sightings": 1,
+      "sources": [
+        3
+      ]
+    },
+    {
+      "userId": "usr_antibot-debug-1795809384813-1",
+      "displayName": "Debug Bot 1",
+      "threat": 110,
+      "reasons": [
+        "known_bot_site_hexed_cc"
+      ],
+      "platform": "standalonewindows",
+      "firstSeen": "2026-11-27T19:56:24.813Z",
+      "lastSeen": "2026-11-27T19:56:24.813Z",
+      "sightings": 1,
+      "sources": [
+        3
+      ]
+    }
+  ]
 }
