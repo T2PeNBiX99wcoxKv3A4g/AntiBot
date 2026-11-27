@@ -4,6 +4,7 @@ using AntiBot.Messaging;
 using AntiBot.Models;
 using PhotinoNetUtils.Localization;
 using PhotinoNetUtils.Messaging;
+using PhotinoNetUtils.Platform;
 
 namespace AntiBot.Services;
 
@@ -57,9 +58,13 @@ internal partial class CommunityService
     }
 
     private Task<NativeResponse?> HandleMessageAsync(NativeContext context) =>
-        context.Request.Type == "community.refresh"
-            ? RefreshMessageAsync(context)
-            : Task.FromResult<NativeResponse?>(null);
+        context.Request.Type switch
+        {
+            "community.refresh" => RefreshMessageAsync(context),
+            "community.saveSubmission" => SaveSubmissionAsync(context),
+            "community.openDownloads" => Task.FromResult<NativeResponse?>(OpenDownloads(context)),
+            _ => Task.FromResult<NativeResponse?>(null)
+        };
 
     private async Task<NativeResponse?> RefreshMessageAsync(NativeContext context)
     {
@@ -68,6 +73,37 @@ internal partial class CommunityService
         return refreshed
             ? context.Reply("community.refresh.result", new OkPayload())
             : context.Fail("community.refresh.result", Localization.Get("error.community_list"));
+    }
+
+    /// <summary>Writes the submission JSON to Downloads so the user can attach it to the issue.</summary>
+    private static async Task<NativeResponse?> SaveSubmissionAsync(NativeContext context)
+    {
+        var json = context.Payload<CommunitySubmissionRequest>()?.Json;
+        if (string.IsNullOrWhiteSpace(json) || json.Length > 1_000_000)
+            return context.Fail("community.saveSubmission.result", Localization.Get("error.community_save"));
+
+        var path = Path.Combine(DownloadsFolder(), $"antibot-community-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+        var attempt = await Try.Run(() => File.WriteAllTextAsync(path, json));
+
+        return attempt.IsSuccess
+            ? context.Reply("community.saveSubmission.result", new CommunitySubmissionPayload(true, path))
+            : context.Fail("community.saveSubmission.result", Localization.Get("error.community_save"));
+    }
+
+    private static NativeResponse OpenDownloads(NativeContext context)
+    {
+        var attempt = Try.Run(() => SystemLauncher.Open(DownloadsFolder()));
+
+        return attempt.IsSuccess
+            ? context.Reply("community.openDownloads.result", new OkPayload())
+            : context.Fail("community.openDownloads.result", Localization.Get("error.open_folder"));
+    }
+
+    private static string DownloadsFolder()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var downloads = Path.Combine(home, "Downloads");
+        return Directory.Exists(downloads) ? downloads : home;
     }
 
     private async Task LoopAsync(CancellationToken token)

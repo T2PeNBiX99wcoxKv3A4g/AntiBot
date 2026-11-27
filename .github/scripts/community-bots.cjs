@@ -1,10 +1,14 @@
-// Community bot list submissions. A maintainer applies `approved` to merge an issue and closing a
-// merged issue withdraws the entries it contributed.
-const marker = /<!-- antibot-community-bots:v1 -->([\s\S]*?)<!-- \/antibot-community-bots(?::v1)? -->/;
+// Community bot list submissions. The user attaches the JSON file exported by AntiBot; a maintainer
+// applies `approved` to merge it. Closing an unapproved issue means it is not used, and approval is
+// permanent even if the issue is closed later.
+const marker = "antibot-community-bots";
 const dataPath = "data/community-bots.json";
 const branch = "master";
 const maxSubmitted = 200;
 const maxStored = 5000;
+const maxFileBytes = 1_000_000;
+const attachmentPattern =
+    /https:\/\/(?:github\.com\/user-attachments\/assets|user-images\.githubusercontent\.com|private-user-images\.githubusercontent\.com)\/[^\s)\]"'<>]+/g;
 
 let github;
 let context;
@@ -26,14 +30,15 @@ async function run() {
     const body = issue.body ?? "";
     const hasLabel = (name) => (issue.labels ?? [])
         .some((label) => (typeof label === "string" ? label : label.name) === name);
-    const isCommunity = marker.test(body) || hasLabel("community-bots");
+    const isCommunity = body.includes(marker) || hasLabel("community-bots") ||
+        (issue.title ?? "").startsWith("[community]");
 
     if (!isCommunity) return;
 
     if (action === "opened" || action === "edited") {
-        const parsed = parseSubmission(body);
+        const parsed = await parseAttachments(body);
         if (!parsed.ok) {
-            await comment(`This submission could not be read: ${parsed.error}\n\nFix the JSON between the markers and save the issue.`);
+            await comment(parsed.error);
             return;
         }
 
@@ -42,16 +47,16 @@ async function run() {
         await ensureLabel("merged", "1d76db", "The community bot list submission is merged");
         await addLabel("community-bots");
         await comment(
-            `Received ${parsed.bots.length} bot(s). ${parsed.skipped > 0 ? `${parsed.skipped} invalid row(s) were skipped. ` : ""}` +
-            "A maintainer will review this issue. Adding `approved` merges it; closing the issue withdraws its entries.");
+            `Received ${parsed.bots.length} bot(s) from the attached file. ` +
+            "A maintainer adds `approved` to merge it. Closing the issue without approval means it is not used.");
         core.info(`Validated ${parsed.bots.length} bot(s) from issue #${issue.number}`);
         return;
     }
 
     if (action === "labeled" && context.payload.label?.name === "approved") {
-        const parsed = parseSubmission(body);
+        const parsed = await parseAttachments(body);
         if (!parsed.ok) {
-            await comment(`This submission could not be read: ${parsed.error}`);
+            await comment(parsed.error);
             return;
         }
 
@@ -59,77 +64,111 @@ async function run() {
         await ensureLabel("merged", "1d76db", "The community bot list submission is merged");
         await addLabel("merged");
         await comment(
-            `Merged ${parsed.bots.length} bot(s). Close this issue to withdraw the entries it contributed.`);
+            `Merged ${parsed.bots.length} bot(s). They stay merged even if this issue is closed.`);
         core.info(`Merged ${parsed.bots.length} bot(s) from issue #${issue.number}`);
-        return;
-    }
-
-    if (action === "closed" && hasLabel("merged")) {
-        const removed = await withdraw(issue.number);
-        await comment(`Withdrawn ${removed} entr${removed === 1 ? "y" : "ies"} submitted by this issue.`);
-        core.info(`Withdrew ${removed} entr${removed === 1 ? "y" : "ies"} from issue #${issue.number}`);
     }
 }
 
-function parseSubmission(body) {
-    const block = body.match(marker);
-    if (!block) return {ok: false, error: "the submission markers are missing"};
-
-    const json = block[1]
-        .replace(/```json/gi, "")
-        .replace(/```/g, "")
-        .trim();
-
-    let submission;
-    try {
-        submission = JSON.parse(json);
-    } catch {
-        return {ok: false, error: "the JSON between the markers is not valid"};
-    }
-
-    if (!submission || submission.v !== 1 || !Array.isArray(submission.bots))
-        return {ok: false, error: "expected a version 1 submission with a bots array"};
-
-    if (submission.bots.length > maxSubmitted)
-        return {ok: false, error: `at most ${maxSubmitted} bots can be submitted at once`};
+async function parseAttachments(body) {
+    const urls = [...new Set(body.match(attachmentPattern) ?? [])];
+    if (urls.length === 0)
+        return {
+            ok: false,
+            error: "Attach the JSON file exported by AntiBot to this issue, then save it. The workflow reads the attachment automatically.",
+        };
 
     const byUser = new Map();
     let skipped = 0;
+    const errors = [];
 
-    for (const value of submission.bots) {
-        const bot = normalize(value);
-        if (!bot) {
-            skipped++;
-            continue;
+    for (const url of urls) {
+        try {
+            const text = await download(url);
+            const data = JSON.parse(text);
+            const rows = Array.isArray(data) ? data : data.bots;
+
+            if (!Array.isArray(rows))
+                throw new Error("the file has no bots array");
+
+            for (const value of rows.slice(0, maxSubmitted)) {
+                const bot = normalize(value);
+                if (!bot) {
+                    skipped++;
+                    continue;
+                }
+
+                const previous = byUser.get(bot.u);
+                if (!previous || bot.t >= previous.t) byUser.set(bot.u, bot);
+            }
+        } catch (error) {
+            errors.push(String(error.message ?? error));
         }
-
-        const previous = byUser.get(bot.u);
-        if (!previous || bot.t >= previous.t) byUser.set(bot.u, bot);
     }
 
     if (byUser.size === 0)
-        return {ok: false, error: "none of the rows had a valid user id and threat"};
+        return {
+            ok: false,
+            error: `No valid bot rows were found in the attached file(s). ${errors.length > 0 ? `Errors: ${errors.join("; ")}` : ""}`.trim(),
+        };
 
     return {ok: true, bots: [...byUser.values()], skipped};
+}
+
+async function download(url) {
+    let response = await fetch(url, {
+        redirect: "follow",
+        headers: {"User-Agent": "AntiBot-community-workflow"},
+    });
+
+    // Some attachment URLs only answer when the workflow is authenticated.
+    if (response.status === 401 || response.status === 403) {
+        response = await fetch(url, {
+            redirect: "follow",
+            headers: {
+                "User-Agent": "AntiBot-community-workflow",
+                "Authorization": `Bearer ${process.env.GITHUB_TOKEN}`,
+            },
+        });
+    }
+
+    if (!response.ok)
+        throw new Error(`attachment answered HTTP ${response.status}`);
+
+    const text = await response.text();
+    if (text.length > maxFileBytes)
+        throw new Error("the attached file is too large");
+
+    return text;
 }
 
 function normalize(value) {
     if (!value || typeof value !== "object") return null;
 
-    const userId = typeof value.u === "string" ? value.u.trim() : "";
+    const rawUserId = value.u ?? value.userId;
+    const userId = typeof rawUserId === "string" ? rawUserId.trim() : "";
     if (!/^usr_[A-Za-z0-9-]{8,64}$/.test(userId)) return null;
 
-    const threat = Number(value.t);
+    const threat = Number(value.t ?? value.threat);
     if (!Number.isFinite(threat) || threat < 0 || threat > 1000) return null;
 
-    const name = typeof value.n === "string" ? value.n.trim().slice(0, 200) : "";
-    const platform = typeof value.p === "string" ? value.p.trim().slice(0, 50) : "";
-    const firstSeen = dateOrUndefined(value.f);
-    const lastSeen = dateOrUndefined(value.s) ?? firstSeen;
-    const sightings = Number.isFinite(Number(value.c)) ? Math.min(Math.max(Number(value.c), 1), 1000) : 1;
-    const reasons = Array.isArray(value.r)
-        ? value.r
-            .filter((reason) => typeof reason === "string" && reason.trim().length > 0)
+    const rawName = value.n ?? value.displayName;
+    const name = typeof rawName === "string" ? rawName.trim().slice(0, 200) : "";
+    const rawPlatform = value.p ?? value.platform;
+    const platform = typeof rawPlatform === "string" ? rawPlatform.trim().slice(0, 50) : "";
+    const firstSeen = dateOrUndefined(value.f ?? value.firstSeen);
+    const lastSeen = dateOrUndefined(value.s ?? value.lastSeen) ?? firstSeen;
+    const sightings = Number.isFinite(Number(value.c ?? value.sightings))
+        ? Math.min(Math.max(Number(value.c ?? value.sightings), 1), 1000)
+        : 1;
+    const rawReasons = value.r ?? value.reasons;
+    const reasons = Array.isArray(rawReasons)
+        ? rawReasons
+            .map((reason) => typeof reason === "string"
+                ? reason
+                : reason && typeof reason === "object" && typeof reason.text === "string"
+                    ? reason.text
+                    : "")
+            .filter((reason) => reason.trim().length > 0)
             .map((reason) => reason.trim().slice(0, 100))
             .slice(0, 20)
         : [];
@@ -196,35 +235,6 @@ async function merge(bots, issueNumber) {
         .slice(0, maxStored);
 
     await writeData(data, sha, `data(community): merge issue #${issueNumber}`);
-}
-
-async function withdraw(issueNumber) {
-    const {data, sha} = await readData();
-    let removed = 0;
-
-    data.bots = (Array.isArray(data.bots) ? data.bots : []).filter((bot) => {
-        const sources = Array.isArray(bot.sources) ? bot.sources : [];
-
-        // A row with no source predates this workflow; never remove it automatically.
-        if (sources.length === 0) return true;
-
-        const kept = sources.filter((source) => source !== issueNumber);
-        if (kept.length === sources.length) return true;
-        if (kept.length > 0) {
-            bot.sources = kept;
-            return true;
-        }
-
-        removed++;
-        return false;
-    });
-
-    if (removed === 0) return 0;
-
-    data.version = 1;
-    data.updatedAt = new Date().toISOString();
-    await writeData(data, sha, `data(community): withdraw issue #${issueNumber}`);
-    return removed;
 }
 
 async function readData() {

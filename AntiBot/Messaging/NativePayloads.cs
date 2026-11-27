@@ -215,3 +215,9 @@ internal sealed record BotExportRequest(string Format);
 
 /// <summary>Body for <c>bots.export</c>: whether the file was written, and where.</summary>
 internal sealed record BotExportPayload(bool Saved, int Count, string? Path);
+
+/// <summary>Payload for <c>community.saveSubmission</c>: the JSON the app prepared.</summary>
+internal sealed record CommunitySubmissionRequest(string Json);
+
+/// <summary>Body for <c>community.saveSubmission</c>: where the file went.</summary>
+internal sealed record CommunitySubmissionPayload(bool Saved, string? Path);

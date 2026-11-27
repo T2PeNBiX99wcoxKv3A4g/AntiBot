@@ -1,15 +1,14 @@
 ---
 name: Community bot list
-about: Submit bots detected by AntiBot to the shared list
+about: Attach the JSON file exported by AntiBot
 title: "[community] Bot list submission"
 ---
 
-<!-- antibot-community-bots:v1 -->
-```json
-{}
-```
-<!-- /antibot-community-bots -->
+<!-- antibot-community-bots-file:v1 -->
 
-Do not edit the markers. A GitHub Action validates this automatically.
+1. In AntiBot, open **Bot list** and click **Upload this list**.
+2. AntiBot saves a JSON file to Downloads and opens this page.
+3. Drag that file into this issue (or use the attachment button).
+4. Submit the issue. A maintainer adds **approved** to merge it.
 
-A maintainer adds the `approved` label to merge it. Close this issue to withdraw the entries it submitted.
+Closing this issue without `approved` means it is not used. Once `approved`, the entries stay merged even if the issue is closed.

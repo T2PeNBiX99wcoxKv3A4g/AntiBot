@@ -5,9 +5,9 @@ import {type BotEntry, addTestBot, exportBots, getBots, onBotsChanged, removeBot
 import {
     buildSubmission,
     communityIssueUrl,
-    copyCommunityBody,
-    MaxPrefilledUrl,
     openCommunityUrl,
+    openDownloads,
+    saveSubmission,
 } from "../api/community";
 import type {InstanceUser, ThreatReason} from "../api/instance";
 import {TrashIcon} from "../components/Icons";
@@ -23,6 +23,7 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
     const [busy, setBusy] = useState(false);
     const [uploadOpen, setUploadOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [savedPath, setSavedPath] = useState("");
     const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
     const received = useRef(false);
 
@@ -90,23 +91,18 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
         setUploading(true);
         setNotice(null);
 
-        const {body} = buildSubmission(bots);
-        const url = communityIssueUrl(body);
+        const {json} = buildSubmission(bots);
 
-        if (url.length <= MaxPrefilledUrl) {
-            void openCommunityUrl(url).then(() => setUploadOpen(false), (reason) => {
-                setNotice({ok: false, text: reason instanceof Error ? reason.message : t("community_upload_failed")});
-            }).finally(() => setUploading(false));
-            return;
-        }
+        void saveSubmission(json).then(async (file) => {
+            if (!file.saved) throw new Error(t("community_upload_failed"));
 
-        void copyCommunityBody(body).then(async () => {
+            setSavedPath(file.path ?? "");
             await openCommunityUrl(communityIssueUrl());
-            setUploadOpen(false);
-            setNotice({ok: true, text: t("community_upload_too_large")});
-        }).catch(() => {
-            setNotice({ok: false, text: t("community_upload_failed")});
-        }).finally(() => setUploading(false));
+        }).catch((reason) => {
+            setNotice({ok: false, text: reason instanceof Error ? reason.message : t("community_upload_failed")});
+        }).finally(() => {
+            setUploading(false);
+        });
     };
 
     return (
@@ -130,7 +126,10 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
                         )}
                         <UploadButton
                             disabled={bots.length === 0}
-                            onClick={() => setUploadOpen(true)}
+                            onClick={() => {
+                                setSavedPath("");
+                                setUploadOpen(true);
+                            }}
                             title={bots.length === 0 ? t("no_bots_detected_yet") : t("upload_this_list")}
                             type="button"
                         >
@@ -232,16 +231,46 @@ export function BotsPage({signedIn, debug}: { signedIn: boolean; debug: boolean 
                 <Overlay onClick={() => !uploading && setUploadOpen(false)}>
                     <Dialog onClick={(event) => event.stopPropagation()}>
                         <h2>{t("community_upload_title")}</h2>
-                        <p>{t("community_upload_explanation")}</p>
-                        <p>{t("community_upload_withdraw")}</p>
-                        <DialogActions>
-                            <ActionButton disabled={uploading} onClick={() => setUploadOpen(false)} type="button">
-                                {t("cancel")}
-                            </ActionButton>
-                            <UploadButton disabled={uploading} onClick={upload} type="button">
-                                {uploading ? t("working") : t("open_github")}
-                            </UploadButton>
-                        </DialogActions>
+
+                        {savedPath ? (
+                            <>
+                                <p>{t("community_upload_file_saved", {path: savedPath})}</p>
+                                <p>{t("community_upload_withdraw")}</p>
+                                <DialogActions>
+                                    <ActionButton onClick={() => void openDownloads()} type="button">
+                                        {t("community_upload_show_folder")}
+                                    </ActionButton>
+                                    <ActionButton onClick={() => void openCommunityUrl(communityIssueUrl())}
+                                                  type="button">
+                                        {t("open_github")}
+                                    </ActionButton>
+                                    <UploadButton
+                                        onClick={() => {
+                                            setUploadOpen(false);
+                                            setSavedPath("");
+                                        }}
+                                        type="button"
+                                    >
+                                        {t("close")}
+                                    </UploadButton>
+                                </DialogActions>
+                            </>
+                        ) : (
+                            <>
+                                <p>{t("community_upload_explanation")}</p>
+                                <p>{t("community_upload_withdraw")}</p>
+                                <DialogActions>
+                                    <ActionButton disabled={uploading}
+                                                  onClick={() => setUploadOpen(false)}
+                                                  type="button">
+                                        {t("cancel")}
+                                    </ActionButton>
+                                    <UploadButton disabled={uploading} onClick={upload} type="button">
+                                        {uploading ? t("working") : t("community_upload_save_and_open")}
+                                    </UploadButton>
+                                </DialogActions>
+                            </>
+                        )}
                     </Dialog>
                 </Overlay>
             )}

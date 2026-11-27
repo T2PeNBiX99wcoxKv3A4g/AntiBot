@@ -77,6 +77,8 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(BotActionRequest))]
 [JsonSerializable(typeof(BotExportRequest))]
 [JsonSerializable(typeof(BotExportPayload))]
+[JsonSerializable(typeof(CommunitySubmissionRequest))]
+[JsonSerializable(typeof(CommunitySubmissionPayload))]
 [JsonSerializable(typeof(OperationEntry[]))]
 [JsonSerializable(typeof(InstanceSnapshot))]
 [JsonSerializable(typeof(InstanceUser))]

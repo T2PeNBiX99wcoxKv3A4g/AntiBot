@@ -5,10 +5,6 @@ import {readBlock} from "./data";
 /** The repository the submission form lives in. */
 const Repository = "T2PeNBiX99wcoxKv3A4g/AntiBot";
 const issueUrl = `https://github.com/${Repository}/issues/new`;
-const marker = "antibot-community-bots:v1";
-
-/** A link longer than this is not reliable in every browser. */
-export const MaxPrefilledUrl = 7000;
 
 /** One row of the community list, as the host serves it. */
 export interface CommunityBot {
@@ -44,6 +40,11 @@ export interface CommunitySubmission {
     }[];
 }
 
+export interface SubmissionFile {
+    saved: boolean;
+    path?: string;
+}
+
 /** Reads the list the background service downloaded; the page never calls GitHub itself. */
 export async function getCommunity(): Promise<CommunityList> {
     if (!Native.available) return {updatedAt: "", bots: []};
@@ -69,8 +70,8 @@ export async function refreshCommunity(): Promise<void> {
     await Native.request("community.refresh");
 }
 
-/** Builds the compact payload the workflow reads, plus the issue body around it. */
-export function buildSubmission(bots: BotEntry[]): { submission: CommunitySubmission; body: string } {
+/** Builds the JSON file the user attaches to the GitHub issue. */
+export function buildSubmission(bots: BotEntry[]): { submission: CommunitySubmission; json: string } {
     const submission: CommunitySubmission = {
         v: 1,
         id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -87,29 +88,15 @@ export function buildSubmission(bots: BotEntry[]): { submission: CommunitySubmis
         })),
     };
 
-    return {
-        submission,
-        body: [
-            `<!-- ${marker} -->`,
-            "```json",
-            JSON.stringify(submission),
-            "```",
-            `<!-- /${marker} -->`,
-            "",
-            "Submitted by AntiBot. A workflow validates and merges this automatically.",
-        ].join("\n"),
-    };
+    return {submission, json: JSON.stringify(submission, null, 2)};
 }
 
-/** The new-issue page; with a body GitHub uses it directly, otherwise it shows the template. */
-export function communityIssueUrl(body?: string): string {
-    const params = new URLSearchParams({title: "[community] Bot list submission"});
-
-    if (body) {
-        params.set("body", body);
-    } else {
-        params.set("template", "community-bots.md");
-    }
+/** The new-issue page with the file template; the JSON is attached, never pasted into the URL. */
+export function communityIssueUrl(): string {
+    const params = new URLSearchParams({
+        template: "community-bots.md",
+        title: "[community] Bot list submission",
+    });
 
     return `${issueUrl}?${params.toString()}`;
 }
@@ -124,9 +111,18 @@ export async function openCommunityUrl(url: string): Promise<void> {
     await Native.request("community.open", {url});
 }
 
-/** Puts the issue body on the clipboard for the paste fallback. */
-export async function copyCommunityBody(body: string): Promise<void> {
-    await navigator.clipboard.writeText(body);
+/** Saves the submission JSON to Downloads, so it can be dragged into the issue. */
+export async function saveSubmission(json: string): Promise<SubmissionFile> {
+    if (!Native.available) return {saved: false};
+
+    return await Native.request<SubmissionFile>("community.saveSubmission", {json});
+}
+
+/** Opens the folder that holds the submission file. */
+export async function openDownloads(): Promise<void> {
+    if (!Native.available) return;
+
+    await Native.request("community.openDownloads");
 }
 
 async function fetchCommunity(): Promise<CommunityList> {

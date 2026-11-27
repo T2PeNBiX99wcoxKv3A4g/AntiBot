@@ -104,8 +104,10 @@ declare module "@photino-net-utils/bridge"
         "community_list_updated": true;
         "community_upload_explanation": true;
         "community_upload_failed": true;
+        "community_upload_file_saved": true;
+        "community_upload_save_and_open": true;
+        "community_upload_show_folder": true;
         "community_upload_title": true;
-        "community_upload_too_large": true;
         "community_upload_withdraw": true;
         "configurable": true;
         "confirm_clear": true;
@@ -172,6 +174,7 @@ declare module "@photino-net-utils/bridge"
         "error.auth_unlock_password": true;
         "error.bots_export": true;
         "error.community_list": true;
+        "error.community_save": true;
         "error.debug_user_missing": true;
         "error.debug_user_not_found": true;
         "error.export": true;

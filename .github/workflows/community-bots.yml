@@ -2,7 +2,7 @@ name: Community bot list
 
 on:
   issues:
-    types: [opened, edited, labeled, closed]
+    types: [opened, edited, labeled]
 
 permissions:
   contents: write
