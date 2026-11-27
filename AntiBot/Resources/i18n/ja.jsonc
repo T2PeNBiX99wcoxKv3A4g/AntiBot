@@ -190,6 +190,7 @@
   "edit": "編集",
   "remove": "削除",
   "add_test_bot": "テストボットを追加",
+  "added_test_bot_entries": "テストボットを {count} 件追加しました。",
   "only_edit_mode_can_remove_a_bot_so_an_accidental_click_cannot_delete_it": "削除できるのは編集モードだけです。誤クリックで消えることはありません。",
   "export_as_json": "JSON で書き出す",
   "export_as_csv": "CSV で書き出す",

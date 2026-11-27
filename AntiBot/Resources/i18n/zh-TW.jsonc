@@ -190,6 +190,7 @@
   "edit": "編輯",
   "remove": "移除",
   "add_test_bot": "新增測試機器人",
+  "added_test_bot_entries": "已新增 {count} 個測試機器人。",
   "only_edit_mode_can_remove_a_bot_so_an_accidental_click_cannot_delete_it": "只有編輯模式可以移除，避免誤觸刪除。",
   "export_as_json": "匯出為 JSON",
   "export_as_csv": "匯出為 CSV",

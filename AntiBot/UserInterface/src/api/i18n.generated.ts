@@ -15,6 +15,7 @@ declare module "@photino-net-utils/bridge"
         "account_created_yesterday": true;
         "actions_follow_the_switches_under_automatic_protection": true;
         "add": true;
+        "added_test_bot_entries": true;
         "added_to_whitelist": true;
         "add_account": true;
         "add_a_user": true;

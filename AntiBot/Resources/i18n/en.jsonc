@@ -196,6 +196,7 @@
   "edit": "Edit",
   "remove": "Remove",
   "add_test_bot": "Add test bot",
+  "added_test_bot_entries": "Added {count} test bot(s).",
   "only_edit_mode_can_remove_a_bot_so_an_accidental_click_cannot_delete_it": "Only edit mode can remove a row, so an accidental click cannot delete one.",
   "export_as_json": "Export as JSON",
   "export_as_csv": "Export as CSV",

@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import styled from "styled-components";
 import {useTranslation} from "@photino-net-utils/bridge";
+import {addTestBot} from "../api/bots";
 import {closeVrchat, type DebugUserResult, enableSafeMode, scoreUser, switchAvatar, toggleFakeInstance, toggleFakeOperations} from "../api/debug";
 import {type OscStatus, oscStatus} from "../api/osc";
 
@@ -22,7 +23,8 @@ function FakeData() {
     const t = useTranslation();
     const [instanceOn, setInstanceOn] = useState<boolean | null>(null);
     const [operationsOn, setOperationsOn] = useState<boolean | null>(null);
-    const [busy, setBusy] = useState<"instance" | "operations" | null>(null);
+    const [added, setAdded] = useState(0);
+    const [busy, setBusy] = useState<"instance" | "operations" | "bot" | null>(null);
     const [error, setError] = useState("");
 
     const toggle = async (which: "instance" | "operations") => {
@@ -33,6 +35,20 @@ function FakeData() {
             const on = which === "instance" ? await toggleFakeInstance() : await toggleFakeOperations();
             if (which === "instance") setInstanceOn(on);
             else setOperationsOn(on);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setBusy(null);
+        }
+    };
+
+    const addBot = async () => {
+        setBusy("bot");
+        setError("");
+
+        try {
+            await addTestBot();
+            setAdded((count) => count + 1);
         } catch (err) {
             setError(err instanceof Error ? err.message : String(err));
         } finally {
@@ -52,7 +68,14 @@ function FakeData() {
                 <Primary disabled={busy !== null} onClick={() => void toggle("operations")} type="button">
                     {busy === "operations" ? t("working") : t("fake_operation_history")}
                 </Primary>
+                <Primary disabled={busy !== null} onClick={() => void addBot()} type="button">
+                    {busy === "bot" ? t("working") : t("add_test_bot")}
+                </Primary>
             </Actions>
+
+            {added > 0 && (
+                <Status $failed={false}>{t("added_test_bot_entries", {count: added})}</Status>
+            )}
 
             {instanceOn !== null || operationsOn !== null
                 ? <Status $failed={false}>
