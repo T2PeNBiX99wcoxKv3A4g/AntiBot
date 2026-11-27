@@ -69,6 +69,8 @@ declare module "@photino-net-utils/bridge"
         "blocked": true;
         "block_the_user": true;
         "block_the_user_vr_chat_may_then_refuse_to_send_them_your_avatar_if_it_checks_blocks_on_the_server_it_may_also_have_no_effect": true;
+        "bots_are_found_from_the_name_avatar_and_profile_while_signed_out_only_the_log_based_checks_run": true;
+        "bot_list": true;
         "browser_preview": true;
         "build": true;
         "busy": true;
@@ -102,6 +104,7 @@ declare module "@photino-net-utils/bridge"
         "could_not_read_the_settings": true;
         "could_not_send_the_test_message": true;
         "count_action_s": true;
+        "count_bot_s": true;
         "count_lines": true;
         "count_recorded_pending_still_pending": true;
         "count_request_s": true;
@@ -122,6 +125,7 @@ declare module "@photino-net-utils/bridge"
         "download_complete": true;
         "do_not_close_vr_chat_while_a_vr_headset_is_in_use_quitting_from_vr_is_disruptive": true;
         "do_not_remember": true;
+        "edit": true;
         "email_code": true;
         "enabled": true;
         "enable_at_least_one_api_action_under_automatic_protection_first": true;
@@ -152,6 +156,7 @@ declare module "@photino-net-utils/bridge"
         "error.auth_unauthorized": true;
         "error.auth_unlock_failed": true;
         "error.auth_unlock_password": true;
+        "error.bots_export": true;
         "error.debug_user_missing": true;
         "error.debug_user_not_found": true;
         "error.export": true;
@@ -166,14 +171,18 @@ declare module "@photino-net-utils/bridge"
         "error.updatecheckfailed": true;
         "error.vrchat_status": true;
         "europe": true;
+        "every_account_anti_bot_has_detected_as_a_bot_newest_first_and_repeats_are_merged": true;
         "every_block_chat_box_mute_and_avatar_interaction_change_as_it_happened": true;
         "every_incoming_request_anti_bot_has_recorded_with_the_sender_s_profile": true;
         "every_incoming_request_is_recorded_here_with_the_sender_s_profile": true;
         "every_line_is_hidden_by_the_level_filter": true;
         "every_request_anti_bot_has_seen_newest_first": true;
         "export": true;
+        "exported_count_bots_to_path": true;
         "exported_count_lines_to_path": true;
         "exporting": true;
+        "export_as_csv": true;
+        "export_as_json": true;
         "faded_rows_are_no_longer_pending": true;
         "failed": true;
         "fair": true;
@@ -182,6 +191,7 @@ declare module "@photino-net-utils/bridge"
         "fake_operation_history": true;
         "filter_lines": true;
         "filter_log_lines": true;
+        "first_seen": true;
         "following": true;
         "follow_the_system": true;
         "forget_it": true;
@@ -229,6 +239,7 @@ declare module "@photino-net-utils/bridge"
         "known_user_account": true;
         "language": true;
         "language_used_by_both_the_interface_and_the_desktop_backend": true;
+        "last_seen": true;
         "license": true;
         "light": true;
         "linux": true;
@@ -259,8 +270,9 @@ declare module "@photino-net-utils/bridge"
         "not_listening": true;
         "not_running": true;
         "not_signed_in": true;
-        "not_signed_in_only_the_log_is_available": true;
+        "not_signed_in_detection_accuracy_and_automatic_actions_are_unavailable": true;
         "not_stored": true;
+        "no_bots_detected_yet": true;
         "no_endpoint_avatar_names_stay_unknown": true;
         "no_friend_requests_recorded_yet": true;
         "no_line_contains_query": true;
@@ -274,6 +286,7 @@ declare module "@photino-net-utils/bridge"
         "one_of_your_recovery_codes": true;
         "online": true;
         "only_avatars_in_your_favourites_your_recents_or_your_own_uploads_can_be_used_paste_the_avatar_s_link_or_its_id_avtr": true;
+        "only_edit_mode_can_remove_a_bot_so_an_accidental_click_cannot_delete_it": true;
         "only_the_vr_chat_session_cookie_is_stored_never_your_password_every_mode_except_do_not_remember_encrypts_it_at_rest_the_difference_is_what_unlocks_it": true;
         "only_vr_chat_s_local_log_is_read_the_player_list_and_instance_details_can_be_wrong_when_more_than_one_client_runs_and_status_platform_and_avatar_names_are_unavailable": true;
         "opens_vr_chat_s_quick_menu_when_osc_is_working": true;
@@ -326,6 +339,7 @@ declare module "@photino-net-utils/bridge"
         "quest_i_os_platform_score_halved": true;
         "rank": true;
         "read_from_the_executable_the_interface_is_running_in": true;
+        "reasons": true;
         "received": true;
         "recorded_requests": true;
         "recovery_code": true;
@@ -334,6 +348,7 @@ declare module "@photino-net-utils/bridge"
         "reject_friend_requests": true;
         "reject_friend_requests_from_any_user_at_or_above_the_threshold_vr_chat_s_notification_is_hidden_and_only_the_block_avatar_interaction_and_chat_box_actions_are_applied_to_the_sender_the_request_stays_in_anti_bot_s_list_as_rejected_where_it_can_be_undone": true;
         "remember_password": true;
+        "remove": true;
         "removed_from_whitelist": true;
         "remove_account": true;
         "remove_endpoint": true;
@@ -429,6 +444,7 @@ declare module "@photino-net-utils/bridge"
         "threat": true;
         "threat_threshold": true;
         "time": true;
+        "times_seen": true;
         "time_in_this_instance": true;
         "today": true;
         "tools_that_only_a_debug_build_shows": true;

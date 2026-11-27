@@ -116,6 +116,7 @@ internal static class Program
             _ = FriendRequestService.Instance;
             _ = OperationService.Instance;
             _ = ThreatActionService.Instance;
+            _ = BotListService.Instance;
             _ = BatchService.Instance;
 
             // Answers where the data plane lives, so the window can fetch its lists from there.

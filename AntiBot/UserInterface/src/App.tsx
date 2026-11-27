@@ -12,12 +12,14 @@ import {
 import {getSettings, normalizeTheme} from "./api/settings";
 import {type AppInfo, getAppInfo, getUpdateStatus, type UpdateCheck} from "./api/system";
 import {Sidebar} from "./components/Sidebar";
+import {XIcon} from "./components/Icons";
 import {TitleBar} from "./components/TitleBar";
 import {ContextMenu} from "./components/ContextMenu";
 import {useVrchatLog} from "./hooks/useVrchatLog";
 import {useAuth} from "./hooks/useAuth";
 import {AccountPage} from "./pages/AccountPage";
 import {BatchPage} from "./pages/BatchPage";
+import {BotsPage} from "./pages/BotsPage";
 import {DebugPage} from "./pages/DebugPage";
 import {InstancePage} from "./pages/InstancePage";
 import {LogViewerPage} from "./pages/LogViewerPage";
@@ -53,6 +55,10 @@ const pageMeta: Record<Page, { title: LocalizationKey; subtitle: LocalizationKey
         title: "operations",
         subtitle: "the_automatic_actions_anti_bot_has_taken_newest_first",
     },
+    bots: {
+        title: "bot_list",
+        subtitle: "every_account_anti_bot_has_detected_as_a_bot_newest_first_and_repeats_are_merged",
+    },
     account: {title: "account", subtitle: "sign_in_to_vr_chat_so_the_instance_comes_from_the_api_not_the_log"},
     settings: {title: "settings", subtitle: "where_the_log_comes_from_and_what_anti_bot_does_with_it"},
     debug: {title: "debug", subtitle: "tools_that_only_a_debug_build_shows"},
@@ -64,6 +70,7 @@ export default function App() {
     const [info, setInfo] = useState<AppInfo | null>(null);
     const [update, setUpdate] = useState<UpdateCheck | null>(null);
     const [authExpired, setAuthExpired] = useState(false);
+    const [noticeDismissed, setNoticeDismissed] = useState(false);
     const [pendingSettingsSection, setPendingSettingsSection] = useState<string | null>(null);
     const [theme, setTheme] = useState<ThemeMode>("system");
     const corners = useWindowCorners();
@@ -76,6 +83,9 @@ export default function App() {
     useEffect(() => {
         if (signedIn) setAuthExpired(false);
     }, [signedIn]);
+
+    // A new sign-in state is a new reason to show the notice, even if the last one was dismissed.
+    useEffect(() => setNoticeDismissed(false), [signedIn]);
 
     useEffect(() => {
         void getAppInfo().then(setInfo, () => setInfo(null));
@@ -154,11 +164,21 @@ export default function App() {
                             <p>{t(subtitle)}</p>
                         </HeaderText>
                         <HeaderMeta>
-                            {!signedIn && (
-                                <SignInPill onClick={() => setPage("account")} type="button">
-                                    {authExpired
-                                        ? t("session_expired_automatic_protection_is_off")
-                                        : t("not_signed_in_only_the_log_is_available")}
+                            {!signedIn && !noticeDismissed && (
+                                <SignInPill>
+                                    <SignInPillText onClick={() => setPage("account")} type="button">
+                                        {authExpired
+                                            ? t("session_expired_automatic_protection_is_off")
+                                            : t("not_signed_in_detection_accuracy_and_automatic_actions_are_unavailable")}
+                                    </SignInPillText>
+                                    <DismissButton
+                                        aria-label={t("dismiss")}
+                                        onClick={() => setNoticeDismissed(true)}
+                                        title={t("dismiss")}
+                                        type="button"
+                                    >
+                                        <XIcon size={11}/>
+                                    </DismissButton>
                                 </SignInPill>
                             )}
                         </HeaderMeta>
@@ -175,7 +195,9 @@ export default function App() {
                                         ? <RequestsPage signedIn={signedIn} onSignIn={() => setPage("account")}/>
                                         : page === "operations"
                                             ? <OperationsPage/>
-                                            : page === "account"
+                                            : page === "bots"
+                                                ? <BotsPage signedIn={signedIn}/>
+                                                : page === "account"
                                                 ? <AccountPage initial={auth} ready={ready} expired={authExpired}/>
                                                 : page === "debug"
                                                     ? <DebugPage/>
@@ -272,11 +294,11 @@ const HeaderMeta = styled.div`
     padding-top: 4px;
 `;
 
-const SignInPill = styled.button`
+const SignInPill = styled.div`
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 6px 10px;
+    gap: 2px;
+    padding: 3px 4px 3px 10px;
     border: 1px solid rgba(251, 191, 36, 0.45);
     border-radius: 999px;
     background: rgba(251, 191, 36, 0.12);
@@ -284,17 +306,38 @@ const SignInPill = styled.button`
     font-family: var(--font-mono);
     font-size: 10px;
     white-space: nowrap;
+`;
+
+const SignInPillText = styled.button`
+    padding: 2px 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
     cursor: pointer;
-    transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+
+    &:hover {
+        text-decoration: underline;
+    }
+`;
+
+const DismissButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
 
     &:hover {
         background: rgba(251, 191, 36, 0.2);
-        border-color: rgba(251, 191, 36, 0.7);
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
+        opacity: 1;
     }
 `;
 

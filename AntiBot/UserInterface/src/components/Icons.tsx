@@ -176,6 +176,18 @@ export function BellIcon({size = 18}: IconProps) {
     );
 }
 
+export function BotIcon({size = 18}: IconProps) {
+    return (
+        <svg {...base(size)}>
+            <rect x="4" y="8" width="16" height="11" rx="3"/>
+            <path d="M12 8V5M9.5 5h5"/>
+            <circle cx="9" cy="13" r="1.2"/>
+            <circle cx="15" cy="13" r="1.2"/>
+            <path d="M9.5 16.5h5"/>
+        </svg>
+    );
+}
+
 export function BatchIcon({size = 18}: IconProps) {
     return (
         <svg {...base(size)}>

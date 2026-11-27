@@ -26,6 +26,7 @@ internal static class DataRoutes
     public const ushort RequestsKind = 4;
     public const ushort BatchPreviewKind = 5;
     public const ushort BatchStateKind = 6;
+    public const ushort BotsKind = 7;
 
     private const int DefaultLogLines = 5000;
     private const int MaxLogLines = 20_000;
@@ -42,6 +43,7 @@ internal static class DataRoutes
         app.MapGet($"/data/{token}/instance", (Delegate)((HttpContext _) => Block(Instance())));
         app.MapGet($"/data/{token}/operations", (Delegate)((HttpContext _) => Block(Operations())));
         app.MapGet($"/data/{token}/requests", (Delegate)((HttpContext _) => Block(Requests())));
+        app.MapGet($"/data/{token}/bots", (Delegate)((HttpContext _) => Block(Bots())));
         app.MapGet($"/data/{token}/log", (Delegate)Log);
 
         app.MapPost($"/data/{token}/batch-preview", (Delegate)(async (HttpContext context) =>
@@ -140,6 +142,36 @@ internal static class DataRoutes
 
             block.Row([.. text], [.. numbers]);
         }
+
+        return block.Build();
+    }
+
+    /// <summary>Every account the scoring has called a bot, newest sighting first.</summary>
+    private static byte[] Bots()
+    {
+        var bots = BotListService.Instance.DataEntries;
+
+        var block = new DataBlock(BotsKind)
+            .Meta("count", bots.Length.ToString(CultureInfo.InvariantCulture))
+            .Text("userId")
+            .Text("name")
+            .Text("trust")
+            .Text("platform")
+            .Text("dateJoined")
+            .Text("avatar")
+            .Text("reasons")
+            .Number("threat")
+            .Number("firstSeen")
+            .Number("lastSeen")
+            .Number("sightings");
+
+        foreach (var bot in bots)
+            block.Row(
+            [
+                bot.UserId, bot.DisplayName, bot.Trust ?? "", bot.Platform ?? "", bot.DateJoined ?? "",
+                bot.AvatarUrl ?? "", Reasons(bot.Reasons)
+            ],
+                bot.Threat, bot.FirstSeen, bot.LastSeen, bot.Sightings);
 
         return block.Build();
     }

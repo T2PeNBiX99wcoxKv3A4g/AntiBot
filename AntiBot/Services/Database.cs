@@ -100,6 +100,21 @@ internal partial class Database
                                       undone       INTEGER NOT NULL DEFAULT 0
                                   );
 
+                                  CREATE TABLE IF NOT EXISTS bots (
+                                      user_id      TEXT PRIMARY KEY,
+                                      display_name TEXT NOT NULL,
+                                      threat       INTEGER NOT NULL,
+                                      reasons      TEXT NOT NULL,
+                                      avatar_url   TEXT,
+                                      trust        TEXT,
+                                      platform     TEXT,
+                                      date_joined  TEXT,
+                                      first_seen   INTEGER NOT NULL,
+                                      last_seen    INTEGER NOT NULL,
+                                      sightings    INTEGER NOT NULL DEFAULT 1,
+                                      removed      INTEGER NOT NULL DEFAULT 0
+                                  );
+
                                   CREATE TABLE IF NOT EXISTS account (
                                       id      TEXT PRIMARY KEY,
                                       payload TEXT NOT NULL
@@ -545,6 +560,103 @@ internal partial class Database
 
         attempt.OnFailure(ex => Log.Warning(ex, "Could not clear the operations"));
     }
+
+    /// <summary>
+    ///     Every stored bot, including the ones the user removed: a removal has to survive a restart,
+    ///     otherwise the same false positive would come back on the next detection.
+    /// </summary>
+    public IReadOnlyList<BotRow> LoadBots()
+    {
+        var attempt = Try.Run(() =>
+        {
+            using var connection = Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  SELECT user_id, display_name, threat, reasons, avatar_url, trust, platform,
+                                         date_joined, first_seen, last_seen, sightings, removed
+                                  FROM bots
+                                  ORDER BY last_seen DESC
+                                  """;
+
+            var rows = new List<BotRow>();
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                rows.Add(new(
+                    new(reader.GetString(0), reader.GetString(1), reader.GetInt32(2), ParseReasons(reader.GetString(3)),
+                        reader.GetStringOrNull(4), reader.GetStringOrNull(5), reader.GetStringOrNull(6),
+                        reader.GetStringOrNull(7), reader.GetInt64(8), reader.GetInt64(9), reader.GetInt32(10)),
+                    reader.GetInt64(11) != 0));
+
+            return rows;
+        });
+
+        return attempt
+            .OnFailure(ex => Log.Warning(ex, "Could not read the stored bot list"))
+            .GetOrElse(_ => []);
+    }
+
+    /// <summary>Stores a bot row, unless the user already removed that user id.</summary>
+    public async Task SaveBotAsync(BotEntry entry, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                                  INSERT INTO bots (user_id, display_name, threat, reasons, avatar_url, trust, platform,
+                                                    date_joined, first_seen, last_seen, sightings)
+                                  VALUES ($userId, $displayName, $threat, $reasons, $avatarUrl, $trust, $platform,
+                                          $dateJoined, $firstSeen, $lastSeen, $sightings)
+                                  ON CONFLICT (user_id) DO UPDATE SET
+                                      display_name = excluded.display_name,
+                                      threat = excluded.threat,
+                                      reasons = excluded.reasons,
+                                      avatar_url = excluded.avatar_url,
+                                      trust = excluded.trust,
+                                      platform = excluded.platform,
+                                      date_joined = excluded.date_joined,
+                                      last_seen = excluded.last_seen,
+                                      sightings = excluded.sightings
+                                  """;
+
+            command.Parameters.AddWithValue("$userId", entry.UserId);
+            command.Parameters.AddWithValue("$displayName", entry.DisplayName);
+            command.Parameters.AddWithValue("$threat", entry.Threat);
+            command.Parameters.AddWithValue("$reasons",
+                JsonSerializer.Serialize(entry.Reasons, AppJsonContext.Default.ThreatReasonArray));
+            command.Parameters.AddWithValue("$avatarUrl", (object?)entry.AvatarUrl ?? DBNull.Value);
+            command.Parameters.AddWithValue("$trust", (object?)entry.Trust ?? DBNull.Value);
+            command.Parameters.AddWithValue("$platform", (object?)entry.Platform ?? DBNull.Value);
+            command.Parameters.AddWithValue("$dateJoined", (object?)entry.DateJoined ?? DBNull.Value);
+            command.Parameters.AddWithValue("$firstSeen", entry.FirstSeen);
+            command.Parameters.AddWithValue("$lastSeen", entry.LastSeen);
+            command.Parameters.AddWithValue("$sightings", entry.Sightings);
+
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not store the bot {UserId}", entry.UserId));
+    }
+
+    /// <summary>Hides a bot the user called a false positive, or puts it back.</summary>
+    public async Task SetBotRemovedAsync(string userId, bool removed, CancellationToken token = default)
+    {
+        var attempt = await Try.Run(async () =>
+        {
+            await using var connection = await OpenAsync(token);
+            await using var command = connection.CreateCommand();
+            command.CommandText = "UPDATE bots SET removed = $removed WHERE user_id = $userId";
+            command.Parameters.AddWithValue("$removed", removed ? 1 : 0);
+            command.Parameters.AddWithValue("$userId", userId);
+            await command.ExecuteNonQueryAsync(token);
+        });
+
+        attempt.OnFailure(ex => Log.Warning(ex, "Could not update the bot {UserId}", userId));
+    }
+
+    private static ThreatReason[] ParseReasons(string json) =>
+        Try.Run(() => JsonSerializer.Deserialize(json, AppJsonContext.Default.ThreatReasonArray) ?? [])
+            .GetOrElse(_ => []);
 
     /// <summary>Every friend request ever recorded, newest first.</summary>
     public IReadOnlyList<FriendRequestRow> LoadFriendRequests()

@@ -205,3 +205,12 @@ internal sealed record UserBioRequest(string UserId);
 
 /// <summary>Body for <c>user.bio</c>.</summary>
 internal sealed record UserBioPayload(string? Bio);
+
+/// <summary>Payload for <c>bots.remove</c>: the row the user called a false positive.</summary>
+internal sealed record BotActionRequest(string UserId);
+
+/// <summary>Payload for <c>bots.export</c>: <c>json</c> or <c>csv</c>.</summary>
+internal sealed record BotExportRequest(string Format);
+
+/// <summary>Body for <c>bots.export</c>: whether the file was written, and where.</summary>
+internal sealed record BotExportPayload(bool Saved, int Count, string? Path);

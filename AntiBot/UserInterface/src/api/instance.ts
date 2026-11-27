@@ -157,7 +157,7 @@ export function toUser(row: Record<string, string | number>, prefix = ""): Insta
 }
 
 /** The reasons travel as one string: key, weight and detail, separated by unit separators. */
-function toReasons(value: string): ThreatReason[] {
+export function toReasons(value: string): ThreatReason[] {
     if (!value) return [];
 
     return value.split("\u001f").map((part) => {

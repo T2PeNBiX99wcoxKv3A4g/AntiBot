@@ -438,7 +438,7 @@ function platformTitle(platform: string | undefined,
         : undefined;
 }
 
-function platformLabel(platform: string | undefined,
+export function platformLabel(platform: string | undefined,
                        t: Translate): string {
     switch (platform) {
         case "standalonewindows":

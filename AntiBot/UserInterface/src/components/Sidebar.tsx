@@ -3,7 +3,7 @@ import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {useTranslation} from "@photino-net-utils/bridge";
 import type {LogStatus} from "../api/logs";
 import type {Page} from "../pages";
-import {AlertIcon, BatchIcon, BellIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
+import {AlertIcon, BatchIcon, BellIcon, BotIcon, LogIcon, ShieldIcon, SlidersIcon, UserIcon, UsersIcon} from "./Icons";
 
 interface SidebarProps {
     page: Page;
@@ -19,6 +19,7 @@ const items: { id: Page; label: LocalizationKey; icon: typeof LogIcon }[] = [
     {id: "batch", label: "batch_actions", icon: BatchIcon},
     {id: "requests", label: "friend_requests", icon: BellIcon},
     {id: "operations", label: "operations", icon: ShieldIcon},
+    {id: "bots", label: "bot_list", icon: BotIcon},
     {id: "account", label: "account", icon: UserIcon},
     {id: "settings", label: "settings", icon: SlidersIcon},
 ];
