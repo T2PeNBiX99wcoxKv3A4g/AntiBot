@@ -1,6 +1,6 @@
 // Community bot list submissions. A maintainer applies `approved` to merge an issue and closing a
 // merged issue withdraws the entries it contributed.
-const marker = /<!-- antibot-community-bots:v1 -->([\s\S]*?)<!-- \/antibot-community-bots -->/;
+const marker = /<!-- antibot-community-bots:v1 -->([\s\S]*?)<!-- \/antibot-community-bots(?::v1)? -->/;
 const dataPath = "data/community-bots.json";
 const branch = "master";
 const maxSubmitted = 200;
