@@ -87,6 +87,14 @@ export async function stopBatch(): Promise<void> {
     await Native.request("batch.stop");
 }
 
+/** Adds the parsed users to the bot list without moderating them. */
+export async function addBatchToBotList(userIds: string[]): Promise<number> {
+    if (!Native.available) return 0;
+
+    const result = await Native.request<{ added: number }>("batch.addBots", {userIds}, 120_000);
+    return result.added;
+}
+
 export async function getBatchState(): Promise<BatchState> {
     if (!Native.available)
         return {running: false, done: 0, total: 0, failed: 0, cancelled: false, outcomes: [], actions: []};

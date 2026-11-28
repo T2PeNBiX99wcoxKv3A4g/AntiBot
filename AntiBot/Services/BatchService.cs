@@ -34,6 +34,7 @@ internal partial class BatchService
     {
         "batch.parse" => ParseAsync(context),
         "batch.run" => RunAsync(context),
+        "batch.addBots" => AddBotsAsync(context),
         "batch.stop" => Stop(context),
         "batch.state" => Task.FromResult<NativeResponse?>(context.Reply("batch.state.result", State())),
         _ => Task.FromResult<NativeResponse?>(null)
@@ -151,6 +152,41 @@ internal partial class BatchService
         return Task.FromResult<NativeResponse?>(context.Reply("batch.stop.result", new OkPayload()));
     }
 
+    /// <summary>Adds the parsed users to the bot list without blocking or moderating them.</summary>
+    private async Task<NativeResponse?> AddBotsAsync(NativeContext context)
+    {
+        var ids = (context.Payload<BatchRunRequest>()?.UserIds ?? [])
+            .Select(Ids.User)
+            .OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(id => !string.Equals(id, AuthService.Instance.CurrentUserId, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (ids.Length == 0)
+            return context.Fail("batch.addBots.result", Localization.Get("batch.error.no_users"));
+
+        var added = 0;
+
+        foreach (var id in ids)
+        {
+            try
+            {
+                var user = await DescribeAsync(id, CancellationToken.None);
+                if (user.UserId.Length == 0)
+                    continue;
+
+                BotListService.Instance.Add(user);
+                added++;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not add {UserId} to the bot list", id);
+            }
+        }
+
+        return context.Reply("batch.addBots.result", new BatchAddBotsPayload(added));
+    }
+
     private async Task ExecuteAsync(string[] ids, (string Api, string Kind, string Label)[] actions,
         CancellationToken token)
     {
@@ -183,8 +219,14 @@ internal partial class BatchService
                     var success = await ModerationQueue.Instance.ModerateAsync(id, api, token);
 
                     if (success)
+                    {
+                        // A successful batch block also puts the account on the bot list.
+                        if (api == "block")
+                            BotListService.Instance.Add(user);
+
                         await OperationService.Instance.LogAsync(kind, id, user.Name,
                             $"batch · {user.Threat}", user.IconUrl ?? user.AvatarUrl, false);
+                    }
                     else
                     {
                         ok = false;

@@ -172,6 +172,9 @@ internal sealed record BatchRunRequest(string[] UserIds);
 /// <summary>Body for <c>batch.run</c>: whether the batch started, and how many API calls it will make.</summary>
 internal sealed record BatchStartPayload(bool Started, int Total, string[] Actions, string? Error = null);
 
+/// <summary>Body for <c>batch.addBots</c>: how many parsed users were added to the bot list.</summary>
+internal sealed record BatchAddBotsPayload(int Added);
+
 /// <summary>One <c>batch.progress</c> event: how many calls are done, and which user is being handled.</summary>
 internal sealed record BatchProgressPayload(bool Running, int Done, int Total, int Failed, string? UserId);
 

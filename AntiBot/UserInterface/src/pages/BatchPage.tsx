@@ -3,6 +3,7 @@ import styled from "styled-components";
 import type {LocalizationKey} from "@photino-net-utils/bridge";
 import {useTranslation} from "@photino-net-utils/bridge";
 import {
+    addBatchToBotList,
     type BatchFinished,
     getBatchState,
     onBatchFinished,
@@ -23,7 +24,9 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
     const [invalid, setInvalid] = useState<string[]>([]);
     const [error, setError] = useState("");
     const [parsing, setParsing] = useState(false);
+    const [adding, setAdding] = useState(false);
     const [stopping, setStopping] = useState(false);
+    const [notice, setNotice] = useState("");
     const [running, setRunning] = useState(false);
     const [done, setDone] = useState(0);
     const [total, setTotal] = useState(0);
@@ -84,6 +87,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
     const parse = async () => {
         setParsing(true);
         setError("");
+        setNotice("");
         setFinished(null);
         setUsers([]);
         setInvalid([]);
@@ -110,6 +114,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
 
     const run = async () => {
         setError("");
+        setNotice("");
         setFinished(null);
 
         try {
@@ -138,6 +143,21 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
         } catch (reason) {
             setError(reason instanceof Error ? reason.message : String(reason));
             setStopping(false);
+        }
+    };
+
+    const add = async () => {
+        setAdding(true);
+        setError("");
+        setNotice("");
+
+        try {
+            const count = await addBatchToBotList(users.map((user) => user.userId));
+            setNotice(t("added_count_bots_to_the_bot_list", {count}));
+        } catch (reason) {
+            setError(reason instanceof Error ? reason.message : String(reason));
+        } finally {
+            setAdding(false);
         }
     };
 
@@ -172,6 +192,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                         setInvalid([]);
                         setFinished(null);
                         setError("");
+                        setNotice("");
                     }}
                     placeholder={"https://vrchat.com/home/user/usr_…\nusr_…"}
                     spellCheck={false}
@@ -193,6 +214,13 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                     >
                         {t("batch_block")}
                     </Secondary>
+                    <Secondary
+                        disabled={running || parsing || adding || users.length === 0 || !signedIn}
+                        onClick={() => void add()}
+                        type="button"
+                    >
+                        {adding ? t("working") : t("add_to_bot_list")}
+                    </Secondary>
                     {running && (
                         <Secondary disabled={stopping} onClick={() => void stop()} type="button">
                             {t("stop")}
@@ -202,6 +230,7 @@ export function BatchPage({signedIn, onSignIn}: { signedIn: boolean; onSignIn: (
                 </Actions>
 
                 {error && <ErrorText>{error}</ErrorText>}
+                {notice && <SuccessText>{notice}</SuccessText>}
             </Card>
 
             {invalid.length > 0 && (
@@ -350,6 +379,12 @@ const ErrorText = styled.p`
     font-size: 11px;
     line-height: 1.5;
     color: #f87171;
+`;
+
+const SuccessText = styled.p`
+    font-size: 11px;
+    line-height: 1.5;
+    color: #4ade80;
 `;
 
 const InvalidList = styled.ul`

@@ -72,6 +72,60 @@ internal partial class BotListService
         }
     }
 
+    /// <summary>
+    ///     Adds a user explicitly, either after a batch block or from the batch add action. This
+    ///     bypasses the threshold: the caller already decided the account belongs on the list.
+    /// </summary>
+    public void Add(InstanceUser user)
+    {
+        if (user.UserId.Length == 0)
+            return;
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var reason = new ThreatReason("added_from_batch", 0);
+        BotEntry entry;
+
+        lock (_gate)
+        {
+            if (_bots.TryGetValue(user.UserId, out var known))
+            {
+                entry = known.Entry with
+                {
+                    DisplayName = user.Name.Length > 0 ? user.Name : known.Entry.DisplayName,
+                    Threat = Math.Max(known.Entry.Threat, user.Threat),
+                    Reasons = [.. known.Entry.Reasons.Concat([reason]).Distinct()],
+                    AvatarUrl = user.IconUrl ?? user.AvatarUrl ?? known.Entry.AvatarUrl,
+                    Trust = user.Trust ?? known.Entry.Trust,
+                    Platform = user.Platform ?? known.Entry.Platform,
+                    DateJoined = user.DateJoined ?? known.Entry.DateJoined,
+                    LastSeen = now
+                };
+            }
+            else
+            {
+                entry = new BotEntry(
+                    user.UserId,
+                    user.Name.Length > 0 ? user.Name : user.UserId,
+                    user.Threat,
+                    [.. (user.ThreatReasons ?? []).Append(reason).Distinct()],
+                    user.IconUrl ?? user.AvatarUrl,
+                    user.Trust,
+                    user.Platform,
+                    user.DateJoined,
+                    now,
+                    now,
+                    1);
+            }
+
+            _bots[user.UserId] = new(entry, false);
+        }
+
+        _ = Database.Instance.SetBotRemovedAsync(user.UserId, false);
+        _ = Database.Instance.SaveBotAsync(entry);
+        Log.Information("Bot list: {Name} ({UserId}) was added from a batch", entry.DisplayName, entry.UserId);
+        Publish();
+    }
+
     private void OnSnapshot(InstanceSnapshot snapshot) =>
         // The sweep starts apart from the log reader: parsing the next line matters more than this.
         _ = Task.Run(() => Sweep(snapshot));

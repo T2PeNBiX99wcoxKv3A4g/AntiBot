@@ -16,11 +16,14 @@ declare module "@photino-net-utils/bridge"
         "actions_follow_the_switches_under_automatic_protection": true;
         "act_on_users_in_the_downloaded_community_list_false_positives_can_be_whitelisted": true;
         "add": true;
+        "added_count_bots_to_the_bot_list": true;
+        "added_from_batch": true;
         "added_test_bot_entries": true;
         "added_to_whitelist": true;
         "add_account": true;
         "add_a_user": true;
         "add_test_bot": true;
+        "add_to_bot_list": true;
         "add_to_whitelist": true;
         "aes_256_gcm_with_a_key_derived_from_your_password_asked_each_launch": true;
         "aes_256_gcm_with_a_key_file_next_to_the_session_obfuscation_only_not_real_protection": true;

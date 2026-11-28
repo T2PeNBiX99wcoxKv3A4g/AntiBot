@@ -96,6 +96,7 @@ namespace AntiBot.Messaging;
 [JsonSerializable(typeof(BatchPreviewPayload))]
 [JsonSerializable(typeof(BatchRunRequest))]
 [JsonSerializable(typeof(BatchStartPayload))]
+[JsonSerializable(typeof(BatchAddBotsPayload))]
 [JsonSerializable(typeof(BatchProgressPayload))]
 [JsonSerializable(typeof(BatchOutcomePayload))]
 [JsonSerializable(typeof(BatchFinishedPayload))]
